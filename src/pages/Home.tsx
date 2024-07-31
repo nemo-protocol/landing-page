@@ -3,7 +3,7 @@ import bg1 from "@/assets/images/svg/bg-1.svg";
 import PT from "@/assets/images/png/PT.png";
 import YT from "@/assets/images/png/YT.png";
 import Nemo from "@/assets/images/png/nemo.png";
-import vSUI from "@/assets/images/svg/vSUI.svg";
+import sSUI from "@/assets/images/svg/sSUI.svg";
 import logo from "@/assets/images/svg/logo.svg";
 import sUSDC from "@/assets/images/svg/sUSDC.svg";
 import sUSDT from "@/assets/images/svg/sUSDT.svg";
@@ -19,8 +19,10 @@ import Cetus from "@/assets/images/svg/Partners/Cetus.svg";
 import MoveBit from "@/assets/images/svg/MoveBit.svg";
 import Twitter from "@/assets/images/svg/twitter.svg";
 import X from "@/assets/images/svg/x.svg";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Home() {
+  const { toast } = useToast();
   const [tab, setTab] = useState<string>("Markets");
   const [router, setRouter] = useState<string>("Home");
 
@@ -41,14 +43,46 @@ export default function Home() {
           <li
             onClick={() => setRouter("Community")}
             className={[
-              "w-32 text-center text-white bg-transparent py-2 rounded-full cursor-pointer",
+              "w-32 text-center text-white bg-transparent py-2 rounded-full cursor-pointer dropdown",
               router === "Community" ? "bg-white/10" : "",
             ].join(" ")}
           >
-            Community
+            <div tabIndex={0} role="button">
+              Community
+            </div>
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu bg-white/10 rounded-box z-[1] p-2 shadow mt-4 w-[130px]"
+            >
+              <li>
+                <a
+                  href="https://x.com/nemoprotocol"
+                  target="_blank"
+                  className="text-white"
+                >
+                  Twitter
+                </a>
+              </li>
+              <li>
+                <a
+                  className="text-white"
+                  onClick={() => {
+                    toast({
+                      title: "Coming soon!",
+                    });
+                  }}
+                >
+                  Telegram
+                </a>
+              </li>
+            </ul>
           </li>
           <li
-            onClick={() => setRouter("Docs")}
+            onClick={() => {
+              toast({
+                title: "Coming soon!",
+              });
+            }}
             className={[
               "w-24 text-center text-white bg-transparent py-2 rounded-full cursor-pointer",
               router === "Docs" ? "bg-white/10" : "",
@@ -57,7 +91,11 @@ export default function Home() {
             Docs
           </li>
           <li
-            onClick={() => setRouter("Learn")}
+            onClick={() => {
+              toast({
+                title: "Coming soon!",
+              });
+            }}
             className={[
               "w-24 text-center text-white bg-transparent py-2 rounded-full cursor-pointer",
               router === "Learn" ? "bg-white/10" : "",
@@ -66,7 +104,14 @@ export default function Home() {
             Learn
           </li>
         </ul>
-        <button className="border border-white bg-transparent rounded-full">
+        <button
+          className="border border-white bg-transparent rounded-full"
+          onClick={() => {
+            toast({
+              title: "Coming soon!",
+            });
+          }}
+        >
           Launch App
         </button>
       </header>
@@ -84,11 +129,25 @@ export default function Home() {
             trading.
           </h6>
           <div className="flex items-center justify-center gap-x-5 text-white mt-10">
-            <button className="bg-[#1954FF] flex items-center gap-x-4 rounded-full">
+            <button
+              className="bg-[#1954FF] flex items-center gap-x-4 rounded-full"
+              onClick={() => {
+                toast({
+                  title: "Coming soon!",
+                });
+              }}
+            >
               <span>Enter Now</span>
               <img src={RightArrow} alt="" />
             </button>
-            <button className="rounded-full border border-white">
+            <button
+              className="rounded-full border border-white"
+              onClick={() => {
+                toast({
+                  title: "Coming soon!",
+                });
+              }}
+            >
               Learn More
             </button>
           </div>
@@ -151,13 +210,13 @@ export default function Home() {
               <div className="p-[24.44px] rounded-[21.544px] bg-[#1D1D1D] h-[422px] -rotate-[5deg] mt-3">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-y-2.5">
-                    <h6>vSUI</h6>
+                    <h6>sSUI</h6>
                     <div className="rounded-full bg-[#292929] py-0.5 px-1 flex items-center gap-x-0.5">
                       <img src={Scallop} alt="" className="w-3.5" />
                       <span className="text-xs scale-75">Scallop</span>
                     </div>
                   </div>
-                  <img src={vSUI} alt="vSUI" className="mr-2.5" />
+                  <img src={sSUI} alt="sSUI" className="mr-2.5" />
                 </div>
                 <div className="py-3 px-3.5 rounded-xl bg-[#292929] mt-6">
                   <div className="flex items-center justify-between">
@@ -453,20 +512,39 @@ export default function Home() {
           </div>
           <div className="flex flex-col gap-y-4">
             <div>Community</div>
-            <div className="text-white/60 hover:text-white cursor-pointer">Twitter</div>
-            <div className="text-white/60 hover:text-white cursor-pointer">Telegram</div>
+            <div className="text-white/60 hover:text-white cursor-pointer">
+              Twitter
+            </div>
+            <div className="text-white/60 hover:text-white cursor-pointer">
+              Telegram
+            </div>
           </div>
           <div className="flex flex-col gap-y-4">
             <div>Docs</div>
-            <div className="text-white/60 hover:text-white cursor-pointer">gitbook</div>
+            <div className="text-white/60 hover:text-white cursor-pointer">
+              gitbook
+            </div>
           </div>
           <div className="flex flex-col gap-y-4">
             <div>Learn</div>
-            <div className="text-white/60 hover:text-white cursor-pointer">YT trading</div>
-            <div className="text-white/60 hover:text-white cursor-pointer">PT trading</div>
-            <div className="text-white/60 hover:text-white cursor-pointer">earn</div>
+            <div className="text-white/60 hover:text-white cursor-pointer">
+              YT trading
+            </div>
+            <div className="text-white/60 hover:text-white cursor-pointer">
+              PT trading
+            </div>
+            <div className="text-white/60 hover:text-white cursor-pointer">
+              earn
+            </div>
           </div>
-          <button className="border border-white bg-transparent rounded-3xl px-3 py-2 h-9 text-xs">
+          <button
+            className="border border-white bg-transparent rounded-3xl px-3 py-2 h-9 text-xs"
+            onClick={() => {
+              toast({
+                title: "Coming soon!",
+              });
+            }}
+          >
             Launch App
           </button>
         </div>
