@@ -28,7 +28,7 @@ export default function Home() {
 
   return (
     <div>
-      <header className="max-w-[75rem] mx-auto py-6 flex items-center justify-between text-xs">
+      <header className="max-w-[75rem] mx-auto py-6 flex items-center justify-between text-xs text-white">
         <img src={logo} alt="" />
         <ul className="rounded-full border border-white/20 flex items-center">
           <li
