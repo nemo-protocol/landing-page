@@ -28,7 +28,7 @@ export default function Home() {
 
   return (
     <div>
-      <header className="max-w-[75rem] mx-auto py-6 flex items-center justify-between text-xs text-white">
+      <header className="max-w-[75rem] mx-auto py-6 flex items-center justify-between text-xs">
         <img src={logo} alt="" />
         <ul className="rounded-full border border-white/20 flex items-center">
           <li
@@ -121,7 +121,7 @@ export default function Home() {
         className="h-[68.125rem] pt-[7.125rem] relative"
       >
         <div className="max-w-[75rem] mx-auto flex flex-col">
-          <h1 className="text-5xl text-center">
+          <h1 className="text-5xl text-center text-white">
             Yield <span className="text-[#65A2FF]">Trading</span> For Everyone
           </h1>
           <h6 className="text-center mt-4">
@@ -388,7 +388,7 @@ export default function Home() {
       </div>
 
       <div className="h-[68.125rem] pt-[126px]">
-        <h1 className="text-5xl text-center max-w-[829px] mx-auto">
+        <h1 className="text-5xl text-center max-w-[829px] mx-auto text-white">
           Yield often fluctuates with the market, so{" "}
           <span className="text-[#65A2FF]">Nemo</span> Separates yields for
           everyone.
@@ -396,7 +396,7 @@ export default function Home() {
         <div className="flex items-center mt-10 justify-center gap-x-8">
           <div className="flex flex-col w-[280px]">
             <span
-              className="text-center w-16 h-[50px] flex items-center justify-center"
+              className="text-center w-16 h-[50px] flex items-center justify-center text-white"
               style={{
                 backgroundImage: `url(${PT})`,
                 backgroundRepeat: "no-repeat",
@@ -405,7 +405,7 @@ export default function Home() {
             >
               PT
             </span>
-            <h4 className="mt-8 text-2xl">
+            <h4 className="mt-8 text-2xl text-white">
               Fixing yield, harvest definite returns
             </h4>
             <h6 className="mt-10 text-xs text-white/50">
@@ -422,7 +422,7 @@ export default function Home() {
           ></div>
           <div className="flex flex-col w-[280px]">
             <span
-              className="text-center w-16 h-[50px] flex items-center justify-center"
+              className="text-center w-16 h-[50px] flex items-center justify-center text-white"
               style={{
                 backgroundImage: `url(${YT})`,
                 backgroundRepeat: "no-repeat",
@@ -431,7 +431,7 @@ export default function Home() {
             >
               YT
             </span>
-            <h4 className="mt-8 text-2xl">
+            <h4 className="mt-8 text-2xl text-white">
               Longing yield, generate profit from future yield
             </h4>
             <h6 className="mt-10 text-xs text-white/50">
@@ -555,7 +555,7 @@ export default function Home() {
           <img src={Twitter} alt="" />
           <img src={X} alt="" />
         </div>
-        <div>2024 Nemolab Inc.</div>
+        <div className="text-white">2024 Nemolab Inc.</div>
       </div>
     </div>
   );
