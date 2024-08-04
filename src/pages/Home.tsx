@@ -88,7 +88,13 @@ export default function Home() {
               router === "Docs" ? "bg-white/10" : "",
             ].join(" ")}
           >
-            Docs
+            <a
+              href="https://docs.nemoprotocol.com/"
+              target="_blank"
+              className="text-white"
+            >
+              Docs
+            </a>
           </li>
           <li
             onClick={() => {
@@ -124,7 +130,7 @@ export default function Home() {
           <h1 className="text-5xl text-center text-white">
             Yield <span className="text-[#65A2FF]">Trading</span> For Everyone
           </h1>
-          <h6 className="text-center mt-4">
+          <h6 className="text-center mt-4 text-white">
             Revolutionizing investment strategy and maximize returns with yield
             trading.
           </h6>
@@ -242,10 +248,10 @@ export default function Home() {
                   <h6 className="text-xs text-white">Trade</h6>
                   <div className="grid grid-cols-2 gap-x-4 mt-2.5">
                     <div className="px-4 py-3 bg-[#0F60FF] rounded-xl flex items-center justify-between">
-                      <span>YT</span>
+                      <span className="text-white">YT</span>
                       <div className="flex flex-col items-end">
-                        <span className="text-sm">+9.92%</span>
-                        <span className="text-xs">$0.072</span>
+                        <span className="text-sm text-white">+9.92%</span>
+                        <span className="text-xs text-white">$0.072</span>
                       </div>
                     </div>
                     <div className="px-4 py-3 bg-[#2DF5DD] rounded-xl flex items-center justify-between text-black">
@@ -300,10 +306,10 @@ export default function Home() {
                   <h6 className="text-xs text-white">Trade</h6>
                   <div className="grid grid-cols-2 gap-x-4 mt-2.5">
                     <div className="px-4 py-3 bg-[#0F60FF] rounded-xl flex items-center justify-between">
-                      <span>YT</span>
+                      <span className="text-white">YT</span>
                       <div className="flex flex-col items-end">
-                        <span className="text-sm">1.32%</span>
-                        <span className="text-xs">$0.065</span>
+                        <span className="text-sm text-white">1.32%</span>
+                        <span className="text-xs text-white">$0.065</span>
                       </div>
                     </div>
                     <div className="px-4 py-3 bg-[#2DF5DD] rounded-xl flex items-center justify-between text-black">
@@ -358,10 +364,10 @@ export default function Home() {
                   <h6 className="text-xs text-white">Trade</h6>
                   <div className="grid grid-cols-2 gap-x-4 mt-2.5">
                     <div className="px-4 py-3 bg-[#0F60FF] rounded-xl flex items-center justify-between">
-                      <span>YT</span>
+                      <span className="text-white">YT</span>
                       <div className="flex flex-col items-end">
-                        <span className="text-sm">1.18%</span>
-                        <span className="text-xs">$0.045</span>
+                        <span className="text-sm text-white">1.18%</span>
+                        <span className="text-xs text-white">$0.045</span>
                       </div>
                     </div>
                     <div className="px-4 py-3 bg-[#2DF5DD] rounded-xl flex items-center justify-between text-black">
