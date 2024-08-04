@@ -183,7 +183,7 @@ export default function Home() {
                   Learn
                 </div>
               </div>
-              <h4 className="text-2xl">Markets</h4>
+              <h4 className="text-2xl text-white">Markets</h4>
               {/* <p className="text-xs mt-5">
                 Exit Anytime At{" "}
                 <span className="text-[#0052F2]">market price.</span>
@@ -210,7 +210,7 @@ export default function Home() {
               <div className="p-[24.44px] rounded-[21.544px] bg-[#1D1D1D] h-[422px] -rotate-[5deg] mt-3">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-y-2.5">
-                    <h6>sSUI</h6>
+                    <h6 className="text-white">sSUI</h6>
                     <div className="rounded-full bg-[#292929] py-0.5 px-1 flex items-center gap-x-0.5">
                       <img src={Scallop} alt="" className="w-3.5" />
                       <span className="text-xs scale-75">Scallop</span>
@@ -221,25 +221,25 @@ export default function Home() {
                 <div className="py-3 px-3.5 rounded-xl bg-[#292929] mt-6">
                   <div className="flex items-center justify-between">
                     <h6 className="text-white/60 scale-75">TVL</h6>
-                    <div className="rounded-full bg-[#383838] py-0.5 px-4 scale-75 origin-right">
+                    <div className="rounded-full bg-[#383838] py-0.5 px-4 scale-75 origin-right text-white">
                       28 Aug 2024{" "}
                       <span className="text-[#2DF4DD]">41 DAYS</span>
                     </div>
                   </div>
-                  <p className="mt-1.5">$23,268.35.44</p>
+                  <p className="mt-1.5 text-white">$23,268.35.44</p>
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex flex-col gap-y-1">
                       <div className="text-white/60">Underlying Price</div>
-                      <div>$0.82</div>
+                      <div className="text-white">$0.82</div>
                     </div>
                     <div className="flex flex-col gap-y-1">
                       <div className="text-white/60">Underlying Apy</div>
-                      <div>7.23%</div>
+                      <div className="text-white">7.23%</div>
                     </div>
                   </div>
                 </div>
                 <div className="mt-3.5">
-                  <h6 className="text-xs">Trade</h6>
+                  <h6 className="text-xs text-white">Trade</h6>
                   <div className="grid grid-cols-2 gap-x-4 mt-2.5">
                     <div className="px-4 py-3 bg-[#0F60FF] rounded-xl flex items-center justify-between">
                       <span>YT</span>
@@ -268,7 +268,7 @@ export default function Home() {
               <div className="p-[24.44px] rounded-[21.544px] bg-[#1D1D1D] h-[422px]">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-y-2.5">
-                    <h6>sUSDC</h6>
+                    <h6 className="text-white">sUSDC</h6>
                     <div className="rounded-full bg-[#292929] py-0.5 px-1 flex items-center gap-x-0.5">
                       <img src={Scallop} alt="" className="w-3.5" />
                       <span className="text-xs scale-75">Scallop</span>
@@ -279,25 +279,25 @@ export default function Home() {
                 <div className="py-3 px-3.5 rounded-xl bg-[#292929] mt-6">
                   <div className="flex items-center justify-between">
                     <h6 className="text-white/60 scale-75">TVL</h6>
-                    <div className="rounded-full bg-[#383838] py-0.5 px-4 scale-75 origin-right">
+                    <div className="rounded-full bg-[#383838] py-0.5 px-4 scale-75 origin-right text-white">
                       28 Aug 2024{" "}
                       <span className="text-[#2DF4DD]">41 DAYS</span>
                     </div>
                   </div>
-                  <p className="mt-1.5">$10,623,44</p>
+                  <p className="mt-1.5 text-white">$10,623,44</p>
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex flex-col gap-y-1">
                       <div className="text-white/60">Underlying Price</div>
-                      <div>$1.00</div>
+                      <div className="text-white">$1.00</div>
                     </div>
                     <div className="flex flex-col gap-y-1">
                       <div className="text-white/60">Underlying Apy</div>
-                      <div>6.88%</div>
+                      <div className="text-white">6.88%</div>
                     </div>
                   </div>
                 </div>
                 <div className="mt-3.5">
-                  <h6 className="text-xs">Trade</h6>
+                  <h6 className="text-xs text-white">Trade</h6>
                   <div className="grid grid-cols-2 gap-x-4 mt-2.5">
                     <div className="px-4 py-3 bg-[#0F60FF] rounded-xl flex items-center justify-between">
                       <span>YT</span>
@@ -326,7 +326,7 @@ export default function Home() {
               <div className="p-[24.44px] rounded-[21.544px] bg-[#1D1D1D] h-[422px] rotate-[3deg] mt-2">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-y-2.5">
-                    <h6>sUSDT</h6>
+                    <h6 className="text-white">sUSDT</h6>
                     <div className="rounded-full bg-[#292929] py-0.5 px-1 flex items-center gap-x-0.5">
                       <img src={Scallop} alt="" className="w-3.5" />
                       <span className="text-xs scale-75">Scallop</span>
@@ -337,25 +337,25 @@ export default function Home() {
                 <div className="py-3 px-3.5 rounded-xl bg-[#292929] mt-6">
                   <div className="flex items-center justify-between">
                     <h6 className="text-white/60 scale-75">TVL</h6>
-                    <div className="rounded-full bg-[#383838] py-0.5 px-4 scale-75 origin-right">
+                    <div className="rounded-full bg-[#383838] py-0.5 px-4 scale-75 origin-right text-white">
                       28 Aug 2024{" "}
                       <span className="text-[#2DF4DD]">41 DAYS</span>
                     </div>
                   </div>
-                  <p className="mt-1.5">$1,386,215</p>
+                  <p className="mt-1.5 text-white">$1,386,215</p>
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex flex-col gap-y-1">
                       <div className="text-white/60">Underlying Price</div>
-                      <div>$1.00</div>
+                      <div className="text-white">$1.00</div>
                     </div>
                     <div className="flex flex-col gap-y-1">
                       <div className="text-white/60">Underlying Apy</div>
-                      <div>6.56%</div>
+                      <div className="text-white">6.56%</div>
                     </div>
                   </div>
                 </div>
                 <div className="mt-3.5">
-                  <h6 className="text-xs">Trade</h6>
+                  <h6 className="text-xs text-white">Trade</h6>
                   <div className="grid grid-cols-2 gap-x-4 mt-2.5">
                     <div className="px-4 py-3 bg-[#0F60FF] rounded-xl flex items-center justify-between">
                       <span>YT</span>
@@ -503,7 +503,7 @@ export default function Home() {
       <div className="h-[214px] pt-[53.32px] flex items-start justify-between w-[1189px] mx-auto hidden">
         <div>
           <img src={logo} alt="nemo" />
-          <p>Yield trading for everyone.</p>
+          <p className="text-white">Yield trading for everyone.</p>
         </div>
         <div className="flex gap-x-10">
           <div className="flex flex-col gap-y-4">
