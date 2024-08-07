@@ -20,11 +20,13 @@ import MoveBit from "@/assets/images/svg/MoveBit.svg";
 import Twitter from "@/assets/images/svg/twitter.svg";
 import X from "@/assets/images/svg/x.svg";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const { toast } = useToast();
   const [tab, setTab] = useState<string>("Markets");
   const [router, setRouter] = useState<string>("Home");
+  const navigate = useNavigate();
 
   return (
     <div>
@@ -112,11 +114,7 @@ export default function Home() {
         </ul>
         <button
           className="border border-white bg-transparent rounded-full"
-          onClick={() => {
-            toast({
-              title: "Coming soon!",
-            });
-          }}
+          onClick={() => navigate("/market")}
         >
           Launch App
         </button>
