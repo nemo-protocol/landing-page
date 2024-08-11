@@ -2,7 +2,7 @@ import { Suspense, lazy } from "react";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 
-const Home = lazy(() => import("./pages/Home"));
+const Home = lazy(() => import("./pages/Home/Index"));
 const Market = lazy(() => import("./pages/Market/Index"));
 const Detail = lazy(() => import("./pages/Market/Detail"));
 
