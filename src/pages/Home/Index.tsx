@@ -1,244 +1,181 @@
+import Header from './Header'
 import bg1 from "@/assets/images/svg/bg-1.svg";
 import PT from "@/assets/images/png/PT.png";
 import YT from "@/assets/images/png/YT.png";
 import Nemo from "@/assets/images/png/nemo.png";
-import logo from "@/assets/images/svg/logo.svg";
-import Scallop from "@/assets/images/svg/Scallop.svg";
 import RightArrow from "@/assets/images/svg/right-arrow.svg";
-import Assmbly from "@/assets/images/svg/TrustedBy/Assmbly.svg";
-import Comma3 from "@/assets/images/svg/TrustedBy/Comma3.svg";
-import Lbank from "@/assets/images/svg/TrustedBy/Lbank.svg";
-import Web3fund from "@/assets/images/svg/TrustedBy/Web3fund.svg";
-import Youbi from "@/assets/images/svg/TrustedBy/Youbi.svg";
-import Sui from "@/assets/images/svg/Partners/SUI.svg";
-import Cetus from "@/assets/images/svg/Partners/Cetus.svg";
-import MoveBit from "@/assets/images/svg/MoveBit.svg";
-import Twitter from "@/assets/images/svg/twitter.svg";
-import X from "@/assets/images/svg/x.svg";
+import Telegram from "@/assets/images/svg/telegram.svg?react";
+import X from "@/assets/images/svg/x.svg?react";
 import { useToast } from "@/components/ui/use-toast";
-import Header from './Header'
 import MarketPNG from '@/assets/images/png/market.png'
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+
+export const containerStyles = 'px-6 lg:px-0 w-full lg:max-w-[75rem] lg:mx-auto';
 
 export default function Home() {
     const { toast } = useToast();
+    const { ref: ref1, inView: ref1InView } = useInView({ triggerOnce: true, threshold: 0.1 });
+    const { ref: ref2, inView: ref2InView } = useInView({ triggerOnce: true, threshold: 0.1 });
+    const { ref: ref3, inView: ref3InView } = useInView({ triggerOnce: true, threshold: 0.1 });
+    const { ref: ref4, inView: ref4InView } = useInView({ triggerOnce: true, threshold: 0.1 });
+    const { ref: ref5, inView: ref5InView } = useInView({ triggerOnce: true, threshold: 0.1 });
 
     return (
-        <div className="px-6 lg:px-0 w-full overflow-x-hidden">
-            <Header />
-            <div
-                style={{ backgroundImage: `url(${bg1})` }}
-                className="pt-12 md:pt-[7.125rem] relative"
-            >
-                <div className="max-w-[75rem] mx-auto flex flex-col lg:px-0">
-                    <h1 className="text-3xl xs:text-5xl xs:text-center text-white">
-                        Yield <span className="text-[#65A2FF]">Trading</span> For Everyone
-                    </h1>
-                    <h6 className="xs:text-center mt-4 text-white">
-                        Revolutionizing investment strategy and maximize returns with yield
-                        trading.
-                    </h6>
-                    <div className="flex items-center xs:justify-center gap-x-5 text-white mt-10">
-                        <button
-                            className="bg-[#1954FF] flex items-center gap-x-4 rounded-full"
-                            onClick={() => {
-                                toast({
-                                    title: "Coming soon!",
-                                });
-                            }}
+        <div className='overflow-hidden'>
+            <div className="min-h-screen">
+                <Header />
+                <div
+                    ref={ref1}
+                    style={{ backgroundImage: `url(${bg1})` }}
+                    className="pt-12 md:pt-[7.125rem] relative bg-cover bg-no-repeat bg-center"
+                >
+                    <div className={["flex flex-col", containerStyles].join(" ")} >
+                        <motion.h1
+                            initial={{ opacity: 0, x: -50 }}
+                            animate={ref1InView ? { opacity: 1, x: 0 } : {}}
+                            transition={{ duration: 0.5 }}
+                            className="text-3xl xs:text-5xl xs:text-center text-white text-balance"
                         >
-                            <span>Enter Now</span>
-                            <img src={RightArrow} alt="" />
-                        </button>
-                        <a
-                            target="_blank"
-                            href="https://docs.nemoprotocol.com/"
-                            className="rounded-full border border-white text-white bg-transparent px-5 py-3"
-                        >
-                            Learn More
-                        </a>
+                            Yield <span className="text-[#65A2FF]">Trading</span> For Everyone
+                        </motion.h1>
+                        <motion.h6
+                            initial={{ opacity: 0, x: -30 }}
+                            animate={ref1InView ? { opacity: 1, x: 0 } : {}}
+                            transition={{ duration: 0.5 }}
+                            className="xs:text-center mt-4 text-white text-balance">
+                            Revolutionizing investment strategy and maximize returns with yield
+                            trading.
+                        </motion.h6>
+                        <motion.div
+                            initial={{ opacity: 0, x: 50 }}
+                            animate={ref1InView ? { opacity: 1, x: 0 } : {}}
+                            transition={{ duration: 0.5 }}
+                            className="flex items-center xs:justify-center gap-x-5 text-white mt-10">
+                            <button
+                                className="bg-[#1954FF] flex items-center gap-x-4 rounded-full"
+                                onClick={() => {
+                                    toast({
+                                        title: "Coming soon!",
+                                    });
+                                }}
+                            >
+                                <span className="text-sm xs:text-base">Enter Now</span>
+                                <img src={RightArrow} alt="" />
+                            </button>
+                            <a
+                                target="_blank"
+                                href="https://docs.nemoprotocol.com/"
+                                className="rounded-full border border-white text-white bg-transparent px-5 py-3"
+                            >
+                                <span className="text-sm xs:text-base">Learn More</span>
+                            </a>
+                        </motion.div>
                     </div>
-                    <img src={MarketPNG} alt="" className="mt-9" />
+                    <motion.img
+                        alt=""
+                        src={MarketPNG}
+                        className={["mt-9", containerStyles, 'px-0'].join(" ")}
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={ref1InView ? { opacity: 1, y: 0 } : {}}
+                        transition={{ duration: 0.5 }}
+                    />
                 </div>
             </div>
 
-            <div className="lg:h-[68.125rem] pt-12 md:pt-[126px]">
-                <h1 className="text-3xl xs:text-5xl text-center max-w-[829px] mx-auto text-white">
-                    Yield often fluctuates with the market, so{" "}
+            <div className={["min-h-screen lg:pt-12 flex flex-col", containerStyles].join(" ")} ref={ref2}>
+                <motion.h1
+                    initial={{ opacity: 0, y: -100 }}
+                    animate={ref2InView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.5 }}
+                    className="text-3xl xs:text-5xl text-center text-white text-balance">
+                    Yield often fluctuates with the market, So&nbsp;
                     <span className="text-[#65A2FF]">Nemo</span> Separates yields for
                     everyone.
-                </h1>
-                <div className="flex flex-col lg:flex-row items-center mt-10 justify-center gap-8">
-                    <div
-                        style={{
-                            backgroundImage: `url(${Nemo})`,
-                            backgroundRepeat: "no-repeat",
-                            backgroundSize: "100% 100%",
-                        }}
-                        className="w-full lg:hidden"
-                    ></div>
-                    <div className="flex flex-col w-full lg:w-[280px]">
-                        <span
-                            className="text-center w-16 h-[50px] flex items-center justify-center text-white"
-                            style={{
-                                backgroundImage: `url(${PT})`,
-                                backgroundRepeat: "no-repeat",
-                                backgroundSize: "100% 100%",
-                            }}
-                        >
-                            PT
-                        </span>
-                        <h4 className="mt-5 xs:mt-8 text-xl xs:text-2xl text-white">
-                            Fixing yield, harvest definite returns
-                        </h4>
-                        <h6 className="mt-5 xs:mt-8 text-xs text-white/50">
-                            Find your stability among volatile yields. No lock-up period
-                        </h6>
-                    </div>
-                    <div
-                        style={{
-                            backgroundImage: `url(${Nemo})`,
-                            backgroundRepeat: "no-repeat",
-                            backgroundSize: "100% 100%",
-                        }}
-                        className="w-[605px] h-[680px] hidden lg:inline-block"
-                    ></div>
-                    <div className="flex flex-col w-full lg:w-[280px]">
-                        <span
-                            className="text-center w-16 h-[50px] flex items-center justify-center text-white"
-                            style={{
-                                backgroundImage: `url(${YT})`,
-                                backgroundRepeat: "no-repeat",
-                                backgroundSize: "100% 100%",
-                            }}
-                        >
-                            YT
-                        </span>
-                        <h4 className="mt-5 xs:mt-8 text-xl xs:text-2xl text-white">
-                            Longing yield, generate profit from future yield
-                        </h4>
-                        <h6 className="mt-5 xs:mt-8 text-xs text-white/50">
-                            Long yield or hedge your yield exposure, the choice is yours.
-                        </h6>
-                    </div>
-                </div>
-            </div>
-
-            <div className="h-[474px] pt-[105px] bg-[#06091c] hidden">
-                <h1 className="text-5xl text-center max-w-[829px] mx-auto">
-                    Trusted by
-                </h1>
-                <div className="grid grid-cols-5 gap-x-4 max-w-[1200px] mx-auto mt-[60px]">
-                    <div className="bg-[#16238E] rounded-3xl flex items-center justify-center h-[120px]">
-                        <img src={Assmbly} alt="" />
-                    </div>
-                    <div className="bg-[#16238E] rounded-3xl flex items-center justify-center h-[120px]">
-                        <img src={Comma3} alt="" />
-                    </div>
-                    <div className="bg-[#16238E] rounded-3xl flex items-center justify-center h-[120px]">
-                        <img src={Lbank} alt="" />
-                    </div>
-                    <div className="bg-[#16238E] rounded-3xl flex items-center justify-center h-[120px]">
-                        <img src={Web3fund} alt="" />
-                    </div>
-                    <div className="bg-[#16238E] rounded-3xl flex items-center justify-center h-[120px]">
-                        <img src={Youbi} alt="" />
-                    </div>
-                </div>
-            </div>
-
-            <div className="h-[360px] pt-[76px] bg-[#03050f] hidden">
-                <h1 className="text-5xl text-center max-w-[829px] mx-auto">
-                    Our Partners
-                </h1>
-                <div className="flex items-center justify-center gap-x-8 mt-[60px]">
-                    <div className="bg-[#5A8AC6] bg-opacity-[0.38] rounded-2xl flex items-center justify-center w-[300px] h-[120px] gap-x-4">
-                        <img src={Sui} alt="Sui" />
-                        <span className="text-[#5A8AC6] text-2xl">SUI</span>
-                    </div>
-                    <div className="bg-[#68FFD8] bg-opacity-[0.38] rounded-3xl flex items-center justify-center w-[300px] h-[120px] gap-x-4">
-                        <img src={Cetus} alt="Cetus" />
-                        <span className="text-[#68FFD8] text-2xl">Cetus</span>
-                    </div>
-                    <div className="bg-[#FF8B4A] bg-opacity-[0.38] rounded-3xl flex items-center justify-center w-[300px] h-[120px] gap-x-4">
-                        <img src={Scallop} alt="Scallop" />
-                        <span className="text-[#FF8B4A] text-2xl">Scallop</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="h-[460px] pt-[76px] hidden">
-                <h1 className="text-5xl text-center max-w-[829px] mx-auto">Audits</h1>
-                <div className="flex items-center justify-between mt-[60px] rounded-3xl bg-gradient-to-r from-[#0040FF] to-[#002699] w-[1189px] h-[238px] mx-auto pl-[67px] pt-[46px] pr-[89px]">
-                    <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col gap-y-6">
-                            <h4 className="text-3xl">MoveBit</h4>
-                            <h6 className="text-white/50 text-xl max-w-60 text-balance">
-                                MoveBit focuses on security audit and building the standard in
-                                Move.
+                </motion.h1>
+                <div className="grow">
+                    <div className="flex flex-col lg:flex-row items-center mt-10 justify-center gap-8">
+                        <motion.img
+                            alt=""
+                            ref={ref5}
+                            src={Nemo}
+                            className="w-full lg:hidden"
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={ref5InView ? { opacity: 1, y: 0 } : {}}
+                            transition={{ duration: 0.5 }}
+                        />
+                        <motion.div
+                            transition={{ duration: 0.5 }}
+                            initial={{ opacity: 0, x: -50 }}
+                            animate={ref3InView ? { opacity: 1, x: 0 } : {}}
+                            className="flex flex-col w-full lg:w-[280px]">
+                            <span
+                                style={{ backgroundImage: `url(${PT})` }}
+                                className="text-center w-12 h-[38px] lg:w-16 lg:h-[50px] flex items-center justify-center text-white bg-cover bg-no-repeat bg-center"
+                            >
+                                PT
+                            </span>
+                            <h4 className="mt-5 xs:mt-8 text-xl xs:text-2xl text-white">
+                                Fixing yield, harvest definite returns
+                            </h4>
+                            <h6 className="mt-5 xs:mt-8 text-xs text-white/50">
+                                Find your stability among volatile yields. No lock-up period
                             </h6>
-                        </div>
-                        <img src={MoveBit} alt="MoveBit" />
+                        </motion.div>
+                        <motion.img
+                            alt=""
+                            src={Nemo}
+                            className="w-[605px] hidden lg:inline-block"
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={ref3InView ? { opacity: 1, y: 0 } : {}}
+                            transition={{ duration: 0.5 }}
+                        />
+                        <motion.div
+                            ref={ref3}
+                            transition={{ duration: 0.5 }}
+                            initial={{ opacity: 0, x: 50 }}
+                            animate={ref3InView ? { opacity: 1, x: 0 } : {}}
+                            className="flex flex-col w-full lg:w-[280px]">
+                            <span
+                                style={{ backgroundImage: `url(${YT})` }}
+                                className="text-center w-12 h-[38px] lg:w-16 lg:h-[50px] flex items-center justify-center text-white bg-cover bg-no-repeat bg-center"
+                            >
+                                YT
+                            </span>
+                            <h4 className="mt-5 xs:mt-8 text-xl xs:text-2xl text-white">
+                                Longing yield, generate profit from future yield
+                            </h4>
+                            <h6 className="mt-5 xs:mt-8 text-xs text-white/50">
+                                Long yield or hedge your yield exposure, the choice is yours.
+                            </h6>
+                        </motion.div>
                     </div>
                 </div>
+                <motion.div
+                    ref={ref4}
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={ref4InView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.5 }}
+                    className="py-6 flex items-center justify-between">
+                    <div className="flex items-center gap-x-4">
+                        <a
+                            target="_blank"
+                            href="https://t.me/NemoProtocol"
+                        >
+                            <Telegram className='size-10' />
+                        </a>
+                        <a
+                            target="_blank"
+                            href="https://x.com/nemoprotocol"
+                        >
+                            <X className='size-10' />
+                        </a>
+                    </div>
+                    <span className="text-sm xs:text-base text-white">2024 Nemolab Inc.</span>
+                </motion.div>
             </div>
 
-            <div className="h-[214px] pt-[53.32px] flex items-start justify-between w-[1189px] mx-auto hidden">
-                <div>
-                    <img src={logo} alt="nemo" />
-                    <p className="text-white">Yield trading for everyone.</p>
-                </div>
-                <div className="flex gap-x-10">
-                    <div className="flex flex-col gap-y-4">
-                        <div>Home</div>
-                        <div className="text-white/60">home</div>
-                    </div>
-                    <div className="flex flex-col gap-y-4">
-                        <div>Community</div>
-                        <div className="text-white/60 hover:text-white cursor-pointer">
-                            Twitter
-                        </div>
-                        <div className="text-white/60 hover:text-white cursor-pointer">
-                            Telegram
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-y-4">
-                        <div>Docs</div>
-                        <div className="text-white/60 hover:text-white cursor-pointer">
-                            gitbook
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-y-4">
-                        <div>Learn</div>
-                        <div className="text-white/60 hover:text-white cursor-pointer">
-                            YT trading
-                        </div>
-                        <div className="text-white/60 hover:text-white cursor-pointer">
-                            PT trading
-                        </div>
-                        <div className="text-white/60 hover:text-white cursor-pointer">
-                            earn
-                        </div>
-                    </div>
-                    <button
-                        className="border border-white bg-transparent rounded-3xl px-3 py-2 h-9 text-xs text-white"
-                        onClick={() => {
-                            toast({
-                                title: "Coming soon!",
-                            });
-                        }}
-                    >
-                        Launch App
-                    </button>
-                </div>
-            </div>
 
-            <div className="h-[56px] flex items-center justify-between w-[1189px] mx-auto mb-4">
-                <div className="flex items-center gap-x-4">
-                    <img src={Twitter} alt="" />
-                    <img src={X} alt="" />
-                </div>
-                <div className="text-white">2024 Nemolab Inc.</div>
-            </div>
         </div>
     );
 }

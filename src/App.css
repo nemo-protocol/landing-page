@@ -1,5 +1,5 @@
 #root {
-  @apply w-screen m-0 bg-black;
+  @apply w-full m-0 bg-black overflow-x-hidden;
 }
 
 .logo {

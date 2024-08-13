@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { containerStyles } from "./Index";
 import logo from "@/assets/images/svg/logo.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,7 +12,7 @@ export default function HomeHeader() {
     const [subNav, setSubNav] = useState(false)
     const [router, setRouter] = useState<string>("Home");
     return (
-        <header className="w-full lg:max-w-[75rem] lg:mx-auto">
+        <header className={containerStyles}>
             <div className="flex items-center justify-between py-6 text-xs">
                 <img src={logo} alt="" />
                 <ul className="rounded-full border border-white/20 hidden md:flex items-center">
