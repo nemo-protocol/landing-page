@@ -23,12 +23,12 @@ export default function Home() {
 
     return (
         <div className='overflow-hidden'>
-            <div className="min-h-screen">
+            <div className="min-h-screen flex flex-col">
                 <Header />
                 <div
                     ref={ref1}
                     style={{ backgroundImage: `url(${bg1})` }}
-                    className="pt-12 md:pt-[7.125rem] relative bg-cover bg-no-repeat bg-center"
+                    className="pt-12 md:pt-[7.125rem] relative bg-cover bg-no-repeat bg-center lg:grow"
                 >
                     <div className={["flex flex-col", containerStyles].join(" ")} >
                         <motion.h1
@@ -66,7 +66,7 @@ export default function Home() {
                             <a
                                 target="_blank"
                                 href="https://docs.nemoprotocol.com/"
-                                className="rounded-full border border-white text-white bg-transparent px-5 py-3"
+                                className="rounded-full border border-white text-white bg-transparent px-5 py-3 active:border-[#1954FF] active:text-[#1954FF] hover:text-[#1954FF]"
                             >
                                 <span className="text-sm xs:text-base">Learn More</span>
                             </a>

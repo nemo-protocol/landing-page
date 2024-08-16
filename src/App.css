@@ -37,3 +37,11 @@
 .read-the-docs {
   color: #888;
 }
+
+a:active {
+  color: #1954ff !important;
+}
+
+a:hover {
+  color: #1954ff !important;
+}

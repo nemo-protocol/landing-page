@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from 'framer-motion';
 import { containerStyles } from "./Index";
 import logo from "@/assets/images/svg/logo.svg";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,13 +9,16 @@ import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react";
 export default function HomeHeader() {
     const { toast } = useToast();
     const navigate = useNavigate();
-    const [open, setOpen] = useState(false)
+    const [isOpen, setIsOpen] = useState(false)
     const [subNav, setSubNav] = useState(false)
     const [router, setRouter] = useState<string>("Home");
     return (
         <header className={containerStyles}>
             <div className="flex items-center justify-between py-6 text-xs">
-                <img src={logo} alt="" />
+                <div className="flex gap-x-2">
+                    <img src={logo} alt="" />
+                    <div className="text-[#44E0C3] py-1 px-2 rounded-full bg-[#ECFBF9]/10 text-xs">Beta</div>
+                </div>
                 <ul className="rounded-full border border-white/20 hidden md:flex items-center">
                     <li
                         onClick={() => setRouter("Home")}
@@ -89,7 +93,7 @@ export default function HomeHeader() {
                             target="_blank"
                             className="text-white"
                         >
-                            Docs
+                            Learn
                         </a>
                     </li>
                 </ul>
@@ -100,27 +104,30 @@ export default function HomeHeader() {
                     Launch App
                 </button>
 
-                <Squares2X2Icon className="md:hidden text-white cursor-pointer" onClick={() => setOpen(open => !open)} />
+                <Squares2X2Icon className="md:hidden text-white cursor-pointer" onClick={() => setIsOpen(isOpen => !isOpen)} />
             </div>
-            {
-                open && <div className="flex gap-x-8 text-sm">
-                    <div className="flex flex-col">
-                        <Link to='/' className="py-4 text-white" onClick={() => setSubNav(false)}>Home</Link>
-                        <a href="javascript:void(0)" className="py-4 cursor-pointer text-white" onClick={() => setSubNav(subNav => !subNav)}>Community</a>
-                        <a href="https://docs.nemoprotocol.com/"
-                            target="_blank" className="py-4 text-white" onClick={() => setSubNav(false)}>Docs</a>
-                        <a href="https://docs.nemoprotocol.com/"
-                            target="_blank" className="py-4 text-white" onClick={() => setSubNav(false)}>Learn</a>
-                    </div>
-                    {subNav && <div className="flex flex-col">
-                        <a href="https://x.com/nemoprotocol"
-                            target="_blank" className="py-4 text-white">Twitter</a>
-                        <a href="https://t.me/NemoProtocol"
-                            target="_blank" className="py-4 text-white">Telegram</a>
-                    </div>}
-
+            <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ overflow: 'hidden' }} className="flex gap-x-8 text-sm lg:hidden">
+                <div className="flex flex-col">
+                    <Link to='/' className="py-2 text-white" onClick={() => setSubNav(false)}>Home</Link>
+                    <a href="javascript:void(0)" className="py-2 cursor-pointer text-white" onClick={() => setSubNav(subNav => !subNav)}>Community</a>
+                    <a href="https://docs.nemoprotocol.com/"
+                        target="_blank" className="py-2 text-white" onClick={() => setSubNav(false)}>Docs</a>
+                    <a href="https://docs.nemoprotocol.com/"
+                        target="_blank" className="py-2 text-white" onClick={() => setSubNav(false)}>Learn</a>
                 </div>
-            }
+                {subNav && <div className="flex flex-col">
+                    <a href="https://x.com/nemoprotocol"
+                        target="_blank" className="py-2 text-white">Twitter</a>
+                    <a href="https://t.me/NemoProtocol"
+                        target="_blank" className="py-2 text-white">Telegram</a>
+                </div>}
+
+            </motion.div>
+
         </header>
     )
 }
