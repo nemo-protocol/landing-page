@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import Learn from "./pages/Learn/Index";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 
@@ -9,11 +10,12 @@ const Detail = lazy(() => import("./pages/Market/Detail"));
 function App() {
   return (
     <HashRouter>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div className="h-[100%]">Loading...</div>}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/market" element={<Market />} />
           <Route path="/market/detail" element={<Detail />} />
+          <Route path="/learn" element={<Learn />} />
         </Routes>
       </Suspense>
     </HashRouter>

@@ -17,6 +17,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  min-height: 100vh;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
