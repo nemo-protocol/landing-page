@@ -1,85 +1,34 @@
-import { useState } from "react";
-import logo from "@/assets/images/svg/logo.svg";
 import sUSDC from "@/assets/images/svg/sUSDC.svg";
-import Scallop from "@/assets/images/svg/Scallop.svg";
-import Network from "@/assets/images/svg/network.svg";
+import Scallop from "@/assets/images/svg/Scallop.svg?react";
 import Diamond from "@/assets/images/svg/market/diamond.svg";
 import Crown from "@/assets/images/svg/market/crown.svg";
 import Star from "@/assets/images/svg/market/star.svg";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Header from "@/components/Header";
+// import { useCoinInfoList } from "@/queries";
 
 export default function Home() {
-  const { toast } = useToast();
-  const [router, setRouter] = useState<string>("Markets");
   const navigate = useNavigate();
+  // const { data } = useCoinInfoList();
 
   return (
-    <div className="min-h-screen max-w-[1440px] mx-auto">
-      <header className="w-full mx-auto py-6 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-x-6">
-          <img src={logo} alt="" />
-          <ul className="flex items-center">
-            <li
-              onClick={() => setRouter("Markets")}
-              className={[
-                "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
-                router === "Markets" ? "text-white" : "text-white/50",
-              ].join(" ")}
-            >
-              Markets
-            </li>
-            <li
-              onClick={() => {
-                toast({
-                  title: "Coming soon!",
-                });
-              }}
-              className={[
-                "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
-                router === "Portfolio" ? "text-white" : "text-white/50",
-              ].join(" ")}
-            >
-              Portfolio
-            </li>
-            <li
-              onClick={() => {
-                toast({
-                  title: "Coming soon!",
-                });
-              }}
-              className={[
-                "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
-                router === "Learn" ? "text-white" : "text-white/50",
-              ].join(" ")}
-            >
-              Learn
-            </li>
-          </ul>
-        </div>
-        <div className="flex items-center gap-x-6">
-          <img src={Network} alt="" />
-          <button
-            className="bg-[#0052F2] text-white px-3 py-2 rounded-full"
-            onClick={() => {
-              toast({
-                title: "Coming soon!",
-              });
-            }}
-          >
-            Connect Wallet
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen xl:max-w-[1440px] xl:mx-auto  w-full">
+      <Header />
 
-      <div className="py-10 relative">
+      <div className="py-10 relative px-7.5">
         <h3 className="text-[28px] text-white">Markets</h3>
-        <h6 className="text-sm text-white mt-8">
-          Exit Anytime At <span className="text-[#0052F2]">Market Price.</span>{" "}
+        <h6 className="text-white mt-8">
+          Exit Anytime At&nbsp;
+          <span className="text-[#0052F2]">Market Price.</span>&nbsp;
         </h6>
         <p className="text-white">
-          Learn More About <span className="underline">PT & YT Trading,</span>{" "}
-          Or Simply Add <span className="underline">Liquidity And Earn.</span>{" "}
+          Learn More About&nbsp;
+          <Link to="/learn" className="underline">
+            PT & YT Trading
+          </Link>
+          &nbsp;Or Simply&nbsp;
+          <span className="underline">Add Liquidity and Earn.</span>
         </p>
         <div className="flex items-center gap-x-2 mt-9">
           <button className="border border-[#0052F2] bg-[#0052F2]/25 text-[#5D94FF] py-1.5 px-3 rounded-full flex items-center gap-x-1">
@@ -93,23 +42,23 @@ export default function Home() {
             <span className="text-xs">Popular</span>
           </button>
         </div>
-        <div className="mt-[23px] grid grid-cols-4 gap-8">
+        <div className="mt-[23px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {Array.from({ length: 12 }, () => (
             <div
-              className="p-[24.44px] rounded-[21.544px] bg-[#1D1D1D] h-[422px]"
+              className="p-[24.44px] rounded-[21.544px] bg-[#0E0F16]"
               onClick={() => navigate("/market/detail")}
             >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-y-2.5">
                   <h6 className="text-white">sUSDC</h6>
                   <div className="rounded-full bg-[#292929] py-0.5 px-1 flex items-center gap-x-0.5">
-                    <img src={Scallop} alt="" className="w-3.5" />
+                    <Scallop className="w-6" />
                     <span className="text-xs scale-75">Scallop</span>
                   </div>
                 </div>
                 <img src={sUSDC} alt="sUSDC" className="mr-2.5" />
               </div>
-              <div className="py-3 px-3.5 rounded-xl bg-[#292929] mt-6">
+              <div className="py-3 px-3.5 rounded-xl bg-[#131520] mt-6">
                 <div className="flex items-center justify-between">
                   <h6 className="text-white/60 scale-75">TVL</h6>
                   <div className="rounded-full bg-[#383838] py-0.5 px-4 scale-75 origin-right text-white">
@@ -131,7 +80,7 @@ export default function Home() {
               <div className="mt-3.5">
                 <h6 className="text-xs text-white">Trade</h6>
                 <div className="grid grid-cols-2 gap-x-4 mt-2.5">
-                  <div className="px-4 py-3 bg-[#0F60FF] rounded-xl flex items-center justify-between">
+                  <div className="px-2 py-1.5 bg-[#0F60FF] rounded-xl flex items-center justify-between">
                     <span className="text-white">YT</span>
                     <div className="flex flex-col items-end">
                       <span className="text-sm text-white">1.32%</span>
@@ -149,10 +98,10 @@ export default function Home() {
               </div>
               <div className="mt-3.5">
                 <h6 className="text-xs">Earn</h6>
-                <div className="mt-2.5 flex items-center justify-between text-xs">
+                <button className="mt-2.5 py-3 px-7 flex items-center justify-between text-xs bg-[#62CAFF] w-full text-black">
                   <span>+ POOL APY</span>
                   <span>7.23%</span>
-                </div>
+                </button>
               </div>
             </div>
           ))}
