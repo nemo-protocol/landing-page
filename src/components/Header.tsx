@@ -1,12 +1,12 @@
-import { toast } from "./ui/use-toast";
-import NemoLogo from "@/assets/images/svg/logo.svg?react";
-import Network from "@/assets/images/svg/network.svg?react";
-import { Link, useLocation } from "react-router-dom";
+import { toast } from "./ui/use-toast"
+import NemoLogo from "@/assets/images/svg/logo.svg?react"
+import Network from "@/assets/images/svg/network.svg?react"
+import { Link, useLocation } from "react-router-dom"
 
 export default function Header() {
-  const location = useLocation();
+  const location = useLocation()
   return (
-    <header className="lg:px-7.5 w-full mx-auto py-6 flex items-center justify-between text-xs">
+    <header className="px-7.5 w-full mx-auto py-6 flex items-center justify-between text-xs">
       <div className="flex items-center gap-x-6">
         <div className="flex gap-x-2">
           <NemoLogo />
@@ -14,18 +14,16 @@ export default function Header() {
             Beta
           </div>
         </div>
-        <ul className="flex items-center">
+        <ul className="flex items-center text-sm">
           <li
             className={[
               "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
             ].join(" ")}
           >
             <Link
-              to="/markets"
+              to="/market"
               className={
-                location.pathname === "/markets"
-                  ? "text-white"
-                  : "text-white/50"
+                location.pathname === "/market" ? "text-white" : "text-white/50"
               }
             >
               Markets
@@ -35,7 +33,7 @@ export default function Header() {
             onClick={() => {
               toast({
                 title: "Coming soon!",
-              });
+              })
             }}
             className={[
               "w-24 text-center bg-transparent rounded-full cursor-pointer",
@@ -69,12 +67,12 @@ export default function Header() {
           onClick={() => {
             toast({
               title: "Coming soon!",
-            });
+            })
           }}
         >
           Connect Wallet
         </button>
       </div>
     </header>
-  );
+  )
 }

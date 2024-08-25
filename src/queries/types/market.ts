@@ -13,4 +13,5 @@ export interface CoinInfo {
   ytRate: number;
   ptPrice: number;
   ytPrice: number;
+  poolApy: number;
 }
