@@ -1,9 +1,8 @@
 import sUSDC from "@/assets/images/svg/sUSDC.svg";
-import Scallop from "@/assets/images/svg/Scallop.svg?react";
+import ScallopPNG from "@/assets/images/png/scallop.png";
 import Diamond from "@/assets/images/svg/market/diamond.svg";
 import Crown from "@/assets/images/svg/market/crown.svg";
 import Star from "@/assets/images/svg/market/star.svg";
-import { useToast } from "@/components/ui/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 // import { useCoinInfoList } from "@/queries";
@@ -51,9 +50,9 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-y-2.5">
                   <h6 className="text-white">sUSDC</h6>
-                  <div className="rounded-full bg-[#292929] py-0.5 px-1 flex items-center gap-x-0.5">
-                    <Scallop className="w-6" />
-                    <span className="text-xs scale-75">Scallop</span>
+                  <div className="rounded-full bg-[#292929] py-0.5 px-2 flex items-center gap-x-2">
+                    <img src={ScallopPNG} alt="scallop" className="w-6" />
+                    <span className="text-xs">Scallop</span>
                   </div>
                 </div>
                 <img src={sUSDC} alt="sUSDC" className="mr-2.5" />
