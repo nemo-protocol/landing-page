@@ -85,7 +85,7 @@ export const nemoApi = <T>(path: string) => {
       nemoRequest<T>(`${baseUrl}${path}`, {
         method: "GET",
         params,
-        mode: "cors",
+        // mode: "cors",
       }),
     post: (data?: OptionData) =>
       nemoRequest<T>(`${baseUrl}${path}`, {

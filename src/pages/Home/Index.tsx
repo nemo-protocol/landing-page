@@ -6,7 +6,6 @@ import Nemo from "@/assets/images/png/nemo.png";
 import RightArrow from "@/assets/images/svg/right-arrow.svg?react";
 import Telegram from "@/assets/images/svg/telegram.svg?react";
 import X from "@/assets/images/svg/x.svg?react";
-import { useToast } from "@/components/ui/use-toast";
 import MarketPNG from "@/assets/images/png/market.png";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
@@ -15,7 +14,6 @@ export const containerStyles =
   "px-6 lg:px-0 w-full lg:max-w-[75rem] lg:mx-auto";
 
 export default function Home() {
-  const { toast } = useToast();
   const { ref: ref1, inView: ref1InView } = useInView({
     triggerOnce: true,
     threshold: 0.1,

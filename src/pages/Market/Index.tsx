@@ -5,17 +5,18 @@ import Crown from "@/assets/images/svg/market/crown.svg";
 import Star from "@/assets/images/svg/market/star.svg";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-// import { useCoinInfoList } from "@/queries";
+import { useCoinInfoList } from "@/queries";
 
 export default function Home() {
   const navigate = useNavigate();
-  // const { data } = useCoinInfoList();
+  const { data } = useCoinInfoList();
 
   return (
     <div className="min-h-screen xl:max-w-[1440px] xl:mx-auto  w-full">
       <Header />
 
       <div className="py-10 relative px-7.5">
+        <div>{JSON.stringify(data)}</div>
         <h3 className="text-[28px] text-white">Markets</h3>
         <h6 className="text-white mt-8">
           Exit Anytime At&nbsp;
