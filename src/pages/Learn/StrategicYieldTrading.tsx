@@ -8,7 +8,7 @@ export default function StrategicYieldTrading() {
         As we are aware, the yield market constantly fluctuates, and so does the
         Fixing Yield and Long Yield
       </p>
-      <img src={StrategicYieldTradingPNG} alt="" className="mt-7.5" />
+      <img src={StrategicYieldTradingPNG} alt="" className="mt-7.5 scale-75 origin-top" />
     </div>
   );
 }

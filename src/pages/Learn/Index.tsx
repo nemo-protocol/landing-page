@@ -10,10 +10,10 @@ import StrategicYieldTrading from "./StrategicYieldTrading";
 export default function Learn() {
   const [step, setStep] = useState(1);
   return (
-    <div className="flex flex-col h-screen">
+    <div className="min-h-screen xl:max-w-[1440px] xl:mx-auto w-full">
       <Header />
       <div className="lg:px-7.5 flex gap-x-28 grow">
-        <div className="flex items-center">
+        <div className="flex items-center h-96 shrink-0">
           <SideBar step={step} setStep={setStep} />
         </div>
         <div className="flex items-center justify-center grow">
