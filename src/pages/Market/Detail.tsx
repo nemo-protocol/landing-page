@@ -9,8 +9,6 @@ import { useNavigate } from "react-router-dom"
 import Header from "@/components/Header"
 import DownArrow from "@/assets/images/svg/down-arrow.svg"
 import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
-
-import { useToast } from "@/components/ui/use-toast"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import {
   ChartConfig,
@@ -40,9 +38,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function Home() {
-  const { toast } = useToast()
   const navigate = useNavigate()
-  const [router, setRouter] = useState<string>("Markets")
   const [type, setType] = useState<"APY" | "Price">("APY")
   const [tab, setTab] = useState<"Details" | "Calculator">("Details")
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")

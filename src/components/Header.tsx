@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { toast } from "./ui/use-toast"
+import { ConnectButton } from "@mysten/dapp-kit"
 import { Link, useLocation } from "react-router-dom"
 import NemoLogo from "@/assets/images/svg/logo.svg?react"
 import Network from "@/assets/images/svg/network.svg?react"
@@ -10,7 +11,7 @@ export default function Header() {
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
   return (
-    <header className="px-7.5 py-6">
+    <header className="px-7.5 xl:px-0 py-6">
       <div className=" w-full mx-auto flex items-center justify-between text-xs">
         <div className="flex items-center gap-x-6">
           <Link to="/" className="flex gap-x-2">
@@ -76,16 +77,15 @@ export default function Header() {
           />
 
           <Network />
-          <button
-            className="bg-[#0052F2] text-white px-3 py-2 rounded-full"
-            onClick={() => {
-              toast({
-                title: "Coming soon!",
-              })
+          <ConnectButton
+            style={{
+              color: "#fff",
+              outline: "none",
+              padding: "8px 12px",
+              borderRadius: "28px",
+              backgroundColor: "#0052F2",
             }}
-          >
-            Connect Wallet
-          </button>
+          />
         </div>
       </div>
       <motion.div
