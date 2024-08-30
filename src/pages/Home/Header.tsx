@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { containerStyles } from "./Index";
-import logo from "@/assets/images/svg/logo.svg";
-import { Link, useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react";
+import { useState } from "react"
+import { motion } from "framer-motion"
+import { containerStyles } from "./Index"
+import logo from "@/assets/images/svg/logo.svg"
+import { Link, useNavigate } from "react-router-dom"
+import { useToast } from "@/components/ui/use-toast"
+import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
 
 export default function HomeHeader() {
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const [subNav, setSubNav] = useState(false);
-  const [router, setRouter] = useState<string>("Home");
+  const { toast } = useToast()
+  const navigate = useNavigate()
+  const [isOpen, setIsOpen] = useState(false)
+  const [subNav, setSubNav] = useState(false)
+  const [router, setRouter] = useState<string>("Home")
   return (
     <header className={containerStyles}>
       <div className="flex items-center justify-between py-6 text-xs">
@@ -69,7 +69,7 @@ export default function HomeHeader() {
             onClick={() => {
               toast({
                 title: "Coming soon!",
-              });
+              })
             }}
             className={[
               "w-24 text-center text-white bg-transparent py-2 rounded-full cursor-pointer",
@@ -166,5 +166,5 @@ export default function HomeHeader() {
         )}
       </motion.div>
     </header>
-  );
+  )
 }

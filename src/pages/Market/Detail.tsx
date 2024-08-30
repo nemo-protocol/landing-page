@@ -1,87 +1,61 @@
 import { useState } from "react"
-import logo from "@/assets/images/svg/logo.svg"
-import Network from "@/assets/images/svg/network.svg"
-import LeftArrow from "@/assets/images/svg/left-arrow.svg"
 import Loading from "@/assets/images/svg/loading.svg"
 import Swtich from "@/assets/images/svg/swtich.svg"
 import Wallet from "@/assets/images/svg/wallet.svg"
 import sSUI from "@/assets/images/svg/sSUI.svg"
-import DownArrow from "@/assets/images/svg/down-arrow.svg"
 import Add from "@/assets/images/svg/add.svg"
 import Swap from "@/assets/images/svg/swap.svg"
 import { useNavigate } from "react-router-dom"
+import Header from "@/components/Header"
+import DownArrow from "@/assets/images/svg/down-arrow.svg"
+import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
 
 import { useToast } from "@/components/ui/use-toast"
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+
+const chartData = [
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+  { month: "April", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "June", desktop: 214, mobile: 140 },
+]
+
+const chartConfig = {
+  desktop: {
+    label: "Desktop",
+    color: "hsl(var(--chart-1))",
+  },
+  mobile: {
+    label: "Mobile",
+    color: "hsl(var(--chart-2))",
+  },
+} satisfies ChartConfig
 
 export default function Home() {
   const { toast } = useToast()
   const navigate = useNavigate()
   const [router, setRouter] = useState<string>("Markets")
+  const [type, setType] = useState<"APY" | "Price">("APY")
+  const [tab, setTab] = useState<"Details" | "Calculator">("Details")
+  const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
 
   return (
     <div className="min-h-screen max-w-[1440px] mx-auto">
-      <header className="w-full mx-auto py-6 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-x-6">
-          <img src={logo} alt="" />
-          <ul className="flex items-center">
-            <li
-              onClick={() => setRouter("Markets")}
-              className={[
-                "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
-                router === "Markets" ? "text-white" : "text-white/50",
-              ].join(" ")}
-            >
-              Markets
-            </li>
-            <li
-              onClick={() => {
-                toast({
-                  title: "Coming soon!",
-                })
-              }}
-              className={[
-                "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
-                router === "Portfolio" ? "text-white" : "text-white/50",
-              ].join(" ")}
-            >
-              Portfolio
-            </li>
-            <li
-              onClick={() => {
-                toast({
-                  title: "Coming soon!",
-                })
-              }}
-              className={[
-                "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
-                router === "Learn" ? "text-white" : "text-white/50",
-              ].join(" ")}
-            >
-              Learn
-            </li>
-          </ul>
-        </div>
-        <div className="flex items-center gap-x-6">
-          <img src={Network} alt="" />
-          <button
-            className="bg-[#0052F2] text-white px-3 py-2 rounded-full"
-            onClick={() => {
-              toast({
-                title: "Coming soon!",
-              })
-            }}
-          >
-            Connect Wallet
-          </button>
-        </div>
-      </header>
-
+      <Header />
       <div className="py-10 relative">
         <h3
           className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
           onClick={() => navigate(-1)}
         >
-          <img src={LeftArrow} /> <span>All Markets</span>
+          <LeftArrow /> <span>All Markets</span>
         </h3>
         <div className="mt-9 flex gap-x-8">
           <div className="w-[360px] flex flex-col gap-y-5">
@@ -167,7 +141,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="grow ">
+          <div className="grow flex flex-col gap-y-5">
             <div className="w-full px-10 py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl">
               <div className="flex items-center gap-x-4">
                 <img src={sSUI} alt="" className="size-[60px]" />
@@ -194,6 +168,118 @@ export default function Home() {
                 <span className="text-white text-lg">6.66%</span>
                 <span className="text-white/50 text-xs">Fixed APY</span>
               </div>
+            </div>
+            <div className="bg-[#0E0F16] rounded-3xl p-7.5">
+              <div>
+                <div className="flex items-center gap-x-7">
+                  <span
+                    onClick={() => setTab("Details")}
+                    className={[
+                      tab === "Details" ? "text-white" : "text-white/40",
+                      "cursor-pointer",
+                    ].join(" ")}
+                  >
+                    Details
+                  </span>
+                  <span
+                    onClick={() => setTab("Calculator")}
+                    className={[
+                      tab === "Calculator" ? "text-white" : "text-white/40",
+                      "cursor-pointer",
+                    ].join(" ")}
+                  >
+                    Calculator
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-x-4 mt-7">
+                    <span
+                      onClick={() => setTimeRange("1h")}
+                      className={[
+                        timeRange === "1h" ? "rounded-[20px] bg-[#1E212B]" : "",
+                        "py-1 px-2 cursor-pointer",
+                      ].join(" ")}
+                    >
+                      1h
+                    </span>
+                    <span
+                      onClick={() => setTimeRange("1D")}
+                      className={[
+                        timeRange === "1D" ? "rounded-[20px] bg-[#1E212B]" : "",
+                        "py-1 px-2 cursor-pointer",
+                      ].join(" ")}
+                    >
+                      1D
+                    </span>
+                    <span
+                      onClick={() => setTimeRange("1W")}
+                      className={[
+                        timeRange === "1W" ? "rounded-[20px] bg-[#1E212B]" : "",
+                        "py-1 px-2 cursor-pointer",
+                      ].join(" ")}
+                    >
+                      1W
+                    </span>
+                  </div>
+                  <div className="bg-[#242632] rounded-[30px] text-sm">
+                    <span
+                      onClick={() => setType("APY")}
+                      className={[
+                        type === "APY" && "bg-[#0F60FF] rounded-[30px]",
+                        "py-1 px-3.5 cursor-pointer",
+                      ].join(" ")}
+                    >
+                      APY
+                    </span>
+                    <span
+                      onClick={() => setType("Price")}
+                      className={[
+                        type === "Price" && "bg-[#0F60FF] rounded-[30px]",
+                        "py-1 px-3.5 cursor-pointer",
+                      ].join(" ")}
+                    >
+                      Price
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <ChartContainer config={chartConfig} className="mt-14">
+                <LineChart
+                  accessibilityLayer
+                  data={chartData}
+                  margin={{
+                    left: 12,
+                    right: 12,
+                  }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => value.slice(0, 3)}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent />}
+                  />
+                  <Line
+                    dataKey="desktop"
+                    type="monotone"
+                    stroke="#0F60FF"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    dataKey="mobile"
+                    type="monotone"
+                    stroke="#44E0C3"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ChartContainer>
             </div>
           </div>
         </div>
