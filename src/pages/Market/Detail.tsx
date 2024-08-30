@@ -78,7 +78,7 @@ export default function Home() {
 
       <div className="py-10 relative">
         <h3
-          className="text-lg text-white flex items-center gap-x-2"
+          className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
           onClick={() => navigate(-1)}
         >
           <img src={LeftArrow} /> <span>All Markets</span>
