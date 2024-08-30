@@ -1,20 +1,22 @@
-import { useState } from "react";
-import logo from "@/assets/images/svg/logo.svg";
-import Network from "@/assets/images/svg/network.svg";
-import LeftArrow from "@/assets/images/svg/left-arrow.svg";
-import Loading from "@/assets/images/svg/loading.svg";
-import Swtich from "@/assets/images/svg/swtich.svg";
-import Wallet from "@/assets/images/svg/wallet.svg";
-import sSUI from "@/assets/images/svg/sSUI.svg";
-import DownArrow from "@/assets/images/svg/down-arrow.svg";
-import Add from "@/assets/images/svg/add.svg";
-import Swap from "@/assets/images/svg/swap.svg";
+import { useState } from "react"
+import logo from "@/assets/images/svg/logo.svg"
+import Network from "@/assets/images/svg/network.svg"
+import LeftArrow from "@/assets/images/svg/left-arrow.svg"
+import Loading from "@/assets/images/svg/loading.svg"
+import Swtich from "@/assets/images/svg/swtich.svg"
+import Wallet from "@/assets/images/svg/wallet.svg"
+import sSUI from "@/assets/images/svg/sSUI.svg"
+import DownArrow from "@/assets/images/svg/down-arrow.svg"
+import Add from "@/assets/images/svg/add.svg"
+import Swap from "@/assets/images/svg/swap.svg"
+import { useNavigate } from "react-router-dom"
 
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast"
 
 export default function Home() {
-  const { toast } = useToast();
-  const [router, setRouter] = useState<string>("Markets");
+  const { toast } = useToast()
+  const navigate = useNavigate()
+  const [router, setRouter] = useState<string>("Markets")
 
   return (
     <div className="min-h-screen max-w-[1440px] mx-auto">
@@ -35,7 +37,7 @@ export default function Home() {
               onClick={() => {
                 toast({
                   title: "Coming soon!",
-                });
+                })
               }}
               className={[
                 "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
@@ -48,7 +50,7 @@ export default function Home() {
               onClick={() => {
                 toast({
                   title: "Coming soon!",
-                });
+                })
               }}
               className={[
                 "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
@@ -66,7 +68,7 @@ export default function Home() {
             onClick={() => {
               toast({
                 title: "Coming soon!",
-              });
+              })
             }}
           >
             Connect Wallet
@@ -75,7 +77,10 @@ export default function Home() {
       </header>
 
       <div className="py-10 relative">
-        <h3 className="text-lg text-white flex items-center gap-x-2">
+        <h3
+          className="text-lg text-white flex items-center gap-x-2"
+          onClick={() => navigate(-1)}
+        >
           <img src={LeftArrow} /> <span>All Markets</span>
         </h3>
         <div className="mt-9 flex gap-x-8">
@@ -194,5 +199,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  );
+  )
 }

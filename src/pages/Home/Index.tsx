@@ -59,7 +59,7 @@ export default function Home() {
               transition={{ duration: 0.5 }}
               className="xs:text-center mt-4 text-white text-balance"
             >
-              Revolutionizing investment strategy and maximize returns with
+              Revolutionize investment strategy and maximize returns with
               yield trading.
             </motion.h6>
             <motion.div
