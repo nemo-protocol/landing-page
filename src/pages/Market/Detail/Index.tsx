@@ -139,7 +139,7 @@ export default function Home() {
             </div>
           </div>
           <div className="grow flex xl:flex-col flex-col-reverse gap-y-5">
-            <div className="w-full px-10 py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
+            <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
               <div className="flex items-center gap-x-4 w-full md:w-auto">
                 <img src={sSUI} alt="" className="size-[60px]" />
                 <div className="flex flex-col">
@@ -166,7 +166,7 @@ export default function Home() {
                 <span className="text-white/50 text-xs">Fixed APY</span>
               </div>
             </div>
-            <div className="bg-[#0E0F16] rounded-3xl p-7.5">
+            <div className="bg-[#0E0F16] rounded-3xl md:p-7.5">
               <div>
                 <div className="flex items-center gap-x-7">
                   <span
