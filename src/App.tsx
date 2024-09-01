@@ -5,7 +5,7 @@ import "./App.css";
 
 const Home = lazy(() => import("./pages/Home/Index"));
 const Market = lazy(() => import("./pages/Market/Index"));
-const Detail = lazy(() => import("./pages/Market/Detail"));
+const Detail = lazy(() => import("./pages/Market/Detail/Index"));
 
 function App() {
   return (

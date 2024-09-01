@@ -1,12 +1,12 @@
 import { useState } from "react"
-import Loading from "@/assets/images/svg/loading.svg"
-import Swtich from "@/assets/images/svg/swtich.svg"
-import Wallet from "@/assets/images/svg/wallet.svg"
-import sSUI from "@/assets/images/svg/sSUI.svg"
-import Add from "@/assets/images/svg/add.svg"
-import Swap from "@/assets/images/svg/swap.svg"
-import { useNavigate } from "react-router-dom"
 import Header from "@/components/Header"
+import Add from "@/assets/images/svg/add.svg"
+import { useNavigate } from "react-router-dom"
+import Swap from "@/assets/images/svg/swap.svg"
+import sSUI from "@/assets/images/svg/sSUI.svg"
+import Wallet from "@/assets/images/svg/wallet.svg"
+import Switch from "@/assets/images/svg/swtich.svg"
+import Loading from "@/assets/images/svg/loading.svg"
 import DownArrow from "@/assets/images/svg/down-arrow.svg"
 import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
@@ -46,15 +46,16 @@ export default function Home() {
   return (
     <div className="min-h-screen max-w-[1440px] mx-auto">
       <Header />
-      <div className="py-10 relative">
+      <div className="py-10 relative px-6 xl:px-0">
         <h3
-          className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
           onClick={() => navigate(-1)}
+          className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
         >
-          <LeftArrow /> <span>All Markets</span>
+          <LeftArrow />
+          <span>All Markets</span>
         </h3>
-        <div className="mt-9 flex gap-x-8">
-          <div className="w-[360px] flex flex-col gap-y-5">
+        <div className="mt-9 flex xl:flex-row flex-col gap-x-8">
+          <div className="w-full xl:w-[360px] flex flex-col gap-y-5">
             <div className="w-full flex items-center h-[50px] bg-[#0E0F16] rounded-[40px]">
               <div className="flex-1 bg-[#0F60FF] rounded-[40px] h-full flex items-center justify-center">
                 Trade
@@ -72,7 +73,7 @@ export default function Home() {
                 <div className="flex items-center gap-x-2 w-auto">
                   <img src={Loading} alt="" />
                   <div className="flex items-center gap-x-2 bg-[#242632]/30 rounded-md py-1.5 px-2.5">
-                    <img src={Swtich} alt="" />
+                    <img src={Switch} alt="" />
                     <span className="text-white">0.5%</span>
                   </div>
                 </div>
@@ -137,9 +138,9 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="grow flex flex-col gap-y-5">
-            <div className="w-full px-10 py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl">
-              <div className="flex items-center gap-x-4">
+          <div className="grow flex xl:flex-col flex-col-reverse gap-y-5">
+            <div className="w-full px-10 py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
+              <div className="flex items-center gap-x-4 w-full md:w-auto">
                 <img src={sSUI} alt="" className="size-[60px]" />
                 <div className="flex flex-col">
                   <span className="text-white text-lg">PT sSUI</span>
@@ -148,19 +149,19 @@ export default function Home() {
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col gap-y-2 items-center justify-center">
+              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
                 <span className="text-white text-lg">$232,523,76.36</span>
                 <span className="text-white/50 text-xs">TVL</span>
               </div>
-              <div className="flex flex-col gap-y-2 items-center justify-center">
+              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
                 <span className="text-white text-lg">Apr 24 2025</span>
                 <span className="text-white/50 text-xs">Maturity</span>
               </div>
-              <div className="flex flex-col gap-y-2 items-center justify-center">
+              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
                 <span className="text-white text-lg">3.56%</span>
                 <span className="text-white/50 text-xs">Underlying APY</span>
               </div>
-              <div className="flex flex-col gap-y-2 items-center justify-center">
+              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
                 <span className="text-white text-lg">6.66%</span>
                 <span className="text-white/50 text-xs">Fixed APY</span>
               </div>
