@@ -70,7 +70,7 @@ export default function Home() {
             >
               <a
                 target="_blank"
-                href="https://app.nemoprotocol.com"
+                href="https://app.nemoprotocol.com/market"
                 className="bg-[#1954FF] flex items-center gap-x-4 rounded-full px-5 py-3"
               >
                 <span className="text-sm xs:text-base text-white">

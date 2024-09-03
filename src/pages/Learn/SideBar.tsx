@@ -2,8 +2,8 @@ export default function SideBar({
   step,
   setStep,
 }: {
-  step: number;
-  setStep: (value: number) => void;
+  step: number
+  setStep: (value: number) => void
 }) {
   return (
     <ul className="w-48">
@@ -53,5 +53,5 @@ export default function SideBar({
         4.Strategic yield trading
       </li>
     </ul>
-  );
+  )
 }

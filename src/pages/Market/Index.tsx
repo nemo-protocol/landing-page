@@ -11,16 +11,16 @@ export default function Home() {
   const { data: list } = useCoinInfoList()
 
   return (
-    <div className="min-h-screen xl:max-w-[1440px] xl:mx-auto w-full">
+    <>
       <Header />
 
-      <div className="py-10 relative px-7.5">
+      <div className="py-10 relative">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-[28px] text-white">Markets</h3>
+            <h3 className="text-[28px] text-white">Market</h3>
             <h6 className="text-white mt-8">
-              Exit Anytime At&nbsp;
-              <span className="text-[#0052F2]">Market Price.</span>&nbsp;
+              Dive into the yield trading market and maximize your profit
+              potential.
             </h6>
             <p className="text-white">
               Learn More&nbsp;&nbsp;
@@ -30,10 +30,6 @@ export default function Home() {
               >
                 About PT & YT Trading
               </Link>
-              &nbsp;&nbsp;Or Simply&nbsp;
-              <span className="underline underline-offset-2">
-                Add Liquidity and Earn.
-              </span>
             </p>
             <div className="flex items-center gap-x-2 mt-9">
               <button className="border border-[#0052F2] bg-[#0052F2]/25 text-[#5D94FF] py-1.5 px-3 rounded-full flex items-center gap-x-1">
@@ -70,7 +66,7 @@ export default function Home() {
                     <span className="text-xs">{item.provider}</span>
                   </div>
                 </div>
-                <img src={item.coinLogo} alt="sUSDC" className="size-14" />
+                <img src={item.coinLogo} alt={item.coinName} className="size-14" />
               </div>
               <div className="py-3 px-3.5 rounded-xl bg-[#131520] mt-6">
                 <div className="flex items-center justify-between">
@@ -144,6 +140,6 @@ export default function Home() {
           ))}
         </div>
       </div>
-    </div>
+    </>
   )
 }

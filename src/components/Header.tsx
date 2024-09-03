@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { toast } from "./ui/use-toast"
 import { ConnectButton } from "@mysten/dapp-kit"
 import { Link, useLocation } from "react-router-dom"
+import HotIcon from "@/assets/images/svg/hot.svg?react"
 import NemoLogo from "@/assets/images/svg/logo.svg?react"
 import Network from "@/assets/images/svg/network.svg?react"
 import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
@@ -11,7 +12,7 @@ export default function Header() {
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
   return (
-    <header className="px-7.5 xl:px-0 py-6">
+    <header className="py-6">
       <div className=" w-full mx-auto flex items-center justify-between text-xs">
         <div className="flex items-center gap-x-6">
           <Link to="/" className="flex gap-x-2">
@@ -21,6 +22,24 @@ export default function Header() {
             </div>
           </Link>
           <ul className="md:flex items-center text-sm hidden">
+            <li
+              className={[
+                "text-center bg-transparent py-2 rounded-full cursor-pointer",
+              ].join(" ")}
+            >
+              <Link
+                to="/fixed-return"
+                className={[
+                  location.pathname === "/fixed-return"
+                    ? "text-white"
+                    : "text-white/50",
+                  "flex items-center gap-x-1",
+                ].join(" ")}
+              >
+                <span>Fixed Return</span>
+                <HotIcon />
+              </Link>
+            </li>
             <li
               className={[
                 "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
@@ -34,7 +53,7 @@ export default function Header() {
                     : "text-white/50"
                 }
               >
-                Markets
+                Market
               </Link>
             </li>
             <li

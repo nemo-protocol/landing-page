@@ -1,16 +1,16 @@
-import Header from "@/components/Header";
-import SideBar from "./SideBar";
-import { useState } from "react";
-import GettingStarted from "./GettingStarted";
-import YieldTokenisation from "./YieldTokenisation";
-import FixingYieldWithPT from "./FixingYieldWithPT";
-import LongingYieldWithYT from "./LongingYieldWithYT";
-import StrategicYieldTrading from "./StrategicYieldTrading";
+import Header from "@/components/Header"
+import SideBar from "./SideBar"
+import { useState } from "react"
+import GettingStarted from "./GettingStarted"
+import YieldTokenisation from "./YieldTokenisation"
+import FixingYieldWithPT from "./FixingYieldWithPT"
+import LongingYieldWithYT from "./LongingYieldWithYT"
+import StrategicYieldTrading from "./StrategicYieldTrading"
 
 export default function Learn() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0)
   return (
-    <div className="min-h-screen xl:max-w-[1440px] xl:mx-auto w-full">
+    <div className="min-h-screen xl:max-w-[1200px] xl:mx-auto w-full">
       <Header />
       <div className="lg:px-7.5 flex gap-x-28 grow">
         <div className="flex items-center h-96 shrink-0">
@@ -25,5 +25,5 @@ export default function Learn() {
         </div>
       </div>
     </div>
-  );
+  )
 }

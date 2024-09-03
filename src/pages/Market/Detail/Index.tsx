@@ -44,7 +44,7 @@ export default function Home() {
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
 
   return (
-    <div className="min-h-screen max-w-[1440px] mx-auto">
+    <div className="min-h-screen max-w-[1200px] mx-auto">
       <Header />
       <div className="py-10 relative px-6 xl:px-0">
         <h3
@@ -96,7 +96,7 @@ export default function Home() {
               <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
                 <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
                   <img src={sSUI} alt="" className="size-6" />
-                  <span>SSUI</span>
+                  <span>sSUI</span>
                   <img src={DownArrow} alt="" />
                 </div>
                 <input
