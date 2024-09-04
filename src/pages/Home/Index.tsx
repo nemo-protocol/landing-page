@@ -1,39 +1,39 @@
-import Header from "./Header";
-import bg1 from "@/assets/images/svg/bg-1.svg";
-import PT from "@/assets/images/png/PT.png";
-import YT from "@/assets/images/png/YT.png";
-import Nemo from "@/assets/images/png/nemo.png";
-import RightArrow from "@/assets/images/svg/right-arrow.svg?react";
-import Telegram from "@/assets/images/svg/telegram.svg?react";
-import X from "@/assets/images/svg/x.svg?react";
-import MarketPNG from "@/assets/images/png/market.png";
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+import Header from "./Header"
+import bg1 from "@/assets/images/svg/bg-1.svg"
+import PT from "@/assets/images/png/PT.png"
+import YT from "@/assets/images/png/YT.png"
+import Nemo from "@/assets/images/png/nemo.png"
+import RightArrow from "@/assets/images/svg/right-arrow.svg?react"
+import Telegram from "@/assets/images/svg/telegram.svg?react"
+import X from "@/assets/images/svg/x.svg?react"
+import MarketPNG from "@/assets/images/png/market.png"
+import { motion } from "framer-motion"
+import { useInView } from "react-intersection-observer"
+import { Link } from "react-router-dom"
 
-export const containerStyles =
-  "px-6 lg:px-0 w-full lg:max-w-[75rem] lg:mx-auto";
+export const containerStyles = "px-6 lg:px-0 w-full lg:max-w-[75rem] lg:mx-auto"
 
 export default function Home() {
   const { ref: ref1, inView: ref1InView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
-  });
+  })
   const { ref: ref2, inView: ref2InView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
-  });
+  })
   const { ref: ref3, inView: ref3InView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
-  });
+  })
   const { ref: ref4, inView: ref4InView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
-  });
+  })
   const { ref: ref5, inView: ref5InView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
-  });
+  })
 
   return (
     <div className="overflow-hidden">
@@ -59,8 +59,8 @@ export default function Home() {
               transition={{ duration: 0.5 }}
               className="xs:text-center mt-4 text-white text-balance"
             >
-              Revolutionize investment strategy and maximize returns with
-              yield trading.
+              Revolutionize investment strategy and maximize returns with yield
+              trading.
             </motion.h6>
             <motion.div
               initial={{ opacity: 0, x: 50 }}
@@ -68,16 +68,15 @@ export default function Home() {
               transition={{ duration: 0.5 }}
               className="flex items-center xs:justify-center gap-x-5 text-white mt-10"
             >
-              <a
-                target="_blank"
-                href="https://app.nemoprotocol.com/market"
+              <Link
+                to="/market"
                 className="bg-[#1954FF] flex items-center gap-x-4 rounded-full px-5 py-3"
               >
                 <span className="text-sm xs:text-base text-white">
                   Enter Now
                 </span>
                 <RightArrow />
-              </a>
+              </Link>
               <a
                 target="_blank"
                 href="https://docs.nemoprotocol.com/"
@@ -196,5 +195,5 @@ export default function Home() {
         </motion.div>
       </div>
     </div>
-  );
+  )
 }

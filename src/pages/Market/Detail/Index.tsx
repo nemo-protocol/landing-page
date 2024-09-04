@@ -17,6 +17,13 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
+import {
+  useSuiClient,
+  useSignTransaction,
+  useSignAndExecuteTransaction,
+} from "@mysten/dapp-kit"
+import { Transaction } from "@mysten/sui/transactions"
+
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
   { month: "February", desktop: 305, mobile: 200 },
@@ -39,20 +46,120 @@ const chartConfig = {
 
 export default function Home() {
   const navigate = useNavigate()
+  const client = useSuiClient()
+  const { mutateAsync: signTransaction } = useSignTransaction()
+  const { mutateAsync: signAndExecuteTransaction } =
+    useSignAndExecuteTransaction({
+      execute: async ({ bytes, signature }) =>
+        await client.executeTransactionBlock({
+          transactionBlock: bytes,
+          signature,
+          options: {
+            // Raw effects are required so the effects can be reported back to the wallet
+            showRawEffects: true,
+            // Select additional data to return
+            showObjectChanges: true,
+          },
+        }),
+    })
   const [type, setType] = useState<"APY" | "Price">("APY")
   const [tab, setTab] = useState<"Details" | "Calculator">("Details")
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
 
   return (
-    <div className="min-h-screen max-w-[1200px] mx-auto">
+    <>
       <Header />
+      <div className="hidden">
+        <button
+          onClick={async () => {
+            const transaction = new Transaction()
+            transaction.moveCall({
+              target:
+                "0x21d459a82d58db2d0c81ea04c46c479ee9d652ffdf1da310fc08a4327b43ceda::sy_sSui::create",
+              arguments: [],
+              typeArguments: ["0x2::sui::SUI"],
+            })
+            transaction.setGasBudget(3000000)
+
+            const { bytes, signature } = await signTransaction({
+              transaction,
+              chain: "sui:testnet",
+            })
+
+            const executeResult = await client.executeTransactionBlock({
+              transactionBlock: bytes,
+              signature,
+              options: {
+                showRawEffects: true,
+                showObjectChanges: true,
+              },
+            })
+
+            console.log(executeResult)
+          }}
+        >
+          create
+        </button>
+        <button
+          onClick={async () => {
+            const transaction = new Transaction()
+            transaction.moveCall({
+              target:
+                "0x21d459a82d58db2d0c81ea04c46c479ee9d652ffdf1da310fc08a4327b43ceda::sy_sSui::create",
+              arguments: [],
+              typeArguments: ["0x2::sui::SUI"],
+            })
+            transaction.setGasBudget(3000000)
+            const data = await signAndExecuteTransaction(
+              {
+                transaction,
+                chain: "sui:testnet",
+              },
+              {
+                onSuccess: (result) => {
+                  console.log("object changes", result)
+                },
+              },
+            )
+            console.log("data", data)
+          }}
+        >
+          create2
+        </button>
+        <button
+          onClick={async () => {
+            const transaction = new Transaction()
+            transaction.moveCall({
+              target:
+                "0x21d459a82d58db2d0c81ea04c46c479ee9d652ffdf1da310fc08a4327b43ceda::sy_sSui::create",
+              arguments: [],
+              typeArguments: ["0x2::sui::SUI"],
+            })
+            transaction.setGasBudget(3000000)
+            const data = await signAndExecuteTransaction(
+              {
+                transaction,
+                chain: "sui:testnet",
+              },
+              {
+                onSuccess: (result) => {
+                  console.log("object changes", result)
+                },
+              },
+            )
+            console.log("data", data)
+          }}
+        >
+          deposit
+        </button>
+      </div>
       <div className="py-10 relative px-6 xl:px-0">
         <h3
           onClick={() => navigate(-1)}
           className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
         >
           <LeftArrow />
-          <span>All Markets</span>
+          <span>Back</span>
         </h3>
         <div className="mt-9 flex xl:flex-row flex-col gap-x-8">
           <div className="w-full xl:w-[360px] flex flex-col gap-y-5">
@@ -106,7 +213,7 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-x-2 justify-end mt-3.5">
                 <div className="bg-[#1E212B] p-1 rounded-[20px] text-xs">
-                  Harlf
+                  Half
                 </div>
                 <div className="bg-[#1E212B] p-1 rounded-[20px] text-xs">
                   Max
@@ -116,7 +223,7 @@ export default function Home() {
               <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
                 <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
                   <img src={sSUI} alt="" className="size-6" />
-                  <span>SSUI</span>
+                  <span>sSUI</span>
                   <img src={DownArrow} alt="" />
                 </div>
                 <input
@@ -128,7 +235,7 @@ export default function Home() {
               <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
                 <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
                   <img src={sSUI} alt="" className="size-6" />
-                  <span>SSUI</span>
+                  <span>sSUI</span>
                   <img src={DownArrow} alt="" />
                 </div>
                 <input
@@ -281,6 +388,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

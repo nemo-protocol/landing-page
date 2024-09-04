@@ -5,6 +5,7 @@ import "./App.css"
 
 const Home = lazy(() => import("./pages/Home/Index"))
 const Market = lazy(() => import("./pages/Market/Index"))
+const Portfolio = lazy(() => import("./pages/Portfolio/Index"))
 const Detail = lazy(() => import("./pages/Market/Detail/Index"))
 const FixedReturn = lazy(() => import("./pages/FixedReturn/Index"))
 
@@ -19,6 +20,7 @@ function App() {
             <Route path="/market" element={<Market />} />
             <Route path="/market/detail" element={<Detail />} />
             <Route path="/learn" element={<Learn />} />
+            <Route path="/portfolio" element={<Portfolio />} />
           </Routes>
         </div>
       </Suspense>

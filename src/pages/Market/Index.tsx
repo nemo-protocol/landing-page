@@ -1,9 +1,9 @@
-import Diamond from "@/assets/images/svg/market/diamond.svg"
-import Crown from "@/assets/images/svg/market/crown.svg"
-import Star from "@/assets/images/svg/market/star.svg"
-import { Link, useNavigate } from "react-router-dom"
 import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
+import { Link, useNavigate } from "react-router-dom"
+import Star from "@/assets/images/svg/market/star.svg"
+import Crown from "@/assets/images/svg/market/crown.svg"
+import Diamond from "@/assets/images/svg/market/diamond.svg"
 import Logo from "@/assets/images/svg/market/logo.svg?react"
 
 export default function Home() {
@@ -13,7 +13,6 @@ export default function Home() {
   return (
     <>
       <Header />
-
       <div className="py-10 relative">
         <div className="flex items-center justify-between">
           <div>
@@ -66,7 +65,11 @@ export default function Home() {
                     <span className="text-xs">{item.provider}</span>
                   </div>
                 </div>
-                <img src={item.coinLogo} alt={item.coinName} className="size-14" />
+                <img
+                  src={item.coinLogo}
+                  alt={item.coinName}
+                  className="size-14"
+                />
               </div>
               <div className="py-3 px-3.5 rounded-xl bg-[#131520] mt-6">
                 <div className="flex items-center justify-between">

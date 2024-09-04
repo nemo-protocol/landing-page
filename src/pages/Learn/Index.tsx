@@ -2,7 +2,7 @@ import Header from "@/components/Header"
 import SideBar from "./SideBar"
 import { useState } from "react"
 import GettingStarted from "./GettingStarted"
-import YieldTokenisation from "./YieldTokenisation"
+import YieldTokenization from "./YieldTokenization"
 import FixingYieldWithPT from "./FixingYieldWithPT"
 import LongingYieldWithYT from "./LongingYieldWithYT"
 import StrategicYieldTrading from "./StrategicYieldTrading"
@@ -18,7 +18,7 @@ export default function Learn() {
         </div>
         <div className="flex items-center justify-center grow">
           {step === 0 && <GettingStarted />}
-          {step === 1 && <YieldTokenisation />}
+          {step === 1 && <YieldTokenization />}
           {step === 2 && <FixingYieldWithPT />}
           {step === 3 && <LongingYieldWithYT />}
           {step === 4 && <StrategicYieldTrading />}

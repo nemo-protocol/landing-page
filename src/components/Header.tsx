@@ -57,19 +57,20 @@ export default function Header() {
               </Link>
             </li>
             <li
-              onClick={() => {
-                toast({
-                  title: "Coming soon!",
-                })
-              }}
               className={[
                 "w-24 text-center bg-transparent rounded-full cursor-pointer",
-                location.pathname === "portfolio"
-                  ? "text-white"
-                  : "text-white/50",
               ].join(" ")}
             >
-              Portfolio
+              <Link
+                to="/portfolio"
+                className={
+                  location.pathname === "/portfolio"
+                    ? "text-white"
+                    : "text-white/50"
+                }
+              >
+                Portfolio
+              </Link>
             </li>
             <li
               className={[
