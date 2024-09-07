@@ -2,8 +2,10 @@ import { Suspense, lazy } from "react"
 import Learn from "./pages/Learn/Index"
 import { HashRouter, Route, Routes } from "react-router-dom"
 import "./App.css"
+import { IS_DEV } from "./config"
 
 const Home = lazy(() => import("./pages/Home/Index"))
+const Test = lazy(() => import("./pages/Test/Index"))
 const Market = lazy(() => import("./pages/Market/Index"))
 const Portfolio = lazy(() => import("./pages/Portfolio/Index"))
 const Detail = lazy(() => import("./pages/Market/Detail/Index"))
@@ -21,6 +23,7 @@ function App() {
             <Route path="/market/detail" element={<Detail />} />
             <Route path="/learn" element={<Learn />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            {IS_DEV && <Route path="/test" element={<Test />} />}
           </Routes>
         </div>
       </Suspense>

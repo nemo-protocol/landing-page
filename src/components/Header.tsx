@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { toast } from "./ui/use-toast"
 import { ConnectButton } from "@mysten/dapp-kit"
 import { Link, useLocation } from "react-router-dom"
 import HotIcon from "@/assets/images/svg/hot.svg?react"
 import NemoLogo from "@/assets/images/svg/logo.svg?react"
 import Network from "@/assets/images/svg/network.svg?react"
 import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
+import { IS_DEV } from "@/config"
 
 export default function Header() {
   const location = useLocation()
@@ -88,6 +88,24 @@ export default function Header() {
                 Learn
               </Link>
             </li>
+            {IS_DEV && (
+              <li
+                className={[
+                  "w-24 text-center bg-transparent rounded-full cursor-pointer",
+                ].join(" ")}
+              >
+                <Link
+                  to="/test"
+                  className={
+                    location.pathname === "/test"
+                      ? "text-white"
+                      : "text-white/50"
+                  }
+                >
+                  Test
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
         <div className="flex items-center gap-x-6">
@@ -119,17 +137,9 @@ export default function Header() {
           <Link to="/market" className="py-2 text-white">
             Markets
           </Link>
-          <a
-            href="javascript:void(0)"
-            className="py-2 cursor-pointer text-white"
-            onClick={() => {
-              toast({
-                title: "Coming soon!",
-              })
-            }}
-          >
+          <Link to="/portfolio" className="py-2 cursor-pointer text-white">
             Portfolio
-          </a>
+          </Link>
           <Link to="/learn" className="py-2 text-white">
             Markets
           </Link>

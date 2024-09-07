@@ -15,6 +15,7 @@ export default function FixedReturn() {
           </p>
 
           <a
+            target="_blank"
             href="https://docs.nemoprotocol.com/tutorial/pt"
             className="underline text-sm flex items-center gap-x-1 mt-3.5 text-white hover:text-[#0052F2"
           >

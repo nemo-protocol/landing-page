@@ -123,9 +123,12 @@ export default function HomeHeader() {
             Home
           </Link>
           <a
-            href="javascript:void(0)"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setSubNav((subNav) => !subNav)
+            }}
             className="py-2 cursor-pointer text-white"
-            onClick={() => setSubNav((subNav) => !subNav)}
           >
             Community
           </a>

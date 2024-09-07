@@ -1,2 +1,2 @@
-export const contractAddress =
-  "0x21d459a82d58db2d0c81ea04c46c479ee9d652ffdf1da310fc08a4327b43ceda"
+export const PackageAddress =
+  "0x380dd7ad6dca5dc2afc71aad0efe4d15dcfa202b1465a7e186048812daeb8f5c"
