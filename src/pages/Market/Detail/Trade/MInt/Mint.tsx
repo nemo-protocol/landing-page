@@ -15,7 +15,7 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
-import { network } from "@/config"
+import { IS_DEV, network } from "@/config"
 
 import {
   AlertDialog,
@@ -63,8 +63,9 @@ export default function Mint({ slippage }: { slippage: string }) {
     "getCoins",
     {
       owner: address!,
-      coinType:
-        "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI",
+      coinType: IS_DEV
+        ? coinType!
+        : "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI",
     },
     {
       gcTime: 10000,
@@ -93,15 +94,14 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function mint() {
-    console.log("insufficientBalance", insufficientBalance)
-
     if (!insufficientBalance) {
       try {
         const tx = new Transaction()
 
-        const [splitCoin] = tx.splitCoins(tx.gas, [
-          new Decimal(mintValue).mul(1e9).toString(),
-        ])
+        const [splitCoin] = tx.splitCoins(
+          IS_DEV ? tx.gas : coinData![0].coinObjectId,
+          [new Decimal(mintValue).mul(1e9).toString()],
+        )
 
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
