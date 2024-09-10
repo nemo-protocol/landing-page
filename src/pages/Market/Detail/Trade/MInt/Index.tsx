@@ -3,7 +3,7 @@ import Redeem from "./Redeem"
 import { useState } from "react"
 
 export default function TradeMint({ slippage }: { slippage: string }) {
-  const [nav, setNav] = useState<"Mint" | "Redeem">("Redeem")
+  const [nav, setNav] = useState<"Mint" | "Redeem">("Mint")
   return (
     <>
       <div className="flex items-center rounded-[40px] w-40 my-6 bg-[#242632]">

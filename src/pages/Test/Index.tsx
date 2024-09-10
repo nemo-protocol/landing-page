@@ -11,6 +11,7 @@ import {
   useSuiClientQuery,
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
+import { network } from "@/config"
 
 export default function Test() {
   const client = useSuiClient()
@@ -103,7 +104,7 @@ export default function Test() {
                 transaction.setGasBudget(3000000)
                 const { effects } = await signAndExecuteTransaction({
                   transaction,
-                  chain: "sui:testnet",
+                  chain: `sui:${network}`,
                 })
                 setSSUI(effects?.created?.[0].reference.objectId || "")
               }}
@@ -146,7 +147,7 @@ export default function Test() {
                 tx.setGasBudget(3000000)
                 const data = await signAndExecuteTransaction({
                   transaction: tx,
-                  chain: "sui:testnet",
+                  chain: `sui:${network}`,
                 })
                 console.log("data", data)
               }}

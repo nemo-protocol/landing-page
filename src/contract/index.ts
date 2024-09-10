@@ -1,2 +1,1 @@
-export const PackageAddress =
-  "0xa76ac358ec958886cc5ee552425365b19d537c58cd74a67d7c51d104b17553a2"
+export const PackageAddress = import.meta.env.VITE_CONTRACT

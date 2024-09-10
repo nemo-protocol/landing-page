@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { network } from "@/config"
 import { useCoinConfig } from "@/queries"
 
 export default function Mint({ slippage }: { slippage: string }) {
@@ -112,12 +113,16 @@ export default function Mint({ slippage }: { slippage: string }) {
     return 0
   }, [ytData])
 
+  const insufficientBalance = useMemo(
+    () =>
+      new Decimal(Math.min(Number(ptBalance), Number(ytBalance))).lt(
+        redeemValue || 0,
+      ),
+    [ptBalance, ytBalance, redeemValue],
+  )
+
   async function redeem() {
-    if (
-      new Decimal(Math.min(Number(ptBalance), Number(ytBalance))).gte(
-        redeemValue,
-      )
-    ) {
+    if (!insufficientBalance) {
       try {
         const tx = new Transaction()
 
@@ -170,7 +175,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
-          chain: "sui:testnet",
+          chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
@@ -195,7 +200,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                 <p className=" text-white/50">Transaction submitted!</p>
                 <a
                   className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/testnet/tx/${txId}`}
+                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
                   target="_blank"
                 >
                   View details
@@ -313,12 +318,24 @@ export default function Mint({ slippage }: { slippage: string }) {
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>
-      <button
-        className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] rounded-3xl w-56"
-        onClick={redeem}
-      >
-        Redeem
-      </button>
+      {insufficientBalance ? (
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+          Insufficient Balance
+        </div>
+      ) : (
+        <button
+          onClick={redeem}
+          className={[
+            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            redeemValue === ""
+              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
+              : "bg-[#0F60FF] text-white",
+          ].join(" ")}
+          disabled={redeemValue === ""}
+        >
+          Redeem
+        </button>
+      )}
     </div>
   )
 }

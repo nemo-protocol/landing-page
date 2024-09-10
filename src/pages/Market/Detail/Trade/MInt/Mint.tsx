@@ -15,6 +15,7 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
+import { network } from "@/config"
 
 import {
   AlertDialog,
@@ -80,8 +81,15 @@ export default function Mint({ slippage }: { slippage: string }) {
     return 0
   }, [coinData])
 
+  const insufficientBalance = useMemo(
+    () => new Decimal(coinBalance).lt(mintValue || 0),
+    [coinBalance, mintValue],
+  )
+
   async function mint() {
-    if (new Decimal(coinBalance).gte(mintValue)) {
+    console.log("insufficientBalance", insufficientBalance)
+
+    if (!insufficientBalance) {
       try {
         const tx = new Transaction()
 
@@ -127,7 +135,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
-          chain: "sui:testnet",
+          chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
@@ -152,7 +160,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                 <p className=" text-white/50">Transaction submitted!</p>
                 <a
                   className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/testnet/tx/${txId}`}
+                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
                   target="_blank"
                 >
                   View details
@@ -241,12 +249,24 @@ export default function Mint({ slippage }: { slippage: string }) {
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>
-      <button
-        className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] rounded-3xl w-56"
-        onClick={mint}
-      >
-        Mint
-      </button>
+      {insufficientBalance ? (
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+          Insufficient Balance
+        </div>
+      ) : (
+        <button
+          onClick={mint}
+          disabled={mintValue === ""}
+          className={[
+            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            mintValue === ""
+              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
+              : "bg-[#0F60FF] text-white",
+          ].join(" ")}
+        >
+          Mint
+        </button>
+      )}
     </div>
   )
 }

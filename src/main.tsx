@@ -11,7 +11,8 @@ import {
 } from "@mysten/dapp-kit"
 
 import "./index.css"
-import "@mysten/dapp-kit/dist/index.css";
+import "@mysten/dapp-kit/dist/index.css"
+import { network } from "./config"
 
 const queryClient = new QueryClient()
 const { networkConfig } = createNetworkConfig({
@@ -23,7 +24,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Toaster />
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
+      <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
         <WalletProvider>
           <App />
         </WalletProvider>
