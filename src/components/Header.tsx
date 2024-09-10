@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { IS_DEV } from "@/config"
 import { motion } from "framer-motion"
 import { ConnectButton } from "@mysten/dapp-kit"
 import { Link, useLocation } from "react-router-dom"
@@ -6,7 +7,6 @@ import HotIcon from "@/assets/images/svg/hot.svg?react"
 import NemoLogo from "@/assets/images/svg/logo.svg?react"
 import Network from "@/assets/images/svg/network.svg?react"
 import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
-import { IS_DEV } from "@/config"
 
 export default function Header() {
   const location = useLocation()
@@ -141,8 +141,13 @@ export default function Header() {
             Portfolio
           </Link>
           <Link to="/learn" className="py-2 text-white">
-            Markets
+            Learn
           </Link>
+          {IS_DEV && (
+            <Link to="/test" className="py-2 text-white">
+              Test
+            </Link>
+          )}
         </div>
       </motion.div>
     </header>

@@ -1,2 +1,2 @@
 export const PackageAddress =
-  "0x380dd7ad6dca5dc2afc71aad0efe4d15dcfa202b1465a7e186048812daeb8f5c"
+  "0x828ff7c47a38c495be92b6bebac983b9a4747d4663dbf0090942a0221a81ecd9"

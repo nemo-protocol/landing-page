@@ -1,13 +1,10 @@
-import { useState } from "react"
+import Trade from "./Trade/Index.tsx"
 import Header from "@/components/Header"
-import Add from "@/assets/images/svg/add.svg"
-import { useNavigate } from "react-router-dom"
-import Swap from "@/assets/images/svg/swap.svg"
+import { useMemo, useState } from "react"
+import Liquidity from "./Liquidity/Index.tsx"
 import sSUI from "@/assets/images/svg/sSUI.svg"
-import Wallet from "@/assets/images/svg/wallet.svg"
-import Switch from "@/assets/images/svg/swtich.svg"
-import Loading from "@/assets/images/svg/loading.svg"
-import DownArrow from "@/assets/images/svg/down-arrow.svg"
+import { useNavigate, useParams } from "react-router-dom"
+import { useCoinInfoList, useCoinConfig } from "@/queries"
 import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import {
@@ -22,7 +19,6 @@ import {
   useSignTransaction,
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
-import { Transaction } from "@mysten/sui/transactions"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -45,8 +41,20 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function Home() {
-  const navigate = useNavigate()
   const client = useSuiClient()
+  const navigate = useNavigate()
+  const { name, address, coinType } = useParams()
+  const [type, setType] = useState<"APY" | "Price">("APY")
+  const [nav, setNav] = useState<"Trade" | "Liquidity">("Trade")
+  const [tab, setTab] = useState<"Details" | "Calculator">("Details")
+  const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
+  const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: coinInfoList } = useCoinInfoList(name, address)
+  const coinInfo = useMemo(() => {
+    if (coinInfoList?.length) {
+      return coinInfoList[0]
+    }
+  }, [coinInfoList])
   const { mutateAsync: signTransaction } = useSignTransaction()
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction({
@@ -62,9 +70,6 @@ export default function Home() {
           },
         }),
     })
-  const [type, setType] = useState<"APY" | "Price">("APY")
-  const [tab, setTab] = useState<"Details" | "Calculator">("Details")
-  const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
 
   return (
     <>
@@ -77,91 +82,32 @@ export default function Home() {
           <LeftArrow />
           <span>Back</span>
         </h3>
-        <div className="mt-9 flex xl:flex-row flex-col gap-x-8">
+        <div className="mt-9 flex xl:flex-row flex-col gap-x-8 justify-center">
           <div className="w-full xl:w-[360px] flex flex-col gap-y-5">
             <div className="w-full flex items-center h-[50px] bg-[#0E0F16] rounded-[40px]">
-              <div className="flex-1 bg-[#0F60FF] rounded-[40px] h-full flex items-center justify-center">
+              <div
+                onClick={() => setNav("Trade")}
+                className={[
+                  "flex-1 rounded-[40px] h-full flex items-center justify-center",
+                  nav === "Trade" ? "bg-[#0F60FF]" : "cursor-pointer",
+                ].join(" ")}
+              >
                 Trade
               </div>
-              <div className="flex-1 h-full flex items-center justify-center">
+              <div
+                onClick={() => setNav("Liquidity")}
+                className={[
+                  "flex-1 rounded-[40px] h-full flex items-center justify-center",
+                  nav === "Liquidity" ? "bg-[#0F60FF]" : "cursor-pointer",
+                ].join(" ")}
+              >
                 Liquidity
               </div>
             </div>
-            <div className="w-full bg-[#0E0F16] rounded-[40px] px-5 py-7">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-x-7">
-                  <span className="text-white">Swap</span>
-                  <span className="text-white/50">Mint</span>
-                </div>
-                <div className="flex items-center gap-x-2 w-auto">
-                  <img src={Loading} alt="" />
-                  <div className="flex items-center gap-x-2 bg-[#242632]/30 rounded-md py-1.5 px-2.5">
-                    <img src={Switch} alt="" />
-                    <span className="text-white">0.5%</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center rounded-[40px] w-40 my-6 bg-[#242632]">
-                <div className="bg-[#0F60FF] text-white text-sm flex-1 py-1.5 rounded-[40px] flex items-center justify-center">
-                  Mint
-                </div>
-                <div className="text-white flex-1 py-1.5 text-sm flex items-center justify-center">
-                  Redeem
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-white">Input</div>
-                <div className="flex items-center gap-x-1">
-                  <img src={Wallet} alt="" />
-                  <span>Balance:1998.45</span>
-                </div>
-              </div>
-              <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
-                <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-                  <img src={sSUI} alt="" className="size-6" />
-                  <span>sSUI</span>
-                  <img src={DownArrow} alt="" />
-                </div>
-                <input
-                  type="text"
-                  className="bg-transparent h-full outline-none"
-                />
-              </div>
-              <div className="flex items-center gap-x-2 justify-end mt-3.5">
-                <div className="bg-[#1E212B] p-1 rounded-[20px] text-xs">
-                  Half
-                </div>
-                <div className="bg-[#1E212B] p-1 rounded-[20px] text-xs">
-                  Max
-                </div>
-              </div>
-              <img src={Swap} alt="" className="mx-auto mt-5" />
-              <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
-                <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-                  <img src={sSUI} alt="" className="size-6" />
-                  <span>sSUI</span>
-                  <img src={DownArrow} alt="" />
-                </div>
-                <input
-                  type="text"
-                  className="bg-transparent h-full outline-none"
-                />
-              </div>
-              <img src={Add} alt="" className="mx-auto mt-5" />
-              <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
-                <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-                  <img src={sSUI} alt="" className="size-6" />
-                  <span>sSUI</span>
-                  <img src={DownArrow} alt="" />
-                </div>
-                <input
-                  type="text"
-                  className="bg-transparent h-full outline-none"
-                />
-              </div>
-            </div>
+            {nav === "Trade" && <Trade />}
+            {nav === "Liquidity" && <Liquidity />}
           </div>
-          <div className="grow flex xl:flex-col flex-col-reverse gap-y-5">
+          <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
             <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
               <div className="flex items-center gap-x-4 w-full md:w-auto">
                 <img src={sSUI} alt="" className="size-[60px]" />

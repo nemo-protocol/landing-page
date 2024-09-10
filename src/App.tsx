@@ -20,7 +20,10 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/fixed-return" element={<FixedReturn />} />
             <Route path="/market" element={<Market />} />
-            <Route path="/market/detail" element={<Detail />} />
+            <Route
+              element={<Detail />}
+              path="/market/detail/:name/:coinType/:address"
+            />
             <Route path="/learn" element={<Learn />} />
             <Route path="/portfolio" element={<Portfolio />} />
             {IS_DEV && <Route path="/test" element={<Test />} />}

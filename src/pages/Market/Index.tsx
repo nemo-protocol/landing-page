@@ -8,6 +8,7 @@ import Logo from "@/assets/images/svg/market/logo.svg?react"
 
 export default function Home() {
   const navigate = useNavigate()
+  const coinType = "0x2::sui::SUI"
   const { data: list } = useCoinInfoList()
 
   return (
@@ -32,7 +33,7 @@ export default function Home() {
             </p>
             <div className="flex items-center gap-x-2 mt-9">
               <button className="border border-[#0052F2] bg-[#0052F2]/25 text-[#5D94FF] py-1.5 px-3 rounded-full flex items-center gap-x-1">
-                <img src={Diamond} alt="" />{" "}
+                <img src={Diamond} alt="" />
                 <span className="text-xs">All</span>
               </button>
               <button className="border border-[#C2B166] bg-[#C2B166]/25 text-[#C2B166] py-1.5 px-3 rounded-full flex items-center gap-x-1">
@@ -51,7 +52,11 @@ export default function Home() {
             <div
               key={item.coinAddress}
               className="p-5 rounded-[21.544px] bg-[#0E0F16] cursor-pointer"
-              onClick={() => navigate("/market/detail")}
+              onClick={() =>
+                navigate(
+                  `/market/detail/${item.coinName}/${coinType}/${item.coinAddress}`,
+                )
+              }
             >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-y-2.5">
