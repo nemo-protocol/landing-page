@@ -67,6 +67,11 @@ export default function Mint({ slippage }: { slippage: string }) {
     {
       gcTime: 10000,
       enabled: !!address,
+      select: (data) => {
+        return data.data.sort((a, b) =>
+          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
+        )
+      },
     },
   )
 
@@ -79,12 +84,17 @@ export default function Mint({ slippage }: { slippage: string }) {
     {
       gcTime: 10000,
       enabled: !!address,
+      select: (data) => {
+        return data.data.sort((a, b) =>
+          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
+        )
+      },
     },
   )
 
   const ptBalance = useMemo(() => {
-    if (ptData?.data.length) {
-      return ptData.data
+    if (ptData?.length) {
+      return ptData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
         .div(1e9)
         .toFixed(9)
@@ -93,8 +103,8 @@ export default function Mint({ slippage }: { slippage: string }) {
   }, [ptData])
 
   const ytBalance = useMemo(() => {
-    if (ytData?.data.length) {
-      return ytData.data
+    if (ytData?.length) {
+      return ytData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
         .div(1e9)
         .toFixed(9)
@@ -111,12 +121,10 @@ export default function Mint({ slippage }: { slippage: string }) {
       try {
         const tx = new Transaction()
 
-        const _pt
-
-        const [ptCoin] = tx.splitCoins(ptData!.data[0].coinObjectId, [
+        const [ptCoin] = tx.splitCoins(ptData![0].coinObjectId, [
           new Decimal(redeemValue).mul(1e9).toString(),
         ])
-        const [ytCoin] = tx.splitCoins(ytData!.data[0].coinObjectId, [
+        const [ytCoin] = tx.splitCoins(ytData![0].coinObjectId, [
           new Decimal(redeemValue).mul(1e9).toString(),
         ])
 
@@ -221,7 +229,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
         </div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
+          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
             <span>PT sSUI</span>
             {/* <DownArrowIcon /> */}
@@ -264,7 +272,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
         </div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
+          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
             <span>PT sSUI</span>
             {/* <DownArrowIcon /> */}
