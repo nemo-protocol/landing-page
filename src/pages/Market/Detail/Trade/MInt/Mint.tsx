@@ -63,17 +63,23 @@ export default function Mint({ slippage }: { slippage: string }) {
     "getCoins",
     {
       owner: address!,
-      coinType: coinType!,
+      coinType:
+        "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI",
     },
     {
       gcTime: 10000,
       enabled: !!address,
+      select: (data) => {
+        return data.data.sort((a, b) =>
+          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
+        )
+      },
     },
   )
 
   const coinBalance = useMemo(() => {
-    if (coinData?.data.length) {
-      return coinData.data
+    if (coinData?.length) {
+      return coinData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
         .div(1e9)
         .toFixed(9)
