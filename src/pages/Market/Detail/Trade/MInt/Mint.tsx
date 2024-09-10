@@ -31,7 +31,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
-  const { currentWallet } = useCurrentWallet()
+  const { currentWallet, isConnected } = useCurrentWallet()
   const [mintValue, setMintValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction({
@@ -95,13 +95,14 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   const balance = useMemo(() => {
-    if (coinBalance?.data?.[0].balance) {
+    if (coinBalance?.data.length) {
       return new Decimal(coinBalance?.data?.[0].balance).div(1e9).toFixed(9)
     }
+    return 0
   }, [coinBalance])
 
   const suiCoins = useMemo(() => {
-    if (suiData) {
+    if (suiData?.data) {
       return suiData.data.sort((a, b) =>
         new Decimal(b.balance).minus(a.balance).toNumber(),
       )
@@ -207,7 +208,7 @@ export default function Mint({ slippage }: { slippage: string }) {
       </AlertDialog>
       <div className="flex items-center justify-between w-full">
         <div className="text-white">Input</div>
-        {balance ? (
+        {isConnected ? (
           <div className="flex items-center gap-x-1">
             <WalletIcon />
             <span>Balance: {balance}</span>
