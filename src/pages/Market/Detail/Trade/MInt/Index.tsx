@@ -1,8 +1,9 @@
 import Mint from "./Mint"
+import Redeem from "./Redeem"
 import { useState } from "react"
 
-export default function TradeMint({slippage}:{slippage:string}) {
-  const [nav, setNav] = useState<"Mint" | "Redeem">("Mint")
+export default function TradeMint({ slippage }: { slippage: string }) {
+  const [nav, setNav] = useState<"Mint" | "Redeem">("Redeem")
   return (
     <>
       <div className="flex items-center rounded-[40px] w-40 my-6 bg-[#242632]">
@@ -25,7 +26,8 @@ export default function TradeMint({slippage}:{slippage:string}) {
           Redeem
         </div>
       </div>
-      {nav === "Mint" && <Mint slippage={slippage}/>}
+      {nav === "Mint" && <Mint slippage={slippage} />}
+      {nav === "Redeem" && <Redeem slippage={slippage} />}
     </>
   )
 }
