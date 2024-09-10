@@ -128,57 +128,51 @@ export default function Mint({ slippage }: { slippage: string }) {
           new Decimal(redeemValue).mul(1e9).toString(),
         ])
 
-        tx.transferObjects([ptCoin, ytCoin], address!)
+        // tx.transferObjects([ptCoin, ytCoin], address!)
 
-        // const [syCoin] = tx.moveCall({
-        //   target: `${PackageAddress}::yield_factory::redeemPY_with_coin_back`,
-        //   arguments: [
-        //     tx.pure.address(address!),
-        //     ptCoin,
-        //     ytCoin,
-        //     tx.object(coinConfig!.syStructId),
-        //     tx.object(coinConfig!.tokenConfigId),
-        //     tx.object(coinConfig!.ptStructId),
-        //     tx.object(coinConfig!.ytStructId),
-        //     tx.object(coinConfig!.yieldFactoryConfigId),
-        //     tx.object("0x6"),
-        //   ],
-        //   typeArguments: [coinType!],
-        // })
+        const [a, b, syCoin] = tx.moveCall({
+          target: `${PackageAddress}::yield_factory::redeemPY_with_coin_back`,
+          arguments: [
+            tx.pure.address(address!),
+            ptCoin,
+            ytCoin,
+            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig!.tokenConfigId),
+            tx.object(coinConfig!.ptStructId),
+            tx.object(coinConfig!.ytStructId),
+            tx.object(coinConfig!.yieldFactoryConfigId),
+            tx.object("0x6"),
+          ],
+          typeArguments: [coinType!],
+        })
 
-        // tx.transferObjects([syCoin], address!)
+        tx.transferObjects([a, b], address!)
 
-        // const [sCoin] = tx.moveCall({
-        //   target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,
-        //   arguments: [
-        //     tx.pure.address(address!),
-        //     syCoin,
-        //     tx.pure.u64(
-        //       new Decimal(redeemValue)
-        //         .mul(1e9)
-        //         .mul(1 - Number(slippage))
-        //         .toNumber(),
-        //     ),
-        //     tx.object(coinConfig!.syStructId),
-        //   ],
-        //   typeArguments: [coinType!],
-        // })
+        const [sCoin] = tx.moveCall({
+          target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,
+          arguments: [
+            tx.pure.address(address!),
+            syCoin,
+            tx.pure.u64(
+              new Decimal(redeemValue)
+                .mul(1e9)
+                .mul(1 - Number(slippage))
+                .toNumber(),
+            ),
+            tx.object(coinConfig!.syStructId),
+          ],
+          typeArguments: [coinType!],
+        })
 
-        // tx.transferObjects([sCoin], address!)
+        tx.transferObjects([sCoin], address!)
 
         tx.setGasBudget(10000000)
 
-        const data = await signAndExecuteTransaction({
+        const { digest } = await signAndExecuteTransaction({
           transaction: tx,
           chain: "sui:testnet",
         })
-        console.log("data", data)
-
-        // const { digest } = await signAndExecuteTransaction({
-        //   transaction: tx,
-        //   chain: "sui:testnet",
-        // })
-        setTxId(data.digest)
+        setTxId(digest)
         setOpen(true)
         setRedeemValue("")
       } catch (error) {
@@ -263,7 +257,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         </div>
       </div>
       <AddIcon className="mx-auto mt-5" />
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full mt-[18px]">
         <div className="flex items-center justify-between w-full">
           <div className="text-white">Input</div>
           <div className="flex items-center gap-x-1">
