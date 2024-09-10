@@ -6,7 +6,7 @@ import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-import FailIcon from "@/assets/images/svg/fail.svg?react"
+// import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import {
   useSuiClient,
@@ -15,11 +15,10 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
-import { useCoinConfig } from "@/queries"
+// import { useCoinConfig } from "@/queries"
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,

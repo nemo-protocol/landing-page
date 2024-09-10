@@ -1,10 +1,9 @@
 import Trade from "./Trade/Index.tsx"
 import Header from "@/components/Header"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Liquidity from "./Liquidity/Index.tsx"
 import sSUI from "@/assets/images/svg/sSUI.svg"
-import { useNavigate, useParams } from "react-router-dom"
-import { useCoinInfoList, useCoinConfig } from "@/queries"
+import { useNavigate } from "react-router-dom"
 import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import {
@@ -13,12 +12,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-
-import {
-  useSuiClient,
-  useSignTransaction,
-  useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -41,35 +34,11 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function Home() {
-  const client = useSuiClient()
   const navigate = useNavigate()
-  const { name, address, coinType } = useParams()
   const [type, setType] = useState<"APY" | "Price">("APY")
   const [nav, setNav] = useState<"Trade" | "Liquidity">("Trade")
   const [tab, setTab] = useState<"Details" | "Calculator">("Details")
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
-  const { data: coinConfig } = useCoinConfig(coinType!)
-  const { data: coinInfoList } = useCoinInfoList(name, address)
-  const coinInfo = useMemo(() => {
-    if (coinInfoList?.length) {
-      return coinInfoList[0]
-    }
-  }, [coinInfoList])
-  const { mutateAsync: signTransaction } = useSignTransaction()
-  const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction({
-      execute: async ({ bytes, signature }) =>
-        await client.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            // Raw effects are required so the effects can be reported back to the wallet
-            showRawEffects: true,
-            // Select additional data to return
-            showObjectChanges: true,
-          },
-        }),
-    })
 
   return (
     <>
