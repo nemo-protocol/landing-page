@@ -15,7 +15,7 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
-import { IS_DEV, network } from "@/config"
+import { network } from "@/config"
 
 import {
   AlertDialog,
@@ -57,15 +57,20 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: coinConfig } = useCoinConfig(
+    network === "mainnet"
+      ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
+      : coinType!,
+  )
 
   const { data: coinData } = useSuiClientQuery(
     "getCoins",
     {
       owner: address!,
-      coinType: IS_DEV
-        ? coinType!
-        : "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI",
+      coinType:
+        network === "mainnet"
+          ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
+          : coinType!,
     },
     {
       gcTime: 10000,
@@ -99,11 +104,13 @@ export default function Mint({ slippage }: { slippage: string }) {
         const tx = new Transaction()
 
         const [splitCoin] = tx.splitCoins(
-          IS_DEV ? tx.gas : coinData![0].coinObjectId,
+          network === "mainnet" ? coinData![0].coinObjectId : tx.gas,
+          // tx.gas,
           [new Decimal(mintValue).mul(1e9).toString()],
         )
 
-        console.log(IS_DEV ? tx.gas : coinData![0].coinObjectId)
+        // console.log(network === "mainnet" ? coinData![0].coinObjectId : tx.gas)
+        // tx.transferObjects([splitCoin], address!)
 
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
@@ -118,8 +125,15 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig!.syStructId),
           ],
-          // typeArguments: [coinType!],
+          typeArguments: [
+            network === "mainnet"
+              ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
+              : coinType!,
+            // coinType!,
+          ],
         })
+
+        // tx.transferObjects([syCoin], address!)
 
         const [ptCoin, ytCoin] = tx.moveCall({
           target: `${PackageAddress}::yield_factory::mintPY`,
@@ -134,7 +148,11 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig!.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          // typeArguments: [coinType!],
+          typeArguments: [
+            network === "mainnet"
+              ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
+              : coinType!,
+          ],
         })
 
         tx.transferObjects([ptCoin, ytCoin], address!)

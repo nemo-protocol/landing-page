@@ -57,13 +57,17 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: coinConfig } = useCoinConfig(
+    network === "mainnet"
+      ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
+      : coinType!,
+  )
 
   const { data: ptData } = useSuiClientQuery(
     "getCoins",
     {
       owner: address!,
-      coinType: `${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>`,
+      coinType: `${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${network === "mainnet" ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI" : coinType!}>>`,
     },
     {
       gcTime: 10000,
@@ -80,7 +84,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     "getCoins",
     {
       owner: address!,
-      coinType: `${PackageAddress}::yt::YTCoin<${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<0x2::sui::SUI>>>`,
+      coinType: `${PackageAddress}::yt::YTCoin<${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${network === "mainnet" ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI" : coinType!}>>>`,
     },
     {
       gcTime: 10000,
@@ -148,7 +152,11 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig!.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [
+            network === "mainnet"
+              ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
+              : coinType!,
+          ],
         })
 
         tx.transferObjects([a, b], address!)
@@ -166,7 +174,11 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig!.syStructId),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [
+            network === "mainnet"
+              ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
+              : coinType!,
+          ],
         })
 
         tx.transferObjects([sCoin], address!)

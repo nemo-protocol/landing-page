@@ -1,5 +1,6 @@
 import React from "react"
 import App from "./App.tsx"
+import { network } from "./config"
 import ReactDOM from "react-dom/client"
 import { Toaster } from "@/components/ui/toaster"
 import { getFullnodeUrl } from "@mysten/sui/client"
@@ -10,9 +11,8 @@ import {
   WalletProvider,
 } from "@mysten/dapp-kit"
 
-import "./index.css"
 import "@mysten/dapp-kit/dist/index.css"
-import { network } from "./config"
+import "./index.css"
 
 const queryClient = new QueryClient()
 const { networkConfig } = createNetworkConfig({
