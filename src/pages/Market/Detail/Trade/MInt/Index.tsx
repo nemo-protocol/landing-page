@@ -1,7 +1,7 @@
 import Mint from "./Mint"
 import { useState } from "react"
 
-export default function TradeMint() {
+export default function TradeMint({slippage}:{slippage:string}) {
   const [nav, setNav] = useState<"Mint" | "Redeem">("Mint")
   return (
     <>
@@ -25,7 +25,7 @@ export default function TradeMint() {
           Redeem
         </div>
       </div>
-      {nav === "Mint" && <Mint />}
+      {nav === "Mint" && <Mint slippage={slippage}/>}
     </>
   )
 }

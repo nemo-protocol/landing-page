@@ -15,3 +15,15 @@ export interface CoinInfo {
   ytPrice: number;
   poolApy: number;
 }
+
+export interface CoinConfig {
+  yieldFactoryConfigId: string;
+  syStructId: string;
+  yieldTokenStoreId: string;
+  tokenConfigId: string;
+  ytStructId: string;
+  ptStructId: string;
+  coinType: string;
+}
+
+

@@ -1,24 +1,39 @@
+import Decimal from "decimal.js"
 import { useMemo, useState } from "react"
+import { PackageAddress } from "@/contract"
+import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-import DownArrowIcon from "@/assets/images/svg/down-arrow.svg?react"
+import FailIcon from "@/assets/images/svg/fail.svg?react"
+import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import {
-  useCurrentWallet,
-  useSignAndExecuteTransaction,
   useSuiClient,
+  useCurrentWallet,
   useSuiClientQuery,
+  useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
-import Decimal from "decimal.js"
-import { truncateStr } from "@/lib/utils"
-import { Transaction } from "@mysten/sui/transactions"
-import { PackageAddress } from "@/contract"
+import { useParams } from "react-router-dom"
+import { useCoinConfig } from "@/queries"
 
-export default function Mint() {
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+export default function Mint({ slippage }: { slippage: string }) {
   const client = useSuiClient()
-  const [syCoin, setSyCoin] = useState<string>("")
+  const { coinType } = useParams()
+  const [txId, setTxId] = useState("")
+  const [open, setOpen] = useState(false)
   const { currentWallet } = useCurrentWallet()
+  const [mintValue, setMintValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction({
       execute: async ({ bytes, signature }) =>
@@ -36,6 +51,7 @@ export default function Mint() {
           },
         }),
     })
+
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
     [currentWallet],
@@ -52,6 +68,39 @@ export default function Mint() {
     },
   )
 
+  // const { data: coinConfig } = useCoinConfig(coinType!)
+  const coinConfig = {
+    coinType: coinType!,
+    syStructId:
+      "0x58610cbfc52d6d90684ea5b6ac422a33ca560e929b58a32b5b007d645e3707cd",
+    ptStructId:
+      "0xeeb3f1075fa9ccfadf0b3d6cca0b260d449381a982240dbd75802f8a5d909c09",
+    ytStructId:
+      "0xdad07b12013733278c4e45f758847ea87a0fff08fd2885a6625e4e588d9615b2",
+    tokenConfigId:
+      "0x46716d4af47d545330abded03e000c326d924ca4b03517732554f2de56a51628",
+    yieldFactoryConfigId:
+      "0xa20a507c3713d03959800d94b56271ad5665068e44cac6033a4fa3210a7c92e5",
+  }
+
+  const { data: coinBalance } = useSuiClientQuery(
+    "getCoins",
+    {
+      owner: address!,
+      coinType: "0x2::sui::SUI",
+    },
+    {
+      gcTime: 10000,
+      enabled: !!address,
+    },
+  )
+
+  const balance = useMemo(() => {
+    if (coinBalance?.data?.[0].balance) {
+      return new Decimal(coinBalance?.data?.[0].balance).div(1e9).toFixed(9)
+    }
+  }, [coinBalance])
+
   const suiCoins = useMemo(() => {
     if (suiData) {
       return suiData.data.sort((a, b) =>
@@ -60,18 +109,14 @@ export default function Mint() {
     }
   }, [suiData])
 
-  async function merge() {
+  async function mint() {
     if (suiCoins?.length) {
       try {
         const tx = new Transaction()
 
         const [splitCoin] = tx.splitCoins(tx.gas, [
-          new Decimal(1.2).mul(1e9).toString(),
+          new Decimal(mintValue).mul(1e9).toString(),
         ])
-
-        // tx.transferObjects([splitCoin], address!)
-
-        console.log("splitCoin", splitCoin)
 
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
@@ -79,19 +124,22 @@ export default function Mint() {
             tx.pure.address(address!),
             splitCoin,
             tx.pure.u64(
-              new Decimal(1.2)
+              new Decimal(mintValue)
                 .mul(1e9)
-                .mul(1 - 0.005)
+                .mul(1 - Number(slippage))
                 .toNumber(),
             ),
-            tx.object(
-              "0x58610cbfc52d6d90684ea5b6ac422a33ca560e929b58a32b5b007d645e3707cd",
-            ),
+            tx.object(coinConfig!.syStructId),
           ],
-          typeArguments: ["0x2::sui::SUI"],
+          typeArguments: [coinType!],
         })
 
-        console.log("syCoin", syCoin)
+        // const data = await signAndExecuteTransaction({
+        //   transaction: tx,
+        //   chain: "sui:testnet",
+        // })
+        // console.log("data", data)
+        // console.log("objectId", data.effects?.created?.[0].reference.objectId)
 
         tx.moveCall({
           target: `${PackageAddress}::yield_factory::mintPY`,
@@ -99,126 +147,26 @@ export default function Mint() {
             tx.pure.address(address!),
             tx.pure.address(address!),
             syCoin,
-            tx.object(
-              "0x58610cbfc52d6d90684ea5b6ac422a33ca560e929b58a32b5b007d645e3707cd",
-            ),
-            tx.object(
-              "0xeeb3f1075fa9ccfadf0b3d6cca0b260d449381a982240dbd75802f8a5d909c09",
-            ),
-            tx.object(
-              "0xdad07b12013733278c4e45f758847ea87a0fff08fd2885a6625e4e588d9615b2",
-            ),
-            tx.object(
-              "0x46716d4af47d545330abded03e000c326d924ca4b03517732554f2de56a51628",
-            ),
-            tx.object(
-              "0xa20a507c3713d03959800d94b56271ad5665068e44cac6033a4fa3210a7c92e5",
-            ),
+            // tx.object(data.effects!.created![0].reference.objectId!),
+            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig!.ptStructId),
+            tx.object(coinConfig!.ytStructId),
+            tx.object(coinConfig!.tokenConfigId),
+            tx.object(coinConfig!.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: ["0x2::sui::SUI"],
+          typeArguments: [coinType!],
         })
 
         tx.setGasBudget(10000000)
 
-        const data = await signAndExecuteTransaction({
+        const { digest } = await signAndExecuteTransaction({
           transaction: tx,
           chain: "sui:testnet",
         })
-        console.log("data", data)
-      } catch (error) {
-        console.log("error", error)
-      }
-    }
-  }
-
-  async function deposit() {
-    if (suiCoins?.length) {
-      try {
-        const tx = new Transaction()
-
-        const [splitCoin] = tx.splitCoins(tx.gas, [
-          new Decimal(1.2).mul(1e9).toString(),
-        ])
-
-        // tx.transferObjects([splitCoin], address!)
-
-        console.log("splitCoin", splitCoin)
-
-        const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit`,
-          arguments: [
-            tx.pure.address(address!),
-            splitCoin,
-            tx.pure.u64(
-              new Decimal(1.2)
-                .mul(1e9)
-                .mul(1 - 0.005)
-                .toNumber(),
-            ),
-            tx.object(
-              "0x58610cbfc52d6d90684ea5b6ac422a33ca560e929b58a32b5b007d645e3707cd",
-            ),
-          ],
-          typeArguments: ["0x2::sui::SUI"],
-        })
-
-        console.log("syCoin", syCoin)
-
-        tx.setGasBudget(3000000)
-
-        const data = await signAndExecuteTransaction({
-          transaction: tx,
-          chain: "sui:testnet",
-        })
-        console.log("data", data)
-        console.log("objectId", data.effects?.created?.[0].reference.objectId)
-
-        setSyCoin(data.effects?.created?.[0].reference.objectId || "")
-      } catch (error) {
-        console.log("error", error)
-      }
-    }
-  }
-
-  async function mint() {
-    if (syCoin) {
-      try {
-        const tx = new Transaction()
-
-        tx.moveCall({
-          target: `${PackageAddress}::yield_factory::mintPY`,
-          arguments: [
-            tx.pure.address(address!),
-            tx.pure.address(address!),
-            tx.object(syCoin),
-            tx.object(
-              "0x58610cbfc52d6d90684ea5b6ac422a33ca560e929b58a32b5b007d645e3707cd",
-            ),
-            tx.object(
-              "0xeeb3f1075fa9ccfadf0b3d6cca0b260d449381a982240dbd75802f8a5d909c09",
-            ),
-            tx.object(
-              "0xdad07b12013733278c4e45f758847ea87a0fff08fd2885a6625e4e588d9615b2",
-            ),
-            tx.object(
-              "0x46716d4af47d545330abded03e000c326d924ca4b03517732554f2de56a51628",
-            ),
-            tx.object(
-              "0xa20a507c3713d03959800d94b56271ad5665068e44cac6033a4fa3210a7c92e5",
-            ),
-            tx.object("0x6"),
-          ],
-          typeArguments: ["0x2::sui::SUI"],
-        })
-
-        tx.setGasBudget(10000000)
-
-        const data = await signAndExecuteTransaction({
-          transaction: tx,
-          chain: "sui:testnet",
-        })
-        console.log("data", data)
+        setTxId(digest)
+        setOpen(true)
+        setMintValue("")
       } catch (error) {
         console.log("error", error)
       }
@@ -226,78 +174,113 @@ export default function Mint() {
   }
 
   return (
-    <>
-      <button onClick={() => merge()}>merge</button>
-      <button onClick={() => deposit()}>deposit</button>
-      <button onClick={() => mint()}>mint</button>
-      {/* <button onClick={() => deposit()}>deposit</button> */}
-      <div>syCoin:{syCoin}</div>
-      <div>
-        SUI:
-        {suiCoins && (
-          <span>
-            {suiCoins.map((coin) => (
-              <div
-                className="flex items-center gap-x-2"
-                key={coin.coinObjectId}
-              >
-                <span>{truncateStr(coin.coinObjectId, 4)}</span>
-                <span>{new Decimal(coin.balance).div(1e9).toNumber()}</span>
+    <div className="flex flex-col items-center">
+      <AlertDialog open={open}>
+        <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-white">
+              Success
+            </AlertDialogTitle>
+            <AlertDialogDescription className="flex flex-col items-center">
+              <SuccessIcon />
+              <div className="py-2 flex flex-col items-center">
+                <p className=" text-white/50">Transaction submitted!</p>
+                <a
+                  className="text-[#8FB5FF] underline"
+                  href={`https://suiscan.xyz/testnet/tx/${txId}`}
+                  target="_blank"
+                >
+                  View details
+                </a>
               </div>
-            ))}
-          </span>
-        )}
-      </div>
-      <div className="flex items-center justify-between">
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex items-center justify-center">
+            <button
+              className="text-white w-36 rounded-3xl bg-[#0F60FF]"
+              onClick={() => setOpen(false)}
+            >
+              OK
+            </button>
+          </div>
+          <AlertDialogFooter></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <div className="flex items-center justify-between w-full">
         <div className="text-white">Input</div>
-        <div className="flex items-center gap-x-1">
-          <WalletIcon />
-          <span>Balance:1998.45</span>
-        </div>
+        {balance ? (
+          <div className="flex items-center gap-x-1">
+            <WalletIcon />
+            <span>Balance: {balance}</span>
+          </div>
+        ) : (
+          <span>Please connect wallet</span>
+        )}
       </div>
       <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
         <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
           <SSUIIcon className="size-6" />
           <span>sSUI</span>
-          <DownArrowIcon />
+          {/* <DownArrowIcon /> */}
         </div>
         <input
           type="text"
-          className="bg-transparent h-full outline-none grow text-right"
+          value={mintValue}
+          disabled={!address}
+          onChange={(e) => setMintValue(e.target.value)}
+          className={`bg-transparent h-full outline-none grow text-right min-w-0`}
         />
       </div>
-      <div className="flex items-center gap-x-2 justify-end mt-3.5">
-        <div className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer">
+      <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
+        <button
+          className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+          disabled={!balance}
+          onClick={() => setMintValue(new Decimal(balance!).div(2).toFixed(9))}
+        >
           Half
-        </div>
-        <div className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer">
+        </button>
+        <button
+          className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+          disabled={!balance}
+          onClick={() => setMintValue(new Decimal(balance!).toFixed(9))}
+        >
           Max
-        </div>
+        </button>
       </div>
       <SwapIcon className="mx-auto mt-5" />
       <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
+        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
           <SSUIIcon className="size-6" />
           <span>PT sSUI</span>
-          <DownArrowIcon />
+          {/* <DownArrowIcon /> */}
         </div>
         <input
+          disabled
           type="text"
-          className="bg-transparent h-full outline-none grow text-right"
+          value={mintValue}
+          className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>
       <AddIcon className="mx-auto mt-5" />
       <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
+        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
           <SSUIIcon className="size-6" />
           <span>YT sSUI</span>
-          <DownArrowIcon />
+          {/* <DownArrowIcon /> */}
         </div>
         <input
+          disabled
           type="text"
-          className="bg-transparent h-full outline-none grow text-right"
+          value={mintValue}
+          className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>
-    </>
+      <button
+        className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] rounded-3xl w-56"
+        onClick={mint}
+      >
+        Mint
+      </button>
+    </div>
   )
 }

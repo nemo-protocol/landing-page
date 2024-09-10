@@ -1,6 +1,6 @@
 import { nemoApi } from "./request"
 import { useQuery } from "@tanstack/react-query"
-import { CoinInfo } from "./types/market"
+import { CoinInfo,CoinConfig } from "./types/market"
 
 function getCoinInfoList(name = "", address = "") {
   return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo").get({
@@ -10,7 +10,7 @@ function getCoinInfoList(name = "", address = "") {
 }
 
 function getCoinConfig(coinType: string) {
-  return nemoApi<CoinInfo[]>("/api/v1/market/config/depositAndMint").post({
+  return nemoApi<CoinConfig>("/api/v1/market/config/depositAndMint").post({
     coinType,
   })
 }
