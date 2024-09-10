@@ -103,6 +103,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           [new Decimal(mintValue).mul(1e9).toString()],
         )
 
+        console.log(IS_DEV ? tx.gas : coinData![0].coinObjectId)
+
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
           arguments: [
@@ -116,7 +118,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig!.syStructId),
           ],
-          typeArguments: [coinType!],
+          // typeArguments: [coinType!],
         })
 
         const [ptCoin, ytCoin] = tx.moveCall({
@@ -132,7 +134,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig!.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          // typeArguments: [coinType!],
         })
 
         tx.transferObjects([ptCoin, ytCoin], address!)
