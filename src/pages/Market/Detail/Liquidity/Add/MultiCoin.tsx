@@ -32,8 +32,8 @@ export default function Mint({ slippage }: { slippage: string }) {
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
-  const [addSCoinValue, setAdSCoinValue] = useState("")
-  const [addPTCoinValue, setAddPTCoinValue] = useState("")
+  const [sCoinValue, setSCoinValue] = useState("")
+  const [ptCoinValue, setPTCoinValue] = useState("")
   const { currentWallet, isConnected } = useCurrentWallet()
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction({
@@ -115,8 +115,10 @@ export default function Mint({ slippage }: { slippage: string }) {
   }, [ptData])
 
   const insufficientBalance = useMemo(
-    () => new Decimal(coinBalance).lt(mintValue || 0),
-    [coinBalance, mintValue],
+    () =>
+      new Decimal(coinBalance).lt(sCoinValue || 0) ||
+      new Decimal(ptBalance).lt(ptCoinValue || 0),
+    [coinBalance, ptBalance, sCoinValue, ptCoinValue],
   )
 
   async function mint() {
@@ -125,7 +127,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         const tx = new Transaction()
 
         const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
-          new Decimal(mintValue).mul(1e9).toString(),
+          new Decimal(sCoinValue).mul(1e9).toString(),
         ])
 
         const [syCoin] = tx.moveCall({
@@ -134,7 +136,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.pure.address(address!),
             splitCoin,
             tx.pure.u64(
-              new Decimal(mintValue)
+              new Decimal(sCoinValue)
                 .mul(1e9)
                 .mul(1 - Number(slippage))
                 .toNumber(),
@@ -170,7 +172,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         })
         setTxId(digest)
         setOpen(true)
-        setMintValue("")
+        setSCoinValue("")
       } catch (error) {
         console.log("error", error)
       }
@@ -219,8 +221,10 @@ export default function Mint({ slippage }: { slippage: string }) {
             {/* <DownArrowIcon /> */}
           </div>
           <input
+            disabled={isConnected}
+            onChange={(e) => setSCoinValue(e.target.value)}
             type="text"
-            value={mintValue}
+            value={sCoinValue}
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
@@ -232,9 +236,10 @@ export default function Mint({ slippage }: { slippage: string }) {
           <span>PT sSUI</span>
         </div>
         <input
-          disabled
+          disabled={isConnected}
+          onChange={(e) => setPTCoinValue(e.target.value)}
           type="text"
-          value={mintValue}
+          value={ptCoinValue}
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>
@@ -254,30 +259,10 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
           <input
             type="text"
-            value={mintValue}
-            disabled={!isConnected}
-            onChange={(e) => setMintValue(e.target.value)}
+            disabled={true}
             placeholder={!isConnected ? "Please connect wallet" : ""}
             className={`bg-transparent h-full outline-none grow text-right min-w-0`}
           />
-        </div>
-        <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() =>
-              setMintValue(new Decimal(coinBalance!).div(2).toFixed(9))
-            }
-          >
-            Half
-          </button>
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() => setMintValue(new Decimal(coinBalance!).toFixed(9))}
-          >
-            Max
-          </button>
         </div>
       </div>
 
@@ -288,10 +273,10 @@ export default function Mint({ slippage }: { slippage: string }) {
       ) : (
         <button
           onClick={mint}
-          disabled={mintValue === ""}
+          disabled={sCoinValue === ""}
           className={[
             "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
-            mintValue === ""
+            sCoinValue === ""
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
