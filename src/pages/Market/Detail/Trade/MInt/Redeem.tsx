@@ -57,17 +57,13 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(
-    network === "mainnet"
-      ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
-      : coinType!,
-  )
+  const { data: coinConfig } = useCoinConfig(coinType!)
 
   const { data: ptData } = useSuiClientQuery(
     "getCoins",
     {
       owner: address!,
-      coinType: `${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${network === "mainnet" ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI" : coinType!}>>`,
+      coinType: `${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>`,
     },
     {
       gcTime: 10000,
@@ -84,7 +80,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     "getCoins",
     {
       owner: address!,
-      coinType: `${PackageAddress}::yt::YTCoin<${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${network === "mainnet" ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI" : coinType!}>>>`,
+      coinType: `${PackageAddress}::yt::YTCoin<${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>>`,
     },
     {
       gcTime: 10000,
@@ -152,11 +148,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig!.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            network === "mainnet"
-              ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
-              : coinType!,
-          ],
+          typeArguments: [coinType!],
         })
 
         tx.transferObjects([a, b], address!)
@@ -174,11 +166,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig!.syStructId),
           ],
-          typeArguments: [
-            network === "mainnet"
-              ? "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
-              : coinType!,
-          ],
+          typeArguments: [coinType!],
         })
 
         tx.transferObjects([sCoin], address!)
@@ -273,10 +261,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           </button>
         </div>
       </div>
-      <AddIcon className="mx-auto mt-5" />
+      <AddIcon className="mx-auto" />
       <div className="flex flex-col w-full mt-[18px]">
-        <div className="flex items-center justify-between w-full">
-          <div className="text-white">Input</div>
+        <div className="flex items-center justify-end w-full">
           <div className="flex items-center gap-x-1">
             <WalletIcon />
             <span>Balance: {isConnected ? ytBalance : "--"}</span>
@@ -285,7 +272,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>PT sSUI</span>
+            <span>YT sSUI</span>
             {/* <DownArrowIcon /> */}
           </div>
           <input
@@ -317,18 +304,21 @@ export default function Mint({ slippage }: { slippage: string }) {
         </div>
       </div>
       <SwapIcon className="mx-auto mt-5" />
-      <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-          <SSUIIcon className="size-6" />
-          <span>YT sSUI</span>
-          {/* <DownArrowIcon /> */}
+      <div className="flex flex-col gap-y-4.5 w-full">
+        <div>Output</div>
+        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
+          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
+            <SSUIIcon className="size-6" />
+            <span>sSUI</span>
+            {/* <DownArrowIcon /> */}
+          </div>
+          <input
+            disabled
+            type="text"
+            value={redeemValue}
+            className="bg-transparent h-full outline-none grow text-right min-w-0"
+          />
         </div>
-        <input
-          disabled
-          type="text"
-          value={redeemValue}
-          className="bg-transparent h-full outline-none grow text-right min-w-0"
-        />
       </div>
       {insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">

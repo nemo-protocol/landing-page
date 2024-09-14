@@ -8,7 +8,6 @@ import Logo from "@/assets/images/svg/market/logo.svg?react"
 
 export default function Home() {
   const navigate = useNavigate()
-  const coinType = "0x2::sui::SUI"
   const { data: list } = useCoinInfoList()
 
   return (
@@ -54,7 +53,7 @@ export default function Home() {
               className="p-5 rounded-[21.544px] bg-[#0E0F16] cursor-pointer"
               onClick={() =>
                 navigate(
-                  `/market/detail/${item.coinName}/${coinType}/${item.coinAddress}`,
+                  `/market/detail/${item.coinAddress}`,
                 )
               }
             >

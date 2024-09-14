@@ -24,6 +24,8 @@ export interface CoinConfig {
   ytStructId: string;
   ptStructId: string;
   coinType: string;
+  marketStateId: string;
+  marketConfigId: string;
 }
 
 

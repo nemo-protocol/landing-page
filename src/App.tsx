@@ -22,7 +22,7 @@ function App() {
             <Route path="/market" element={<Market />} />
             <Route
               element={<Detail />}
-              path="/market/detail/:name/:coinType/:address"
+              path="/market/detail/:coinType"
             />
             <Route path="/learn" element={<Learn />} />
             <Route path="/portfolio" element={<Portfolio />} />

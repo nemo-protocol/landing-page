@@ -32,8 +32,9 @@ export default function Mint({ slippage }: { slippage: string }) {
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [addSCoinValue, setAdSCoinValue] = useState("")
+  const [addPTCoinValue, setAddPTCoinValue] = useState("")
   const { currentWallet, isConnected } = useCurrentWallet()
-  const [mintValue, setMintValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction({
       execute: async ({ bytes, signature }) =>
@@ -67,7 +68,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     },
     {
       gcTime: 10000,
-      enabled: !!address,
+      enabled: !!address && !!coinType,
       select: (data) => {
         return data.data.sort((a, b) =>
           new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
@@ -85,6 +86,33 @@ export default function Mint({ slippage }: { slippage: string }) {
     }
     return 0
   }, [coinData])
+
+  const { data: ptData } = useSuiClientQuery(
+    "getCoins",
+    {
+      owner: address!,
+      coinType: `${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>`,
+    },
+    {
+      gcTime: 10000,
+      enabled: !!address,
+      select: (data) => {
+        return data.data.sort((a, b) =>
+          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
+        )
+      },
+    },
+  )
+
+  const ptBalance = useMemo(() => {
+    if (ptData?.length) {
+      return ptData
+        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+        .div(1e9)
+        .toFixed(9)
+    }
+    return 0
+  }, [ptData])
 
   const insufficientBalance = useMemo(
     () => new Decimal(coinBalance).lt(mintValue || 0),
@@ -150,7 +178,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center gap-y-4.5">
       <AlertDialog open={open}>
         <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
           <AlertDialogHeader>
@@ -182,9 +210,38 @@ export default function Mint({ slippage }: { slippage: string }) {
           <AlertDialogFooter></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <div className="flex flex-col w-full gap-y-4.5">
+        <div>Input</div>
+        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
+          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
+            <SSUIIcon className="size-6" />
+            <span>sSUI</span>
+            {/* <DownArrowIcon /> */}
+          </div>
+          <input
+            type="text"
+            value={mintValue}
+            className="bg-transparent h-full outline-none grow text-right min-w-0"
+          />
+        </div>
+      </div>
+      <AddIcon className="mx-auto" />
+      <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
+        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
+          <SSUIIcon className="size-6" />
+          <span>PT sSUI</span>
+        </div>
+        <input
+          disabled
+          type="text"
+          value={mintValue}
+          className="bg-transparent h-full outline-none grow text-right min-w-0"
+        />
+      </div>
+      <SwapIcon className="mx-auto" />
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
-          <div className="text-white">Input</div>
+          <div className="text-white">Output</div>
           <div className="flex items-center gap-x-1">
             <WalletIcon />
             <span>Balance: {isConnected ? coinBalance : "--"}</span>
@@ -193,8 +250,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
             <SSUIIcon className="size-6" />
-            <span>sSUI</span>
-            {/* <DownArrowIcon /> */}
+            <span>LP sSUI</span>
           </div>
           <input
             type="text"
@@ -224,37 +280,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           </button>
         </div>
       </div>
-      <SwapIcon className="mx-auto" />
-      <div className="flex flex-col w-full gap-y-4.5">
-        <div>Output</div>
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
-          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
-            <span>PT sSUI</span>
-            {/* <DownArrowIcon /> */}
-          </div>
-          <input
-            disabled
-            type="text"
-            value={mintValue}
-            className="bg-transparent h-full outline-none grow text-right min-w-0"
-          />
-        </div>
-      </div>
-      <AddIcon className="mx-auto mt-5" />
-      <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-          <SSUIIcon className="size-6" />
-          <span>YT sSUI</span>
-          {/* <DownArrowIcon /> */}
-        </div>
-        <input
-          disabled
-          type="text"
-          value={mintValue}
-          className="bg-transparent h-full outline-none grow text-right min-w-0"
-        />
-      </div>
+
       {insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
           Insufficient Balance
@@ -270,7 +296,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >
-          Mint
+          Add
         </button>
       )}
     </div>

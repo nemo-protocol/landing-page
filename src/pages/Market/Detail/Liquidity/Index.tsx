@@ -1,72 +1,90 @@
-import AddIcon from "@/assets/images/svg/add.svg?react"
-import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
-import WalletIcon from "@/assets/images/svg/wallet.svg?react"
+import Add from "./Add/Index"
+import { useState } from "react"
 import SwitchIcon from "@/assets/images/svg/switch.svg?react"
 import LoadingIcon from "@/assets/images/svg/loading.svg?react"
-import DownArrowIcon from "@/assets/images/svg/down-arrow.svg?react"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 export default function Trade() {
+  const [slippage, setSlippage] = useState("0.5")
+  const [nav, setNav] = useState<"Add" | "Remove">("Add")
   return (
-    <div className="w-full bg-[#0E0F16] rounded-[40px] px-5 py-7">
+    <div className="w-full bg-[#0E0F16] rounded-[40px] px-5 py-7 flex flex-col gap-y-4.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-x-7">
-          <span className="text-white">Swap</span>
-          <span className="text-white/50">Mint</span>
+          <span
+            onClick={() => setNav("Add")}
+            className={
+              nav === "Add" ? "text-white" : "text-white/50 cursor-pointer"
+            }
+          >
+            Add
+          </span>
+          <span
+            onClick={() => setNav("Remove")}
+            className={
+              nav === "Remove" ? "text-white" : "text-white/50 cursor-pointer"
+            }
+          >
+            Remove
+          </span>
         </div>
         <div className="flex items-center gap-x-2 w-auto">
           <LoadingIcon />
           <div className="flex items-center gap-x-2 bg-[#242632]/30 rounded-md py-1.5 px-2.5">
             <SwitchIcon />
-            <span className="text-white">0.5%</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <span className="text-white cursor-pointer">{slippage}%</span>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 bg-[#161720] border-none rounded-3xl">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none text-xs py-4 px-6">
+                      Slippage Setting
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-3 gap-x-2 gap-y-4">
+                    <button
+                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs"
+                      onClick={() => setSlippage("0.1")}
+                    >
+                      0.1%
+                    </button>
+                    <button
+                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs"
+                      onClick={() => setSlippage("0.5")}
+                    >
+                      0.5%
+                    </button>
+                    <button
+                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs"
+                      onClick={() => setSlippage("1")}
+                    >
+                      1%
+                    </button>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] placeholder:text-xs w-full outline-none"
+                        placeholder="Custom"
+                        onChange={(e) => setSlippage(e.target.value)}
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-white mt-0.5">
+                        %
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </div>
-      <div className="flex items-center rounded-[40px] w-40 my-6 bg-[#242632]">
-        <div className="bg-[#0F60FF] text-white text-sm flex-1 py-1.5 rounded-[40px] flex items-center justify-center">
-          Mint
-        </div>
-        <div className="text-white flex-1 py-1.5 text-sm flex items-center justify-center">
-          Redeem
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="text-white">Input</div>
-        <div className="flex items-center gap-x-1">
-          <WalletIcon />
-          <span>Balance:1998.45</span>
-        </div>
-      </div>
-      <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
-        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-          <SSUIIcon className="size-6" />
-          <span>sSUI</span>
-          <DownArrowIcon />
-        </div>
-        <input type="text" className="bg-transparent h-full outline-none" />
-      </div>
-      <div className="flex items-center gap-x-2 justify-end mt-3.5">
-        <div className="bg-[#1E212B] p-1 rounded-[20px] text-xs">Half</div>
-        <div className="bg-[#1E212B] p-1 rounded-[20px] text-xs">Max</div>
-      </div>
-      <SwapIcon className="mx-auto mt-5" />
-      <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
-        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-          <SSUIIcon className="size-6" />
-          <span>sSUI</span>
-          <DownArrowIcon />
-        </div>
-        <input type="text" className="bg-transparent h-full outline-none" />
-      </div>
-      <AddIcon className="mx-auto mt-5" />
-      <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px]">
-        <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-          <SSUIIcon className="size-6" />
-          <span>sSUI</span>
-          <DownArrowIcon />
-        </div>
-        <input type="text" className="bg-transparent h-full outline-none" />
-      </div>
+      {nav === "Add" && <Add slippage={slippage} />}
     </div>
   )
 }
