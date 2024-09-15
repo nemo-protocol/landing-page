@@ -26,6 +26,7 @@ export interface CoinConfig {
   coinType: string;
   marketStateId: string;
   marketConfigId: string;
+  marketFactoryConfigId: string;
 }
 
 

@@ -36,7 +36,7 @@ const chartConfig = {
 export default function Home() {
   const navigate = useNavigate()
   const [type, setType] = useState<"APY" | "Price">("APY")
-  const [nav, setNav] = useState<"Trade" | "Liquidity">("Liquidity")
+  const [nav, setNav] = useState<"Trade" | "Liquidity">("Trade")
   const [tab, setTab] = useState<"Details" | "Calculator">("Details")
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
 

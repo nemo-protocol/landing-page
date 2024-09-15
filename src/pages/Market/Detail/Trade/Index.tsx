@@ -1,4 +1,5 @@
 import Mint from "./MInt/Index"
+import Swap from "./Swap/Index"
 import { useState } from "react"
 import SwitchIcon from "@/assets/images/svg/switch.svg?react"
 import LoadingIcon from "@/assets/images/svg/loading.svg?react"
@@ -85,6 +86,7 @@ export default function Trade() {
         </div>
       </div>
       {nav === "Mint" && <Mint slippage={slippage}/>}
+      {nav === "Swap" && <Swap slippage={slippage}/>}
     </div>
   )
 }

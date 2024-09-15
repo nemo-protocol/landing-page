@@ -2,7 +2,6 @@ import Decimal from "decimal.js"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { Transaction } from "@mysten/sui/transactions"
-import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
@@ -76,53 +75,19 @@ export default function Mint({ slippage }: { slippage: string }) {
     },
   )
 
-  // 0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::yt::YTCoin<0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::pt::PTCoin<0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::sy::SYCoin<0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI>>>
-
-  // 0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::pt::PTCoin<0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::sy::SYCoin<0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI>>
-
-  const { data: ytData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: `${PackageAddress}::yt::YTCoin<${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>>`,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
-  )
-
   const ptBalance = useMemo(() => {
     if (ptData?.length) {
       return ptData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
         .div(1e9)
-        .toString()
+        .toFixed(9)
     }
     return 0
   }, [ptData])
 
-  const ytBalance = useMemo(() => {
-    if (ytData?.length) {
-      return ytData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(1e9)
-        .toString()
-    }
-    return 0
-  }, [ytData])
-
   const insufficientBalance = useMemo(
-    () =>
-      new Decimal(Math.min(Number(ptBalance), Number(ytBalance))).lt(
-        redeemValue || 0,
-      ),
-    [ptBalance, ytBalance, redeemValue],
+    () => new Decimal(Number(ptBalance)).lt(redeemValue || 0),
+    [ptBalance, redeemValue],
   )
 
   async function redeem() {
@@ -133,29 +98,24 @@ export default function Mint({ slippage }: { slippage: string }) {
         const [ptCoin] = tx.splitCoins(ptData![0].coinObjectId, [
           new Decimal(redeemValue).mul(1e9).toString(),
         ])
-        const [ytCoin] = tx.splitCoins(ytData![0].coinObjectId, [
-          new Decimal(redeemValue).mul(1e9).toString(),
-        ])
 
-        // tx.transferObjects([ptCoin, ytCoin], address!)
-
-        const [a, b, syCoin] = tx.moveCall({
-          target: `${PackageAddress}::yield_factory::redeemPY_with_coin_back`,
+        const [syCoin] = tx.moveCall({
+          target: `${PackageAddress}::market::swap_exact_pt_for_sy`,
           arguments: [
             tx.pure.address(address!),
+            tx.object(coinConfig!.marketFactoryConfigId),
+            tx.object(coinConfig!.yieldFactoryConfigId),
             ptCoin,
-            ytCoin,
             tx.object(coinConfig!.syStructId),
             tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.ptStructId),
-            tx.object(coinConfig!.ytStructId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
+            tx.object(coinConfig!.marketConfigId),
+            tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
           typeArguments: [coinType!],
         })
 
-        tx.transferObjects([a, b], address!)
+        // tx.transferObjects([syCoin], address!)
 
         const [sCoin] = tx.moveCall({
           target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,
@@ -265,48 +225,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           </button>
         </div>
       </div>
-      <AddIcon className="mx-auto" />
-      <div className="flex flex-col w-full mt-[18px]">
-        <div className="flex items-center justify-end w-full">
-          <div className="flex items-center gap-x-1">
-            <WalletIcon />
-            <span>Balance: {isConnected ? ytBalance : "--"}</span>
-          </div>
-        </div>
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
-            <span>YT sSUI</span>
-            {/* <DownArrowIcon /> */}
-          </div>
-          <input
-            type="text"
-            value={redeemValue}
-            disabled={!isConnected}
-            onChange={(e) => setRedeemValue(e.target.value)}
-            placeholder={!isConnected ? "Please connect wallet" : ""}
-            className={`bg-transparent h-full outline-none grow text-right min-w-0`}
-          />
-        </div>
-        <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() =>
-              setRedeemValue(new Decimal(ytBalance!).div(2).toFixed(9))
-            }
-          >
-            Half
-          </button>
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() => setRedeemValue(new Decimal(ytBalance!).toFixed(9))}
-          >
-            Max
-          </button>
-        </div>
-      </div>
       <SwapIcon className="mx-auto mt-5" />
       <div className="flex flex-col gap-y-4.5 w-full">
         <div>Output</div>
@@ -339,7 +257,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           ].join(" ")}
           disabled={redeemValue === ""}
         >
-          Redeem
+          Sell
         </button>
       )}
     </div>
