@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { network } from "@/config"
+import { GAS_BUDGET, network } from "@/config"
 import { useCoinConfig } from "@/queries"
 
 export default function Mint({ slippage }: { slippage: string }) {
@@ -175,7 +175,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         tx.transferObjects([sCoin], address!)
 
-        tx.setGasBudget(10000000)
+        tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,

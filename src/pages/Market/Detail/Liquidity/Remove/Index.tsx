@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { network } from "@/config"
+import { GAS_BUDGET, network } from "@/config"
 import { useCoinConfig } from "@/queries"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
@@ -125,7 +125,7 @@ export default function Remove() {
           typeArguments: [coinType!],
         })
 
-        tx.setGasBudget(10000000)
+        tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,

@@ -13,7 +13,7 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
-import { network } from "@/config"
+import { GAS_BUDGET, network } from "@/config"
 
 import {
   AlertDialog,
@@ -138,7 +138,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         tx.transferObjects([ptCoin], address!)
 
-        tx.setGasBudget(10000000)
+        tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,

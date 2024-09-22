@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { network } from "@/config"
+import { GAS_BUDGET, network } from "@/config"
 import { useCoinConfig } from "@/queries"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
@@ -100,7 +100,22 @@ export default function Mint({ slippage }: { slippage: string }) {
       try {
         const tx = new Transaction()
 
-        console.log("coinData", coinData);
+        console.log("coinData", coinData)
+        console.log(
+          new Decimal(addValue)
+            .mul(1e9)
+            .mul(ratio)
+            .div(new Decimal(ratio).add(1))
+            .toString(),
+          new Decimal(addValue)
+            .mul(1e9)
+            .mul(ratio)
+            .div(new Decimal(ratio).add(1))
+            .toString(),
+          coinData!
+            .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+            .toString(),
+        )
 
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
           coinData![0].coinObjectId,
@@ -190,7 +205,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        tx.setGasBudget(10000000)
+        tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
