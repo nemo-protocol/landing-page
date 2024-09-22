@@ -6,9 +6,9 @@ import { Toaster } from "@/components/ui/toaster"
 import { getFullnodeUrl } from "@mysten/sui/client"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import {
-  createNetworkConfig,
-  SuiClientProvider,
   WalletProvider,
+  SuiClientProvider,
+  createNetworkConfig,
 } from "@mysten/dapp-kit"
 
 import "@mysten/dapp-kit/dist/index.css"

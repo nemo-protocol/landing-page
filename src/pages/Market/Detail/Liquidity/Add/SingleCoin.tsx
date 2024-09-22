@@ -100,6 +100,8 @@ export default function Mint({ slippage }: { slippage: string }) {
       try {
         const tx = new Transaction()
 
+        console.log("coinData", coinData);
+
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
           coinData![0].coinObjectId,
           [

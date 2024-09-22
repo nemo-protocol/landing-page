@@ -1,16 +1,32 @@
 import { useState } from "react"
 import { IS_DEV } from "@/config"
 import { motion } from "framer-motion"
-import { ConnectButton } from "@mysten/dapp-kit"
+import { truncateStr } from "@/lib/utils"
+import { ChevronDown } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import HotIcon from "@/assets/images/svg/hot.svg?react"
 import NemoLogo from "@/assets/images/svg/logo.svg?react"
 import Network from "@/assets/images/svg/network.svg?react"
 import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
+import {
+  ConnectModal,
+  useAccounts,
+  useCurrentAccount,
+  useCurrentWallet,
+  useDisconnectWallet,
+  useSwitchAccount,
+} from "@mysten/dapp-kit"
 
 export default function Header() {
   const location = useLocation()
+  const accounts = useAccounts()
+  const [open, setOpen] = useState(false)
+  const currentAccount = useCurrentAccount()
+  const { isConnected } = useCurrentWallet()
   const [isOpen, setIsOpen] = useState(false)
+  const { mutate: switchAccount } = useSwitchAccount()
+  const { mutate: disconnect } = useDisconnectWallet()
+
   return (
     <header className="py-6">
       <div className=" w-full mx-auto flex items-center justify-between text-xs">
@@ -113,17 +129,64 @@ export default function Header() {
             className="md:hidden text-white cursor-pointer"
             onClick={() => setIsOpen((isOpen) => !isOpen)}
           />
-
           <Network />
-          <ConnectButton
-            style={{
-              color: "#fff",
-              outline: "none",
-              padding: "8px 12px",
-              borderRadius: "28px",
-              backgroundColor: "#0052F2",
-            }}
-          />
+          {isConnected ? (
+            <div className="dropdown dropdown-end">
+              <div
+                tabIndex={0}
+                role="button"
+                className="flex items-center gap-x-1 bg-[#0E0F16] px-3 py-2 rounded-full"
+              >
+                <span>{truncateStr(currentAccount?.address || "", 4)}</span>
+                <ChevronDown className="size-4" />
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu rounded-sm w-40"
+              >
+                <li
+                  className="cursor-pointer bg-[#0E0F16] px-2 py-1.5 text-white/50 hover:text-white w-full"
+                  onClick={() => disconnect()}
+                >
+                  Disconnect
+                </li>
+                {accounts
+                  .filter(
+                    (account) => account.address !== currentAccount?.address,
+                  )
+                  .map((account) => (
+                    <li
+                      key={account.address}
+                      className="cursor-pointer bg-[#0E0F16] px-2 py-1.5 text-white/50 hover:text-white w-full"
+                      onClick={() => {
+                        switchAccount(
+                          { account },
+                          {
+                            onSuccess: () =>
+                              console.log(`switched to ${account.address}`),
+                          },
+                        )
+                      }}
+                    >
+                      {truncateStr(account?.address || "", 4)}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : (
+            <ConnectModal
+              open={open}
+              onOpenChange={(isOpen) => setOpen(isOpen)}
+              trigger={
+                <button
+                  disabled={!!currentAccount}
+                  className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
+                >
+                  Connect Wallet
+                </button>
+              }
+            />
+          )}
         </div>
       </div>
       <motion.div
