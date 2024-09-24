@@ -26,7 +26,7 @@ import {
 import { GAS_BUDGET, network } from "@/config"
 import { useCoinConfig } from "@/queries"
 
-export default function Mint({ slippage }: { slippage: string }) {
+export default function Sell() {
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")

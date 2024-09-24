@@ -1,5 +1,5 @@
-import Mint from "./Buy"
-import Redeem from "./Sell"
+import Buy from "./Buy"
+import Sell from "./Sell"
 import { useState } from "react"
 
 export default function TradeMint({ slippage }: { slippage: string }) {
@@ -26,8 +26,8 @@ export default function TradeMint({ slippage }: { slippage: string }) {
           Sell
         </div>
       </div>
-      {nav === "Buy" && <Mint slippage={slippage} />}
-      {nav === "Sell" && <Redeem slippage={slippage} />}
+      {nav === "Buy" && <Buy slippage={slippage} />}
+      {nav === "Sell" && <Sell />}
     </>
   )
 }
