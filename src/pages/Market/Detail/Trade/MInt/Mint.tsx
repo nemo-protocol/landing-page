@@ -116,6 +116,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
+        // tx.transferObjects([syCoin], address!)
+
         const [ptCoin, ytCoin] = tx.moveCall({
           target: `${PackageAddress}::yield_factory::mintPY`,
           arguments: [
@@ -137,7 +139,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
-          transaction: tx,
+          transaction: Transaction.from(tx),
           chain: `sui:${network}`,
         })
         setTxId(digest)

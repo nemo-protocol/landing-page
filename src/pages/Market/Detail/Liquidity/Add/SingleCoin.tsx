@@ -99,24 +99,6 @@ export default function Mint({ slippage }: { slippage: string }) {
     if (!insufficientBalance) {
       try {
         const tx = new Transaction()
-
-        console.log("coinData", coinData)
-        console.log(
-          new Decimal(addValue)
-            .mul(1e9)
-            .mul(ratio)
-            .div(new Decimal(ratio).add(1))
-            .toString(),
-          new Decimal(addValue)
-            .mul(1e9)
-            .mul(ratio)
-            .div(new Decimal(ratio).add(1))
-            .toString(),
-          coinData!
-            .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-            .toString(),
-        )
-
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
           coinData![0].coinObjectId,
           [

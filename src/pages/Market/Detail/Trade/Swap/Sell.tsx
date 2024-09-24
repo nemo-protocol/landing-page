@@ -62,7 +62,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     "getCoins",
     {
       owner: address!,
-      coinType: `${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>`,
+      coinType: `${PackageAddress}::pt::PTCoin<${coinType!}>`,
     },
     {
       gcTime: 10000,
@@ -99,7 +99,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           new Decimal(redeemValue).mul(1e9).toString(),
         ])
 
-        const [syCoin] = tx.moveCall({
+        // tx.transferObjects([ptCoin], address!)
+
+        tx.moveCall({
           target: `${PackageAddress}::market::swap_exact_pt_for_sy`,
           arguments: [
             tx.pure.address(address!),
@@ -117,23 +119,23 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         // tx.transferObjects([syCoin], address!)
 
-        const [sCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,
-          arguments: [
-            tx.pure.address(address!),
-            syCoin,
-            tx.pure.u64(
-              new Decimal(redeemValue)
-                .mul(1e9)
-                .mul(1 - Number(slippage))
-                .toNumber(),
-            ),
-            tx.object(coinConfig!.syStructId),
-          ],
-          typeArguments: [coinType!],
-        })
+        // tx.moveCall({
+        //   target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,
+        //   arguments: [
+        //     tx.pure.address(address!),
+        //     syCoin,
+        //     tx.pure.u64(
+        //       new Decimal(redeemValue)
+        //         .mul(1e9)
+        //         .mul(1 - Number(slippage))
+        //         .toNumber(),
+        //     ),
+        //     tx.object(coinConfig!.syStructId),
+        //   ],
+        //   typeArguments: [coinType!],
+        // })
 
-        tx.transferObjects([sCoin], address!)
+        // tx.transferObjects([sCoin], address!)
 
         tx.setGasBudget(GAS_BUDGET)
 

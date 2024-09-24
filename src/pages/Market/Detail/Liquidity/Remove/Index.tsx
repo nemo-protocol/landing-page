@@ -63,8 +63,7 @@ export default function Remove() {
     "getCoins",
     {
       owner: address!,
-      // FIXME: update lp coin type
-      coinType: `${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>`,
+      coinType: `${PackageAddress}::market::MarketLP<${coinType!}>`,
     },
     {
       gcTime: 10000,
@@ -103,12 +102,6 @@ export default function Remove() {
         const [lpCoin] = tx.splitCoins(lpCoinData![0].coinObjectId, [
           new Decimal(addValue)
             .mul(1e9)
-            .mul(ratio)
-            .div(new Decimal(ratio).add(1))
-            .toString(),
-          new Decimal(addValue)
-            .mul(1e9)
-            .div(new Decimal(ratio).add(1))
             .toString(),
         ])
 
@@ -120,7 +113,6 @@ export default function Remove() {
             tx.object(coinConfig!.marketConfigId),
             lpCoin,
             tx.object(coinConfig!.marketStateId),
-            tx.object("0x6"),
           ],
           typeArguments: [coinType!],
         })

@@ -114,7 +114,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        const [ptCoin] = tx.moveCall({
+        tx.moveCall({
           target: `${PackageAddress}::market::swap_sy_for_exact_pt`,
           arguments: [
             tx.pure.address(address!),
@@ -136,12 +136,10 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        tx.transferObjects([ptCoin], address!)
-
         tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
-          transaction: tx,
+          transaction: Transaction.from(tx),
           chain: `sui:${network}`,
         })
         setTxId(digest)

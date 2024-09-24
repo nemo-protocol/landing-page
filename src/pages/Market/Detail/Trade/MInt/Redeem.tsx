@@ -63,7 +63,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     "getCoins",
     {
       owner: address!,
-      coinType: `${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>`,
+      coinType: `${PackageAddress}::pt::PTCoin<${coinType!}>`,
     },
     {
       gcTime: 10000,
@@ -76,15 +76,11 @@ export default function Mint({ slippage }: { slippage: string }) {
     },
   )
 
-  // 0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::yt::YTCoin<0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::pt::PTCoin<0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::sy::SYCoin<0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI>>>
-
-  // 0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::pt::PTCoin<0xf2e8a7dd164f26046ddeaa3723e545c0c8b6626769aa1f8d15cae369c2a2a96a::sy::SYCoin<0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI>>
-
   const { data: ytData } = useSuiClientQuery(
     "getCoins",
     {
       owner: address!,
-      coinType: `${PackageAddress}::yt::YTCoin<${PackageAddress}::pt::PTCoin<${PackageAddress}::sy::SYCoin<${coinType!}>>>`,
+      coinType: `${PackageAddress}::yt::YTCoin<${coinType!}>`,
     },
     {
       gcTime: 10000,
