@@ -11,3 +11,13 @@ export const truncateStr = (str: string, charsPerSide = 4) => {
   }
   return `${str.slice(0, charsPerSide)}...${str.slice(-charsPerSide)}`
 }
+
+export const debounce = <T extends (...args: string[]) => void>(func: T, delay: number): ((...args: Parameters<T>) => void) => {
+  let timeout: ReturnType<typeof setTimeout>
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+}

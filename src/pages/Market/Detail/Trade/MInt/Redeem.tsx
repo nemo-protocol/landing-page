@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { GAS_BUDGET, network } from "@/config"
+import {  network } from "@/config"
 import { useCoinConfig } from "@/queries"
 
 export default function Mint({ slippage }: { slippage: string }) {

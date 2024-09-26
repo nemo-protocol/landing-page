@@ -13,7 +13,7 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
-import { GAS_BUDGET, network } from "@/config"
+import { network } from "@/config"
 
 import {
   AlertDialog,

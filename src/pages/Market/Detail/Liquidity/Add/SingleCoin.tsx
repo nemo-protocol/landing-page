@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
-import { GAS_BUDGET, network } from "@/config"
-import { useCoinConfig } from "@/queries"
+import { network } from "@/config"
+import { useCoinConfig, useQueryMintLpAmount } from "@/queries"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
@@ -25,12 +25,12 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
+import { debounce } from "@/lib/utils"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const ratio = 1
   const client = useSuiClient()
   const { coinType } = useParams()
-  // const [rate, setRate] = useState(1)
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [addValue, setAddValue] = useState("")
@@ -59,6 +59,32 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
+
+  const syCoinAmount = useMemo(() => {
+    if (addValue !== "" && !isNaN(Number(addValue)) && Number(addValue) >= 0) {
+      return new Decimal(addValue)
+        .mul(1e9)
+        .div(new Decimal(ratio).add(1))
+        .toString()
+    }
+  }, [addValue, ratio])
+
+  const ptCoinAmount = useMemo(() => {
+    if (addValue !== "" && !isNaN(Number(addValue)) && Number(addValue) >= 0) {
+      return new Decimal(addValue ?? 0)
+        .mul(1e9)
+        .mul(ratio)
+        .div(new Decimal(ratio).add(1))
+        .toString()
+    }
+  }, [addValue, ratio])
+
+  const { data: lpAmount, isLoading } = useQueryMintLpAmount(
+    coinConfig!.marketConfigId,
+    syCoinAmount!,
+    ptCoinAmount!,
+    !!coinConfig?.marketConfigId && !!syCoinAmount && !!ptCoinAmount,
+  )
 
   const { data: coinData } = useSuiClientQuery(
     "getCoins",
@@ -114,8 +140,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
         )
 
-        // tx.transferObjects([splitCoin, splitCoinForPY], address!)
-
         const [syCoinForPY] = tx.moveCall({
           target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
           arguments: [
@@ -131,8 +155,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
           typeArguments: [coinType!],
         })
-
-        // tx.transferObjects([splitCoin, syCoinForPY], address!)
 
         const [ptCoin, ytCoin] = tx.moveCall({
           target: `${PackageAddress}::yield_factory::mintPY`,
@@ -151,7 +173,6 @@ export default function Mint({ slippage }: { slippage: string }) {
         })
 
         tx.transferObjects([ytCoin], address!)
-        // tx.transferObjects([ptCoin, ytCoin, splitCoin], address!)
 
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
@@ -169,8 +190,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        // tx.transferObjects([syCoin, ptCoin], address!)
-
         tx.moveCall({
           target: `${PackageAddress}::market::mint_lp`,
           arguments: [
@@ -187,8 +206,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        // tx.setGasBudget(GAS_BUDGET)
-
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,
@@ -201,6 +218,10 @@ export default function Mint({ slippage }: { slippage: string }) {
       }
     }
   }
+
+  const debouncedSetAddValue = debounce((value: string) => {
+    setAddValue(value)
+  }, 300)
 
   return (
     <div className="flex flex-col items-center">
@@ -251,9 +272,11 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
           <input
             type="text"
-            value={addValue}
+            // value={addValue}
             disabled={!isConnected}
-            onChange={(e) => setAddValue(e.target.value)}
+            onChange={(e) =>
+              debouncedSetAddValue(new Decimal(e.target.value).toString())
+            }
             placeholder={!isConnected ? "Please connect wallet" : ""}
             className={`bg-transparent h-full outline-none grow text-right min-w-0`}
           />
@@ -289,7 +312,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           <input
             disabled
             type="text"
-            value={addValue}
+            value={
+              lpAmount ? new Decimal(lpAmount).div(1e9).toString() : undefined
+            }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
@@ -301,7 +326,7 @@ export default function Mint({ slippage }: { slippage: string }) {
       ) : (
         <button
           onClick={add}
-          disabled={addValue === ""}
+          disabled={addValue === "" || isLoading}
           className={[
             "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
             addValue === ""
@@ -309,7 +334,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >
-          Add Liquidity
+          {isLoading ? "Calculating" : "Add Liquidity"}
         </button>
       )}
     </div>

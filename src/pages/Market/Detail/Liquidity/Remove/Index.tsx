@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { GAS_BUDGET, network } from "@/config"
+import {  network } from "@/config"
 import { useCoinConfig } from "@/queries"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
