@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useCoinConfig } from "@/queries"
+import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const client = useSuiClient()
@@ -56,6 +56,10 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: ptRatio } = useQuerySwapRatio(
+    coinConfig?.marketConfigId ?? "",
+    !!coinConfig?.marketConfigId,
+  )
 
   const { data: coinData } = useSuiClientQuery(
     "getCoins",
@@ -238,7 +242,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           <input
             disabled
             type="text"
-            value={mintValue}
+            value={new Decimal(mintValue || 0).mul(ptRatio || 0).toString()}
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>

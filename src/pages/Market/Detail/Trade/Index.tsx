@@ -11,7 +11,7 @@ import {
 
 export default function Trade() {
   const [slippage, setSlippage] = useState("0.5")
-  const [nav, setNav] = useState<"Swap" | "Mint">("Mint")
+  const [nav, setNav] = useState<"Swap" | "Mint">("Swap")
   return (
     <div className="w-full bg-[#0E0F16] rounded-[40px] px-5 py-7">
       <div className="flex items-center justify-between">

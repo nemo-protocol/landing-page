@@ -1,6 +1,5 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-import { useCoinConfig, useQueryMintLpAmount } from "@/queries"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
@@ -10,6 +9,7 @@ import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 // import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
+import { useCoinConfig, useQueryMintLpAmount } from "@/queries"
 import {
   useSuiClient,
   useCurrentWallet,

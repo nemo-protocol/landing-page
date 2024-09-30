@@ -30,6 +30,12 @@ async function getMintLpAmount(
   return amount
 }
 
+async function getSwapRatio(marketConfigId: string) {
+  return await nemoApi<string>("/api/v1/market/swap/exchangeRate").get({
+    marketConfigId,
+  })
+}
+
 export function useQueryMintLpAmount(
   marketConfigId: string,
   syCoinAmount: string,
@@ -43,11 +49,13 @@ export function useQueryMintLpAmount(
   })
 }
 
-export function useCoinInfoList(name = "", address = "") {
+export function useQuerySwapRatio(marketConfigId: string, enabled: boolean) {
   return useQuery({
     // FIXME： queryKey dose not work
-    queryKey: ["coinInfoList", name, address],
-    queryFn: () => getCoinInfoList(name, address),
+    queryKey: ["swapRatio", marketConfigId],
+    queryFn: () => getSwapRatio(marketConfigId),
+    refetchInterval: 1000 * 30,
+    enabled,
   })
 }
 
@@ -56,5 +64,13 @@ export function useCoinConfig(coinType: string) {
     // FIXME： queryKey dose not work
     queryKey: ["coinConfig", coinType],
     queryFn: () => getCoinConfig(coinType),
+  })
+}
+
+export function useCoinInfoList(name = "", address = "") {
+  return useQuery({
+    // FIXME： queryKey dose not work
+    queryKey: ["coinInfoList", name, address],
+    queryFn: () => getCoinInfoList(name, address),
   })
 }

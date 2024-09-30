@@ -13,7 +13,7 @@ export default function HomeHeader() {
   const [subNav, setSubNav] = useState(false)
   const [router, setRouter] = useState<string>("Home")
   return (
-    <header className={containerStyles}>
+    <header className={containerStyles} style={{ zIndex: 10 }}>
       <div className="flex items-center justify-between py-6 text-xs">
         <div className="flex gap-x-2">
           <img src={logo} alt="" />

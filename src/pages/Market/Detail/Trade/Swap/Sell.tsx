@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { network } from "@/config"
-import { useCoinConfig } from "@/queries"
+import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 
 export default function Sell() {
   const client = useSuiClient()
@@ -57,6 +57,10 @@ export default function Sell() {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: ptRatio } = useQuerySwapRatio(
+    coinConfig?.marketConfigId ?? "",
+    !!coinConfig?.marketConfigId,
+  )
 
   const { data: ptData } = useSuiClientQuery(
     "getCoins",
@@ -239,7 +243,7 @@ export default function Sell() {
           <input
             disabled
             type="text"
-            value={redeemValue}
+            value={new Decimal(redeemValue || 0).div(ptRatio || 0).toString()}
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
