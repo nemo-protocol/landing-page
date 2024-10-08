@@ -1,12 +1,13 @@
 import Decimal from "decimal.js"
+import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+import FailIcon from "@/assets/images/svg/fail.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-// import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import {
   useSuiClient,
@@ -24,16 +25,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {  network } from "@/config"
-import { useCoinConfig } from "@/queries"
+import { network } from "@/config"
+import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [message, setMessage] = useState<string>()
+  const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
-  const [redeemValue, setRedeemValue] = useState("")
+  const [ptRedeemValue, setPTRedeemValue] = useState("")
+  const [ytRedeemValue, setYTRedeemValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction({
       execute: async ({ bytes, signature }) =>
@@ -58,6 +62,19 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
+
+  const { data: mintPYRatio } = useQueryMintPYRatio(
+    coinConfig?.marketConfigId ?? "",
+  )
+
+  const ptytRatio = useMemo(() => {
+    if (mintPYRatio) {
+      return new Decimal(mintPYRatio?.syYtRate)
+        .div(mintPYRatio?.syPtRate)
+        .toString()
+    }
+    return 0
+  }, [mintPYRatio])
 
   const { data: ptData } = useSuiClientQuery(
     "getCoins",
@@ -113,13 +130,12 @@ export default function Mint({ slippage }: { slippage: string }) {
     return 0
   }, [ytData])
 
-  const insufficientBalance = useMemo(
-    () =>
-      new Decimal(Math.min(Number(ptBalance), Number(ytBalance))).lt(
-        redeemValue || 0,
-      ),
-    [ptBalance, ytBalance, redeemValue],
-  )
+  const insufficientBalance = useMemo(() => {
+    return (
+      new Decimal(ptBalance).lt(ptRedeemValue || 0) ||
+      new Decimal(ytBalance).lt(ytRedeemValue || 0)
+    )
+  }, [ptBalance, ytBalance, ptRedeemValue, ytRedeemValue])
 
   async function redeem() {
     if (!insufficientBalance) {
@@ -127,13 +143,11 @@ export default function Mint({ slippage }: { slippage: string }) {
         const tx = new Transaction()
 
         const [ptCoin] = tx.splitCoins(ptData![0].coinObjectId, [
-          new Decimal(redeemValue).mul(1e9).toString(),
+          new Decimal(ptRedeemValue).mul(1e9).toString(),
         ])
         const [ytCoin] = tx.splitCoins(ytData![0].coinObjectId, [
-          new Decimal(redeemValue).mul(1e9).toString(),
+          new Decimal(ytRedeemValue).mul(1e9).toString(),
         ])
-
-        // tx.transferObjects([ptCoin, ytCoin], address!)
 
         const [a, b, syCoin] = tx.moveCall({
           target: `${PackageAddress}::yield_factory::redeemPY_with_coin_back`,
@@ -159,7 +173,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.pure.address(address!),
             syCoin,
             tx.pure.u64(
-              new Decimal(redeemValue)
+              new Decimal(ptRedeemValue)
                 .mul(1e9)
                 .mul(1 - Number(slippage))
                 .toNumber(),
@@ -171,20 +185,32 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         tx.transferObjects([sCoin], address!)
 
-        // tx.setGasBudget(GAS_BUDGET)
-
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
-        setRedeemValue("")
+        setPTRedeemValue("")
+        setYTRedeemValue("")
+        setStatus("Success")
       } catch (error) {
-        console.log("error", error)
+        setOpen(true)
+        setStatus("Failed")
+        setMessage((error as Error)?.message ?? error)
       }
     }
   }
+
+  const debouncedSetPTValue = debounce((value: string) => {
+    setPTRedeemValue(value)
+    setYTRedeemValue(new Decimal(value).div(ptytRatio).toFixed(9))
+  }, 300)
+
+  const debouncedSetYTValue = debounce((value: string) => {
+    setYTRedeemValue(value)
+    setPTRedeemValue(new Decimal(value).mul(ptytRatio).toFixed(9))
+  }, 300)
 
   return (
     <div className="flex flex-col items-center">
@@ -192,20 +218,28 @@ export default function Mint({ slippage }: { slippage: string }) {
         <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-white">
-              Success
+              {status}
             </AlertDialogTitle>
             <AlertDialogDescription className="flex flex-col items-center">
-              <SuccessIcon />
-              <div className="py-2 flex flex-col items-center">
-                <p className=" text-white/50">Transaction submitted!</p>
-                <a
-                  className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                  target="_blank"
-                >
-                  View details
-                </a>
-              </div>
+              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
+              {status === "Success" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-white/50">Transaction submitted!</p>
+                  <a
+                    className="text-[#8FB5FF] underline"
+                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
+                    target="_blank"
+                  >
+                    View details
+                  </a>
+                </div>
+              )}
+              {status === "Failed" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-red-400">Transaction Error</p>
+                  <p className="text-red-500 break-all">{message}</p>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
@@ -235,9 +269,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
           <input
             type="text"
-            value={redeemValue}
+            value={ptRedeemValue}
             disabled={!isConnected}
-            onChange={(e) => setRedeemValue(e.target.value)}
+            onChange={(e) => debouncedSetPTValue(e.target.value)}
             placeholder={!isConnected ? "Please connect wallet" : ""}
             className={`bg-transparent h-full outline-none grow text-right min-w-0`}
           />
@@ -247,7 +281,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setRedeemValue(new Decimal(ptBalance!).div(2).toFixed(9))
+              setPTRedeemValue(new Decimal(ptBalance).div(2).toFixed(9))
             }
           >
             Half
@@ -255,7 +289,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
-            onClick={() => setRedeemValue(new Decimal(ptBalance!).toFixed(9))}
+            onClick={() => setPTRedeemValue(new Decimal(ptBalance).toFixed(9))}
           >
             Max
           </button>
@@ -277,9 +311,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
           <input
             type="text"
-            value={redeemValue}
+            value={ytRedeemValue}
             disabled={!isConnected}
-            onChange={(e) => setRedeemValue(e.target.value)}
+            onChange={(e) => debouncedSetYTValue(e.target.value)}
             placeholder={!isConnected ? "Please connect wallet" : ""}
             className={`bg-transparent h-full outline-none grow text-right min-w-0`}
           />
@@ -289,7 +323,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setRedeemValue(new Decimal(ytBalance!).div(2).toFixed(9))
+              setYTRedeemValue(new Decimal(ytBalance).div(2).toFixed(9))
             }
           >
             Half
@@ -297,7 +331,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
-            onClick={() => setRedeemValue(new Decimal(ytBalance!).toFixed(9))}
+            onClick={() => setYTRedeemValue(new Decimal(ytBalance).toFixed(9))}
           >
             Max
           </button>
@@ -315,7 +349,17 @@ export default function Mint({ slippage }: { slippage: string }) {
           <input
             disabled
             type="text"
-            value={redeemValue}
+            value={
+              (ptRedeemValue || ytRedeemValue) &&
+              Math.min(
+                new Decimal(ptRedeemValue || 0)
+                  .div(mintPYRatio?.syPtRate ?? 1)
+                  .toNumber(),
+                new Decimal(ytRedeemValue || 0)
+                  .div(mintPYRatio?.syYtRate ?? 1)
+                  .toNumber(),
+              ).toFixed(9)
+            }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
@@ -329,11 +373,13 @@ export default function Mint({ slippage }: { slippage: string }) {
           onClick={redeem}
           className={[
             "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
-            redeemValue === ""
+            ptRedeemValue === "" || ytRedeemValue === "" || insufficientBalance
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
-          disabled={redeemValue === ""}
+          disabled={
+            ptRedeemValue === "" || ytRedeemValue === "" || insufficientBalance
+          }
         >
           Redeem
         </button>

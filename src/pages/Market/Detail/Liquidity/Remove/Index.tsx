@@ -1,14 +1,14 @@
 import Decimal from "decimal.js"
-import {  network } from "@/config"
-import { useCoinConfig } from "@/queries"
+import { network } from "@/config"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+import FailIcon from "@/assets/images/svg/fail.svg?react"
+import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-// import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import {
   useSuiClient,
@@ -27,12 +27,13 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Remove() {
-  const ratio = 1
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
-  const [addValue, setAddValue] = useState("")
+  const [lpValue, setLpValue] = useState("")
+  const [message, setMessage] = useState<string>()
+  const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction({
@@ -58,6 +59,12 @@ export default function Remove() {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: dataRatio } = useQueryLPRatio(
+    coinConfig?.marketConfigId ?? "",
+    {
+      enabled: !!coinConfig?.marketConfigId,
+    },
+  )
 
   const { data: lpCoinData } = useSuiClientQuery(
     "getCoins",
@@ -87,11 +94,8 @@ export default function Remove() {
   }, [lpCoinData])
 
   const insufficientBalance = useMemo(
-    () =>
-      new Decimal(lpCoinBalance).lt(
-        new Decimal(addValue || 0).mul(new Decimal(ratio || 0).add(1)),
-      ),
-    [lpCoinBalance, addValue, ratio],
+    () => new Decimal(lpCoinBalance).lt(new Decimal(lpValue || 0)),
+    [lpCoinBalance, lpValue],
   )
 
   async function remove() {
@@ -100,9 +104,7 @@ export default function Remove() {
         const tx = new Transaction()
 
         const [lpCoin] = tx.splitCoins(lpCoinData![0].coinObjectId, [
-          new Decimal(addValue)
-            .mul(1e9)
-            .toString(),
+          new Decimal(lpValue).mul(1e9).toString(),
         ])
 
         tx.moveCall({
@@ -117,17 +119,18 @@ export default function Remove() {
           typeArguments: [coinType!],
         })
 
-        // tx.setGasBudget(GAS_BUDGET)
-
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
-        setAddValue("")
+        setLpValue("")
+        setStatus("Success")
       } catch (error) {
-        console.log("error", error)
+        setOpen(true)
+        setStatus("Failed")
+        setMessage((error as Error)?.message ?? error)
       }
     }
   }
@@ -138,20 +141,28 @@ export default function Remove() {
         <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-white">
-              Success
+              {status}
             </AlertDialogTitle>
             <AlertDialogDescription className="flex flex-col items-center">
-              <SuccessIcon />
-              <div className="py-2 flex flex-col items-center">
-                <p className=" text-white/50">Transaction submitted!</p>
-                <a
-                  className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                  target="_blank"
-                >
-                  View details
-                </a>
-              </div>
+              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
+              {status === "Success" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-white/50">Transaction submitted!</p>
+                  <a
+                    className="text-[#8FB5FF] underline"
+                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
+                    target="_blank"
+                  >
+                    View details
+                  </a>
+                </div>
+              )}
+              {status === "Failed" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-red-400">Transaction Error</p>
+                  <p className="text-red-500 break-all">{message}</p>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
@@ -181,9 +192,9 @@ export default function Remove() {
           </div>
           <input
             type="text"
-            value={addValue}
+            value={lpValue}
             disabled={!isConnected}
-            onChange={(e) => setAddValue(e.target.value)}
+            onChange={(e) => setLpValue(e.target.value)}
             placeholder={!isConnected ? "Please connect wallet" : ""}
             className={`bg-transparent h-full outline-none grow text-right min-w-0`}
           />
@@ -193,7 +204,7 @@ export default function Remove() {
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setAddValue(new Decimal(lpCoinBalance!).div(2).toFixed(9))
+              setLpValue(new Decimal(lpCoinBalance!).div(2).toFixed(9))
             }
           >
             Half
@@ -201,7 +212,7 @@ export default function Remove() {
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
-            onClick={() => setAddValue(new Decimal(lpCoinBalance!).toFixed(9))}
+            onClick={() => setLpValue(new Decimal(lpCoinBalance!).toFixed(9))}
           >
             Max
           </button>
@@ -214,12 +225,14 @@ export default function Remove() {
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
             <span>sSUI</span>
-            {/* <DownArrowIcon /> */}
           </div>
           <input
             disabled
             type="text"
-            value={addValue}
+            value={
+              lpValue &&
+              new Decimal(lpValue).div(dataRatio?.syLpRate || 0).toString()
+            }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
@@ -231,10 +244,10 @@ export default function Remove() {
       ) : (
         <button
           onClick={remove}
-          disabled={addValue === ""}
+          disabled={lpValue === "" || insufficientBalance}
           className={[
             "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
-            addValue === ""
+            lpValue === "" || insufficientBalance
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}

@@ -1,22 +1,22 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
+import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+import { useCoinConfig, useQueryLPRatio } from "@/queries"
+import FailIcon from "@/assets/images/svg/fail.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-// import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import { useCoinConfig, useQueryMintLpAmount } from "@/queries"
 import {
   useSuiClient,
   useCurrentWallet,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
-
 import {
   AlertDialog,
   AlertDialogTitle,
@@ -25,15 +25,15 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
-import { debounce } from "@/lib/utils"
 
 export default function Mint({ slippage }: { slippage: string }) {
-  const ratio = 1
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [addValue, setAddValue] = useState("")
+  const [message, setMessage] = useState<string>()
+  const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction({
@@ -59,32 +59,19 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
-
-  const syCoinAmount = useMemo(() => {
-    if (addValue !== "" && !isNaN(Number(addValue)) && Number(addValue) >= 0) {
-      return new Decimal(addValue)
-        .mul(1e9)
-        .div(new Decimal(ratio).add(1))
-        .toString()
-    }
-  }, [addValue, ratio])
-
-  const ptCoinAmount = useMemo(() => {
-    if (addValue !== "" && !isNaN(Number(addValue)) && Number(addValue) >= 0) {
-      return new Decimal(addValue ?? 0)
-        .mul(1e9)
-        .mul(ratio)
-        .div(new Decimal(ratio).add(1))
-        .toString()
-    }
-  }, [addValue, ratio])
-
-  const { data: lpAmount, isLoading } = useQueryMintLpAmount(
-    coinConfig!.marketConfigId,
-    syCoinAmount!,
-    ptCoinAmount!,
-    !!coinConfig?.marketConfigId && !!syCoinAmount && !!ptCoinAmount,
+  const { data: dataRatio } = useQueryLPRatio(
+    coinConfig?.marketConfigId ?? "",
+    {
+      enabled: !!coinConfig?.marketConfigId,
+    },
   )
+
+  const ratio = useMemo(() => {
+    if (dataRatio) {
+      return new Decimal(dataRatio.splitRate).toNumber()
+    }
+    return 0
+  }, [dataRatio])
 
   const { data: coinData } = useSuiClientQuery(
     "getCoins",
@@ -114,11 +101,8 @@ export default function Mint({ slippage }: { slippage: string }) {
   }, [coinData])
 
   const insufficientBalance = useMemo(
-    () =>
-      new Decimal(coinBalance).lt(
-        new Decimal(addValue || 0).mul(new Decimal(ratio || 0).add(1)),
-      ),
-    [coinBalance, addValue, ratio],
+    () => new Decimal(coinBalance).lt(new Decimal(addValue || 0)),
+    [coinBalance, addValue],
   )
 
   async function add() {
@@ -130,13 +114,13 @@ export default function Mint({ slippage }: { slippage: string }) {
           [
             new Decimal(addValue)
               .mul(1e9)
-              .mul(ratio)
               .div(new Decimal(ratio).add(1))
-              .toString(),
+              .toFixed(0),
             new Decimal(addValue)
               .mul(1e9)
+              .mul(ratio)
               .div(new Decimal(ratio).add(1))
-              .toString(),
+              .toFixed(0),
           ],
         )
 
@@ -213,8 +197,11 @@ export default function Mint({ slippage }: { slippage: string }) {
         setTxId(digest)
         setOpen(true)
         setAddValue("")
+        setStatus("Success")
       } catch (error) {
-        console.log("error", error)
+        setOpen(true)
+        setStatus("Failed")
+        setMessage((error as Error)?.message ?? error)
       }
     }
   }
@@ -229,20 +216,28 @@ export default function Mint({ slippage }: { slippage: string }) {
         <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-white">
-              Success
+              {status}
             </AlertDialogTitle>
             <AlertDialogDescription className="flex flex-col items-center">
-              <SuccessIcon />
-              <div className="py-2 flex flex-col items-center">
-                <p className=" text-white/50">Transaction submitted!</p>
-                <a
-                  className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                  target="_blank"
-                >
-                  View details
-                </a>
-              </div>
+              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
+              {status === "Success" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-white/50">Transaction submitted!</p>
+                  <a
+                    className="text-[#8FB5FF] underline"
+                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
+                    target="_blank"
+                  >
+                    View details
+                  </a>
+                </div>
+              )}
+              {status === "Failed" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-red-400">Transaction Error</p>
+                  <p className="text-red-500 break-all">{message}</p>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
@@ -307,13 +302,13 @@ export default function Mint({ slippage }: { slippage: string }) {
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
             <span>LP sSUI</span>
-            {/* <DownArrowIcon /> */}
           </div>
           <input
             disabled
             type="text"
             value={
-              lpAmount ? new Decimal(lpAmount).div(1e9).toString() : undefined
+              addValue &&
+              new Decimal(addValue).mul(dataRatio?.syLpRate || 0).toString()
             }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
@@ -326,15 +321,15 @@ export default function Mint({ slippage }: { slippage: string }) {
       ) : (
         <button
           onClick={add}
-          disabled={addValue === "" || isLoading}
+          disabled={addValue === "" || insufficientBalance}
           className={[
             "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
-            addValue === ""
+            addValue === "" || insufficientBalance
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >
-          {isLoading ? "Calculating" : "Add Liquidity"}
+          Add Liquidity
         </button>
       )}
     </div>

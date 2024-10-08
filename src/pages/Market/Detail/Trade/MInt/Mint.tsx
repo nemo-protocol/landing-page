@@ -5,8 +5,8 @@ import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+import FailIcon from "@/assets/images/svg/fail.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-// import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import {
   useSuiClient,
@@ -15,7 +15,7 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
-import {  network } from "@/config"
+import { network } from "@/config"
 
 import {
   AlertDialog,
@@ -25,13 +25,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useCoinConfig } from "@/queries"
+import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [message, setMessage] = useState<string>()
+  const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
   const [mintValue, setMintValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
@@ -86,6 +88,10 @@ export default function Mint({ slippage }: { slippage: string }) {
     return 0
   }, [coinData])
 
+  const { data: mintPYRatio } = useQueryMintPYRatio(
+    coinConfig?.marketConfigId ?? "",
+  )
+
   const insufficientBalance = useMemo(
     () => new Decimal(coinBalance).lt(mintValue || 0),
     [coinBalance, mintValue],
@@ -116,8 +122,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        // tx.transferObjects([syCoin], address!)
-
         const [ptCoin, ytCoin] = tx.moveCall({
           target: `${PackageAddress}::yield_factory::mintPY`,
           arguments: [
@@ -145,8 +149,11 @@ export default function Mint({ slippage }: { slippage: string }) {
         setTxId(digest)
         setOpen(true)
         setMintValue("")
+        setStatus("Success")
       } catch (error) {
-        console.log("error", error)
+        setOpen(true)
+        setStatus("Failed")
+        setMessage((error as Error)?.message ?? error)
       }
     }
   }
@@ -157,20 +164,28 @@ export default function Mint({ slippage }: { slippage: string }) {
         <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-white">
-              Success
+              {status}
             </AlertDialogTitle>
             <AlertDialogDescription className="flex flex-col items-center">
-              <SuccessIcon />
-              <div className="py-2 flex flex-col items-center">
-                <p className=" text-white/50">Transaction submitted!</p>
-                <a
-                  className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                  target="_blank"
-                >
-                  View details
-                </a>
-              </div>
+              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
+              {status === "Success" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-white/50">Transaction submitted!</p>
+                  <a
+                    className="text-[#8FB5FF] underline"
+                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
+                    target="_blank"
+                  >
+                    View details
+                  </a>
+                </div>
+              )}
+              {status === "Failed" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-red-400">Transaction Error</p>
+                  <p className="text-red-500 break-all">{message}</p>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
@@ -238,7 +253,10 @@ export default function Mint({ slippage }: { slippage: string }) {
           <input
             disabled
             type="text"
-            value={mintValue}
+            value={
+              mintValue &&
+              new Decimal(mintValue).div(mintPYRatio?.syPtRate ?? 0).toString()
+            }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
@@ -253,7 +271,10 @@ export default function Mint({ slippage }: { slippage: string }) {
         <input
           disabled
           type="text"
-          value={mintValue}
+          value={
+            mintValue &&
+            new Decimal(mintValue).div(mintPYRatio?.syYtRate ?? 0).toString()
+          }
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>

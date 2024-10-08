@@ -33,6 +33,38 @@ async function getMintLpAmount(
 async function getSwapRatio(marketConfigId: string) {
   return await nemoApi<string>("/api/v1/market/swap/exchangeRate").get({
     marketConfigId,
+    
+  })
+}
+
+interface MintPYResult {
+  syPtRate: number
+  syYtRate: number
+}
+
+async function getMintPYRatio(marketConfigId: string) {
+  return await nemoApi<MintPYResult>("/api/v1/market/py/mintConfig").get({
+    marketConfigId,
+  })
+}
+
+export function useQueryMintPYRatio(marketConfigId: string) {
+  return useQuery({
+    queryKey: ["mintPYRatio", marketConfigId],
+    queryFn: () => getMintPYRatio(marketConfigId),
+    enabled: !!marketConfigId,
+  })
+}
+
+interface LPResult {
+  syLpRate: number
+  splitRate: number
+}
+
+async function getLPRatio(marketConfigId: string, mintType?: string) {
+  return await nemoApi<LPResult>("/api/v1/market/lp/mintConfig").get({
+    marketConfigId,
+    mintType,
   })
 }
 
@@ -56,6 +88,22 @@ export function useQuerySwapRatio(marketConfigId: string, enabled: boolean) {
     queryFn: () => getSwapRatio(marketConfigId),
     refetchInterval: 1000 * 30,
     enabled,
+  })
+}
+
+export function useQueryLPRatio(
+  marketConfigId: string,
+  options: {
+    enabled: boolean
+    mintType?: string
+  },
+) {
+  return useQuery({
+    // FIXME： queryKey dose not work
+    queryKey: ["lpRatio", marketConfigId, options?.mintType],
+    queryFn: () => getLPRatio(marketConfigId, options?.mintType),
+    enabled: options.enabled,
+    refetchInterval: 1000 * 30,
   })
 }
 
