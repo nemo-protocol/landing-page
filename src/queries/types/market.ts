@@ -1,5 +1,6 @@
 export interface CoinInfo {
   coinLogo: string;
+  maturity: string;
   coinName: string;
   underlyingPrice: number;
   coinAddress: string;

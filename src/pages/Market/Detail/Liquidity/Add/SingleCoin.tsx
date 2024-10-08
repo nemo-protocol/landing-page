@@ -190,6 +190,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
+        tx.setGasBudget(0.1 * 1e9)
+
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,

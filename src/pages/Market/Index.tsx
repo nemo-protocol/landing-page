@@ -1,3 +1,4 @@
+import dayjs from "dayjs"
 import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
 import { Link, useNavigate } from "react-router-dom"
@@ -46,16 +47,12 @@ export default function Home() {
           </div>
           <Logo />
         </div>
-        <div className="mt-[23px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="mt-[23px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 ">
           {list?.map((item) => (
             <div
               key={item.coinAddress}
-              className="p-5 rounded-[21.544px] bg-[#0E0F16] cursor-pointer"
-              onClick={() =>
-                navigate(
-                  `/market/detail/${item.coinAddress}`,
-                )
-              }
+              className="p-5 rounded-[21.544px] bg-[#0E0F16] cursor-pointer transition-all duration-300 ease-in-out"
+              onClick={() => navigate(`/market/detail/${item.coinAddress}`)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-y-2.5">
@@ -78,9 +75,22 @@ export default function Home() {
               <div className="py-3 px-3.5 rounded-xl bg-[#131520] mt-6">
                 <div className="flex items-center justify-between">
                   <h6 className="text-white/60 scale-75">TVL</h6>
-                  <div className="rounded-full py-1 px-5 scale-[0.6] origin-right text-white bg-[#1D2033]">
-                    28 Aug 2024 <span className="text-[#2DF4DD]">41 DAYS</span>
-                  </div>
+                  {item.maturity && (
+                    <div className="rounded-full py-1 px-5 scale-[0.6] origin-right text-white bg-[#1D2033] shrink-0">
+                      <span>
+                        {dayjs(parseInt(item.maturity) * 1000).format(
+                          "DD MMM YYYY",
+                        )}
+                      </span>
+                      <span className="text-[#2DF4DD] ml-2">
+                        {dayjs(parseInt(item.maturity) * 1000).diff(
+                          dayjs(),
+                          "day",
+                        )}
+                        &nbsp; DAYS
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <p className="mt-1.5 text-white">
                   ${item.tvl.toLocaleString()}
