@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Mint({ slippage }: { slippage: string }) {
+  const ratio = 0.579307446
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
@@ -65,13 +66,6 @@ export default function Mint({ slippage }: { slippage: string }) {
       enabled: !!coinConfig?.marketConfigId,
     },
   )
-
-  const ratio = useMemo(() => {
-    if (dataRatio) {
-      return new Decimal(dataRatio.splitRate).toNumber()
-    }
-    return 0
-  }, [dataRatio])
 
   const { data: coinData } = useSuiClientQuery(
     "getCoins",
