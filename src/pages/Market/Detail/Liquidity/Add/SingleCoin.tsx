@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Mint({ slippage }: { slippage: string }) {
-  const ratio = 0.579307446
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
@@ -66,6 +65,7 @@ export default function Mint({ slippage }: { slippage: string }) {
       enabled: !!coinConfig?.marketConfigId,
     },
   )
+  const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio])
 
   const { data: coinData } = useSuiClientQuery(
     "getCoins",
@@ -100,7 +100,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function add() {
-    if (!insufficientBalance) {
+    if (!insufficientBalance && ratio) {
       try {
         const tx = new Transaction()
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
@@ -126,8 +126,9 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(1e9)
+                .div(new Decimal(ratio).add(1))
                 .mul(1 - Number(slippage))
-                .toNumber(),
+                .toFixed(0),
             ),
             tx.object(coinConfig!.syStructId),
           ],
@@ -160,8 +161,10 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(1e9)
+                .mul(ratio)
+                .div(new Decimal(ratio).add(1))
                 .mul(1 - Number(slippage))
-                .toNumber(),
+                .toFixed(0),
             ),
             tx.object(coinConfig!.syStructId),
           ],
