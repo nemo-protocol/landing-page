@@ -1,11 +1,22 @@
 import { nemoApi } from "./request"
 import { useQuery } from "@tanstack/react-query"
-import { CoinInfo, CoinConfig } from "./types/market"
+import { CoinInfo, CoinConfig, FixedReturnItem } from "./types/market"
 
 function getCoinInfoList(name = "", address = "") {
   return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo").get({
     name,
     address,
+  })
+}
+
+function getFixedReturnInfos() {
+  return nemoApi<FixedReturnItem[]>("/api/v1/fixReturn/detail").get()
+}
+
+export function useQueryFixedReturnInfos() {
+  return useQuery({
+    queryKey: ["FixedReturnInfos"],
+    queryFn: () => getFixedReturnInfos(),
   })
 }
 
@@ -30,10 +41,10 @@ async function getMintLpAmount(
   return amount
 }
 
-async function getSwapRatio(marketConfigId: string) {
+async function getSwapRatio(marketConfigId: string, tokenType: string) {
   return await nemoApi<string>("/api/v1/market/swap/exchangeRate").get({
     marketConfigId,
-    
+    tokenType,
   })
 }
 
@@ -81,11 +92,15 @@ export function useQueryMintLpAmount(
   })
 }
 
-export function useQuerySwapRatio(marketConfigId: string, enabled: boolean) {
+export function useQuerySwapRatio(
+  marketConfigId: string,
+  tokenType: string,
+  enabled: boolean,
+) {
   return useQuery({
     // FIXME： queryKey dose not work
-    queryKey: ["swapRatio", marketConfigId],
-    queryFn: () => getSwapRatio(marketConfigId),
+    queryKey: ["swapRatio", marketConfigId, tokenType],
+    queryFn: () => getSwapRatio(marketConfigId, tokenType),
     refetchInterval: 1000 * 30,
     enabled,
   })

@@ -30,6 +30,8 @@ export default function Sell() {
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
+  // const [tokenType, setTokenType] = useState("py")
+  const tokenType = "pt"
   const [open, setOpen] = useState(false)
   const { currentWallet, isConnected } = useCurrentWallet()
   const [redeemValue, setRedeemValue] = useState("")
@@ -57,8 +59,9 @@ export default function Sell() {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
-  const { data: ptRatio } = useQuerySwapRatio(
+  const { data: ratio } = useQuerySwapRatio(
     coinConfig?.marketConfigId ?? "",
+    tokenType,
     !!coinConfig?.marketConfigId,
   )
 
@@ -243,7 +246,9 @@ export default function Sell() {
           <input
             disabled
             type="text"
-            value={new Decimal(redeemValue || 0).div(ptRatio || 0).toString()}
+            value={
+              redeemValue && new Decimal(redeemValue).div(ratio || 0).toString()
+            }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>

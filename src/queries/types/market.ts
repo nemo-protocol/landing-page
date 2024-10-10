@@ -30,4 +30,15 @@ export interface CoinConfig {
   marketFactoryConfigId: string;
 }
 
+export interface FixedReturnItem {
+  name: string;
+  youPay: number;
+  expiry: number;
+  redeem: number;
+  fixedReturn: number;
+  fixedApy: number;
+  coinLogo: string;
+  coinType: string;
+}
+
 

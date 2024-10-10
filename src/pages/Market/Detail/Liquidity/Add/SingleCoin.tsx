@@ -205,6 +205,147 @@ export default function Mint({ slippage }: { slippage: string }) {
     }
   }
 
+  // async function add() {
+  //   if (!insufficientBalance && ratio) {
+  //     try {
+  //       const tx1 = new Transaction()
+  //       const [splitCoinForPY, splitCoin] = tx1.splitCoins(
+  //         coinData![0].coinObjectId,
+  //         [
+  //           new Decimal(addValue)
+  //             .mul(1e9)
+  //             .div(new Decimal(ratio).add(1))
+  //             .toFixed(0),
+  //           new Decimal(addValue)
+  //             .mul(1e9)
+  //             .mul(ratio)
+  //             .div(new Decimal(ratio).add(1))
+  //             .toFixed(0),
+  //         ],
+  //       )
+
+  //       const [syCoin] = tx1.moveCall({
+  //         target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
+  //         arguments: [
+  //           tx1.pure.address(address!),
+  //           splitCoin,
+  //           tx1.pure.u64(
+  //             new Decimal(addValue)
+  //               .mul(1e9)
+  //               .mul(ratio)
+  //               .div(new Decimal(ratio).add(1))
+  //               .mul(1 - Number(slippage))
+  //               .toFixed(0),
+  //           ),
+  //           tx1.object(coinConfig!.syStructId),
+  //         ],
+  //         typeArguments: [coinType!],
+  //       })
+
+  //       tx1.transferObjects([splitCoinForPY, syCoin], address!)
+
+  //       const data = await signAndExecuteTransaction({
+  //         transaction: tx1,
+  //         chain: `sui:${network}`,
+  //       })
+
+  //       console.log("data", data)
+
+  //       const sy = data!.effects!.created![0].reference.objectId
+  //       const sSUIForPT = data!.effects!.created![1].reference.objectId
+
+  //       console.log("sy", sy)
+  //       console.log("sSUIForPT", sSUIForPT)
+
+  //       const tx2 = new Transaction()
+
+  //       const [syCoinForPY] = tx2.moveCall({
+  //         target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
+  //         arguments: [
+  //           tx2.pure.address(address!),
+  //           tx2.object(sSUIForPT),
+  //           tx2.pure.u64(
+  //             new Decimal(addValue)
+  //               .mul(1e9)
+  //               .div(new Decimal(ratio).add(1))
+  //               .mul(1 - Number(slippage))
+  //               .toFixed(0),
+  //           ),
+  //           tx2.object(coinConfig!.syStructId),
+  //         ],
+  //         typeArguments: [coinType!],
+  //       })
+
+  //       const [ptCoin, ytCoin] = tx2.moveCall({
+  //         target: `${PackageAddress}::yield_factory::mintPY`,
+  //         arguments: [
+  //           tx2.pure.address(address!),
+  //           tx2.pure.address(address!),
+  //           syCoinForPY,
+  //           tx2.object(coinConfig!.syStructId),
+  //           tx2.object(coinConfig!.ptStructId),
+  //           tx2.object(coinConfig!.ytStructId),
+  //           tx2.object(coinConfig!.tokenConfigId),
+  //           tx2.object(coinConfig!.yieldFactoryConfigId),
+  //           tx2.object("0x6"),
+  //         ],
+  //         typeArguments: [coinType!],
+  //       })
+
+  //       tx2.transferObjects([ptCoin, ytCoin], address!)
+
+  //       tx2.setGasBudget(0.01 * 1e9)
+
+  //       const data1 = await signAndExecuteTransaction({
+  //         transaction: tx2,
+  //         chain: `sui:${network}`,
+  //       })
+
+  //       console.log(data1)
+
+  //       const yt = data1!.effects!.created![0].reference.objectId
+  //       const pt = data1!.effects!.created![1].reference.objectId
+
+  //       console.log("pt", pt)
+  //       console.log("yt", yt)
+
+  //       const tx3 = new Transaction()
+
+  //       tx3.moveCall({
+  //         target: `${PackageAddress}::market::mint_lp`,
+  //         arguments: [
+  //           tx3.pure.address(address!),
+  //           tx3.object(pt),
+  //           tx3.object(sy),
+  //           tx3.object(coinConfig!.yieldFactoryConfigId),
+  //           tx3.object(coinConfig!.syStructId),
+  //           tx3.object(coinConfig!.tokenConfigId),
+  //           tx3.object(coinConfig!.marketConfigId),
+  //           tx3.object(coinConfig!.marketStateId),
+  //           tx3.object("0x6"),
+  //         ],
+  //         typeArguments: [coinType!],
+  //       })
+
+  //       tx3.setGasBudget(0.01 * 1e9)
+
+  //       const data2 = await signAndExecuteTransaction({
+  //         transaction: tx3,
+  //         chain: `sui:${network}`,
+  //       })
+
+  //       setTxId(data2.digest)
+  //       setOpen(true)
+  //       debouncedSetAddValue("")
+  //       setStatus("Success")
+  //     } catch (error) {
+  //       setOpen(true)
+  //       setStatus("Failed")
+  //       setMessage((error as Error)?.message ?? error)
+  //     }
+  //   }
+  // }
+
   const debouncedSetAddValue = debounce((value: string) => {
     setAddValue(value)
   }, 300)
@@ -262,11 +403,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
             <SSUIIcon className="size-6" />
             <span>sSUI</span>
-            {/* <DownArrowIcon /> */}
           </div>
           <input
             type="text"
-            // value={addValue}
             disabled={!isConnected}
             onChange={(e) =>
               debouncedSetAddValue(new Decimal(e.target.value).toString())

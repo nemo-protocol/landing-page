@@ -30,6 +30,8 @@ export default function Mint({ slippage }: { slippage: string }) {
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  // const [tokenType, setTokenType] = useState("py")
+  const tokenType = "pt"
   const { currentWallet, isConnected } = useCurrentWallet()
   const [mintValue, setMintValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
@@ -56,8 +58,9 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
-  const { data: ptRatio } = useQuerySwapRatio(
+  const { data: ratio } = useQuerySwapRatio(
     coinConfig?.marketConfigId ?? "",
+    tokenType,
     !!coinConfig?.marketConfigId,
   )
 
@@ -242,7 +245,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           <input
             disabled
             type="text"
-            value={new Decimal(mintValue || 0).mul(ptRatio || 0).toString()}
+            value={
+              mintValue && new Decimal(mintValue).mul(ratio || 0).toString()
+            }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
