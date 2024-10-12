@@ -107,10 +107,7 @@ export default function Home() {
                   <div className="flex flex-col gap-y-1">
                     <div className="text-white/60 text-xs">Underlying Apy</div>
                     <div className="text-white mt-1">
-                      {(
-                        Math.ceil(Number(item.underlyingApy) * 100) / 100
-                      ).toFixed(2)}
-                      %
+                      {Math.ceil(Number(item.underlyingApy) * 100).toString()}%
                     </div>
                   </div>
                 </div>
