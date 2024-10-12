@@ -40,7 +40,7 @@ export default function Header() {
           <ul className="md:flex items-center text-sm hidden">
             <li
               className={[
-                "text-center bg-transparent py-2 rounded-full cursor-pointer",
+                "text-center bg-transparent py-2 rounded-full cursor-pointer hidden",
               ].join(" ")}
             >
               <Link
