@@ -6,6 +6,7 @@ import Star from "@/assets/images/svg/market/star.svg"
 import Crown from "@/assets/images/svg/market/crown.svg"
 import Diamond from "@/assets/images/svg/market/diamond.svg"
 import Logo from "@/assets/images/svg/market/logo.svg?react"
+import Decimal from "decimal.js"
 
 export default function Home() {
   const navigate = useNavigate()
@@ -107,7 +108,7 @@ export default function Home() {
                   <div className="flex flex-col gap-y-1">
                     <div className="text-white/60 text-xs">Underlying Apy</div>
                     <div className="text-white mt-1">
-                      {Math.ceil(Number(item.underlyingApy) * 100).toFixed(2)}%
+                      {new Decimal(item.underlyingApy).mul(100).toFixed(2)}%
                     </div>
                   </div>
                 </div>
@@ -119,8 +120,7 @@ export default function Home() {
                     <span className="text-white text-xl">YT</span>
                     <div className="flex flex-col items-end">
                       <span className="text-sm text-white">
-                        {(Math.ceil(Number(item.ytApy) * 100) / 100).toFixed(2)}
-                        %
+                        {new Decimal(item.ytApy).toFixed(2)}%
                       </span>
                       <span className="text-xs text-white">
                         ${item.ytPrice.toLocaleString()}
@@ -131,8 +131,7 @@ export default function Home() {
                     <span className="text-xl">PT</span>
                     <div className="flex flex-col items-end">
                       <span className="text-sm">
-                        {(Math.ceil(Number(item.ptApy) * 100) / 100).toFixed(2)}
-                        %
+                        {new Decimal(Number(item.ptApy)).toFixed(2)}%
                       </span>
                       <span className="text-xs">
                         ${item.ptPrice.toLocaleString()}
@@ -145,9 +144,7 @@ export default function Home() {
                 <h6 className="text-xs">Earn</h6>
                 <button className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-xs bg-[#62CAFF] w-full text-black h-14">
                   <span>+ POOL APY</span>
-                  <span>
-                    {(Math.ceil(Number(item.poolApy) * 100) / 100).toFixed(2)}%
-                  </span>
+                  <span>{new Decimal(item.poolApy).toFixed(2)}%</span>
                 </button>
               </div>
             </div>
