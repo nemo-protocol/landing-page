@@ -108,10 +108,9 @@ export default function Sell() {
 
         // tx.transferObjects([ptCoin], address!)
 
-        tx.moveCall({
+        const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::market::swap_exact_pt_for_sy`,
           arguments: [
-            tx.pure.address(address!),
             tx.object(coinConfig!.marketFactoryConfigId),
             tx.object(coinConfig!.yieldFactoryConfigId),
             ptCoin,
@@ -124,7 +123,7 @@ export default function Sell() {
           typeArguments: [coinType!],
         })
 
-        // tx.transferObjects([syCoin], address!)
+        tx.transferObjects([syCoin], address!)
 
         // tx.moveCall({
         //   target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,

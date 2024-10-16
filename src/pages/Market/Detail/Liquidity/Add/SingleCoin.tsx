@@ -66,6 +66,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     },
   )
   const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio])
+  // const ratio = 1
 
   const { data: coinData } = useSuiClientQuery(
     "getCoins",
@@ -100,7 +101,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function add() {
-    if (!insufficientBalance && ratio) {
+    if (!insufficientBalance && ratio && coinType && address) {
       try {
         const tx = new Transaction()
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
@@ -119,9 +120,8 @@ export default function Mint({ slippage }: { slippage: string }) {
         )
 
         const [syCoinForPY] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
+          target: `${PackageAddress}::sy_sSui::deposit`,
           arguments: [
-            tx.pure.address(address!),
             splitCoinForPY,
             tx.pure.u64(
               new Decimal(addValue)
@@ -132,14 +132,12 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig!.syStructId),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinType],
         })
 
         const [ptCoin, ytCoin] = tx.moveCall({
-          target: `${PackageAddress}::yield_factory::mintPY`,
+          target: `${PackageAddress}::yield_factory::mint_py`,
           arguments: [
-            tx.pure.address(address!),
-            tx.pure.address(address!),
             syCoinForPY,
             tx.object(coinConfig!.syStructId),
             tx.object(coinConfig!.ptStructId),
@@ -154,9 +152,8 @@ export default function Mint({ slippage }: { slippage: string }) {
         tx.transferObjects([ytCoin], address!)
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
+          target: `${PackageAddress}::sy_sSui::deposit`,
           arguments: [
-            tx.pure.address(address!),
             splitCoin,
             tx.pure.u64(
               new Decimal(addValue)
@@ -171,10 +168,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        tx.moveCall({
+        const [p, y, lp] = tx.moveCall({
           target: `${PackageAddress}::market::mint_lp`,
           arguments: [
-            tx.pure.address(address!),
             ptCoin,
             syCoin,
             tx.object(coinConfig!.yieldFactoryConfigId),
@@ -187,7 +183,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        tx.setGasBudget(0.1 * 1e9)
+        tx.transferObjects([p, y, lp], address!)
+
+        // tx.setGasBudget(0.01 * 1e9)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
@@ -225,7 +223,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   //       )
 
   //       const [syCoin] = tx1.moveCall({
-  //         target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
+  //         target: `${PackageAddress}::sy_sSui::deposit`,
   //         arguments: [
   //           tx1.pure.address(address!),
   //           splitCoin,
@@ -260,7 +258,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   //       const tx2 = new Transaction()
 
   //       const [syCoinForPY] = tx2.moveCall({
-  //         target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
+  //         target: `${PackageAddress}::sy_sSui::deposit`,
   //         arguments: [
   //           tx2.pure.address(address!),
   //           tx2.object(sSUIForPT),

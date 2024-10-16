@@ -149,10 +149,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           new Decimal(ytRedeemValue).mul(1e9).toString(),
         ])
 
-        const [a, b, syCoin] = tx.moveCall({
-          target: `${PackageAddress}::yield_factory::redeemPY_with_coin_back`,
+        const [pt, yt, syCoin] = tx.moveCall({
+          target: `${PackageAddress}::yield_factory::redeem_py`,
           arguments: [
-            tx.pure.address(address!),
             ptCoin,
             ytCoin,
             tx.object(coinConfig!.syStructId),
@@ -165,7 +164,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        tx.transferObjects([a, b], address!)
+        tx.transferObjects([pt, yt], address!)
 
         const [sCoin] = tx.moveCall({
           target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,

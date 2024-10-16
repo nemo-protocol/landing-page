@@ -131,9 +131,8 @@ export default function Mint({ slippage }: { slippage: string }) {
         ])
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
+          target: `${PackageAddress}::sy_sSui::deposit`,
           arguments: [
-            tx.pure.address(address!),
             splitCoin,
             tx.pure.u64(
               new Decimal(sCoinValue)
@@ -147,10 +146,8 @@ export default function Mint({ slippage }: { slippage: string }) {
         })
 
         const [ptCoin, ytCoin] = tx.moveCall({
-          target: `${PackageAddress}::yield_factory::mintPY`,
+          target: `${PackageAddress}::yield_factory::mint_py`,
           arguments: [
-            tx.pure.address(address!),
-            tx.pure.address(address!),
             syCoin,
             tx.object(coinConfig!.syStructId),
             tx.object(coinConfig!.ptStructId),

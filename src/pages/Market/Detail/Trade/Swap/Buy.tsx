@@ -13,7 +13,7 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
-import { network } from "@/config"
+import { GAS_BUDGET, network } from "@/config"
 
 import {
   AlertDialog,
@@ -97,7 +97,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function mint() {
-    if (!insufficientBalance) {
+    if (!insufficientBalance && address) {
       try {
         const tx = new Transaction()
 
@@ -106,9 +106,8 @@ export default function Mint({ slippage }: { slippage: string }) {
         ])
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit_with_coin_back`,
+          target: `${PackageAddress}::sy_sSui::deposit`,
           arguments: [
-            tx.pure.address(address!),
             splitCoin,
             tx.pure.u64(
               new Decimal(mintValue)
@@ -121,10 +120,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        tx.moveCall({
+        const [sy, pt] = tx.moveCall({
           target: `${PackageAddress}::market::swap_sy_for_exact_pt`,
           arguments: [
-            tx.pure.address(address!),
             tx.pure.u64(
               new Decimal(mintValue)
                 .mul(1e9)
@@ -143,7 +141,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType!],
         })
 
-        // tx.setGasBudget(GAS_BUDGET)
+        tx.transferObjects([sy, pt], address)
+
+        tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),
