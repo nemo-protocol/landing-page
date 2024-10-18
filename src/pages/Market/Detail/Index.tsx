@@ -1,9 +1,9 @@
+import { useState } from "react"
 import Trade from "./Trade/Index.tsx"
 import Header from "@/components/Header"
-import { useState } from "react"
 import Liquidity from "./Liquidity/Index.tsx"
 import sSUI from "@/assets/images/svg/sSUI.svg"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import {
@@ -35,8 +35,11 @@ const chartConfig = {
 
 export default function Home() {
   const navigate = useNavigate()
+  const { coinType, operation = "swap" } = useParams<{
+    coinType: string
+    operation?: string
+  }>()
   const [type, setType] = useState<"APY" | "Price">("APY")
-  const [nav, setNav] = useState<"Trade" | "Liquidity">("Trade")
   const [tab, setTab] = useState<"Details" | "Calculator">("Details")
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
 
@@ -45,7 +48,7 @@ export default function Home() {
       <Header />
       <div className="py-10 relative px-6 xl:px-0">
         <h3
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/market')}
           className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
         >
           <LeftArrow />
@@ -55,26 +58,34 @@ export default function Home() {
           <div className="w-full xl:w-[360px] flex flex-col gap-y-5">
             <div className="w-full flex items-center h-[50px] bg-[#0E0F16] rounded-[40px]">
               <div
-                onClick={() => setNav("Trade")}
+                onClick={() =>
+                  !["swap", "mint"].includes(operation) &&
+                  navigate(`/market/detail/${coinType}/swap`)
+                }
                 className={[
                   "flex-1 rounded-[40px] h-full flex items-center justify-center",
-                  nav === "Trade" ? "bg-[#0F60FF]" : "cursor-pointer",
+                  ["swap", "mint"].includes(operation)
+                    ? "bg-[#0F60FF]"
+                    : "cursor-pointer",
                 ].join(" ")}
               >
                 Trade
               </div>
               <div
-                onClick={() => setNav("Liquidity")}
+                onClick={() =>
+                  operation !== "liquidity" &&
+                  navigate(`/market/detail/${coinType}/liquidity`)
+                }
                 className={[
                   "flex-1 rounded-[40px] h-full flex items-center justify-center",
-                  nav === "Liquidity" ? "bg-[#0F60FF]" : "cursor-pointer",
+                  operation === "liquidity" ? "bg-[#0F60FF]" : "cursor-pointer",
                 ].join(" ")}
               >
                 Liquidity
               </div>
             </div>
-            {nav === "Trade" && <Trade />}
-            {nav === "Liquidity" && <Liquidity />}
+            {["swap", "mint"].includes(operation) && <Trade />}
+            {operation === "liquidity" && <Liquidity />}
           </div>
           <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
             <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">

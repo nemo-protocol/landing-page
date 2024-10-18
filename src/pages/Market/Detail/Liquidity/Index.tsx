@@ -1,6 +1,7 @@
 import Add from "./Add/Index"
 import Remove from "./Remove/Index"
 import { useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import SwitchIcon from "@/assets/images/svg/switch.svg?react"
 import LoadingIcon from "@/assets/images/svg/loading.svg?react"
 import {
@@ -10,24 +11,34 @@ import {
 } from "@/components/ui/popover"
 
 export default function Trade() {
+  const navigate = useNavigate()
   const [slippage, setSlippage] = useState("0.5")
-  const [nav, setNav] = useState<"Add" | "Remove">("Add")
+  const { action = "add", coinType } = useParams<{
+    action?: string
+    coinType: string
+  }>()
   return (
     <div className="w-full bg-[#0E0F16] rounded-[40px] px-5 py-7 flex flex-col gap-y-4.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-x-7">
           <span
-            onClick={() => setNav("Add")}
+            onClick={() =>
+              action !== "add" &&
+              navigate(`/market/detail/${coinType}/liquidity/add`)
+            }
             className={
-              nav === "Add" ? "text-white" : "text-white/50 cursor-pointer"
+              action === "add" ? "text-white" : "text-white/50 cursor-pointer"
             }
           >
             Add
           </span>
           <span
-            onClick={() => setNav("Remove")}
+            onClick={() =>
+              action !== "remove" &&
+              navigate(`/market/detail/${coinType}/liquidity/remove`)
+            }
             className={
-              nav === "Remove" ? "text-white" : "text-white/50 cursor-pointer"
+              action === "remove" ? "text-white" : "text-white/50 cursor-pointer"
             }
           >
             Remove
@@ -85,8 +96,8 @@ export default function Trade() {
           </div>
         </div>
       </div>
-      {nav === "Add" && <Add slippage={slippage} />}
-      {nav === "Remove" && <Remove />}
+      {action === "add" && <Add slippage={slippage} />}
+      {action === "remove" && <Remove />}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import Mint from "./MInt/Index"
 import Swap from "./Swap/Index"
 import { useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import SwitchIcon from "@/assets/images/svg/switch.svg?react"
 import LoadingIcon from "@/assets/images/svg/loading.svg?react"
 import {
@@ -10,24 +11,38 @@ import {
 } from "@/components/ui/popover"
 
 export default function Trade() {
+  const navigate = useNavigate()
   const [slippage, setSlippage] = useState("0.5")
-  const [nav, setNav] = useState<"Swap" | "Mint">("Swap")
+  const { coinType, operation = "swap" } = useParams<{
+    coinType: string
+    operation?: string
+  }>()
   return (
     <div className="w-full bg-[#0E0F16] rounded-[40px] px-5 py-7">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-x-7">
           <span
-            onClick={() => setNav("Swap")}
+            onClick={() =>
+              operation !== "swap" &&
+              navigate(`/market/detail/${coinType}/swap`)
+            }
             className={
-              nav === "Swap" ? "text-white" : "text-white/50 cursor-pointer"
+              operation === "swap"
+                ? "text-white"
+                : "text-white/50 cursor-pointer"
             }
           >
             Swap
           </span>
           <span
-            onClick={() => setNav("Mint")}
+            onClick={() =>
+              operation !== "mint" &&
+              navigate(`/market/detail/${coinType}/mint`)
+            }
             className={
-              nav === "Mint" ? "text-white" : "text-white/50 cursor-pointer"
+              operation === "mint"
+                ? "text-white"
+                : "text-white/50 cursor-pointer"
             }
           >
             Mint
@@ -85,8 +100,8 @@ export default function Trade() {
           </div>
         </div>
       </div>
-      {nav === "Mint" && <Mint slippage={slippage}/>}
-      {nav === "Swap" && <Swap slippage={slippage}/>}
+      {operation === "mint" && <Mint slippage={slippage} />}
+      {operation === "swap" && <Swap slippage={slippage} />}
     </div>
   )
 }

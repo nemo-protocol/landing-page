@@ -1,33 +1,42 @@
 import Buy from "./Buy"
 import Sell from "./Sell"
-import { useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
 export default function TradeMint({ slippage }: { slippage: string }) {
-  const [nav, setNav] = useState<"Buy" | "Sell">("Buy")
+  const navigate = useNavigate()
+  const { action = "buy", coinType } = useParams<{
+    action?: string
+    coinType: string
+  }>()
   return (
     <>
       <div className="flex items-center rounded-[40px] w-40 my-6 bg-[#242632]">
         <div
-          onClick={() => setNav("Buy")}
+          onClick={() =>
+            action !== "buy" && navigate(`/market/detail/${coinType}/swap/buy`)
+          }
           className={[
             "text-white text-sm flex-1 py-1.5 rounded-[40px] flex items-center justify-center",
-            nav === "Buy" ? "bg-[#0F60FF]" : "cursor-pointer",
+            action === "buy" ? "bg-[#0F60FF]" : "cursor-pointer",
           ].join(" ")}
         >
           Buy
         </div>
         <div
-          onClick={() => setNav("Sell")}
+          onClick={() =>
+            action !== "sell" &&
+            navigate(`/market/detail/${coinType}/swap/sell`)
+          }
           className={[
             "text-white text-sm flex-1 py-1.5 rounded-[40px] flex items-center justify-center",
-            nav === "Sell" ? "bg-[#0F60FF]" : "cursor-pointer",
+            action === "sell" ? "bg-[#0F60FF]" : "cursor-pointer",
           ].join(" ")}
         >
           Sell
         </div>
       </div>
-      {nav === "Buy" && <Buy slippage={slippage} />}
-      {nav === "Sell" && <Sell />}
+      {action === "buy" && <Buy slippage={slippage} />}
+      {action === "sell" && <Sell />}
     </>
   )
 }
