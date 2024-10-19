@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
@@ -14,7 +14,14 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
-
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -28,11 +35,10 @@ import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 
 export default function Sell() {
   const client = useSuiClient()
-  const { coinType } = useParams()
+  const { coinType, tokenType: _tokenType } = useParams()
   const [txId, setTxId] = useState("")
-  // const [tokenType, setTokenType] = useState("py")
-  const tokenType = "pt"
   const [open, setOpen] = useState(false)
+  const [tokenType, setTokenType] = useState("py")
   const { currentWallet, isConnected } = useCurrentWallet()
   const [redeemValue, setRedeemValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
@@ -52,6 +58,12 @@ export default function Sell() {
           },
         }),
     })
+
+  useEffect(() => {
+    if (_tokenType === "yt") {
+      setTokenType("yt")
+    }
+  }, [_tokenType])
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
@@ -97,7 +109,34 @@ export default function Sell() {
     [ptBalance, redeemValue],
   )
 
-  async function redeem() {
+  const { data: ytData } = useSuiClientQuery(
+    "getCoins",
+    {
+      owner: address!,
+      coinType: `${PackageAddress}::yt::YTCoin<${coinType!}>`,
+    },
+    {
+      gcTime: 10000,
+      enabled: !!address,
+      select: (data) => {
+        return data.data.sort((a, b) =>
+          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
+        )
+      },
+    },
+  )
+
+  const ytBalance = useMemo(() => {
+    if (ytData?.length) {
+      return ytData
+        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+        .div(1e9)
+        .toString()
+    }
+    return 0
+  }, [ytData])
+
+  async function redeemPT() {
     if (!insufficientBalance) {
       try {
         const tx = new Transaction()
@@ -125,25 +164,46 @@ export default function Sell() {
 
         tx.transferObjects([syCoin], address!)
 
-        // tx.moveCall({
-        //   target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,
-        //   arguments: [
-        //     tx.pure.address(address!),
-        //     syCoin,
-        //     tx.pure.u64(
-        //       new Decimal(redeemValue)
-        //         .mul(1e9)
-        //         .mul(1 - Number(slippage))
-        //         .toNumber(),
-        //     ),
-        //     tx.object(coinConfig!.syStructId),
-        //   ],
-        //   typeArguments: [coinType!],
-        // })
+        const { digest } = await signAndExecuteTransaction({
+          transaction: tx,
+          chain: `sui:${network}`,
+        })
+        setTxId(digest)
+        setOpen(true)
+        setRedeemValue("")
+      } catch (error) {
+        console.log("error", error)
+      }
+    }
+  }
 
-        // tx.transferObjects([sCoin], address!)
+  async function redeemYT() {
+    if (!insufficientBalance) {
+      try {
+        const tx = new Transaction()
 
-        // tx.setGasBudget(GAS_BUDGET)
+        const [ytCoin] = tx.splitCoins(ytData![0].coinObjectId, [
+          new Decimal(redeemValue).mul(1e9).toString(),
+        ])
+
+        const [syCoin] = tx.moveCall({
+          target: `${PackageAddress}::market::swap_exact_yt_for_sy`,
+          arguments: [
+            ytCoin,
+            tx.object(coinConfig!.marketFactoryConfigId),
+            tx.object(coinConfig!.yieldFactoryConfigId),
+            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig!.ptStructId),
+            tx.object(coinConfig!.ytStructId),
+            tx.object(coinConfig!.tokenConfigId),
+            tx.object(coinConfig!.marketConfigId),
+            tx.object(coinConfig!.marketStateId),
+            tx.object("0x6"),
+          ],
+          typeArguments: [coinType!],
+        })
+
+        tx.transferObjects([syCoin], address!)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
@@ -196,14 +256,38 @@ export default function Sell() {
           <div className="text-white">Input</div>
           <div className="flex items-center gap-x-1">
             <WalletIcon />
-            <span>Balance: {isConnected ? ptBalance : "--"}</span>
+            <span>
+              Balance:{" "}
+              {isConnected ? (coinType === "pt" ? ptBalance : ytBalance) : "--"}
+            </span>
           </div>
         </div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>PT sSUI</span>
-            {/* <DownArrowIcon /> */}
+            <Select value={tokenType}>
+              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none">
+                <SelectValue placeholder="Select token type" />
+              </SelectTrigger>
+              <SelectContent className="border-none outline-none">
+                <SelectGroup>
+                  <SelectItem
+                    value="pt"
+                    className="cursor-pointer"
+                    onClick={() => setTokenType("pt")}
+                  >
+                    PT sSUI
+                  </SelectItem>
+                  <SelectItem
+                    value="yt"
+                    className="cursor-pointer"
+                    onClick={() => setTokenType("yt")}
+                  >
+                    YT sSUI
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
           <input
             type="text"
@@ -258,7 +342,7 @@ export default function Sell() {
         </div>
       ) : (
         <button
-          onClick={redeem}
+          onClick={tokenType === "pt" ? redeemPT : redeemYT}
           className={[
             "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
             redeemValue === ""

@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
@@ -14,6 +14,14 @@ import {
 } from "@mysten/dapp-kit"
 import { useParams } from "react-router-dom"
 import { GAS_BUDGET, network } from "@/config"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 import {
   AlertDialog,
@@ -27,11 +35,10 @@ import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const client = useSuiClient()
-  const { coinType } = useParams()
+  const { coinType, tokenType: _tokenType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
-  // const [tokenType, setTokenType] = useState("py")
-  const tokenType = "pt"
+  const [tokenType, setTokenType] = useState("py")
   const { currentWallet, isConnected } = useCurrentWallet()
   const [mintValue, setMintValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
@@ -51,6 +58,12 @@ export default function Mint({ slippage }: { slippage: string }) {
           },
         }),
     })
+
+  useEffect(() => {
+    if (_tokenType === "yt") {
+      setTokenType("yt")
+    }
+  }, [_tokenType])
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
@@ -121,7 +134,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         })
 
         const [sy, pt] = tx.moveCall({
-          target: `${PackageAddress}::market::swap_sy_for_exact_pt`,
+          target: `${PackageAddress}::market::swap_sy_for_exact_${coinType}`,
           arguments: [
             tx.pure.u64(
               new Decimal(mintValue)
@@ -203,7 +216,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
             <SSUIIcon className="size-6" />
             <span>sSUI</span>
-            {/* <DownArrowIcon /> */}
           </div>
           <input
             type="text"
@@ -239,7 +251,30 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>PT sSUI</span>
+            <Select value={tokenType}>
+              {/* <Select defaultValue="yt"> */}
+              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none">
+                <SelectValue placeholder="Select token type" />
+              </SelectTrigger>
+              <SelectContent className="border-none outline-none">
+                <SelectGroup>
+                  <SelectItem
+                    value="pt"
+                    className="cursor-pointer"
+                    onClick={() => setTokenType("pt")}
+                  >
+                    PT sSUI
+                  </SelectItem>
+                  <SelectItem
+                    value="yt"
+                    className="cursor-pointer"
+                    onClick={() => setTokenType("yt")}
+                  >
+                    YT sSUI
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             {/* <DownArrowIcon /> */}
           </div>
           <input
