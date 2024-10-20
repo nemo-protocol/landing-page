@@ -117,18 +117,18 @@ export default function Item({
         <TableCell className="flex items-center gap-x-3">
           <img src={icon} alt="" className="size-10" />
           <div className="flex items-center gap-x-1">
-            <span>{name}</span>
+            <span>{name} PT</span>
             <span className="text-white/50 text-xs">
               {dayjs(date).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
         <TableCell className="text-center">PT</TableCell>
-        <TableCell className="text-center">${ptBalance}</TableCell>
         <TableCell className="text-center">
           ${new Decimal(ptBalance).div(ptPrice).toFixed(2)}
         </TableCell>
-        <TableCell className="text-center">$523.08</TableCell>
+        <TableCell className="text-center">{ptBalance}</TableCell>
+        {/* <TableCell className="text-center">$523.08</TableCell> */}
         <TableCell align="center" className="space-x-2 text-white">
           <Link to={`/market/detail/${coinType}/swap/buy/pt`}>
             <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
@@ -142,18 +142,18 @@ export default function Item({
         <TableCell className="flex items-center gap-x-3">
           <img src={icon} alt="" className="size-10" />
           <div className="flex items-center gap-x-1">
-            <span>{name}</span>
+            <span>{name} YT</span>
             <span className="text-white/50 text-xs">
               {dayjs(date).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
         <TableCell className="text-center">YT</TableCell>
-        <TableCell className="text-center">${ytBalance}</TableCell>
         <TableCell className="text-center">
           ${new Decimal(ytBalance).div(ytPrice).toFixed(2)}
         </TableCell>
-        <TableCell className="text-center">$523.08</TableCell>
+        <TableCell className="text-center">{ytBalance}</TableCell>
+        {/* <TableCell className="text-center">$523.08</TableCell> */}
         <TableCell align="center" className="space-x-2 text-white">
           <Link to={`/market/detail/${coinType}/swap/buy/yt`}>
             <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
@@ -167,18 +167,18 @@ export default function Item({
         <TableCell className="flex items-center gap-x-3">
           <img src={icon} alt="" className="size-10" />
           <div className="flex items-center gap-x-1">
-            <span>{name}</span>
+            <span>{name} LP</span>
             <span className="text-white/50 text-xs">
               {dayjs(date).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
         <TableCell className="text-center">LP</TableCell>
-        <TableCell className="text-center">${lpBalance}</TableCell>
         <TableCell className="text-center">
           ${new Decimal(lpBalance).div(lpPrice).toFixed(2)}
         </TableCell>
-        <TableCell className="text-center">$523.08</TableCell>
+        <TableCell className="text-center">{lpBalance}</TableCell>
+        {/* <TableCell className="text-center">$523.08</TableCell> */}
         <TableCell align="center" className="space-x-2 text-white">
           <Link to={`/market/detail/${coinType}/liquidity/add`}>
             <button className="rounded-3xl bg-[#0F60FF] w-24">Add</button>

@@ -38,7 +38,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   const { coinType, tokenType: _tokenType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
-  const [tokenType, setTokenType] = useState("py")
+  const [tokenType, setTokenType] = useState("pt")
   const { currentWallet, isConnected } = useCurrentWallet()
   const [mintValue, setMintValue] = useState("")
   const { mutateAsync: signAndExecuteTransaction } =
@@ -60,10 +60,10 @@ export default function Mint({ slippage }: { slippage: string }) {
     })
 
   useEffect(() => {
-    if (_tokenType === "yt") {
-      setTokenType("yt")
+    if (_tokenType) {
+      setTokenType(_tokenType)
     }
-  }, [_tokenType])
+  }, [])
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
@@ -251,7 +251,11 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <Select value={tokenType}>
+            <span>{tokenType}</span>
+            <Select
+              value={tokenType}
+              onValueChange={(value) => setTokenType(value)}
+            >
               {/* <Select defaultValue="yt"> */}
               <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none">
                 <SelectValue placeholder="Select token type" />

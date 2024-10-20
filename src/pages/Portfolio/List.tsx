@@ -26,7 +26,7 @@ export default function List() {
           <TableHead className="text-center">Type</TableHead>
           <TableHead className="text-center">Value</TableHead>
           <TableHead className="text-center">Amount</TableHead>
-          <TableHead className="text-center">P&L</TableHead>
+          {/* <TableHead className="text-center">P&L</TableHead> */}
           <TableHead className="text-center">Actions</TableHead>
         </TableRow>
       </TableHeader>
