@@ -1,12 +1,14 @@
 import dayjs from "dayjs"
+import Decimal from "decimal.js"
 import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
+import PieChart from "./components/PieChart.tsx"
 import { Link, useNavigate } from "react-router-dom"
 import Star from "@/assets/images/svg/market/star.svg"
 import Crown from "@/assets/images/svg/market/crown.svg"
+import StarIcon from "@/assets/images/svg/star.svg?react"
 import Diamond from "@/assets/images/svg/market/diamond.svg"
 import Logo from "@/assets/images/svg/market/logo.svg?react"
-import Decimal from "decimal.js"
 
 export default function Home() {
   const navigate = useNavigate()
@@ -57,7 +59,13 @@ export default function Home() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-y-2.5">
-                  <h6 className="text-white">{item.coinName}</h6>
+                  <div className="flex items-center gap-x-2">
+                    <h6 className="text-white">{item.coinName}</h6>
+                    <StarIcon />
+                    <div className="rounded-3xl px-2 py-0.5 border border-[#71D0FF] text-xs text-[#71D0FF]">
+                      Info
+                    </div>
+                  </div>
                   <div className="rounded-full bg-[#1A1B27] py-0.5 px-2 flex items-center gap-x-2">
                     <img
                       src={item.providerLogo}
@@ -73,17 +81,17 @@ export default function Home() {
                   className="size-14"
                 />
               </div>
-              <div className="py-3 px-3.5 rounded-xl bg-[#131520] mt-6">
+              <div className="py-3 px-3.5 rounded-xl bg-[#0E0F16] mt-6 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h6 className="text-white/60 scale-75">TVL</h6>
+                  <h6 className="text-[#576682] text-xs">Maturity</h6>
                   {item.maturity && (
-                    <div className="rounded-full py-1 px-5 scale-[0.6] origin-right text-white bg-[#1D2033] shrink-0">
-                      <span>
+                    <div className="text-xs text-white shrink-0">
+                      <span className="font-bold">
                         {dayjs(parseInt(item.maturity) * 1000).format(
                           "DD MMM YYYY",
                         )}
                       </span>
-                      <span className="text-[#2DF4DD] ml-2">
+                      <span className="text-[#576682] ml-2">
                         {dayjs(parseInt(item.maturity) * 1000).diff(
                           dayjs(),
                           "day",
@@ -93,22 +101,34 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                <p className="mt-1.5 text-white">
-                  ${item.tvl.toLocaleString()}
-                </p>
-                <div className="mt-4.5 flex items-center justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#576682] text-xs">TVL</span>
+                  <div className="flex items-center gap-x-2">
+                    <span className="text-white text-xs font-bold">
+                      ${item.tvl.toLocaleString()}
+                    </span>
+                    <PieChart
+                      tvl={item.tvl}
+                      cap={item.cap}
+                      decimal={item?.decimal ?? 9}
+                    />
+                  </div>
+                </div>
+                <div className="mt-6 flex items-center justify-between rounded-xl p-4 bg-[#131520]">
                   <div className="flex flex-col gap-y-1">
-                    <div className="text-white/60 text-xs">
-                      Underlying Price
-                    </div>
-                    <div className="text-white mt-1">
+                    <div className="text-white mt-1 text-center">
                       ${item.underlyingPrice.toLocaleString()}
+                    </div>
+                    <div className="text-[#576682] text-xs text-center">
+                      Underlying Price
                     </div>
                   </div>
                   <div className="flex flex-col gap-y-1">
-                    <div className="text-white/60 text-xs">Underlying Apy</div>
-                    <div className="text-white mt-1">
+                    <div className="text-white mt-1 text-center">
                       {new Decimal(item.underlyingApy).mul(100).toFixed(2)}%
+                    </div>
+                    <div className="text-[#576682] text-xs text-center">
+                      Underlying Apy
                     </div>
                   </div>
                 </div>

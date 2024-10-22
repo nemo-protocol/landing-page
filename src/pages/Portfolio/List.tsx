@@ -13,7 +13,7 @@ export default function List() {
     ptPrice: "0.12",
     lpPrice: "0.18",
     ytPrice: "0.02",
-    date: "1730390400000",
+    maturity: "1730390400000",
     icon: "https://nemoprotocol.com/static/sui.svg",
     coinType:
       "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI",
@@ -26,7 +26,7 @@ export default function List() {
           <TableHead className="text-center">Type</TableHead>
           <TableHead className="text-center">Value</TableHead>
           <TableHead className="text-center">Amount</TableHead>
-          {/* <TableHead className="text-center">P&L</TableHead> */}
+          <TableHead className="text-center">Rewards</TableHead>
           <TableHead className="text-center">Actions</TableHead>
         </TableRow>
       </TableHeader>

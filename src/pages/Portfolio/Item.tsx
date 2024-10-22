@@ -11,13 +11,13 @@ export default function Item({
   ptPrice = "0.12",
   lpPrice = "0.18",
   ytPrice = "0.02",
-  date = "1730390400000",
+  maturity = "1730390400000",
   icon = "https://nemoprotocol.com/static/sui.svg",
   coinType = "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI",
 }: {
   name: string
   icon: string
-  date: string
+  maturity: string
   ptPrice: string
   ytPrice: string
   lpPrice: string
@@ -119,7 +119,7 @@ export default function Item({
           <div className="flex items-center gap-x-1">
             <span>{name} PT</span>
             <span className="text-white/50 text-xs">
-              {dayjs(date).format("MMM DD YYYY")}
+              {dayjs(maturity).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
@@ -128,7 +128,17 @@ export default function Item({
           ${new Decimal(ptBalance).div(ptPrice).toFixed(2)}
         </TableCell>
         <TableCell className="text-center">{ptBalance}</TableCell>
-        {/* <TableCell className="text-center">$523.08</TableCell> */}
+        <TableCell className="text-center" align="center">
+          <div className="flex items-center gap-x-2 justify-center">
+            <div className="flex flex-col items-center">
+              <span className="text-white text-sm">0.12SUI</span>
+              <span className="text-white/50 text-xs">0.00</span>
+            </div>
+            <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
+              Claim
+            </button>
+          </div>
+        </TableCell>
         <TableCell align="center" className="space-x-2 text-white">
           <Link to={`/market/detail/${coinType}/swap/buy/pt`}>
             <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
@@ -144,7 +154,7 @@ export default function Item({
           <div className="flex items-center gap-x-1">
             <span>{name} YT</span>
             <span className="text-white/50 text-xs">
-              {dayjs(date).format("MMM DD YYYY")}
+              {dayjs(maturity).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
@@ -153,7 +163,17 @@ export default function Item({
           ${new Decimal(ytBalance).div(ytPrice).toFixed(2)}
         </TableCell>
         <TableCell className="text-center">{ytBalance}</TableCell>
-        {/* <TableCell className="text-center">$523.08</TableCell> */}
+        <TableCell className="text-center">
+          <div className="flex items-center gap-x-2 justify-center">
+            <div className="flex flex-col items-center">
+              <span className="text-white text-sm">0.12SUI</span>
+              <span className="text-white/50 text-xs">0.00</span>
+            </div>
+            <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
+              Claim
+            </button>
+          </div>
+        </TableCell>
         <TableCell align="center" className="space-x-2 text-white">
           <Link to={`/market/detail/${coinType}/swap/buy/yt`}>
             <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
@@ -169,7 +189,7 @@ export default function Item({
           <div className="flex items-center gap-x-1">
             <span>{name} LP</span>
             <span className="text-white/50 text-xs">
-              {dayjs(date).format("MMM DD YYYY")}
+              {dayjs(maturity).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
@@ -178,7 +198,17 @@ export default function Item({
           ${new Decimal(lpBalance).div(lpPrice).toFixed(2)}
         </TableCell>
         <TableCell className="text-center">{lpBalance}</TableCell>
-        {/* <TableCell className="text-center">$523.08</TableCell> */}
+        <TableCell className="text-center">
+          <div className="flex items-center gap-x-2 justify-center">
+            <div className="flex flex-col items-center">
+              <span className="text-white text-sm">0.12SUI</span>
+              <span className="text-white/50 text-xs">0.00</span>
+            </div>
+            <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
+              Claim
+            </button>
+          </div>
+        </TableCell>{" "}
         <TableCell align="center" className="space-x-2 text-white">
           <Link to={`/market/detail/${coinType}/liquidity/add`}>
             <button className="rounded-3xl bg-[#0F60FF] w-24">Add</button>

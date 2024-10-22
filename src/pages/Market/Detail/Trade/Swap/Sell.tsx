@@ -265,7 +265,6 @@ export default function Sell() {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>{tokenType}</span>
             <Select
               value={tokenType}
               onValueChange={(value) => setTokenType(value)}

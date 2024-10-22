@@ -7,6 +7,8 @@ export interface CoinInfo {
   underlyingApy: number;
   provider: string;
   providerLogo: string;
+  cap: string;
+  decimal: string;
   tvl: number;
   ptApy: number;
   ytApy: number;
