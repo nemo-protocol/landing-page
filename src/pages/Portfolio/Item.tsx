@@ -152,7 +152,7 @@ export default function Item({
           <div className="flex items-center gap-x-1">
             <span>{name} YT</span>
             <span className="text-white/50 text-xs">
-              {dayjs(maturity).format("MMM DD YYYY")}
+              {dayjs(parseInt(maturity)).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
@@ -189,7 +189,7 @@ export default function Item({
           <div className="flex items-center gap-x-1">
             <span>{name} LP</span>
             <span className="text-white/50 text-xs">
-              {dayjs(maturity).format("MMM DD YYYY")}
+              {dayjs(parseInt(maturity)).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
