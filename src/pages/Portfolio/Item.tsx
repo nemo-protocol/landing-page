@@ -5,24 +5,20 @@ import { Link } from "react-router-dom"
 import { PackageAddress } from "@/contract"
 import { TableRow, TableCell } from "@/components/ui/table"
 import { useCurrentWallet, useSuiClientQuery } from "@mysten/dapp-kit"
+import { PortfolioItem } from "@/queries/types/market"
 
 export default function Item({
-  name = "sSUI",
-  ptPrice = "0.12",
-  lpPrice = "0.18",
-  ytPrice = "0.02",
-  maturity = "1730390400000",
-  icon = "https://nemoprotocol.com/static/sui.svg",
-  coinType = "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI",
-}: {
-  name: string
-  icon: string
-  maturity: string
-  ptPrice: string
-  ytPrice: string
-  lpPrice: string
-  coinType: string
-}) {
+  name,
+  ptPrice,
+  lpPrice,
+  ytPrice,
+  maturity,
+  icon,
+  coinType,
+  lpReward,
+  ytReward,
+  ptReward,
+}: PortfolioItem) {
   const { currentWallet } = useCurrentWallet()
 
   const address = useMemo(
@@ -119,7 +115,7 @@ export default function Item({
           <div className="flex items-center gap-x-1">
             <span>{name} PT</span>
             <span className="text-white/50 text-xs">
-              {dayjs(maturity).format("MMM DD YYYY")}
+              {dayjs(parseInt(maturity)).format("MMM DD YYYY")}
             </span>
           </div>
         </TableCell>
@@ -131,8 +127,10 @@ export default function Item({
         <TableCell className="text-center" align="center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">0.12SUI</span>
-              <span className="text-white/50 text-xs">0.00</span>
+              <span className="text-white text-sm">{ptReward}SUI</span>
+              <span className="text-white/50 text-xs">
+                ${new Decimal(ptReward || 0).div(ptPrice).toFixed(2)}
+              </span>
             </div>
             <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
               Claim
@@ -166,8 +164,10 @@ export default function Item({
         <TableCell className="text-center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">0.12SUI</span>
-              <span className="text-white/50 text-xs">0.00</span>
+              <span className="text-white text-sm">{ytReward}SUI</span>
+              <span className="text-white/50 text-xs">
+                ${new Decimal(ytReward || 0).div(ytPrice).toFixed(2)}
+              </span>
             </div>
             <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
               Claim
@@ -201,8 +201,10 @@ export default function Item({
         <TableCell className="text-center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">0.12SUI</span>
-              <span className="text-white/50 text-xs">0.00</span>
+              <span className="text-white text-sm">{lpReward} SUI</span>
+              <span className="text-white/50 text-xs">
+                ${new Decimal(lpReward || 0).div(lpPrice).toFixed(2)}
+              </span>
             </div>
             <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
               Claim

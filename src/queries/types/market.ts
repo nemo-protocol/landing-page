@@ -32,6 +32,20 @@ export interface CoinConfig {
   marketFactoryConfigId: string;
 }
 
+export interface PortfolioItem {
+  name: string;
+  icon: string;
+  maturity: string;
+  ptPrice: string;
+  ytPrice: string;
+  lpPrice: string;
+  coinType: string;
+  ptReward: string;
+  ytReward: string;
+  lpReward: string;
+  decimal: string;
+}
+
 export interface FixedReturnItem {
   name: string;
   youPay: number;

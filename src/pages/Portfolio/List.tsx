@@ -1,3 +1,4 @@
+import { usePortfolioList } from "@/queries"
 import Item from "./Item"
 import {
   Table,
@@ -8,16 +9,7 @@ import {
 } from "@/components/ui/table"
 
 export default function List() {
-  const itemProps = {
-    name: "sSUI",
-    ptPrice: "0.12",
-    lpPrice: "0.18",
-    ytPrice: "0.02",
-    maturity: "1730390400000",
-    icon: "https://nemoprotocol.com/static/sui.svg",
-    coinType:
-      "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI",
-  }
+  const { data: list } = usePortfolioList()
   return (
     <Table>
       <TableHeader className="bg-[#1A1D1E]">
@@ -31,7 +23,9 @@ export default function List() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <Item {...itemProps} />
+        {(list ?? []).map((item) => (
+          <Item {...item} />
+        ))}
       </TableBody>
     </Table>
   )

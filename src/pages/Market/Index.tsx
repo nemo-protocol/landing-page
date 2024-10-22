@@ -87,15 +87,12 @@ export default function Home() {
                   {item.maturity && (
                     <div className="text-xs text-white shrink-0">
                       <span className="font-bold">
-                        {dayjs(parseInt(item.maturity) * 1000).format(
+                        {dayjs(parseInt(item.maturity) ).format(
                           "DD MMM YYYY",
                         )}
                       </span>
                       <span className="text-[#576682] ml-2">
-                        {dayjs(parseInt(item.maturity) * 1000).diff(
-                          dayjs(),
-                          "day",
-                        )}
+                        {dayjs(parseInt(item.maturity)).diff(dayjs(), "day")}
                         &nbsp; DAYS
                       </span>
                     </div>

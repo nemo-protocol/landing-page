@@ -1,6 +1,6 @@
 import { nemoApi } from "./request"
 import { useQuery } from "@tanstack/react-query"
-import { CoinInfo, CoinConfig, FixedReturnItem } from "./types/market"
+import { CoinInfo, CoinConfig, FixedReturnItem, PortfolioItem } from "./types/market"
 
 function getCoinInfoList(name = "", address = "") {
   return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo").get({
@@ -24,6 +24,10 @@ function getCoinConfig(coinType: string) {
   return nemoApi<CoinConfig>("/api/v1/market/config/detail").get({
     coinType,
   })
+}
+
+function getPortfolioList() {
+  return nemoApi<PortfolioItem[]>("/api/v1/portfolio/detail").get()
 }
 
 async function getMintLpAmount(
@@ -127,6 +131,14 @@ export function useCoinConfig(coinType: string) {
     // FIXME： queryKey dose not work
     queryKey: ["coinConfig", coinType],
     queryFn: () => getCoinConfig(coinType),
+  })
+}
+
+export function usePortfolioList() {
+  return useQuery({
+    // FIXME： queryKey dose not work
+    queryKey: ["PortfolioConfig"],
+    queryFn: () => getPortfolioList(),
   })
 }
 
