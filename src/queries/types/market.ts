@@ -44,6 +44,8 @@ export interface PortfolioItem {
   ytReward: string;
   lpReward: string;
   decimal: string;
+  rewardCoinType: string;
+  rewardCoinPrice: string;
 }
 
 export interface FixedReturnItem {

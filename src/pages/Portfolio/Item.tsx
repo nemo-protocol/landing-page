@@ -18,6 +18,8 @@ export default function Item({
   lpReward,
   ytReward,
   ptReward,
+  rewardCoinType,
+  rewardCoinPrice
 }: PortfolioItem) {
   const { currentWallet } = useCurrentWallet()
 
@@ -113,7 +115,7 @@ export default function Item({
         <TableCell className="flex items-center gap-x-3">
           <img src={icon} alt="" className="size-10" />
           <div className="flex items-center gap-x-1">
-            <span>{name} PT</span>
+            <span>PT {name}</span>
             <span className="text-white/50 text-xs">
               {dayjs(parseInt(maturity)).format("MMM DD YYYY")}
             </span>
@@ -127,9 +129,9 @@ export default function Item({
         <TableCell className="text-center" align="center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">{ptReward}SUI</span>
+              <span className="text-white text-sm">{ptReward} {rewardCoinType}</span>
               <span className="text-white/50 text-xs">
-                ${new Decimal(ptReward || 0).div(ptPrice).toFixed(2)}
+                ${new Decimal(ptReward || 0).div(rewardCoinPrice).toFixed(2)}
               </span>
             </div>
             <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
@@ -150,7 +152,7 @@ export default function Item({
         <TableCell className="flex items-center gap-x-3">
           <img src={icon} alt="" className="size-10" />
           <div className="flex items-center gap-x-1">
-            <span>{name} YT</span>
+            <span>YT {name}</span>
             <span className="text-white/50 text-xs">
               {dayjs(parseInt(maturity)).format("MMM DD YYYY")}
             </span>
@@ -164,9 +166,9 @@ export default function Item({
         <TableCell className="text-center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">{ytReward}SUI</span>
+              <span className="text-white text-sm">{ytReward} {rewardCoinType}</span>
               <span className="text-white/50 text-xs">
-                ${new Decimal(ytReward || 0).div(ytPrice).toFixed(2)}
+                ${new Decimal(ytReward || 0).div(rewardCoinPrice).toFixed(2)}
               </span>
             </div>
             <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
@@ -187,7 +189,7 @@ export default function Item({
         <TableCell className="flex items-center gap-x-3">
           <img src={icon} alt="" className="size-10" />
           <div className="flex items-center gap-x-1">
-            <span>{name} LP</span>
+            <span>LP {name}</span>
             <span className="text-white/50 text-xs">
               {dayjs(parseInt(maturity)).format("MMM DD YYYY")}
             </span>
@@ -201,9 +203,9 @@ export default function Item({
         <TableCell className="text-center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">{lpReward} SUI</span>
+              <span className="text-white text-sm">{lpReward} {rewardCoinType}</span>
               <span className="text-white/50 text-xs">
-                ${new Decimal(lpReward || 0).div(lpPrice).toFixed(2)}
+                ${new Decimal(lpReward || 0).div(rewardCoinPrice).toFixed(2)}
               </span>
             </div>
             <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
