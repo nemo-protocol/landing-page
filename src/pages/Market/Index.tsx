@@ -81,7 +81,7 @@ export default function Home() {
                   className="size-14"
                 />
               </div>
-              <div className="py-3 px-3.5 rounded-xl bg-[#0E0F16] mt-6 space-y-2">
+              <div className="mt-6 space-y-2">
                 <div className="flex items-center justify-between">
                   <h6 className="text-[#576682] text-xs">Maturity</h6>
                   {item.maturity && (
