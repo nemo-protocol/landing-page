@@ -110,6 +110,7 @@ export default function Home() {
                     <PieChart
                       tvl={item.tvl}
                       cap={item.cap}
+                      price={item.underlyingPrice}
                       decimal={item?.decimal ?? 9}
                     />
                   </div>

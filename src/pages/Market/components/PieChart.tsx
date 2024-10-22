@@ -6,11 +6,12 @@ const COLORS = ["#2DF4DD", "#0E0F16"]
 interface PChartProps {
   cap: string
   tvl: number
+  price: number
   decimal: string
 }
 
-const PChart = ({ cap, tvl, decimal }: PChartProps) => {
-  const total = new Decimal(cap).div(new Decimal(decimal))
+const PChart = ({ cap, tvl, decimal, price }: PChartProps) => {
+  const total = new Decimal(cap).div(decimal).mul(price)
   const tvlValue = new Decimal(tvl).div(total)
   const data = [
     { name: "tvl", value: tvlValue.toNumber() },
