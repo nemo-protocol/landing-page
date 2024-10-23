@@ -40,6 +40,7 @@ import {
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import { debounce } from "@/lib/utils"
 import { Info } from "lucide-react"
+import dayjs from "dayjs"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const client = useSuiClient()
@@ -321,7 +322,11 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-[#44E0C30F]/[0.08] px-6 py-4 flex flex-col gap-y-2 w-full mt-6 rounded-lg">
           <div className="flex items-center justify-between">
             <span className="text-[#44E0C3] text-sm">
-              Fixed return after Y days
+              Fixed return after{" "}
+              {dayjs(
+                parseInt(coinConfig?.maturity || Date.now().toString()),
+              ).diff(dayjs(), "day")}{" "}
+              days
             </span>
             <TooltipProvider>
               <Tooltip>

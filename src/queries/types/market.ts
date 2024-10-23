@@ -37,6 +37,7 @@ export interface CoinConfig {
   coinLogo: string
   coinPrice: string
   coinName: string
+  maturity: string
 }
 
 export interface PortfolioItem {
