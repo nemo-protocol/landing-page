@@ -349,7 +349,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               />
               <div className="flex flex-col gap-y-0.5">
                 <span className="text-white text-sm">
-                  {mintValue} {coinConfig?.coinLogo || "SUI"}
+                  {mintValue || 0} {coinConfig?.coinLogo || "SUI"}
                 </span>
                 <span className="text-white/60 text-xs">
                   $
