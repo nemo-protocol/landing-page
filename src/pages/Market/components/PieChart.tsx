@@ -27,7 +27,7 @@ const PChart = ({ cap, tvl, decimal, price }: PChartProps) => {
   const CustomTooltip = () => {
     return (
       <div className="custom-tooltip bg-[#1d2435] py-1 px-2 rounded-lg w-24">
-        <p className="text-xs">{`${tvlValue}% Pool Cap Filled`}</p>
+        <p className="text-xs">{`${tvlValue.toFixed(2)}% Pool Cap Filled`}</p>
       </div>
     )
   }
