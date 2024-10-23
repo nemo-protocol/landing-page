@@ -59,25 +59,25 @@ export default function Trade() {
               <PopoverContent className="w-80 bg-[#161720] border-none rounded-3xl">
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <h4 className="font-medium leading-none text-xs py-4 px-6">
+                    <h4 className="font-medium leading-none text-xs py-4 px-6 text-white">
                       Slippage Setting
                     </h4>
                   </div>
                   <div className="grid grid-cols-3 gap-x-2 gap-y-4">
                     <button
-                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs"
+                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs text-white"
                       onClick={() => setSlippage("0.1")}
                     >
                       0.1%
                     </button>
                     <button
-                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs"
+                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs text-white"
                       onClick={() => setSlippage("0.5")}
                     >
                       0.5%
                     </button>
                     <button
-                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs"
+                      className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs text-white"
                       onClick={() => setSlippage("1")}
                     >
                       1%
@@ -85,7 +85,7 @@ export default function Trade() {
                     <div className="relative">
                       <input
                         type="text"
-                        className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] placeholder:text-xs w-full outline-none"
+                        className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] placeholder:text-xs w-full outline-none text-white"
                         placeholder="Custom"
                         onChange={(e) => setSlippage(e.target.value)}
                       />

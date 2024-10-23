@@ -231,7 +231,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
-              value={mintValue}
               disabled={!isConnected}
               onChange={(e) =>
                 debouncedSetMintValue(new Decimal(e.target.value).toString())

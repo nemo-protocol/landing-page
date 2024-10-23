@@ -15,9 +15,7 @@ export default function Item({
   maturity,
   icon,
   coinType,
-  lpReward,
   ytReward,
-  ptReward,
   rewardCoinType,
   rewardCoinPrice,
   selectType,
@@ -128,31 +126,21 @@ export default function Item({
             ${new Decimal(ptBalance).mul(ptPrice).toFixed(2)}
           </TableCell>
           <TableCell className="text-center">{ptBalance}</TableCell>
-          <TableCell className="text-center" align="center">
-            <div className="flex items-center gap-x-2 justify-center">
-              <div className="flex flex-col items-center">
-                <span className="text-white text-sm">
-                  {ptReward} {rewardCoinType}
-                </span>
-                <span className="text-white/50 text-xs">
-                  $
-                  {new Decimal(ptReward || 0)
-                    .mul(rewardCoinPrice || 0)
-                    .toFixed(2)}
-                </span>
-              </div>
-              <button className="rounded-3xl bg-[#0F60FF] py-1 px-2 text-xs">
-                Claim
-              </button>
-            </div>
-          </TableCell>
           <TableCell align="center" className="space-x-2 text-white">
-            <Link to={`/market/detail/${coinType}/swap/buy/pt`}>
-              <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
-            </Link>
-            <Link to={`/market/detail/${coinType}/swap/sell/pt`}>
-              <button className="rounded-3xl bg-[#FF7474] w-24">Sell</button>
-            </Link>
+            {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
+              <>
+                <Link to={`/market/detail/${coinType}/swap/buy/pt`}>
+                  <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
+                </Link>
+                <Link to={`/market/detail/${coinType}/swap/sell/pt`}>
+                  <button className="rounded-3xl bg-[#FF7474] w-24">
+                    Sell
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <button className="rounded-3xl bg-[#0F60FF] w-24">Redeem</button>
+            )}
           </TableCell>
         </TableRow>
       )}
@@ -216,31 +204,21 @@ export default function Item({
             ${new Decimal(lpBalance).mul(lpPrice).toFixed(2)}
           </TableCell>
           <TableCell className="text-center">{lpBalance}</TableCell>
-          <TableCell className="text-center">
-            <div className="flex items-center gap-x-2 justify-center">
-              <div className="flex flex-col items-center">
-                <span className="text-white text-sm">
-                  {lpReward} {rewardCoinType}
-                </span>
-                <span className="text-white/50 text-xs">
-                  $
-                  {new Decimal(lpReward || 0)
-                    .mul(rewardCoinPrice || 0)
-                    .toFixed(2)}
-                </span>
-              </div>
-              <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
-                Claim
-              </button>
-            </div>
-          </TableCell>{" "}
           <TableCell align="center" className="space-x-2 text-white">
-            <Link to={`/market/detail/${coinType}/liquidity/add`}>
-              <button className="rounded-3xl bg-[#0F60FF] w-24">Add</button>
-            </Link>
-            <Link to={`/market/detail/${coinType}/liquidity/remove`}>
-              <button className="rounded-3xl bg-[#FF7474] w-24">Remove</button>
-            </Link>
+            {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
+              <>
+                <Link to={`/market/detail/${coinType}/liquidity/add`}>
+                  <button className="rounded-3xl bg-[#0F60FF] w-24">Add</button>
+                </Link>
+                <Link to={`/market/detail/${coinType}/liquidity/remove`}>
+                  <button className="rounded-3xl bg-[#FF7474] w-24">
+                    Remove
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <button className="rounded-3xl bg-[#0F60FF] w-24">Redeem</button>
+            )}
           </TableCell>
         </TableRow>
       )}

@@ -10,27 +10,11 @@ import {
 import { useState } from "react"
 
 export default function List() {
-  const [selectType, setSelectType] = useState<"pt" | "yt" | "lp" | "all">(
-    "all",
-  )
+  const [selectType, setSelectType] = useState<"pt" | "yt" | "lp">("pt")
   const { data: list } = usePortfolioList()
   return (
     <>
       <div className="flex items-center gap-x-4">
-        <span
-          className={
-            selectType === "all"
-              ? "text-white font-bold"
-              : "text-white/80 cursor-pointer"
-          }
-          onClick={() => {
-            if (selectType !== "all") {
-              setSelectType("all")
-            }
-          }}
-        >
-          All
-        </span>
         <span
           className={
             selectType === "pt"
@@ -81,7 +65,9 @@ export default function List() {
             <TableHead className="text-center">Type</TableHead>
             <TableHead className="text-center">Value</TableHead>
             <TableHead className="text-center">Amount</TableHead>
-            <TableHead className="text-center">Rewards</TableHead>
+            {selectType === "yt" && (
+              <TableHead className="text-center">Rewards</TableHead>
+            )}
             <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>

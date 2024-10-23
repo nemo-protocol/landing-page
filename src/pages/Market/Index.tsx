@@ -134,7 +134,7 @@ export default function Home() {
                   <div
                     className="px-2 py-1.5 bg-[#0F60FF] rounded-xl flex items-center justify-between pl-5 pr-3 h-14 cursor-pointer"
                     onClick={() =>
-                      navigate(`/market/detail/${item.coinAddress}/swap/buy/pt`)
+                      navigate(`/market/detail/${item.coinAddress}/swap/buy/yt`)
                     }
                   >
                     <span className="text-white text-sm">YT</span>
@@ -150,7 +150,7 @@ export default function Home() {
                   <div
                     className="px-4 py-3 bg-[#2DF5DD] rounded-xl flex items-center justify-between text-black pl-5 pr-3 h-14 cursor-pointer"
                     onClick={() =>
-                      navigate(`/market/detail/${item.coinAddress}/swap/buy/yt`)
+                      navigate(`/market/detail/${item.coinAddress}/swap/buy/pt`)
                     }
                   >
                     <span className="text-sm">PT</span>
