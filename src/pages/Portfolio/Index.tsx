@@ -20,16 +20,16 @@ export default function Portfolio() {
               <div className="flex items-center gap-x-4">
                 <BalanceIcon />
                 <div className="flex flex-col gap-y-2">
-                  <span>Current balance</span>
-                  <span>$14,257.89</span>
+                  <span className="text-white/60 text-xs">Current balance</span>
+                  <span className="text-white">$14,257.89</span>
                 </div>
               </div>
               <div className="flex items-center gap-x-4">
                 <RewardsIcon />
                 <div className="flex flex-col gap-y-2">
-                  <span>My Claimable Yield & Rewards</span>
+                  <span className="text-white/60 text-xs">My Claimable Yield & Rewards</span>
                   <div className="flex items-center gap-x-2">
-                    <span>$14,257.89</span>
+                    <span className="text-white">$14,257.89</span>
                     <button className="rounded-3xl bg-[#0F60FF] py-1 px-2 text-xs">
                       Claim All
                     </button>

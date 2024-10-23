@@ -137,7 +137,7 @@ export default function Home() {
                       navigate(`/market/detail/${item.coinAddress}/swap/buy/pt`)
                     }
                   >
-                    <span className="text-white text-xl">YT</span>
+                    <span className="text-white text-sm">YT</span>
                     <div className="flex flex-col items-end">
                       <span className="text-base text-white">
                         {new Decimal(item.ytApy).toFixed(2)}%
@@ -153,7 +153,7 @@ export default function Home() {
                       navigate(`/market/detail/${item.coinAddress}/swap/buy/yt`)
                     }
                   >
-                    <span className="text-xl">PT</span>
+                    <span className="text-sm">PT</span>
                     <div className="flex flex-col items-end">
                       <span className="text-base">
                         {new Decimal(Number(item.ptApy)).toFixed(2)}%
@@ -168,13 +168,13 @@ export default function Home() {
               <div className="mt-3.5">
                 <h6 className="text-xs">Earn</h6>
                 <button
-                  className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-xl bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer"
+                  className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer"
                   onClick={() =>
                     navigate(`/market/detail/${item.coinAddress}/liquidity`)
                   }
                 >
                   <span>+ POOL APY</span>
-                  <span>{new Decimal(item.poolApy).toFixed(2)}%</span>
+                  <span className="text-base">{new Decimal(item.poolApy).toFixed(2)}%</span>
                 </button>
               </div>
             </div>
