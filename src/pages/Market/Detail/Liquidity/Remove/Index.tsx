@@ -184,20 +184,30 @@ export default function Remove() {
             <span>Balance: {isConnected ? lpCoinBalance : "--"}</span>
           </div>
         </div>
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
+        <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
             <span>LP sSUI</span>
             {/* <DownArrowIcon /> */}
           </div>
-          <input
-            type="text"
-            value={lpValue}
-            disabled={!isConnected}
-            onChange={(e) => setLpValue(e.target.value)}
-            placeholder={!isConnected ? "Please connect wallet" : ""}
-            className={`bg-transparent h-full outline-none grow text-right min-w-0`}
-          />
+          <div className="flex flex-col items-end gap-y-1">
+            <input
+              type="text"
+              value={lpValue}
+              disabled={!isConnected}
+              onChange={(e) => setLpValue(e.target.value)}
+              placeholder={!isConnected ? "Please connect wallet" : ""}
+              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+            />
+            {isConnected && (
+              <span className="text-xs text-white/80">
+                $
+                {new Decimal(coinConfig?.lpPrice || 0)
+                  .mul(lpValue || 0)
+                  .toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button

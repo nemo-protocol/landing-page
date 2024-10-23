@@ -1,5 +1,11 @@
 import Decimal from "decimal.js"
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts"
 
 const COLORS = ["#2DF4DD", "#0E0F16"]
 
@@ -18,6 +24,14 @@ const PChart = ({ cap, tvl, decimal, price }: PChartProps) => {
     { name: "Group B", value: total.minus(tvlValue).toNumber() },
   ]
 
+  const CustomTooltip = () => {
+    return (
+      <div className="custom-tooltip bg-[#1d2435] py-1 px-2 rounded-lg w-24">
+        <p className="text-xs">{`${tvlValue}% Pool Cap Filled`}</p>
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width={16} height={16}>
       <PieChart>
@@ -30,11 +44,13 @@ const PChart = ({ cap, tvl, decimal, price }: PChartProps) => {
           fill="#2DF4DD"
           dataKey="value"
           stroke="#2DF4DD"
+          isAnimationActive={false}
         >
           {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
+        <Tooltip content={<CustomTooltip />} />
       </PieChart>
     </ResponsiveContainer>
   )

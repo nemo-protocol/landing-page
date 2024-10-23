@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
+import { debounce } from "@/lib/utils"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const client = useSuiClient()
@@ -171,6 +172,10 @@ export default function Mint({ slippage }: { slippage: string }) {
     }
   }
 
+  const debouncedSetMintValue = debounce((value: string) => {
+    setMintValue(value)
+  }, 300)
+
   return (
     <div className="flex flex-col items-center">
       <AlertDialog open={open}>
@@ -205,26 +210,37 @@ export default function Mint({ slippage }: { slippage: string }) {
         </AlertDialogContent>
       </AlertDialog>
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between w-full">
-          <div className="text-white">From</div>
+        <div className="flex items-center justify-end w-full">
           <div className="flex items-center gap-x-1">
             <WalletIcon />
             <span>Balance: {isConnected ? coinBalance : "--"}</span>
           </div>
         </div>
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
+        <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
             <SSUIIcon className="size-6" />
-            <span>sSUI</span>
+            <span className="px-2">sSUI</span>
           </div>
-          <input
-            type="text"
-            value={mintValue}
-            disabled={!isConnected}
-            onChange={(e) => setMintValue(e.target.value)}
-            placeholder={!isConnected ? "Please connect wallet" : ""}
-            className={`bg-transparent h-full outline-none grow text-right min-w-0`}
-          />
+          <div className="flex flex-col items-end gap-y-1">
+            <input
+              type="text"
+              value={mintValue}
+              disabled={!isConnected}
+              onChange={(e) =>
+                debouncedSetMintValue(new Decimal(e.target.value).toString())
+              }
+              placeholder={!isConnected ? "Please connect wallet" : ""}
+              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+            />
+            {isConnected && (
+              <span className="text-xs text-white/80">
+                $
+                {new Decimal(coinConfig?.sCoinPrice || 0)
+                  .mul(mintValue || 0)
+                  .toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button
@@ -246,8 +262,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         </div>
       </div>
       <SwapIcon className="mx-auto" />
-      <div className="flex flex-col w-full gap-y-4.5">
-        <div>To</div>
+      <div className="flex flex-col w-full gap-y-4.5 mt-4">
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
@@ -256,10 +271,10 @@ export default function Mint({ slippage }: { slippage: string }) {
               onValueChange={(value) => setTokenType(value)}
             >
               {/* <Select defaultValue="yt"> */}
-              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none">
+              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent">
                 <SelectValue placeholder="Select token type" />
               </SelectTrigger>
-              <SelectContent className="border-none outline-none">
+              <SelectContent className="border-none outline-none bg-[#0E0F16]">
                 <SelectGroup>
                   <SelectItem
                     value="pt"

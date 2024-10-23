@@ -30,6 +30,13 @@ export interface CoinConfig {
   marketStateId: string;
   marketConfigId: string;
   marketFactoryConfigId: string;
+  sCoinPrice: string;
+  ptPrice: string;
+  ytPrice: string;
+  lpPrice: string;
+  ptApy: string;
+  ytApy: string;
+  lpApy: string;
 }
 
 export interface PortfolioItem {

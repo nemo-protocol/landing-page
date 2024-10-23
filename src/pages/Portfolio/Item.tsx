@@ -19,7 +19,7 @@ export default function Item({
   ytReward,
   ptReward,
   rewardCoinType,
-  rewardCoinPrice
+  rewardCoinPrice,
 }: PortfolioItem) {
   const { currentWallet } = useCurrentWallet()
 
@@ -114,7 +114,7 @@ export default function Item({
       <TableRow className="cursor-pointer">
         <TableCell className="flex items-center gap-x-3">
           <img src={icon} alt="" className="size-10" />
-          <div className="flex items-center gap-x-1">
+          <div className="flex items-center gap-x-2">
             <span>PT {name}</span>
             <span className="text-white/50 text-xs">
               {dayjs(parseInt(maturity)).format("MMM DD YYYY")}
@@ -123,18 +123,23 @@ export default function Item({
         </TableCell>
         <TableCell className="text-center">PT</TableCell>
         <TableCell className="text-center">
-          ${new Decimal(ptBalance).div(ptPrice).toFixed(2)}
+          ${new Decimal(ptBalance).mul(ptPrice).toFixed(2)}
         </TableCell>
         <TableCell className="text-center">{ptBalance}</TableCell>
         <TableCell className="text-center" align="center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">{ptReward} {rewardCoinType}</span>
+              <span className="text-white text-sm">
+                {ptReward} {rewardCoinType}
+              </span>
               <span className="text-white/50 text-xs">
-                ${new Decimal(ptReward || 0).div(rewardCoinPrice).toFixed(2)}
+                $
+                {new Decimal(ptReward || 0)
+                  .mul(rewardCoinPrice || 0)
+                  .toFixed(2)}
               </span>
             </div>
-            <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
+            <button className="rounded-3xl bg-[#0F60FF] py-1 px-2 text-xs">
               Claim
             </button>
           </div>
@@ -160,15 +165,20 @@ export default function Item({
         </TableCell>
         <TableCell className="text-center">YT</TableCell>
         <TableCell className="text-center">
-          ${new Decimal(ytBalance).div(ytPrice).toFixed(2)}
+          ${new Decimal(ytBalance).mul(ytPrice).toFixed(2)}
         </TableCell>
         <TableCell className="text-center">{ytBalance}</TableCell>
         <TableCell className="text-center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">{ytReward} {rewardCoinType}</span>
+              <span className="text-white text-sm">
+                {ytReward} {rewardCoinType}
+              </span>
               <span className="text-white/50 text-xs">
-                ${new Decimal(ytReward || 0).div(rewardCoinPrice).toFixed(2)}
+                $
+                {new Decimal(ytReward || 0)
+                  .mul(rewardCoinPrice || 0)
+                  .toFixed(2)}
               </span>
             </div>
             <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
@@ -197,15 +207,20 @@ export default function Item({
         </TableCell>
         <TableCell className="text-center">LP</TableCell>
         <TableCell className="text-center">
-          ${new Decimal(lpBalance).div(lpPrice).toFixed(2)}
+          ${new Decimal(lpBalance).mul(lpPrice).toFixed(2)}
         </TableCell>
         <TableCell className="text-center">{lpBalance}</TableCell>
         <TableCell className="text-center">
           <div className="flex items-center gap-x-2 justify-center">
             <div className="flex flex-col items-center">
-              <span className="text-white text-sm">{lpReward} {rewardCoinType}</span>
+              <span className="text-white text-sm">
+                {lpReward} {rewardCoinType}
+              </span>
               <span className="text-white/50 text-xs">
-                ${new Decimal(lpReward || 0).div(rewardCoinPrice).toFixed(2)}
+                $
+                {new Decimal(lpReward || 0)
+                  .mul(rewardCoinPrice || 0)
+                  .toFixed(2)}
               </span>
             </div>
             <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">

@@ -260,20 +260,31 @@ export default function Mint({ slippage }: { slippage: string }) {
             <span>Balance: {isConnected ? ptBalance : "--"}</span>
           </div>
         </div>
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
+        <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
             <span>PT sSUI</span>
             {/* <DownArrowIcon /> */}
           </div>
-          <input
-            type="text"
-            value={ptRedeemValue}
-            disabled={!isConnected}
-            onChange={(e) => debouncedSetPTValue(e.target.value)}
-            placeholder={!isConnected ? "Please connect wallet" : ""}
-            className={`bg-transparent h-full outline-none grow text-right min-w-0`}
-          />
+          <div className="flex flex-col items-end gap-y-1">
+            <input
+              type="text"
+              disabled={!isConnected}
+              onChange={(e) =>
+                debouncedSetPTValue(new Decimal(e.target.value).toString())
+              }
+              placeholder={!isConnected ? "Please connect wallet" : ""}
+              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+            />
+            {isConnected && (
+              <span className="text-xs text-white/80">
+                $
+                {new Decimal(coinConfig?.ptPrice || 0)
+                  .mul(ptRedeemValue || 0)
+                  .toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button
@@ -302,20 +313,31 @@ export default function Mint({ slippage }: { slippage: string }) {
             <span>Balance: {isConnected ? ytBalance : "--"}</span>
           </div>
         </div>
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
+        <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
             <span>YT sSUI</span>
             {/* <DownArrowIcon /> */}
           </div>
-          <input
-            type="text"
-            value={ytRedeemValue}
-            disabled={!isConnected}
-            onChange={(e) => debouncedSetYTValue(e.target.value)}
-            placeholder={!isConnected ? "Please connect wallet" : ""}
-            className={`bg-transparent h-full outline-none grow text-right min-w-0`}
-          />
+          <div className="flex flex-col items-end gap-y-1">
+            <input
+              type="text"
+              disabled={!isConnected}
+              onChange={(e) =>
+                debouncedSetYTValue(new Decimal(e.target.value).toString())
+              }
+              placeholder={!isConnected ? "Please connect wallet" : ""}
+              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+            />
+            {isConnected && (
+              <span className="text-xs text-white/80">
+                $
+                {new Decimal(coinConfig?.ptPrice || 0)
+                  .mul(ytRedeemValue || 0)
+                  .toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button

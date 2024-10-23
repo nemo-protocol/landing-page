@@ -30,8 +30,8 @@ export default function Portfolio() {
                   <span>My Claimable Yield & Rewards</span>
                   <div className="flex items-center gap-x-2">
                     <span>$14,257.89</span>
-                    <button className="rounded-3xl bg-[#0F60FF] py-1 px-2">
-                      Claim
+                    <button className="rounded-3xl bg-[#0F60FF] py-1 px-2 text-xs">
+                      Claim All
                     </button>
                   </div>
                 </div>

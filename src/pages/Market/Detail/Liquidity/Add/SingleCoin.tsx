@@ -397,20 +397,30 @@ export default function Mint({ slippage }: { slippage: string }) {
             <span>Balance: {isConnected ? coinBalance : "--"}</span>
           </div>
         </div>
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
+        <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
             <SSUIIcon className="size-6" />
-            <span>sSUI</span>
+            <span className="px-2">sSUI</span>
           </div>
-          <input
-            type="text"
-            disabled={!isConnected}
-            onChange={(e) =>
-              debouncedSetAddValue(new Decimal(e.target.value).toString())
-            }
-            placeholder={!isConnected ? "Please connect wallet" : ""}
-            className={`bg-transparent h-full outline-none grow text-right min-w-0`}
-          />
+          <div className="flex flex-col items-end gap-y-1">
+            <input
+              type="text"
+              disabled={!isConnected}
+              onChange={(e) =>
+                debouncedSetAddValue(new Decimal(e.target.value).toString())
+              }
+              placeholder={!isConnected ? "Please connect wallet" : ""}
+              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+            />
+            {isConnected && (
+              <span className="text-xs text-white/80">
+                $
+                {new Decimal(coinConfig?.sCoinPrice || 0)
+                  .mul(addValue || 0)
+                  .toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button
@@ -437,7 +447,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>LP sSUI</span>
+            <span className="px-2">LP sSUI</span>
           </div>
           <input
             disabled
@@ -457,10 +467,12 @@ export default function Mint({ slippage }: { slippage: string }) {
       ) : (
         <button
           onClick={add}
-          disabled={addValue === "" || insufficientBalance}
+          disabled={
+            addValue === "" || Number(addValue) <= 0 || insufficientBalance
+          }
           className={[
             "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
-            addValue === "" || insufficientBalance
+            addValue === "" || Number(addValue) <= 0 || insufficientBalance
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}

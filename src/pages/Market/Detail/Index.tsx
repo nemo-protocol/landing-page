@@ -55,7 +55,7 @@ export default function Home() {
           <span>Back</span>
         </h3>
         <div className="mt-9 flex xl:flex-row flex-col gap-x-8 justify-center">
-          <div className="w-full xl:w-[360px] flex flex-col gap-y-5">
+          <div className="w-full xl:w-[500px] flex flex-col gap-y-5">
             <div className="w-full flex items-center h-[50px] bg-[#0E0F16] rounded-[40px]">
               <div
                 onClick={() =>

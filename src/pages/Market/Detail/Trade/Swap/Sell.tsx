@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { network } from "@/config"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
+import { debounce } from "@/lib/utils"
 
 export default function Sell() {
   const client = useSuiClient()
@@ -218,6 +219,10 @@ export default function Sell() {
     }
   }
 
+  const debouncedSetRedeemValue = debounce((value: string) => {
+    setRedeemValue(value)
+  }, 300)
+
   return (
     <div className="flex flex-col items-center">
       <AlertDialog open={open}>
@@ -262,17 +267,17 @@ export default function Sell() {
             </span>
           </div>
         </div>
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
+        <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
             <Select
               value={tokenType}
               onValueChange={(value) => setTokenType(value)}
             >
-              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none">
+              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent">
                 <SelectValue placeholder="Select token type" />
               </SelectTrigger>
-              <SelectContent className="border-none outline-none">
+              <SelectContent className="border-none outline-none bg-[#0E0F16]">
                 <SelectGroup>
                   <SelectItem value="pt" className="cursor-pointer">
                     PT sSUI
@@ -284,14 +289,29 @@ export default function Sell() {
               </SelectContent>
             </Select>
           </div>
-          <input
-            type="text"
-            value={redeemValue}
-            disabled={!isConnected}
-            onChange={(e) => setRedeemValue(e.target.value)}
-            placeholder={!isConnected ? "Please connect wallet" : ""}
-            className={`bg-transparent h-full outline-none grow text-right min-w-0`}
-          />
+          <div className="flex flex-col items-end gap-y-1">
+            <input
+              type="text"
+              disabled={!isConnected}
+              onChange={(e) =>
+                debouncedSetRedeemValue(new Decimal(e.target.value).toString())
+              }
+              placeholder={!isConnected ? "Please connect wallet" : ""}
+              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+            />
+            {isConnected && (
+              <span className="text-xs text-white/80">
+                $
+                {new Decimal(
+                  tokenType === "pt"
+                    ? coinConfig?.ptPrice || 0
+                    : coinConfig?.ytPrice || 0,
+                )
+                  .mul(redeemValue || 0)
+                  .toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button
@@ -318,7 +338,7 @@ export default function Sell() {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>sSUI</span>
+            <span className="px-2">sSUI</span>
             {/* <DownArrowIcon /> */}
           </div>
           <input
