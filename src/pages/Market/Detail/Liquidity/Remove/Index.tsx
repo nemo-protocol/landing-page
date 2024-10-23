@@ -247,6 +247,10 @@ export default function Remove() {
           />
         </div>
       </div>
+      <div className="bg-[#2426325C] px-6 py-4 flex items-center justify-between w-full mt-6 rounded-xl">
+        <span className="text-white/80">Total Pool APY</span>
+        <span>{coinConfig?.lpApy || 0}</span>
+      </div>
       {insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
           Insufficient Balance
