@@ -20,12 +20,16 @@ export interface CoinInfo {
 }
 
 export interface CoinConfig {
+  pyStore: string
+  syStore: string
+  pyPosition?: string
+  pyState: string
   yieldFactoryConfigId: string
-  syStructId: string
-  yieldTokenStoreId: string
-  tokenConfigId: string
-  ytStructId: string
-  ptStructId: string
+  // syStructId: string
+  // yieldTokenStoreId: string
+  // tokenConfigId: string
+  // ytStructId: string
+  // ptStructId: string
   coinType: string
   marketStateId: string
   marketConfigId: string

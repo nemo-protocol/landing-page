@@ -27,7 +27,7 @@ export default function TradeMint({ slippage }: { slippage: string }) {
         </div>
       </div>
       {nav === "Mint" && <Mint slippage={slippage} />}
-      {nav === "Redeem" && <Redeem slippage={slippage} />}
+      {nav === "Redeem" && <Redeem />}
     </>
   )
 }

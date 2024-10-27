@@ -61,32 +61,48 @@ export default function Remove() {
   const { data: coinConfig } = useCoinConfig(coinType!)
   const { data: dataRatio } = useQueryLPRatio(
     coinConfig?.marketConfigId ?? "",
+    address!,
     {
-      enabled: !!coinConfig?.marketConfigId,
+      enabled: !!coinConfig?.marketConfigId && !!address,
     },
   )
 
   const { data: lpCoinData } = useSuiClientQuery(
-    "getCoins",
+    "getOwnedObjects",
     {
       owner: address!,
-      coinType: `${PackageAddress}::market::MarketLP<${coinType!}>`,
+      filter: {
+        StructType: `${PackageAddress}::market::MarketPositio`,
+      },
     },
     {
       gcTime: 10000,
-      enabled: !!address && !!coinType,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
     },
   )
 
+  // const { data: lpCoinData } = useSuiClientQuery(
+  //   "getCoins",
+  //   {
+  //     owner: address!,
+  //     coinType: `${PackageAddress}::market::MarketLP<${coinType!}>`,
+  //   },
+  //   {
+  //     gcTime: 10000,
+  //     enabled: !!address && !!coinType,
+  //     select: (data) => {
+  //       return data.data.sort((a, b) =>
+  //         new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
+  //       )
+  //     },
+  //   },
+  // )
+
   const lpCoinBalance = useMemo(() => {
-    if (lpCoinData?.length) {
-      return lpCoinData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+    if (lpCoinData?.data.length) {
+      console.log("lpCoinData", lpCoinData)
+
+      return lpCoinData.data // .data.reduce((total, coin) => total.add(0), new Decimal(0))
+        .reduce((total) => total.add(0), new Decimal(0))
         .div(1e9)
         .toFixed(9)
     }
@@ -99,22 +115,40 @@ export default function Remove() {
   )
 
   async function remove() {
-    if (!insufficientBalance) {
+    if (
+      !insufficientBalance &&
+      coinConfig &&
+      coinType &&
+      lpCoinData?.data.length
+    ) {
       try {
         const tx = new Transaction()
 
-        const [lpCoin] = tx.splitCoins(lpCoinData![0].coinObjectId, [
-          new Decimal(lpValue).mul(1e9).toString(),
-        ])
+        if (!coinConfig?.pyPosition) {
+          tx.moveCall({
+            target: `${PackageAddress}::yield_factory::create`,
+            arguments: [
+              tx.object(coinConfig.pyStore),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.maturity),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType],
+          })
+          return
+        }
+
+        // const [lpCoin] = tx.splitCoins(lpCoinData![0].coinObjectId, [
+        //   new Decimal(lpValue).mul(1e9).toString(),
+        // ])
 
         tx.moveCall({
           target: `${PackageAddress}::market::burn_lp`,
           arguments: [
             tx.pure.address(address!),
-            tx.pure.address(address!),
-            tx.object(coinConfig!.marketConfigId),
-            lpCoin,
-            tx.object(coinConfig!.marketStateId),
+            tx.pure.u64(new Decimal(lpValue).mul(1e9).toString()),
+            tx.object(coinConfig.marketStateId),
+            tx.object(lpCoinData.data[0].data!.objectId!),
           ],
           typeArguments: [coinType!],
         })

@@ -119,9 +119,23 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function mint() {
-    if (!insufficientBalance && address) {
+    if (!insufficientBalance && address && coinConfig && coinType) {
       try {
         const tx = new Transaction()
+
+        if (!coinConfig?.pyPosition) {
+          tx.moveCall({
+            target: `${PackageAddress}::yield_factory::create`,
+            arguments: [
+              tx.object(coinConfig.pyStore),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.maturity),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType],
+          })
+          return
+        }
 
         const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
           new Decimal(mintValue).mul(1e9).toString(),
@@ -137,33 +151,53 @@ export default function Mint({ slippage }: { slippage: string }) {
                 .mul(1 - Number(slippage))
                 .toNumber(),
             ),
-            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig.pyState),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinType],
         })
 
-        const [sy, pt] = tx.moveCall({
-          target: `${PackageAddress}::market::swap_sy_for_exact_${coinType}`,
-          arguments: [
-            tx.pure.u64(
-              new Decimal(mintValue)
-                .mul(1e9)
-                .mul(1 - Number(slippage))
-                .toNumber(),
-            ),
-            tx.object(coinConfig!.marketFactoryConfigId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
-            syCoin,
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.marketConfigId),
-            tx.object(coinConfig!.marketStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinType!],
-        })
-
-        tx.transferObjects([sy, pt], address)
+        if (coinType === "pt") {
+          const [sy] = tx.moveCall({
+            target: `${PackageAddress}::market::swap_sy_for_exact_pt`,
+            arguments: [
+              tx.pure.u64(
+                new Decimal(mintValue)
+                  .mul(1e9)
+                  .mul(1 - Number(slippage))
+                  .toNumber(),
+              ),
+              syCoin,
+              tx.object(coinConfig.pyPosition),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.marketFactoryConfigId),
+              tx.object(coinConfig!.marketStateId),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType!],
+          })
+          tx.transferObjects([sy], address)
+        } else {
+          const [sy] = tx.moveCall({
+            target: `${PackageAddress}::market::swap_sy_for_exact_yt`,
+            arguments: [
+              tx.pure.u64(
+                new Decimal(mintValue)
+                  .mul(1e9)
+                  .mul(1 - Number(slippage))
+                  .toNumber(),
+              ),
+              syCoin,
+              tx.object(coinConfig.pyPosition),
+              tx.object(coinConfig.pyState),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.marketFactoryConfigId),
+              tx.object(coinConfig!.marketStateId),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType!],
+          })
+          tx.transferObjects([sy], address)
+        }
 
         tx.setGasBudget(GAS_BUDGET)
 

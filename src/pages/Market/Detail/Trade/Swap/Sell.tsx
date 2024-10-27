@@ -138,25 +138,34 @@ export default function Sell() {
   }, [ytData])
 
   async function redeemPT() {
-    if (!insufficientBalance) {
+    if (!insufficientBalance && coinConfig && coinType) {
       try {
         const tx = new Transaction()
 
-        const [ptCoin] = tx.splitCoins(ptData![0].coinObjectId, [
-          new Decimal(redeemValue).mul(1e9).toString(),
-        ])
+        if (!coinConfig?.pyPosition) {
+          tx.moveCall({
+            target: `${PackageAddress}::yield_factory::create`,
+            arguments: [
+              tx.object(coinConfig.pyStore),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.maturity),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType],
+          })
+          return
+        }
 
         // tx.transferObjects([ptCoin], address!)
 
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::market::swap_exact_pt_for_sy`,
           arguments: [
-            tx.object(coinConfig!.marketFactoryConfigId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
-            ptCoin,
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.marketConfigId),
+            tx.pure.u64(new Decimal(redeemValue).mul(1e9).toString()),
+            tx.object(coinConfig.pyPosition),
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
+            tx.object(coinConfig.marketFactoryConfigId),
             tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
@@ -179,26 +188,32 @@ export default function Sell() {
   }
 
   async function redeemYT() {
-    if (!insufficientBalance) {
+    if (!insufficientBalance && coinConfig && coinType) {
       try {
         const tx = new Transaction()
-
-        const [ytCoin] = tx.splitCoins(ytData![0].coinObjectId, [
-          new Decimal(redeemValue).mul(1e9).toString(),
-        ])
+        if (!coinConfig?.pyPosition) {
+          tx.moveCall({
+            target: `${PackageAddress}::yield_factory::create`,
+            arguments: [
+              tx.object(coinConfig.pyStore),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.maturity),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType],
+          })
+          return
+        }
 
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::market::swap_exact_yt_for_sy`,
           arguments: [
-            ytCoin,
-            tx.object(coinConfig!.marketFactoryConfigId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.ptStructId),
-            tx.object(coinConfig!.ytStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.marketConfigId),
-            tx.object(coinConfig!.marketStateId),
+            tx.pure.u64(new Decimal(redeemValue).mul(1e9).toString()),
+            tx.object(coinConfig.pyPosition),
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
+            tx.object(coinConfig.marketFactoryConfigId),
+            tx.object(coinConfig.marketStateId),
             tx.object("0x6"),
           ],
           typeArguments: [coinType!],

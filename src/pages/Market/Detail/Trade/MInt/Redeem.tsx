@@ -28,7 +28,7 @@ import {
 import { network } from "@/config"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 
-export default function Mint({ slippage }: { slippage: string }) {
+export default function Mint() {
   const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
@@ -138,51 +138,36 @@ export default function Mint({ slippage }: { slippage: string }) {
   }, [ptBalance, ytBalance, ptRedeemValue, ytRedeemValue])
 
   async function redeem() {
-    if (!insufficientBalance) {
+    if (!insufficientBalance && coinConfig && coinType) {
       try {
         const tx = new Transaction()
-
-        const [ptCoin] = tx.splitCoins(ptData![0].coinObjectId, [
-          new Decimal(ptRedeemValue).mul(1e9).toString(),
-        ])
-        const [ytCoin] = tx.splitCoins(ytData![0].coinObjectId, [
-          new Decimal(ytRedeemValue).mul(1e9).toString(),
-        ])
-
-        const [pt, yt, syCoin] = tx.moveCall({
+        if (!coinConfig?.pyPosition) {
+          tx.moveCall({
+            target: `${PackageAddress}::yield_factory::create`,
+            arguments: [
+              tx.object(coinConfig.pyStore),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.maturity),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType],
+          })
+          return
+        }
+        const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::yield_factory::redeem_py`,
           arguments: [
-            ptCoin,
-            ytCoin,
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.ptStructId),
-            tx.object(coinConfig!.ytStructId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
+            tx.pure.u64(new Decimal(ptRedeemValue).mul(1e9).toString()),
+            tx.pure.u64(new Decimal(ytRedeemValue).mul(1e9).toString()),
+            tx.object(coinConfig.pyPosition),
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
           typeArguments: [coinType!],
         })
 
-        tx.transferObjects([pt, yt], address!)
-
-        const [sCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,
-          arguments: [
-            tx.pure.address(address!),
-            syCoin,
-            tx.pure.u64(
-              new Decimal(ptRedeemValue)
-                .mul(1e9)
-                .mul(1 - Number(slippage))
-                .toNumber(),
-            ),
-            tx.object(coinConfig!.syStructId),
-          ],
-          typeArguments: [coinType!],
-        })
-
-        tx.transferObjects([sCoin], address!)
+        tx.transferObjects([syCoin], address!)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,

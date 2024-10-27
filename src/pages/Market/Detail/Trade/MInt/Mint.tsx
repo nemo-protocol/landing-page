@@ -99,16 +99,29 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function mint() {
-    if (!insufficientBalance) {
+    if (!insufficientBalance && coinConfig && coinType) {
       try {
         const tx = new Transaction()
+        if (!coinConfig?.pyPosition) {
+          tx.moveCall({
+            target: `${PackageAddress}::yield_factory::create`,
+            arguments: [
+              tx.object(coinConfig.pyStore),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.maturity),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType],
+          })
+          return
+        }
 
         const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
           new Decimal(mintValue).mul(1e9).toString(),
         ])
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit`,
+          target: `${PackageAddress}::sy::deposit`,
           arguments: [
             splitCoin,
             tx.pure.u64(
@@ -117,7 +130,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                 .mul(1 - Number(slippage))
                 .toNumber(),
             ),
-            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig.pyState),
           ],
           typeArguments: [coinType!],
         })
@@ -126,10 +139,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           target: `${PackageAddress}::yield_factory::mint_py`,
           arguments: [
             syCoin,
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.ptStructId),
-            tx.object(coinConfig!.ytStructId),
-            tx.object(coinConfig!.tokenConfigId),
+            tx.object(coinConfig!.pyPosition),
+            tx.object(coinConfig!.pyState),
             tx.object(coinConfig!.yieldFactoryConfigId),
             tx.object("0x6"),
           ],

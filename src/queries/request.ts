@@ -78,15 +78,17 @@ const nemoRequest = <T>(url: string, options: RequestOption): Promise<T> =>
 
 export const nemoApi = <T>(path: string) => {
   return {
-    get: (params?: OptionParams) =>
+    get: (params?: OptionParams, headers?: Headers) =>
       nemoRequest<T>(`${baseUrl}${path}`, {
-        method: "GET",
         params,
+        headers,
+        method: "GET",
       }),
-    post: (data?: OptionData) =>
+    post: (data?: OptionData, headers?: Headers) =>
       nemoRequest<T>(`${baseUrl}${path}`, {
-        method: "POST",
         data,
+        headers,
+        method: "POST",
       }),
   }
 }

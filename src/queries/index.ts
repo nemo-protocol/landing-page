@@ -1,6 +1,11 @@
 import { nemoApi } from "./request"
 import { useQuery } from "@tanstack/react-query"
-import { CoinInfo, CoinConfig, FixedReturnItem, PortfolioItem } from "./types/market"
+import {
+  CoinInfo,
+  CoinConfig,
+  FixedReturnItem,
+  PortfolioItem,
+} from "./types/market"
 
 function getCoinInfoList(name = "", address = "") {
   return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo").get({
@@ -76,11 +81,20 @@ interface LPResult {
   splitRate: number
 }
 
-async function getLPRatio(marketConfigId: string, mintType?: string) {
-  return await nemoApi<LPResult>("/api/v1/market/lp/mintConfig").get({
-    marketConfigId,
-    mintType,
-  })
+async function getLPRatio(
+  marketConfigId: string,
+  address: string,
+  mintType?: string,
+) {
+  const headers = new Headers()
+  headers.set("userAddress", address)
+  return await nemoApi<LPResult>("/api/v1/market/lp/mintConfig").get(
+    {
+      marketConfigId,
+      mintType,
+    },
+    headers,
+  )
 }
 
 export function useQueryMintLpAmount(
@@ -112,6 +126,7 @@ export function useQuerySwapRatio(
 
 export function useQueryLPRatio(
   marketConfigId: string,
+  address: string,
   options: {
     enabled: boolean
     mintType?: string
@@ -120,7 +135,7 @@ export function useQueryLPRatio(
   return useQuery({
     // FIXME： queryKey dose not work
     queryKey: ["lpRatio", marketConfigId, options?.mintType],
-    queryFn: () => getLPRatio(marketConfigId, options?.mintType),
+    queryFn: () => getLPRatio(marketConfigId, address, options?.mintType),
     enabled: options.enabled,
     refetchInterval: 1000 * 30,
   })

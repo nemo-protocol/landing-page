@@ -61,8 +61,9 @@ export default function Mint({ slippage }: { slippage: string }) {
   const { data: coinConfig } = useCoinConfig(coinType!)
   const { data: dataRatio } = useQueryLPRatio(
     coinConfig?.marketConfigId ?? "",
+    address!,
     {
-      enabled: !!coinConfig?.marketConfigId,
+      enabled: !!coinConfig?.marketConfigId && !!address,
     },
   )
   const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio])
@@ -101,11 +102,31 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function add() {
-    if (!insufficientBalance && ratio && coinType && address) {
+    if (
+      !insufficientBalance &&
+      ratio &&
+      coinType &&
+      address &&
+      coinConfig &&
+      coinData?.length
+    ) {
       try {
         const tx = new Transaction()
+        if (!coinConfig?.pyPosition) {
+          tx.moveCall({
+            target: `${PackageAddress}::yield_factory::create`,
+            arguments: [
+              tx.object(coinConfig.pyStore),
+              tx.object(coinConfig.yieldFactoryConfigId),
+              tx.object(coinConfig.maturity),
+              tx.object("0x6"),
+            ],
+            typeArguments: [coinType],
+          })
+          return
+        }
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
-          coinData![0].coinObjectId,
+          coinData[0].coinObjectId,
           [
             new Decimal(addValue)
               .mul(1e9)
@@ -120,7 +141,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         )
 
         const [syCoinForPY] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit`,
+          target: `${PackageAddress}::sy::deposit`,
           arguments: [
             splitCoinForPY,
             tx.pure.u64(
@@ -130,29 +151,25 @@ export default function Mint({ slippage }: { slippage: string }) {
                 .mul(1 - Number(slippage))
                 .toFixed(0),
             ),
-            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig.pyState),
           ],
           typeArguments: [coinType],
         })
 
-        const [ptCoin, ytCoin] = tx.moveCall({
+        tx.moveCall({
           target: `${PackageAddress}::yield_factory::mint_py`,
           arguments: [
             syCoinForPY,
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.ptStructId),
-            tx.object(coinConfig!.ytStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
+            tx.object(coinConfig.pyPosition),
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
           typeArguments: [coinType!],
         })
 
-        tx.transferObjects([ytCoin], address!)
-
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit`,
+          target: `${PackageAddress}::sy::deposit`,
           arguments: [
             splitCoin,
             tx.pure.u64(
@@ -163,27 +180,31 @@ export default function Mint({ slippage }: { slippage: string }) {
                 .mul(1 - Number(slippage))
                 .toFixed(0),
             ),
-            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig.pyState),
           ],
           typeArguments: [coinType!],
         })
 
-        const [p, y, lp] = tx.moveCall({
+        const [lp, mp] = tx.moveCall({
           target: `${PackageAddress}::market::mint_lp`,
           arguments: [
-            ptCoin,
             syCoin,
-            tx.object(coinConfig!.yieldFactoryConfigId),
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.marketConfigId),
+            tx.pure.u64(
+              new Decimal(addValue)
+                .mul(1e9)
+                .div(new Decimal(ratio).add(1))
+                .toFixed(0),
+            ),
+            tx.object(coinConfig.pyPosition),
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinType],
         })
 
-        tx.transferObjects([p, y, lp], address!)
+        tx.transferObjects([lp, mp], address)
 
         // tx.setGasBudget(0.01 * 1e9)
 
