@@ -24,6 +24,7 @@ export interface CoinConfig {
   syStore: string
   pyPosition?: string
   pyState: string
+  syState: string
   yieldFactoryConfigId: string
   // syStructId: string
   // yieldTokenStoreId: string

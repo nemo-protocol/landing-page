@@ -104,38 +104,41 @@ export default function Mint({ slippage }: { slippage: string }) {
   async function add() {
     if (
       !insufficientBalance &&
-      ratio &&
       coinType &&
       address &&
       coinConfig &&
       coinData?.length
     ) {
       try {
+        console.log("coinConfig", coinConfig.pyState)
+
         const tx = new Transaction()
+        let pyPosition
         if (!coinConfig?.pyPosition) {
-          tx.moveCall({
-            target: `${PackageAddress}::yield_factory::create`,
-            arguments: [
-              tx.object(coinConfig.pyStore),
-              tx.object(coinConfig.yieldFactoryConfigId),
-              tx.object(coinConfig.maturity),
-              tx.object("0x6"),
+          const [_pyPosition] = tx.moveCall({
+            target: `${PackageAddress}::py::init_py_position`,
+            arguments: [tx.object(coinConfig.pyState)],
+            typeArguments: [
+              `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
-            typeArguments: [coinType],
           })
-          return
+          // tx.transferObjects([_pyPosition], address)
+          pyPosition = _pyPosition
+        } else {
+          pyPosition = tx.object(coinConfig.pyPosition)
         }
+
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
           coinData[0].coinObjectId,
           [
             new Decimal(addValue)
               .mul(1e9)
-              .div(new Decimal(ratio).add(1))
+              .div(new Decimal(ratio || 1).add(1))
               .toFixed(0),
             new Decimal(addValue)
               .mul(1e9)
-              .mul(ratio)
-              .div(new Decimal(ratio).add(1))
+              .mul(ratio || 1)
+              .div(new Decimal(ratio || 1).add(1))
               .toFixed(0),
           ],
         )
@@ -147,25 +150,30 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(1e9)
-                .div(new Decimal(ratio).add(1))
-                .mul(1 - Number(slippage))
+                .div(new Decimal(ratio || 1).add(1))
+                .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
-            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.syState),
           ],
-          typeArguments: [coinType],
+          typeArguments: [
+            coinType,
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+          ],
         })
 
         tx.moveCall({
           target: `${PackageAddress}::yield_factory::mint_py`,
           arguments: [
             syCoinForPY,
-            tx.object(coinConfig.pyPosition),
+            pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+          ],
         })
 
         const [syCoin] = tx.moveCall({
@@ -175,15 +183,20 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(1e9)
-                .mul(ratio)
-                .div(new Decimal(ratio).add(1))
-                .mul(1 - Number(slippage))
+                .mul(ratio || 1)
+                .div(new Decimal(ratio || 1).add(1))
+                .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
-            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.syState),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [
+            coinType,
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+          ],
         })
+
+        // tx.transferObjects([syCoin, pyPosition], address)
 
         const [lp, mp] = tx.moveCall({
           target: `${PackageAddress}::market::mint_lp`,
@@ -192,21 +205,27 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(1e9)
-                .div(new Decimal(ratio).add(1))
+                .div(new Decimal(ratio || 1).add(1))
                 .toFixed(0),
             ),
-            tx.object(coinConfig.pyPosition),
+            pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+          ],
         })
 
         tx.transferObjects([lp, mp], address)
 
-        // tx.setGasBudget(0.01 * 1e9)
+        if (!coinConfig?.pyPosition) {
+          tx.transferObjects([pyPosition], address)
+        }
+
+        tx.setGasBudget(0.01 * 1e9)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
