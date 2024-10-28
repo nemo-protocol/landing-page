@@ -4,19 +4,17 @@ import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
+import useCoinData from "@/hooks/useCoinData"
+import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
+import usePyPositionData from "@/hooks/usePyPositionData"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
-import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
+import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import {
-  useSuiClient,
-  useCurrentWallet,
-  useSuiClientQuery,
-  useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit"
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   AlertDialog,
   AlertDialogTitle,
@@ -27,7 +25,6 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Mint({ slippage }: { slippage: string }) {
-  const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
@@ -35,57 +32,29 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
+
   const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction({
-      execute: async ({ bytes, signature }) =>
-        await client.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            showInput: false,
-            showEvents: false,
-            showEffects: true,
-            showRawInput: false,
-            showRawEffects: true,
-            showObjectChanges: false,
-            showBalanceChanges: false,
-          },
-        }),
-    })
+    useCustomSignAndExecuteTransaction()
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: coinConfig } = useCoinConfig(coinType)
+  const { data: pyPositionData } = usePyPositionData(
+    address,
+    coinConfig?.pyState,
+    coinConfig?.maturity,
+  )
+
   const { data: dataRatio } = useQueryLPRatio(
-    coinConfig?.marketConfigId ?? "",
-    address!,
-    {
-      enabled: !!coinConfig?.marketConfigId && !!address,
-    },
+    address,
+    coinConfig?.marketConfigId,
   )
-  const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio])
-  // const ratio = 1
+  const ratio = useMemo(() => dataRatio?.syLpRate ?? 1, [dataRatio])
 
-  const { data: coinData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: coinType!,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address && !!coinType,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
-  )
-
+  const { data: coinData } = useCoinData(address, coinType)
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
       return coinData
@@ -103,29 +72,28 @@ export default function Mint({ slippage }: { slippage: string }) {
 
   async function add() {
     if (
-      !insufficientBalance &&
-      coinType &&
       address &&
+      coinType &&
       coinConfig &&
-      coinData?.length
+      coinData?.length &&
+      !insufficientBalance
     ) {
       try {
-        console.log("coinConfig", coinConfig.pyState)
-
         const tx = new Transaction()
+
         let pyPosition
-        if (!coinConfig?.pyPosition) {
-          const [_pyPosition] = tx.moveCall({
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = tx.moveCall({
             target: `${PackageAddress}::py::init_py_position`,
             arguments: [tx.object(coinConfig.pyState)],
             typeArguments: [
               `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
-          })
-          // tx.transferObjects([_pyPosition], address)
-          pyPosition = _pyPosition
+          })[0]
         } else {
-          pyPosition = tx.object(coinConfig.pyPosition)
+          pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
@@ -133,12 +101,12 @@ export default function Mint({ slippage }: { slippage: string }) {
           [
             new Decimal(addValue)
               .mul(1e9)
-              .div(new Decimal(ratio || 1).add(1))
+              .div(new Decimal(ratio).add(1))
               .toFixed(0),
             new Decimal(addValue)
               .mul(1e9)
               .mul(ratio || 1)
-              .div(new Decimal(ratio || 1).add(1))
+              .div(new Decimal(ratio).add(1))
               .toFixed(0),
           ],
         )
@@ -196,8 +164,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
         })
 
-        // tx.transferObjects([syCoin, pyPosition], address)
-
         const [lp, mp] = tx.moveCall({
           target: `${PackageAddress}::market::mint_lp`,
           arguments: [
@@ -221,11 +187,9 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         tx.transferObjects([lp, mp], address)
 
-        if (!coinConfig?.pyPosition) {
+        if (created) {
           tx.transferObjects([pyPosition], address)
         }
-
-        tx.setGasBudget(0.01 * 1e9)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
@@ -242,147 +206,6 @@ export default function Mint({ slippage }: { slippage: string }) {
       }
     }
   }
-
-  // async function add() {
-  //   if (!insufficientBalance && ratio) {
-  //     try {
-  //       const tx1 = new Transaction()
-  //       const [splitCoinForPY, splitCoin] = tx1.splitCoins(
-  //         coinData![0].coinObjectId,
-  //         [
-  //           new Decimal(addValue)
-  //             .mul(1e9)
-  //             .div(new Decimal(ratio).add(1))
-  //             .toFixed(0),
-  //           new Decimal(addValue)
-  //             .mul(1e9)
-  //             .mul(ratio)
-  //             .div(new Decimal(ratio).add(1))
-  //             .toFixed(0),
-  //         ],
-  //       )
-
-  //       const [syCoin] = tx1.moveCall({
-  //         target: `${PackageAddress}::sy_sSui::deposit`,
-  //         arguments: [
-  //           tx1.pure.address(address!),
-  //           splitCoin,
-  //           tx1.pure.u64(
-  //             new Decimal(addValue)
-  //               .mul(1e9)
-  //               .mul(ratio)
-  //               .div(new Decimal(ratio).add(1))
-  //               .mul(1 - Number(slippage))
-  //               .toFixed(0),
-  //           ),
-  //           tx1.object(coinConfig!.syStructId),
-  //         ],
-  //         typeArguments: [coinType!],
-  //       })
-
-  //       tx1.transferObjects([splitCoinForPY, syCoin], address!)
-
-  //       const data = await signAndExecuteTransaction({
-  //         transaction: tx1,
-  //         chain: `sui:${network}`,
-  //       })
-
-  //       console.log("data", data)
-
-  //       const sy = data!.effects!.created![0].reference.objectId
-  //       const sSUIForPT = data!.effects!.created![1].reference.objectId
-
-  //       console.log("sy", sy)
-  //       console.log("sSUIForPT", sSUIForPT)
-
-  //       const tx2 = new Transaction()
-
-  //       const [syCoinForPY] = tx2.moveCall({
-  //         target: `${PackageAddress}::sy_sSui::deposit`,
-  //         arguments: [
-  //           tx2.pure.address(address!),
-  //           tx2.object(sSUIForPT),
-  //           tx2.pure.u64(
-  //             new Decimal(addValue)
-  //               .mul(1e9)
-  //               .div(new Decimal(ratio).add(1))
-  //               .mul(1 - Number(slippage))
-  //               .toFixed(0),
-  //           ),
-  //           tx2.object(coinConfig!.syStructId),
-  //         ],
-  //         typeArguments: [coinType!],
-  //       })
-
-  //       const [ptCoin, ytCoin] = tx2.moveCall({
-  //         target: `${PackageAddress}::yield_factory::mintPY`,
-  //         arguments: [
-  //           tx2.pure.address(address!),
-  //           tx2.pure.address(address!),
-  //           syCoinForPY,
-  //           tx2.object(coinConfig!.syStructId),
-  //           tx2.object(coinConfig!.ptStructId),
-  //           tx2.object(coinConfig!.ytStructId),
-  //           tx2.object(coinConfig!.tokenConfigId),
-  //           tx2.object(coinConfig!.yieldFactoryConfigId),
-  //           tx2.object("0x6"),
-  //         ],
-  //         typeArguments: [coinType!],
-  //       })
-
-  //       tx2.transferObjects([ptCoin, ytCoin], address!)
-
-  //       tx2.setGasBudget(0.01 * 1e9)
-
-  //       const data1 = await signAndExecuteTransaction({
-  //         transaction: tx2,
-  //         chain: `sui:${network}`,
-  //       })
-
-  //       console.log(data1)
-
-  //       const yt = data1!.effects!.created![0].reference.objectId
-  //       const pt = data1!.effects!.created![1].reference.objectId
-
-  //       console.log("pt", pt)
-  //       console.log("yt", yt)
-
-  //       const tx3 = new Transaction()
-
-  //       tx3.moveCall({
-  //         target: `${PackageAddress}::market::mint_lp`,
-  //         arguments: [
-  //           tx3.pure.address(address!),
-  //           tx3.object(pt),
-  //           tx3.object(sy),
-  //           tx3.object(coinConfig!.yieldFactoryConfigId),
-  //           tx3.object(coinConfig!.syStructId),
-  //           tx3.object(coinConfig!.tokenConfigId),
-  //           tx3.object(coinConfig!.marketConfigId),
-  //           tx3.object(coinConfig!.marketStateId),
-  //           tx3.object("0x6"),
-  //         ],
-  //         typeArguments: [coinType!],
-  //       })
-
-  //       tx3.setGasBudget(0.01 * 1e9)
-
-  //       const data2 = await signAndExecuteTransaction({
-  //         transaction: tx3,
-  //         chain: `sui:${network}`,
-  //       })
-
-  //       setTxId(data2.digest)
-  //       setOpen(true)
-  //       debouncedSetAddValue("")
-  //       setStatus("Success")
-  //     } catch (error) {
-  //       setOpen(true)
-  //       setStatus("Failed")
-  //       setMessage((error as Error)?.message ?? error)
-  //     }
-  //   }
-  // }
 
   const debouncedSetAddValue = debounce((value: string) => {
     setAddValue(value)
@@ -492,10 +315,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           <input
             disabled
             type="text"
-            value={
-              addValue &&
-              new Decimal(addValue).mul(dataRatio?.syLpRate || 0).toString()
-            }
+            value={addValue && new Decimal(addValue).mul(ratio).toString()}
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>

@@ -1,35 +1,30 @@
 import Decimal from "decimal.js"
+import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
+import { useParams } from "react-router-dom"
+import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
+import usePyPositionData from "@/hooks/usePyPositionData"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
+import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import {
-  useSuiClient,
-  useCurrentWallet,
-  useSuiClientQuery,
-  useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit"
-import { useParams } from "react-router-dom"
-
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
+  AlertDialogTitle,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
-import { network } from "@/config"
-import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 
 export default function Mint() {
-  const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
@@ -38,97 +33,45 @@ export default function Mint() {
   const { currentWallet, isConnected } = useCurrentWallet()
   const [ptRedeemValue, setPTRedeemValue] = useState("")
   const [ytRedeemValue, setYTRedeemValue] = useState("")
+
   const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction({
-      execute: async ({ bytes, signature }) =>
-        await client.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            showInput: false,
-            showEvents: false,
-            showEffects: true,
-            showRawInput: false,
-            showRawEffects: true,
-            showObjectChanges: false,
-            showBalanceChanges: false,
-          },
-        }),
-    })
+    useCustomSignAndExecuteTransaction()
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
-
-  const { data: mintPYRatio } = useQueryMintPYRatio(
-    coinConfig?.marketConfigId ?? "",
+  const { data: coinConfig } = useCoinConfig(coinType)
+  const { data: pyPositionData } = usePyPositionData(
+    address,
+    coinConfig?.pyState,
+    coinConfig?.maturity,
   )
 
-  const ptytRatio = useMemo(() => {
-    if (mintPYRatio) {
-      return new Decimal(mintPYRatio?.syYtRate)
-        .div(mintPYRatio?.syPtRate)
-        .toString()
-    }
-    return 0
-  }, [mintPYRatio])
-
-  const { data: ptData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: `${PackageAddress}::pt::PTCoin<${coinType!}>`,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
-  )
-
-  const { data: ytData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: `${PackageAddress}::yt::YTCoin<${coinType!}>`,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
-  )
+  const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketConfigId)
+  const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
+  const ytRatio = useMemo(() => mintPYRatio?.syYtRate ?? 1, [mintPYRatio])
 
   const ptBalance = useMemo(() => {
-    if (ptData?.length) {
-      return ptData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+    if (pyPositionData?.length) {
+      return pyPositionData
+        .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
         .div(1e9)
         .toString()
     }
     return 0
-  }, [ptData])
+  }, [pyPositionData])
 
   const ytBalance = useMemo(() => {
-    if (ytData?.length) {
-      return ytData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+    if (pyPositionData?.length) {
+      return pyPositionData
+        .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
         .div(1e9)
         .toString()
     }
     return 0
-  }, [ytData])
+  }, [pyPositionData])
 
   const insufficientBalance = useMemo(() => {
     return (
@@ -138,36 +81,45 @@ export default function Mint() {
   }, [ptBalance, ytBalance, ptRedeemValue, ytRedeemValue])
 
   async function redeem() {
-    if (!insufficientBalance && coinConfig && coinType) {
+    if (!insufficientBalance && coinConfig && coinType && address) {
       try {
         const tx = new Transaction()
-        if (!coinConfig?.pyPosition) {
-          tx.moveCall({
-            target: `${PackageAddress}::yield_factory::create`,
-            arguments: [
-              tx.object(coinConfig.pyStore),
-              tx.object(coinConfig.yieldFactoryConfigId),
-              tx.object(coinConfig.maturity),
-              tx.object("0x6"),
+
+        let pyPosition
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = tx.moveCall({
+            target: `${PackageAddress}::py::init_py_position`,
+            arguments: [tx.object(coinConfig.pyState)],
+            typeArguments: [
+              `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
-            typeArguments: [coinType],
-          })
-          return
+          })[0]
+        } else {
+          pyPosition = tx.object(pyPositionData[0].id.id)
         }
-        const [syCoin] = tx.moveCall({
+
+        const [sy] = tx.moveCall({
           target: `${PackageAddress}::yield_factory::redeem_py`,
           arguments: [
-            tx.pure.u64(new Decimal(ptRedeemValue).mul(1e9).toString()),
             tx.pure.u64(new Decimal(ytRedeemValue).mul(1e9).toString()),
-            tx.object(coinConfig.pyPosition),
+            tx.pure.u64(new Decimal(ptRedeemValue).mul(1e9).toString()),
+            pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+          ],
         })
 
-        tx.transferObjects([syCoin], address!)
+        tx.transferObjects([sy], address)
+
+        if (created) {
+          tx.transferObjects([pyPosition], address)
+        }
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
@@ -188,12 +140,12 @@ export default function Mint() {
 
   const debouncedSetPTValue = debounce((value: string) => {
     setPTRedeemValue(value)
-    setYTRedeemValue(new Decimal(value).div(ptytRatio).toFixed(9))
+    setYTRedeemValue(new Decimal(value).div(ptRatio).toFixed(9))
   }, 300)
 
   const debouncedSetYTValue = debounce((value: string) => {
     setYTRedeemValue(value)
-    setPTRedeemValue(new Decimal(value).mul(ptytRatio).toFixed(9))
+    setPTRedeemValue(new Decimal(value).mul(ytRatio).toFixed(9))
   }, 300)
 
   return (
@@ -248,12 +200,13 @@ export default function Mint() {
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>PT sSUI</span>
+            <span>PT {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
+              value={ptRedeemValue}
               disabled={!isConnected}
               onChange={(e) =>
                 debouncedSetPTValue(new Decimal(e.target.value).toString())
@@ -301,12 +254,13 @@ export default function Mint() {
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>YT sSUI</span>
+            <span>YT {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
+              value={ytRedeemValue}
               disabled={!isConnected}
               onChange={(e) =>
                 debouncedSetYTValue(new Decimal(e.target.value).toString())
@@ -358,12 +312,8 @@ export default function Mint() {
             value={
               (ptRedeemValue || ytRedeemValue) &&
               Math.min(
-                new Decimal(ptRedeemValue || 0)
-                  .div(mintPYRatio?.syPtRate ?? 1)
-                  .toNumber(),
-                new Decimal(ytRedeemValue || 0)
-                  .div(mintPYRatio?.syYtRate ?? 1)
-                  .toNumber(),
+                new Decimal(ptRedeemValue || 0).div(ptRatio).toNumber(),
+                new Decimal(ytRedeemValue || 0).div(ytRatio).toNumber(),
               ).toFixed(9)
             }
             className="bg-transparent h-full outline-none grow text-right min-w-0"

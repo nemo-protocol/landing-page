@@ -1,19 +1,14 @@
 import Decimal from "decimal.js"
-import { useEffect, useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
+import { useParams } from "react-router-dom"
+import { useEffect, useMemo, useState } from "react"
+import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+import FailIcon from "@/assets/images/svg/fail.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-// import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import {
-  useSuiClient,
-  useCurrentWallet,
-  useSuiClientQuery,
-  useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit"
-import { useParams } from "react-router-dom"
 import {
   Select,
   SelectContent,
@@ -33,32 +28,20 @@ import {
 import { network } from "@/config"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import { debounce } from "@/lib/utils"
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+import usePyPositionData from "@/hooks/usePyPositionData"
 
 export default function Sell() {
-  const client = useSuiClient()
   const { coinType, tokenType: _tokenType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState("pt")
   const { currentWallet, isConnected } = useCurrentWallet()
   const [redeemValue, setRedeemValue] = useState("")
+  const [status, setStatus] = useState<"Success" | "Failed">()
   const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction({
-      execute: async ({ bytes, signature }) =>
-        await client.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            showInput: false,
-            showEvents: false,
-            showEffects: true,
-            showRawInput: false,
-            showRawEffects: true,
-            showObjectChanges: false,
-            showBalanceChanges: false,
-          },
-        }),
-    })
+    useCustomSignAndExecuteTransaction()
 
   useEffect(() => {
     if (_tokenType) {
@@ -72,164 +55,97 @@ export default function Sell() {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
-  const { data: ratio } = useQuerySwapRatio(
-    coinConfig?.marketConfigId ?? "",
-    tokenType,
-    !!coinConfig?.marketConfigId,
+  const { data: pyPositionData } = usePyPositionData(
+    address,
+    coinConfig?.pyState,
+    coinConfig?.maturity,
   )
 
-  const { data: ptData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: `${PackageAddress}::pt::PTCoin<${coinType!}>`,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
+  const { data: ratio } = useQuerySwapRatio(
+    coinConfig?.marketConfigId,
+    tokenType,
   )
 
   const ptBalance = useMemo(() => {
-    if (ptData?.length) {
-      return ptData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+    if (pyPositionData?.length) {
+      return pyPositionData
+        .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
         .div(1e9)
-        .toFixed(9)
+        .toString()
     }
     return 0
-  }, [ptData])
+  }, [pyPositionData])
+
+  const ytBalance = useMemo(() => {
+    if (pyPositionData?.length) {
+      return pyPositionData
+        .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
+        .div(1e9)
+        .toString()
+    }
+    return 0
+  }, [pyPositionData])
 
   const insufficientBalance = useMemo(
     () => new Decimal(Number(ptBalance)).lt(redeemValue || 0),
     [ptBalance, redeemValue],
   )
 
-  const { data: ytData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: `${PackageAddress}::yt::YTCoin<${coinType!}>`,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
-  )
-
-  const ytBalance = useMemo(() => {
-    if (ytData?.length) {
-      return ytData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(1e9)
-        .toString()
-    }
-    return 0
-  }, [ytData])
-
-  async function redeemPT() {
-    if (!insufficientBalance && coinConfig && coinType) {
+  async function redeem() {
+    if (!insufficientBalance && coinConfig && coinType && address) {
       try {
         const tx = new Transaction()
 
-        if (!coinConfig?.pyPosition) {
-          tx.moveCall({
-            target: `${PackageAddress}::yield_factory::create`,
-            arguments: [
-              tx.object(coinConfig.pyStore),
-              tx.object(coinConfig.yieldFactoryConfigId),
-              tx.object(coinConfig.maturity),
-              tx.object("0x6"),
+        let pyPosition
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = tx.moveCall({
+            target: `${PackageAddress}::py::init_py_position`,
+            arguments: [tx.object(coinConfig.pyState)],
+            typeArguments: [
+              `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
-            typeArguments: [coinType],
-          })
-          return
+          })[0]
+        } else {
+          pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        // tx.transferObjects([ptCoin], address!)
-
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::market::swap_exact_pt_for_sy`,
+          target: `${PackageAddress}::market::swap_exact_${tokenType}_for_sy`,
           arguments: [
             tx.pure.u64(new Decimal(redeemValue).mul(1e9).toString()),
-            tx.object(coinConfig.pyPosition),
+            pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig.marketFactoryConfigId),
             tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [
+            coinType,
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+          ],
         })
 
-        tx.transferObjects([syCoin], address!)
+        tx.transferObjects([syCoin], address)
 
-        const { digest } = await signAndExecuteTransaction({
-          transaction: tx,
-          chain: `sui:${network}`,
-        })
-        setTxId(digest)
-        setOpen(true)
-        setRedeemValue("")
-      } catch (error) {
-        console.log("error", error)
-      }
-    }
-  }
-
-  async function redeemYT() {
-    if (!insufficientBalance && coinConfig && coinType) {
-      try {
-        const tx = new Transaction()
-        if (!coinConfig?.pyPosition) {
-          tx.moveCall({
-            target: `${PackageAddress}::yield_factory::create`,
-            arguments: [
-              tx.object(coinConfig.pyStore),
-              tx.object(coinConfig.yieldFactoryConfigId),
-              tx.object(coinConfig.maturity),
-              tx.object("0x6"),
-            ],
-            typeArguments: [coinType],
-          })
-          return
+        if (created) {
+          tx.transferObjects([pyPosition], address)
         }
 
-        const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::market::swap_exact_yt_for_sy`,
-          arguments: [
-            tx.pure.u64(new Decimal(redeemValue).mul(1e9).toString()),
-            tx.object(coinConfig.pyPosition),
-            tx.object(coinConfig.pyState),
-            tx.object(coinConfig.yieldFactoryConfigId),
-            tx.object(coinConfig.marketFactoryConfigId),
-            tx.object(coinConfig.marketStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinType!],
-        })
-
-        tx.transferObjects([syCoin], address!)
-
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
-        setRedeemValue("")
+        setRedeemValue("")        
+        setStatus("Success")
       } catch (error) {
-        console.log("error", error)
+        setOpen(true)
+        setStatus("Failed")
+        setMessage((error as Error)?.message ?? error)
       }
     }
   }
@@ -244,20 +160,28 @@ export default function Sell() {
         <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-white">
-              Success
+              {status}
             </AlertDialogTitle>
             <AlertDialogDescription className="flex flex-col items-center">
-              <SuccessIcon />
-              <div className="py-2 flex flex-col items-center">
-                <p className=" text-white/50">Transaction submitted!</p>
-                <a
-                  className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                  target="_blank"
-                >
-                  View details
-                </a>
-              </div>
+              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
+              {status === "Success" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-white/50">Transaction submitted!</p>
+                  <a
+                    className="text-[#8FB5FF] underline"
+                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
+                    target="_blank"
+                  >
+                    View details
+                  </a>
+                </div>
+              )}
+              {status === "Failed" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-red-400">Transaction Error</p>
+                  <p className="text-red-500 break-all">{message}</p>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
@@ -295,10 +219,10 @@ export default function Sell() {
               <SelectContent className="border-none outline-none bg-[#0E0F16]">
                 <SelectGroup>
                   <SelectItem value="pt" className="cursor-pointer">
-                    PT sSUI
+                    PT {coinConfig?.coinName}
                   </SelectItem>
                   <SelectItem value="yt" className="cursor-pointer">
-                    YT sSUI
+                    YT {coinConfig?.coinName}
                   </SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -353,7 +277,7 @@ export default function Sell() {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span className="px-2">sSUI</span>
+            <span className="px-2">{coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <input
@@ -378,7 +302,7 @@ export default function Sell() {
         </div>
       ) : (
         <button
-          onClick={tokenType === "pt" ? redeemPT : redeemYT}
+          onClick={redeem}
           className={[
             "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
             redeemValue === ""

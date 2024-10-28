@@ -3,20 +3,17 @@ import { network } from "@/config"
 import { useMemo, useState } from "react"
 import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
+import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
+import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import {
-  useSuiClient,
-  useCurrentWallet,
-  useSuiClientQuery,
-  useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit"
-
+import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   AlertDialog,
   AlertDialogTitle,
@@ -27,31 +24,16 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Remove() {
-  const client = useSuiClient()
   const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [lpValue, setLpValue] = useState("")
   const [message, setMessage] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
+  const [status, setStatus] = useState<"Success" | "Failed">()
+
   const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction({
-      execute: async ({ bytes, signature }) =>
-        await client.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            showInput: false,
-            showEvents: false,
-            showEffects: true,
-            showRawInput: false,
-            showRawEffects: true,
-            showObjectChanges: false,
-            showBalanceChanges: false,
-          },
-        }),
-    })
+    useCustomSignAndExecuteTransaction()
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
@@ -59,55 +41,34 @@ export default function Remove() {
   )
 
   const { data: coinConfig } = useCoinConfig(coinType!)
+
   const { data: dataRatio } = useQueryLPRatio(
-    coinConfig?.marketConfigId ?? "",
-    address!,
-    {
-      enabled: !!coinConfig?.marketConfigId && !!address,
-    },
+    address,
+    coinConfig?.marketConfigId,
+  )
+  const ratio = useMemo(() => dataRatio?.syLpRate || 0, [dataRatio])
+
+  const { data: lppMarketPositionData } = useLpMarketPositionData(
+    address,
+    coinConfig?.marketStateId,
+    coinConfig?.maturity,
   )
 
-  const { data: lpCoinData } = useSuiClientQuery(
-    "getOwnedObjects",
-    {
-      owner: address!,
-      filter: {
-        StructType: `${PackageAddress}::market::MarketPositio`,
-      },
-    },
-    {
-      gcTime: 10000,
-    },
+  const { data: pyPositionData } = usePyPositionData(
+    address,
+    coinConfig?.pyState,
+    coinConfig?.maturity,
   )
-
-  // const { data: lpCoinData } = useSuiClientQuery(
-  //   "getCoins",
-  //   {
-  //     owner: address!,
-  //     coinType: `${PackageAddress}::market::MarketLP<${coinType!}>`,
-  //   },
-  //   {
-  //     gcTime: 10000,
-  //     enabled: !!address && !!coinType,
-  //     select: (data) => {
-  //       return data.data.sort((a, b) =>
-  //         new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-  //       )
-  //     },
-  //   },
-  // )
 
   const lpCoinBalance = useMemo(() => {
-    if (lpCoinData?.data.length) {
-      console.log("lpCoinData", lpCoinData)
-
-      return lpCoinData.data // .data.reduce((total, coin) => total.add(0), new Decimal(0))
-        .reduce((total) => total.add(0), new Decimal(0))
+    if (lppMarketPositionData?.length) {
+      return lppMarketPositionData
+        .reduce((total, item) => total.add(item.lp_amount), new Decimal(0))
         .div(1e9)
         .toFixed(9)
     }
     return 0
-  }, [lpCoinData])
+  }, [lppMarketPositionData])
 
   const insufficientBalance = useMemo(
     () => new Decimal(lpCoinBalance).lt(new Decimal(lpValue || 0)),
@@ -116,42 +77,47 @@ export default function Remove() {
 
   async function remove() {
     if (
-      !insufficientBalance &&
-      coinConfig &&
+      address &&
       coinType &&
-      lpCoinData?.data.length
+      coinConfig &&
+      !insufficientBalance &&
+      lppMarketPositionData?.length
     ) {
       try {
         const tx = new Transaction()
 
-        if (!coinConfig?.pyPosition) {
-          tx.moveCall({
-            target: `${PackageAddress}::yield_factory::create`,
-            arguments: [
-              tx.object(coinConfig.pyStore),
-              tx.object(coinConfig.yieldFactoryConfigId),
-              tx.object(coinConfig.maturity),
-              tx.object("0x6"),
+        let pyPosition
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = tx.moveCall({
+            target: `${PackageAddress}::py::init_py_position`,
+            arguments: [tx.object(coinConfig.pyState)],
+            typeArguments: [
+              `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
-            typeArguments: [coinType],
-          })
-          return
+          })[0]
+        } else {
+          pyPosition = tx.object(pyPositionData[0].id.id)
         }
-
-        // const [lpCoin] = tx.splitCoins(lpCoinData![0].coinObjectId, [
-        //   new Decimal(lpValue).mul(1e9).toString(),
-        // ])
 
         tx.moveCall({
           target: `${PackageAddress}::market::burn_lp`,
           arguments: [
-            tx.pure.address(address!),
-            tx.pure.u64(new Decimal(lpValue).mul(1e9).toString()),
+            tx.pure.address(address),
+            tx.pure.u64(new Decimal(lpValue).mul(1e9).toFixed(0)),
+            pyPosition,
             tx.object(coinConfig.marketStateId),
-            tx.object(lpCoinData.data[0].data!.objectId!),
+            tx.object(lppMarketPositionData[0].id.id),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+          ],
         })
+
+        if (created) {
+          tx.transferObjects([pyPosition], address)
+        }
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
@@ -210,6 +176,7 @@ export default function Remove() {
           <AlertDialogFooter></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
           <div className="text-white">Input</div>
@@ -221,7 +188,7 @@ export default function Remove() {
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>LP sSUI</span>
+            <span>LP {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
@@ -268,15 +235,12 @@ export default function Remove() {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>sSUI</span>
+            <span>{coinConfig?.coinName}</span>
           </div>
           <input
             disabled
             type="text"
-            value={
-              lpValue &&
-              new Decimal(lpValue).div(dataRatio?.syLpRate || 0).toString()
-            }
+            value={lpValue && new Decimal(lpValue).div(ratio).toString()}
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>

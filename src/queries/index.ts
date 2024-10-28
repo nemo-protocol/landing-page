@@ -68,10 +68,10 @@ async function getMintPYRatio(marketConfigId: string) {
   })
 }
 
-export function useQueryMintPYRatio(marketConfigId: string) {
+export function useQueryMintPYRatio(marketConfigId?: string) {
   return useQuery({
     queryKey: ["mintPYRatio", marketConfigId],
-    queryFn: () => getMintPYRatio(marketConfigId),
+    queryFn: () => getMintPYRatio(marketConfigId!),
     enabled: !!marketConfigId,
   })
 }
@@ -110,42 +110,36 @@ export function useQueryMintLpAmount(
   })
 }
 
-export function useQuerySwapRatio(
-  marketConfigId: string,
-  tokenType: string,
-  enabled: boolean,
-) {
+export function useQuerySwapRatio(marketConfigId?: string, tokenType?: string) {
   return useQuery({
     // FIXME： queryKey dose not work
     queryKey: ["swapRatio", marketConfigId, tokenType],
-    queryFn: () => getSwapRatio(marketConfigId, tokenType),
+    queryFn: () => getSwapRatio(marketConfigId!, tokenType!),
     refetchInterval: 1000 * 30,
-    enabled,
+    enabled: !!marketConfigId && !!tokenType,
   })
 }
 
 export function useQueryLPRatio(
-  marketConfigId: string,
-  address: string,
-  options: {
-    enabled: boolean
-    mintType?: string
-  },
+  address?: string,
+  marketConfigId?: string,
+  mintType?: string,
 ) {
   return useQuery({
     // FIXME： queryKey dose not work
-    queryKey: ["lpRatio", marketConfigId, options?.mintType],
-    queryFn: () => getLPRatio(marketConfigId, address, options?.mintType),
-    enabled: options.enabled,
+    queryKey: ["lpRatio", marketConfigId, mintType],
+    queryFn: () => getLPRatio(marketConfigId!, address!, mintType),
+    enabled: !!marketConfigId,
     refetchInterval: 1000 * 30,
   })
 }
 
-export function useCoinConfig(coinType: string) {
+export function useCoinConfig(coinType?: string) {
   return useQuery({
+    enabled: !!coinType,
     // FIXME： queryKey dose not work
     queryKey: ["coinConfig", coinType],
-    queryFn: () => getCoinConfig(coinType),
+    queryFn: () => getCoinConfig(coinType!),
   })
 }
 
