@@ -44,7 +44,7 @@ export default function Remove() {
 
   const { data: dataRatio } = useQueryLPRatio(
     address,
-    coinConfig?.marketConfigId,
+    coinConfig?.marketStateId,
   )
   const ratio = useMemo(() => dataRatio?.syLpRate || 0, [dataRatio])
 

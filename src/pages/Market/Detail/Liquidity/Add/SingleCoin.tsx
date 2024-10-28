@@ -50,7 +50,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
   const { data: dataRatio } = useQueryLPRatio(
     address,
-    coinConfig?.marketConfigId,
+    coinConfig?.marketStateId,
   )
   const ratio = useMemo(() => dataRatio?.syLpRate ?? 1, [dataRatio])
 

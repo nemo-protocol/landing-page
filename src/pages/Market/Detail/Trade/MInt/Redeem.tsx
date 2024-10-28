@@ -49,7 +49,7 @@ export default function Mint() {
     coinConfig?.maturity,
   )
 
-  const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketConfigId)
+  const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
   const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
   const ytRatio = useMemo(() => mintPYRatio?.syYtRate ?? 1, [mintPYRatio])
 

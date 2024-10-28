@@ -62,7 +62,7 @@ export default function Sell() {
   )
 
   const { data: ratio } = useQuerySwapRatio(
-    coinConfig?.marketConfigId,
+    coinConfig?.marketStateId,
     tokenType,
   )
 

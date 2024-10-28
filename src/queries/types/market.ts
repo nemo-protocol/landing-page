@@ -34,7 +34,6 @@ export interface CoinConfig {
   // ptStructId: string
   coinType: string
   marketStateId: string
-  marketConfigId: string
   marketFactoryConfigId: string
   sCoinPrice: string
   ptPrice: string

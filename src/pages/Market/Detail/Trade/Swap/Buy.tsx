@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { network } from "@/config"
+import { GAS_BUDGET, network } from "@/config"
 import { Info } from "lucide-react"
 import { debounce } from "@/lib/utils"
 import { PackageAddress } from "@/contract"
@@ -69,7 +69,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   const { data: ratio } = useQuerySwapRatio(
-    coinConfig?.marketConfigId,
+    coinConfig?.marketStateId,
     tokenType,
   )
 
@@ -190,6 +190,8 @@ export default function Mint({ slippage }: { slippage: string }) {
         if (created) {
           tx.transferObjects([pyPosition], address)
         }
+
+        tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),

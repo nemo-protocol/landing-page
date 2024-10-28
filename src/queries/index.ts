@@ -36,23 +36,23 @@ function getPortfolioList() {
 }
 
 async function getMintLpAmount(
-  marketConfigId: string,
+  marketStateId: string,
   syCoinAmount: string,
   ptCoinAmount: string,
 ) {
   const { amount } = await nemoApi<{ amount: string }>(
     "/api/v1/market/lp/mintConfig",
   ).get({
-    marketConfigId,
+    marketStateId,
     syCoinAmount,
     ptCoinAmount,
   })
   return amount
 }
 
-async function getSwapRatio(marketConfigId: string, tokenType: string) {
+async function getSwapRatio(marketStateId: string, tokenType: string) {
   return await nemoApi<string>("/api/v1/market/swap/exchangeRate").get({
-    marketConfigId,
+    marketStateId,
     tokenType,
   })
 }
@@ -62,17 +62,17 @@ interface MintPYResult {
   syYtRate: number
 }
 
-async function getMintPYRatio(marketConfigId: string) {
+async function getMintPYRatio(marketStateId: string) {
   return await nemoApi<MintPYResult>("/api/v1/market/py/mintConfig").get({
-    marketConfigId,
+    marketStateId,
   })
 }
 
-export function useQueryMintPYRatio(marketConfigId?: string) {
+export function useQueryMintPYRatio(marketStateId?: string) {
   return useQuery({
-    queryKey: ["mintPYRatio", marketConfigId],
-    queryFn: () => getMintPYRatio(marketConfigId!),
-    enabled: !!marketConfigId,
+    queryKey: ["mintPYRatio", marketStateId],
+    queryFn: () => getMintPYRatio(marketStateId!),
+    enabled: !!marketStateId,
   })
 }
 
@@ -82,7 +82,7 @@ interface LPResult {
 }
 
 async function getLPRatio(
-  marketConfigId: string,
+  marketStateId: string,
   address: string,
   mintType?: string,
 ) {
@@ -90,7 +90,7 @@ async function getLPRatio(
   headers.set("userAddress", address)
   return await nemoApi<LPResult>("/api/v1/market/lp/mintConfig").get(
     {
-      marketConfigId,
+      marketStateId,
       mintType,
     },
     headers,
@@ -98,38 +98,38 @@ async function getLPRatio(
 }
 
 export function useQueryMintLpAmount(
-  marketConfigId: string,
+  marketStateId: string,
   syCoinAmount: string,
   ptCoinAmount: string,
   enabled: boolean,
 ) {
   return useQuery({
-    queryKey: ["coinInfoList", marketConfigId, syCoinAmount, ptCoinAmount],
-    queryFn: () => getMintLpAmount(marketConfigId, syCoinAmount, ptCoinAmount),
+    queryKey: ["coinInfoList", marketStateId, syCoinAmount, ptCoinAmount],
+    queryFn: () => getMintLpAmount(marketStateId, syCoinAmount, ptCoinAmount),
     enabled,
   })
 }
 
-export function useQuerySwapRatio(marketConfigId?: string, tokenType?: string) {
+export function useQuerySwapRatio(marketStateId?: string, tokenType?: string) {
   return useQuery({
     // FIXME： queryKey dose not work
-    queryKey: ["swapRatio", marketConfigId, tokenType],
-    queryFn: () => getSwapRatio(marketConfigId!, tokenType!),
+    queryKey: ["swapRatio", marketStateId, tokenType],
+    queryFn: () => getSwapRatio(marketStateId!, tokenType!),
     refetchInterval: 1000 * 30,
-    enabled: !!marketConfigId && !!tokenType,
+    enabled: !!marketStateId && !!tokenType,
   })
 }
 
 export function useQueryLPRatio(
   address?: string,
-  marketConfigId?: string,
+  marketStateId?: string,
   mintType?: string,
 ) {
   return useQuery({
     // FIXME： queryKey dose not work
-    queryKey: ["lpRatio", marketConfigId, mintType],
-    queryFn: () => getLPRatio(marketConfigId!, address!, mintType),
-    enabled: !!marketConfigId,
+    queryKey: ["lpRatio", marketStateId, mintType],
+    queryFn: () => getLPRatio(marketStateId!, address!, mintType),
+    enabled: !!marketStateId,
     refetchInterval: 1000 * 30,
   })
 }
