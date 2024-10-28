@@ -20,6 +20,8 @@ export interface CoinInfo {
 }
 
 export interface CoinConfig {
+  underlyingApy: number
+  ytApy: number
   pyStore: string
   syStore: string
   pyState: string

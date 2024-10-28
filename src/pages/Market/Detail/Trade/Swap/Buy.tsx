@@ -342,67 +342,95 @@ export default function Mint({ slippage }: { slippage: string }) {
           {tokenType === "pt" ? coinConfig?.ptApy || 0 : coinConfig?.ytApy || 0}
         </span>
       </div> */}
-      {tokenType === "pt" && (
+      {
         <div className="bg-[#44E0C30F]/[0.08] px-6 py-4 flex flex-col gap-y-2 w-full mt-6 rounded-lg">
           <div className="flex items-center justify-between">
-            <span className="text-[#44E0C3] text-sm">
-              Fixed return after{" "}
-              {dayjs(
-                parseInt(coinConfig?.maturity || Date.now().toString()),
-              ).diff(dayjs(), "day")}{" "}
-              days
-            </span>
+            {tokenType === "pt" ? (
+              <span className="text-[#44E0C3] text-sm">
+                Fixed return after{" "}
+                {dayjs(
+                  parseInt(coinConfig?.maturity || Date.now().toString()),
+                ).diff(dayjs(), "day")}{" "}
+                days
+              </span>
+            ) : (
+              <span className="text-[#44E0C3] text-sm">
+                If underlying APY remains same
+              </span>
+            )}
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="size-4 cursor-pointer" />
                 </TooltipTrigger>
                 <TooltipContent className="bg-[#20283C] rounded-md border-none">
-                  <p>
-                    You can sell PT prior to maturity. Alternatively, you can
-                    hold PT until maturity to obtain a fixed return.
-                  </p>
+                  {tokenType === "pt" ? (
+                    <p>
+                      You can sell PT prior to maturity. Alternatively, you can
+                      hold PT until maturity to obtain a fixed return.
+                    </p>
+                  ) : (
+                    <p>
+                      If the underlying APY increases, your actual returns will
+                      also increase. Conversely, if it decreases, your returns
+                      will be reduced.
+                    </p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-x-2">
-              <img
-                className="size-6"
-                src={
-                  coinConfig?.coinLogo ||
-                  "https://nemoprotocol.com/static/sui.svg"
-                }
-                alt=""
-              />
-              <div className="flex flex-col gap-y-0.5">
-                <span className="text-white text-sm">
-                  {swapValue || 0} {coinConfig?.coinName}
-                </span>
-                <span className="text-white/60 text-xs">
-                  $
-                  {new Decimal(swapValue || 0)
-                    .mul(coinConfig?.coinPrice || 0)
-                    .mul(ratio || 0)
-                    .toFixed(2)}
-                </span>
+            {tokenType === "pt" ? (
+              <div className="flex items-center gap-x-2">
+                <img
+                  className="size-6"
+                  src={
+                    coinConfig?.coinLogo ||
+                    "https://nemoprotocol.com/static/sui.svg"
+                  }
+                  alt=""
+                />
+                <div className="flex flex-col gap-y-0.5">
+                  <span className="text-white text-sm">
+                    {swapValue || 0} {coinConfig?.coinName}
+                  </span>
+                  <span className="text-white/60 text-xs">
+                    $
+                    {new Decimal(swapValue || 0)
+                      .mul(coinConfig?.coinPrice || 0)
+                      .mul(ratio || 0)
+                      .toFixed(2)}
+                  </span>
+                </div>
               </div>
-            </div>
-            <span className="text-[#44E0C3] text-sm">
-              {new Decimal(swapValue || 0)
-                .mul(ratio || 0)
-                .mul(coinConfig?.coinPrice || 0)
-                .minus(
-                  new Decimal(swapValue || 0).mul(coinConfig?.sCoinPrice || 0),
-                )
-                .toFixed(2)}
-              &nbsp;
-              {coinConfig?.coinName}
-            </span>
+            ) : (
+              <span>YT APY</span>
+            )}
+
+            {tokenType === "pt" ? (
+              <span className="text-[#44E0C3] text-sm">
+                {new Decimal(swapValue || 0)
+                  .mul(ratio || 0)
+                  .mul(coinConfig?.coinPrice || 0)
+                  .minus(
+                    new Decimal(swapValue || 0).mul(
+                      coinConfig?.sCoinPrice || 0,
+                    ),
+                  )
+                  .toFixed(2)}
+                &nbsp;
+                {coinConfig?.coinName}
+              </span>
+            ) : (
+              <span className="text-[#44E0C3] text-sm">
+                {coinConfig?.ytApy ?? 0} %
+              </span>
+            )}
           </div>
         </div>
-      )}
+      }
       {insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
           Insufficient Balance
