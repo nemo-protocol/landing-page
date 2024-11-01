@@ -7,12 +7,6 @@ import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import {
   useSuiClient,
   useCurrentWallet,
   useSuiClientQuery,
@@ -39,8 +33,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import { debounce } from "@/lib/utils"
-import { Info } from "lucide-react"
-import dayjs from "dayjs"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const client = useSuiClient()
@@ -285,14 +277,14 @@ export default function Mint({ slippage }: { slippage: string }) {
                 <SelectGroup>
                   <SelectItem
                     value="pt"
-                    className="cursor-pointer"
+                    className="cursor-pointer text-white"
                     onClick={() => setTokenType("pt")}
                   >
                     PT sSUI
                   </SelectItem>
                   <SelectItem
                     value="yt"
-                    className="cursor-pointer"
+                    className="cursor-pointer text-white"
                     onClick={() => setTokenType("yt")}
                   >
                     YT sSUI
@@ -318,67 +310,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           {tokenType === "pt" ? coinConfig?.ptApy || 0 : coinConfig?.ytApy || 0}
         </span>
       </div> */}
-      {tokenType === "pt" && (
-        <div className="bg-[#44E0C30F]/[0.08] px-6 py-4 flex flex-col gap-y-2 w-full mt-6 rounded-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-[#44E0C3] text-sm">
-              Fixed return after{" "}
-              {dayjs(
-                parseInt(coinConfig?.maturity || Date.now().toString()),
-              ).diff(dayjs(), "day")}{" "}
-              days
-            </span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="size-4 cursor-pointer" />
-                </TooltipTrigger>
-                <TooltipContent className="bg-[#20283C] rounded-md border-none">
-                  <p>
-                    You can sell PT prior to maturity. Alternatively, you can
-                    hold PT until maturity to obtain a fixed return.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-x-2">
-              <img
-                className="size-6"
-                src={
-                  coinConfig?.coinLogo ||
-                  "https://nemoprotocol.com/static/sui.svg"
-                }
-                alt=""
-              />
-              <div className="flex flex-col gap-y-0.5">
-                <span className="text-white text-sm">
-                  {mintValue || 0} {coinConfig?.coinLogo || "SUI"}
-                </span>
-                <span className="text-white/60 text-xs">
-                  $
-                  {new Decimal(mintValue || 0)
-                    .mul(coinConfig?.coinPrice || 0)
-                    .mul(ratio || 0)
-                    .toFixed(2)}
-                </span>
-              </div>
-            </div>
-            <span className="text-[#44E0C3] text-sm">
-              +
-              {new Decimal(mintValue || 0)
-                .mul(ratio || 0)
-                .mul(coinConfig?.coinPrice || 0)
-                .minus(
-                  new Decimal(mintValue || 0).mul(coinConfig?.sCoinPrice || 0),
-                )
-                .toFixed(2)}
-              {coinConfig?.coinLogo || "SUI"}
-            </span>
-          </div>
-        </div>
-      )}
       {insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
           Insufficient Balance
