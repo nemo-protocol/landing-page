@@ -311,17 +311,17 @@ export default function Mint({ slippage }: { slippage: string }) {
                 <SelectGroup>
                   <SelectItem
                     value="pt"
-                    className="cursor-pointer"
+                    className="cursor-pointer text-white"
                     onClick={() => setTokenType("pt")}
                   >
-                    PT sSUI
+                    PT {coinConfig?.coinName}
                   </SelectItem>
                   <SelectItem
                     value="yt"
-                    className="cursor-pointer"
+                    className="cursor-pointer text-white"
                     onClick={() => setTokenType("yt")}
                   >
-                    YT sSUI
+                    YT {coinConfig?.coinName}
                   </SelectItem>
                 </SelectGroup>
               </SelectContent>

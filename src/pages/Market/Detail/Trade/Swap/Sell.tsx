@@ -218,10 +218,10 @@ export default function Sell() {
               </SelectTrigger>
               <SelectContent className="border-none outline-none bg-[#0E0F16]">
                 <SelectGroup>
-                  <SelectItem value="pt" className="cursor-pointer">
+                  <SelectItem value="pt" className="cursor-pointer text-white">
                     PT {coinConfig?.coinName}
                   </SelectItem>
-                  <SelectItem value="yt" className="cursor-pointer">
+                  <SelectItem value="yt" className="cursor-pointer text-white">
                     YT {coinConfig?.coinName}
                   </SelectItem>
                 </SelectGroup>
