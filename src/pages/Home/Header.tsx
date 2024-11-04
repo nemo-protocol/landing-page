@@ -1,9 +1,9 @@
-import { useState } from "react"
 import { motion } from "framer-motion"
 import { containerStyles } from "./Index"
 import logo from "@/assets/images/svg/logo.svg"
-import { Link, useNavigate } from "react-router-dom"
+import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
+import { Link, useNavigate } from "react-router-dom"
 import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
 
 export default function HomeHeader() {
@@ -11,7 +11,25 @@ export default function HomeHeader() {
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
   const [subNav, setSubNav] = useState(false)
+  const subNavRef = useRef<HTMLLIElement>(null)
   const [router, setRouter] = useState<string>("Home")
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      subNavRef.current &&
+      !subNavRef.current.contains(event.target as Node)
+    ) {
+      setSubNav(false)
+    }
+  }
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
   return (
     <header className={containerStyles} style={{ zIndex: 10 }}>
       <div className="flex items-center justify-between py-6 text-xs">
@@ -32,38 +50,44 @@ export default function HomeHeader() {
             Home
           </li>
           <li
-            onClick={() => setRouter("Community")}
+            ref={subNavRef}
+            onClick={() => {
+              setSubNav(true)
+              setRouter("Community")
+            }}
             className={[
-              "w-32 text-center text-white bg-transparent py-2 rounded-full cursor-pointer dropdown",
+              "w-32 text-center text-white bg-transparent py-2 rounded-full cursor-pointer relative",
               router === "Community" ? "bg-white/10" : "",
             ].join(" ")}
           >
             <div tabIndex={0} role="button">
               Community
             </div>
-            <ul
-              tabIndex={0}
-              className="dropdown-content menu bg-white/10 rounded-box z-[1] p-2 shadow mt-4 w-[130px]"
-            >
-              <li>
-                <a
-                  target="_blank"
-                  href="https://x.com/nemoprotocol"
-                  className="text-white hover:text-[#1954FF] active:text-[#1954FF]"
-                >
-                  Twitter
-                </a>
-              </li>
-              <li>
-                <a
-                  target="_blank"
-                  href="https://t.me/NemoProtocol"
-                  className="text-white hover:text-[#1954FF] active:text-[#1954FF]"
-                >
-                  Telegram
-                </a>
-              </li>
-            </ul>
+            {subNav && (
+              <ul
+                tabIndex={0}
+                className="bg-white/10 rounded-box z-[1] p-2 shadow mt-4 w-[130px] absolute rounded-lg"
+              >
+                <li>
+                  <a
+                    target="_blank"
+                    href="https://x.com/nemoprotocol"
+                    className="py-3 hover:bg-[#28282a] rounded-lg text-white hover:text-[#1954FF] active:text-[#1954FF] w-full inline-block"
+                  >
+                    Twitter
+                  </a>
+                </li>
+                <li>
+                  <a
+                    target="_blank"
+                    href="https://t.me/NemoProtocol"
+                    className="py-3 hover:bg-[#28282a] rounded-lg text-white hover:text-[#1954FF] active:text-[#1954FF] w-full inline-block"
+                  >
+                    Telegram
+                  </a>
+                </li>
+              </ul>
+            )}
           </li>
           <li
             onClick={() => {
@@ -96,7 +120,7 @@ export default function HomeHeader() {
           </li>
         </ul>
         <button
-          className="border border-white bg-transparent rounded-full text-white hidden md:inline-block text-white"
+          className="border border-white bg-transparent rounded-full text-white hidden md:inline-block py-1 px-2"
           onClick={() => navigate("/market")}
         >
           Launch App

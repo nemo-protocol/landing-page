@@ -304,7 +304,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               onValueChange={(value) => setTokenType(value)}
             >
               {/* <Select defaultValue="yt"> */}
-              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent">
+              <SelectTrigger className="w-24 border-none focus:ring-0 focus:outline-none bg-transparent">
                 <SelectValue placeholder="Select token type" />
               </SelectTrigger>
               <SelectContent className="border-none outline-none bg-[#0E0F16]">
@@ -434,7 +434,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         </div>
       }
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
           Insufficient Balance
         </div>
       ) : (
@@ -442,7 +442,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           onClick={mint}
           disabled={swapValue === ""}
           className={[
-            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
             swapValue === ""
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",

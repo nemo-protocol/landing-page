@@ -53,7 +53,7 @@ export default function Home() {
         <div className="mt-[23px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 transition-all duration-1000 ease-in-out">
           {list?.map((item) => (
             <div
-              key={item.coinAddress}
+              key={item.coinAddress + "_" + item.maturity}
               className="p-5 rounded-[21.544px] bg-[#0E0F16]"
             >
               <div className="flex items-center justify-between">
@@ -132,9 +132,11 @@ export default function Home() {
                 <h6 className="text-xs text-white">Trade</h6>
                 <div className="grid grid-cols-2 gap-x-4 mt-2.5">
                   <div
-                    className="px-2 py-1.5 bg-[#0F60FF] rounded-xl flex items-center justify-between pl-5 pr-3 h-14 cursor-pointer"
+                    className="px-2 py-1.5 bg-[#0F60FF] rounded-xl flex items-center justify-between pl-5 pr-3 h-14 cursor-pointer border border-transparent hover:border-white"
                     onClick={() =>
-                      navigate(`/market/detail/${item.coinAddress}/${item.maturity}/swap/buy/yt`)
+                      navigate(
+                        `/market/detail/${item.coinAddress}/${item.maturity}/swap/buy/yt`,
+                      )
                     }
                   >
                     <span className="text-white text-sm">YT</span>
@@ -148,9 +150,11 @@ export default function Home() {
                     </div>
                   </div>
                   <div
-                    className="px-4 py-3 bg-[#2DF5DD] rounded-xl flex items-center justify-between text-black pl-5 pr-3 h-14 cursor-pointer"
+                    className="px-4 py-3 bg-[#2DF5DD] rounded-xl flex items-center justify-between text-black pl-5 pr-3 h-14 cursor-pointer border border-transparent hover:border-white"
                     onClick={() =>
-                      navigate(`/market/detail/${item.coinAddress}/${item.maturity}/swap/buy/pt`)
+                      navigate(
+                        `/market/detail/${item.coinAddress}/${item.maturity}/swap/buy/pt`,
+                      )
                     }
                   >
                     <span className="text-sm">PT</span>
@@ -168,13 +172,17 @@ export default function Home() {
               <div className="mt-3.5">
                 <h6 className="text-xs">Earn</h6>
                 <button
-                  className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer"
+                  className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer border border-transparent hover:border-white"
                   onClick={() =>
-                    navigate(`/market/detail/${item.coinAddress}/${item.maturity}/liquidity`)
+                    navigate(
+                      `/market/detail/${item.coinAddress}/${item.maturity}/liquidity`,
+                    )
                   }
                 >
                   <span>+ POOL APY</span>
-                  <span className="text-base">{new Decimal(item.poolApy).toFixed(2)}%</span>
+                  <span className="text-base">
+                    {new Decimal(item.poolApy).toFixed(2)}%
+                  </span>
                 </button>
               </div>
             </div>

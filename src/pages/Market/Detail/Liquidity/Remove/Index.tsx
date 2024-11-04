@@ -250,7 +250,7 @@ export default function Remove() {
         <span>{coinConfig?.lpApy || 0}</span>
       </div> */}
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
           Insufficient Balance
         </div>
       ) : (
@@ -258,7 +258,7 @@ export default function Remove() {
           onClick={remove}
           disabled={lpValue === "" || insufficientBalance}
           className={[
-            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
             lpValue === "" || insufficientBalance
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",

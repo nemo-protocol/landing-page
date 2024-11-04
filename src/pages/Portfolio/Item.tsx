@@ -130,12 +130,12 @@ export default function Item({
             {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
               <>
                 <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/pt`}>
-                  <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
+                  <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">Buy</button>
                 </Link>
                 <Link
                   to={`/market/detail/${coinType}/${maturity}/swap/sell/pt`}
                 >
-                  <button className="rounded-3xl bg-[#FF7474] w-24">
+                  <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
                     Sell
                   </button>
                 </Link>

@@ -325,7 +325,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         <span>{coinConfig?.lpApy || 0}</span>
       </div> */}
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full cursor-pointer h-14">
           Insufficient Balance
         </div>
       ) : (
@@ -335,9 +335,9 @@ export default function Mint({ slippage }: { slippage: string }) {
             addValue === "" || Number(addValue) <= 0 || insufficientBalance
           }
           className={[
-            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            "mt-7.5 px-8 py-2.5 rounded-full w-full",
             addValue === "" || Number(addValue) <= 0 || insufficientBalance
-              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
+              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer h-14"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >

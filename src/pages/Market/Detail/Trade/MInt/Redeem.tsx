@@ -321,14 +321,14 @@ export default function Mint() {
         </div>
       </div>
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
           Insufficient Balance
         </div>
       ) : (
         <button
           onClick={redeem}
           className={[
-            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
             ptRedeemValue === "" || ytRedeemValue === "" || insufficientBalance
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",
