@@ -13,8 +13,13 @@ import {
 export default function Trade() {
   const navigate = useNavigate()
   const [slippage, setSlippage] = useState("0.5")
-  const { coinType, operation = "swap" } = useParams<{
+  const {
+    coinType,
+    maturity,
+    operation = "swap",
+  } = useParams<{
     coinType: string
+    maturity: string
     operation?: string
   }>()
   return (
@@ -24,7 +29,7 @@ export default function Trade() {
           <span
             onClick={() =>
               operation !== "swap" &&
-              navigate(`/market/detail/${coinType}/swap`)
+              navigate(`/market/detail/${coinType}/${maturity}/swap`)
             }
             className={
               operation === "swap"
@@ -37,7 +42,7 @@ export default function Trade() {
           <span
             onClick={() =>
               operation !== "mint" &&
-              navigate(`/market/detail/${coinType}/mint`)
+              navigate(`/market/detail/${coinType}/${maturity}/mint`)
             }
             className={
               operation === "mint"

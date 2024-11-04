@@ -70,4 +70,5 @@ export interface FixedReturnItem {
   fixedApy: number
   coinLogo: string
   coinType: string
+  maturity: string
 }

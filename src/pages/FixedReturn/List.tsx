@@ -31,7 +31,7 @@ export default function List() {
             className="cursor-pointer"
             onClick={() =>
               navigate(
-                `/market/detail/${item.coinType || "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"}`,
+                `/market/detail/${item.coinType || "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"}/${item.maturity}`,
               )
             }
           >
