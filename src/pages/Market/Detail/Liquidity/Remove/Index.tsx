@@ -1,7 +1,7 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
-import { PackageAddress, SYPackageAddress } from "@/contract"
+import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
@@ -96,9 +96,7 @@ export default function Remove() {
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
             ],
-            typeArguments: [
-              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            ],
+            typeArguments: [coinConfig.syCoinType],
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -114,9 +112,7 @@ export default function Remove() {
             tx.object(coinConfig.marketStateId),
             tx.object(lppMarketPositionData[0].id.id),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinConfig.syCoinType],
         })
 
         if (created) {

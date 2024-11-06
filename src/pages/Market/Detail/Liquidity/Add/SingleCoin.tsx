@@ -2,6 +2,7 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
+import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
 import { useCurrentWallet } from "@mysten/dapp-kit"
@@ -11,7 +12,6 @@ import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
-import { PackageAddress, SYPackageAddress } from "@/contract"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
@@ -91,9 +91,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
             ],
-            typeArguments: [
-              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            ],
+            typeArguments: [coinConfig.syCoinType],
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -128,10 +126,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig.syState),
           ],
-          typeArguments: [
-            coinType,
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
         const [priceVoucher] = tx.moveCall({
@@ -142,10 +137,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig.syState),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            `0x2::sui::SUI`,
-          ],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
         tx.moveCall({
@@ -159,9 +151,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinConfig.syCoinType],
         })
 
         const [syCoin] = tx.moveCall({
@@ -179,10 +169,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig.syState),
           ],
-          typeArguments: [
-            coinType,
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
         const [lp, mp] = tx.moveCall({
@@ -203,9 +190,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinConfig.syCoinType],
         })
 
         tx.transferObjects([lp, mp, priceVoucher], address)

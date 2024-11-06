@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress, SYPackageAddress } from "@/contract"
+import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
@@ -95,9 +95,7 @@ export default function Mint() {
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
             ],
-            typeArguments: [
-              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            ],
+            typeArguments: [coinConfig.syCoinType],
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -111,10 +109,7 @@ export default function Mint() {
             tx.object(coinConfig.syState),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            coinType,
-          ],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
         const [sy] = tx.moveCall({
@@ -129,9 +124,7 @@ export default function Mint() {
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinConfig.syCoinType],
         })
 
         tx.transferObjects([sy, priceVoucher], address)

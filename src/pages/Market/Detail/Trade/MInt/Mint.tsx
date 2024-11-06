@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { GAS_BUDGET, network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress, SYPackageAddress } from "@/contract"
+import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
 import { useCurrentWallet } from "@mysten/dapp-kit"
@@ -84,9 +84,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
             ],
-            typeArguments: [
-              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            ],
+            typeArguments: [coinConfig.syCoinType],
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -109,10 +107,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig.syState),
           ],
-          typeArguments: [
-            coinType,
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
         const [priceVoucher] = tx.moveCall({
@@ -123,10 +118,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig.syState),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            coinType,
-          ],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
         // tx.transferObjects([syCoin], address)
@@ -142,9 +134,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinConfig.syCoinType],
         })
 
         tx.transferObjects([priceVoucher], address)

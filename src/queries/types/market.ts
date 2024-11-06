@@ -46,6 +46,8 @@ export interface CoinConfig {
   version: string
   providerVersion: string
   providerMarket: string
+  syCoinType: string
+  underlyingCoinType: string
 }
 
 export interface PortfolioItem {

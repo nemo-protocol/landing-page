@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { PackageAddress, SYPackageAddress } from "@/contract"
+import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
 import { useCurrentWallet } from "@mysten/dapp-kit"
@@ -106,9 +106,7 @@ export default function Sell() {
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
             ],
-            typeArguments: [
-              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            ],
+            typeArguments: [coinConfig.syCoinType],
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -122,10 +120,7 @@ export default function Sell() {
             tx.object(coinConfig.syState),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            coinType,
-          ],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
         const [syCoin] = tx.moveCall({
@@ -141,10 +136,7 @@ export default function Sell() {
             tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            coinType,
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
         tx.transferObjects([syCoin, priceVoucher], address)

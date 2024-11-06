@@ -3,7 +3,7 @@ import Decimal from "decimal.js"
 import { GAS_BUDGET, network } from "@/config"
 import { Info } from "lucide-react"
 import { debounce } from "@/lib/utils"
-import { PackageAddress, SYPackageAddress } from "@/contract"
+import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { useEffect, useMemo, useState } from "react"
@@ -110,9 +110,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
             ],
-            typeArguments: [
-              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            ],
+            typeArguments: [coinConfig.syCoinType],
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -136,10 +134,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig.syState),
           ],
-          typeArguments: [
-            coinType,
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
         const [priceVoucher] = tx.moveCall({
@@ -150,10 +145,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             tx.object(coinConfig.syState),
             tx.object("0x6"),
           ],
-          typeArguments: [
-            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            coinType,
-          ],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
         if (tokenType === "pt") {
@@ -176,9 +168,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.marketStateId),
               tx.object("0x6"),
             ],
-            typeArguments: [
-              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            ],
+            typeArguments: [coinConfig.syCoinType],
           })
           tx.transferObjects([sy], address)
         } else {
@@ -202,9 +192,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.marketStateId),
               tx.object("0x6"),
             ],
-            typeArguments: [
-              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            ],
+            typeArguments: [coinConfig.syCoinType],
           })
           tx.transferObjects([sy, priceVoucher], address)
         }
