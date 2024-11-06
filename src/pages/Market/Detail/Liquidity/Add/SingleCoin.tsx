@@ -144,7 +144,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
           typeArguments: [
             `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
-            coinType,
+            `0x2::sui::SUI`,
           ],
         })
 
