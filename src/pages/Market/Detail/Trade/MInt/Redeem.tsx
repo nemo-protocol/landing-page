@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress } from "@/contract"
+import { PackageAddress, SYPackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
@@ -96,7 +96,7 @@ export default function Mint() {
               tx.object(coinConfig.pyState),
             ],
             typeArguments: [
-              `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
           })[0]
         } else {
@@ -112,7 +112,7 @@ export default function Mint() {
             tx.object("0x6"),
           ],
           typeArguments: [
-            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
             coinType,
           ],
         })
@@ -130,7 +130,7 @@ export default function Mint() {
             tx.object("0x6"),
           ],
           typeArguments: [
-            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
           ],
         })
 

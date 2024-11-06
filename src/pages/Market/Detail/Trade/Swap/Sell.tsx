@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { PackageAddress } from "@/contract"
+import { PackageAddress, SYPackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
 import { useCurrentWallet } from "@mysten/dapp-kit"
@@ -107,7 +107,7 @@ export default function Sell() {
               tx.object(coinConfig.pyState),
             ],
             typeArguments: [
-              `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+              `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
           })[0]
         } else {
@@ -123,7 +123,7 @@ export default function Sell() {
             tx.object("0x6"),
           ],
           typeArguments: [
-            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
             coinType,
           ],
         })
@@ -143,7 +143,7 @@ export default function Sell() {
           ],
           typeArguments: [
             coinType,
-            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            `${SYPackageAddress}::${coinConfig.coinName}::${coinConfig.coinName.toLocaleUpperCase()}`,
           ],
         })
 
