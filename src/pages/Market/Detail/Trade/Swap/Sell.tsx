@@ -32,7 +32,7 @@ import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteT
 import usePyPositionData from "@/hooks/usePyPositionData"
 
 export default function Sell() {
-  const { coinType, tokenType: _tokenType } = useParams()
+  const { coinType, tokenType: _tokenType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
@@ -54,7 +54,7 @@ export default function Sell() {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: coinConfig } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyState,
@@ -102,7 +102,10 @@ export default function Sell() {
           created = true
           pyPosition = tx.moveCall({
             target: `${PackageAddress}::py::init_py_position`,
-            arguments: [tx.object(coinConfig.pyState)],
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
             typeArguments: [
               `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
@@ -111,12 +114,28 @@ export default function Sell() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
+        const [priceVoucher] = tx.moveCall({
+          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          arguments: [
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
+            tx.object("0x6"),
+          ],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            coinType,
+          ],
+        })
+
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::market::swap_exact_${tokenType}_for_sy`,
           arguments: [
+            tx.object(coinConfig.version),
             tx.pure.u64(new Decimal(redeemValue).mul(1e9).toString()),
             pyPosition,
             tx.object(coinConfig.pyState),
+            priceVoucher,
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig.marketFactoryConfigId),
             tx.object(coinConfig!.marketStateId),
@@ -128,7 +147,7 @@ export default function Sell() {
           ],
         })
 
-        tx.transferObjects([syCoin], address)
+        tx.transferObjects([syCoin, priceVoucher], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -140,7 +159,7 @@ export default function Sell() {
         })
         setTxId(digest)
         setOpen(true)
-        setRedeemValue("")        
+        setRedeemValue("")
         setStatus("Success")
       } catch (error) {
         setOpen(true)

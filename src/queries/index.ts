@@ -25,9 +25,10 @@ export function useQueryFixedReturnInfos() {
   })
 }
 
-function getCoinConfig(coinType: string) {
+function getCoinConfig(coinType: string, maturity: string) {
   return nemoApi<CoinConfig>("/api/v1/market/config/detail").get({
     coinType,
+    maturity,
   })
 }
 
@@ -134,12 +135,12 @@ export function useQueryLPRatio(
   })
 }
 
-export function useCoinConfig(coinType?: string) {
+export function useCoinConfig(coinType?: string, maturity?: string) {
   return useQuery({
-    enabled: !!coinType,
+    enabled: !!coinType && !!maturity,
     // FIXME： queryKey dose not work
-    queryKey: ["coinConfig", coinType],
-    queryFn: () => getCoinConfig(coinType!),
+    queryKey: ["coinConfig", coinType, maturity],
+    queryFn: () => getCoinConfig(coinType!, maturity!),
   })
 }
 

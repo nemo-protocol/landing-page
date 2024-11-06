@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Remove() {
-  const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const { coinType, maturity } = useParams()
   const [lpValue, setLpValue] = useState("")
   const [message, setMessage] = useState<string>()
   const { currentWallet, isConnected } = useCurrentWallet()
@@ -40,7 +40,7 @@ export default function Remove() {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: coinConfig } = useCoinConfig(coinType, maturity)
 
   const { data: dataRatio } = useQueryLPRatio(
     address,
@@ -92,7 +92,10 @@ export default function Remove() {
           created = true
           pyPosition = tx.moveCall({
             target: `${PackageAddress}::py::init_py_position`,
-            arguments: [tx.object(coinConfig.pyState)],
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
             typeArguments: [
               `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
@@ -104,6 +107,7 @@ export default function Remove() {
         tx.moveCall({
           target: `${PackageAddress}::market::burn_lp`,
           arguments: [
+            tx.object(coinConfig.version),
             tx.pure.address(address),
             tx.pure.u64(new Decimal(lpValue).mul(1e9).toFixed(0)),
             pyPosition,

@@ -44,7 +44,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [open, setOpen] = useState(false)
   const [swapValue, setSwapValue] = useState("")
   const [tokenType, setTokenType] = useState("pt")
-  const { coinType, tokenType: _tokenType } = useParams()
+  const { coinType, tokenType: _tokenType, maturity } = useParams()
   const { currentWallet, isConnected } = useCurrentWallet()
 
   const { mutateAsync: signAndExecuteTransaction } =
@@ -61,7 +61,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: coinConfig } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyState,
@@ -106,7 +106,10 @@ export default function Mint({ slippage }: { slippage: string }) {
           created = true
           pyPosition = tx.moveCall({
             target: `${PackageAddress}::py::init_py_position`,
-            arguments: [tx.object(coinConfig.pyState)],
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
             typeArguments: [
               `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
@@ -122,6 +125,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::sy::deposit`,
           arguments: [
+            tx.object(coinConfig.version),
             splitCoin,
             tx.pure.u64(
               new Decimal(swapValue)
@@ -138,10 +142,25 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
         })
 
+        const [priceVoucher] = tx.moveCall({
+          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          arguments: [
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
+            tx.object("0x6"),
+          ],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            coinType,
+          ],
+        })
+
         if (tokenType === "pt") {
           const [sy] = tx.moveCall({
             target: `${PackageAddress}::market::swap_sy_for_exact_pt`,
             arguments: [
+              tx.object(coinConfig.version),
               tx.pure.u64(
                 new Decimal(swapValue)
                   .mul(1e9)
@@ -149,6 +168,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                   .toNumber(),
               ),
               syCoin,
+              priceVoucher,
               pyPosition,
               tx.object(coinConfig.pyState),
               tx.object(coinConfig.yieldFactoryConfigId),
@@ -165,6 +185,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           const [sy] = tx.moveCall({
             target: `${PackageAddress}::market::swap_sy_for_exact_yt`,
             arguments: [
+              tx.object(coinConfig.version),
               tx.pure.u64(
                 new Decimal(swapValue)
                   .mul(1e9)
@@ -172,19 +193,20 @@ export default function Mint({ slippage }: { slippage: string }) {
                   .toNumber(),
               ),
               syCoin,
+              priceVoucher,
               pyPosition,
               tx.object(coinConfig.pyState),
               tx.object(coinConfig.syState),
               tx.object(coinConfig.yieldFactoryConfigId),
               tx.object(coinConfig.marketFactoryConfigId),
-              tx.object(coinConfig!.marketStateId),
+              tx.object(coinConfig.marketStateId),
               tx.object("0x6"),
             ],
             typeArguments: [
               `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
           })
-          tx.transferObjects([sy], address)
+          tx.transferObjects([sy, priceVoucher], address)
         }
 
         if (created) {

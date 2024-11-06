@@ -43,6 +43,9 @@ export interface CoinConfig {
   coinPrice: string
   coinName: string
   maturity: string
+  version: string
+  providerVersion: string
+  providerMarket: string
 }
 
 export interface PortfolioItem {

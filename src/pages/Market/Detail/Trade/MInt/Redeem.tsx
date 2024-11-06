@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Mint() {
-  const { coinType } = useParams()
+  const { coinType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
@@ -42,7 +42,7 @@ export default function Mint() {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType)
+  const { data: coinConfig } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyState,
@@ -91,7 +91,10 @@ export default function Mint() {
           created = true
           pyPosition = tx.moveCall({
             target: `${PackageAddress}::py::init_py_position`,
-            arguments: [tx.object(coinConfig.pyState)],
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
             typeArguments: [
               `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
@@ -100,11 +103,27 @@ export default function Mint() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
+        const [priceVoucher] = tx.moveCall({
+          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          arguments: [
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
+            tx.object("0x6"),
+          ],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            coinType,
+          ],
+        })
+
         const [sy] = tx.moveCall({
           target: `${PackageAddress}::yield_factory::redeem_py`,
           arguments: [
+            tx.object(coinConfig.version),
             tx.pure.u64(new Decimal(ytRedeemValue).mul(1e9).toString()),
             tx.pure.u64(new Decimal(ptRedeemValue).mul(1e9).toString()),
+            priceVoucher,
             pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
@@ -115,7 +134,7 @@ export default function Mint() {
           ],
         })
 
-        tx.transferObjects([sy], address)
+        tx.transferObjects([sy, priceVoucher], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)

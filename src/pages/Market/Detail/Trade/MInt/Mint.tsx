@@ -26,7 +26,7 @@ import {
 import usePyPositionData from "@/hooks/usePyPositionData"
 
 export default function Mint({ slippage }: { slippage: string }) {
-  const { coinType } = useParams()
+  const { coinType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
@@ -42,7 +42,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType)
+  const { data: coinConfig } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyState,
@@ -73,14 +73,17 @@ export default function Mint({ slippage }: { slippage: string }) {
     if (!insufficientBalance && coinConfig && coinType && address) {
       try {
         const tx = new Transaction()
-        
+
         let pyPosition
         let created = false
         if (!pyPositionData?.length) {
           created = true
           pyPosition = tx.moveCall({
             target: `${PackageAddress}::py::init_py_position`,
-            arguments: [tx.object(coinConfig.pyState)],
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
             typeArguments: [
               `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
@@ -96,6 +99,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::sy::deposit`,
           arguments: [
+            tx.object(coinConfig.version),
             splitCoin,
             tx.pure.u64(
               new Decimal(mintValue)
@@ -111,12 +115,28 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
         })
 
+        const [priceVoucher] = tx.moveCall({
+          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          arguments: [
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
+            tx.object("0x6"),
+          ],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            coinType,
+          ],
+        })
+
         // tx.transferObjects([syCoin], address)
 
         tx.moveCall({
           target: `${PackageAddress}::yield_factory::mint_py`,
           arguments: [
+            tx.object(coinConfig.version),
             syCoin,
+            priceVoucher,
             pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
@@ -126,6 +146,8 @@ export default function Mint({ slippage }: { slippage: string }) {
             `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
           ],
         })
+
+        tx.transferObjects([priceVoucher], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)

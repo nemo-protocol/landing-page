@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Mint({ slippage }: { slippage: string }) {
-  const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
@@ -41,7 +41,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType)
+  const { data: coinConfig } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyState,
@@ -87,7 +87,10 @@ export default function Mint({ slippage }: { slippage: string }) {
           created = true
           pyPosition = tx.moveCall({
             target: `${PackageAddress}::py::init_py_position`,
-            arguments: [tx.object(coinConfig.pyState)],
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
             typeArguments: [
               `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
             ],
@@ -114,6 +117,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         const [syCoinForPY] = tx.moveCall({
           target: `${PackageAddress}::sy::deposit`,
           arguments: [
+            tx.object(coinConfig.version),
             splitCoinForPY,
             tx.pure.u64(
               new Decimal(addValue)
@@ -130,10 +134,26 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
         })
 
+        const [priceVoucher] = tx.moveCall({
+          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          arguments: [
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
+            tx.object("0x6"),
+          ],
+          typeArguments: [
+            `${PackageAddress}::sy_${coinConfig.coinName}::SY_${coinConfig.coinName.toLocaleUpperCase()}`,
+            coinType,
+          ],
+        })
+
         tx.moveCall({
           target: `${PackageAddress}::yield_factory::mint_py`,
           arguments: [
+            tx.object(coinConfig.version),
             syCoinForPY,
+            priceVoucher,
             pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
@@ -147,6 +167,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         const [syCoin] = tx.moveCall({
           target: `${PackageAddress}::sy::deposit`,
           arguments: [
+            tx.object(coinConfig.version),
             splitCoin,
             tx.pure.u64(
               new Decimal(addValue)
@@ -167,6 +188,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         const [lp, mp] = tx.moveCall({
           target: `${PackageAddress}::market::mint_lp`,
           arguments: [
+            tx.object(coinConfig.version),
             syCoin,
             tx.pure.u64(
               new Decimal(addValue)
@@ -174,6 +196,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                 .div(new Decimal(ratio || 1).add(1))
                 .toFixed(0),
             ),
+            priceVoucher,
             pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
@@ -185,11 +208,13 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
         })
 
-        tx.transferObjects([lp, mp], address)
+        tx.transferObjects([lp, mp, priceVoucher], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
         }
+
+        tx.setGasBudget(0.1 * 1e9)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
