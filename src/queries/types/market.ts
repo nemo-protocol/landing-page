@@ -48,6 +48,7 @@ export interface CoinConfig {
   providerMarket: string
   syCoinType: string
   underlyingCoinType: string
+  nemoContractId: string
 }
 
 export interface PortfolioItem {

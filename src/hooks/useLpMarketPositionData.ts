@@ -1,17 +1,17 @@
-import { PackageAddress } from "@/contract"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 
 const useLpMarketPositionData = (
   address?: string,
   marketState?: string,
   maturity?: string,
+  contractAddress?: string,
 ) => {
   return useSuiClientQuery(
     "getOwnedObjects",
     {
       owner: address!,
       filter: {
-        StructType: `${PackageAddress}::market::MarketPosition`,
+        StructType: `${contractAddress}::market::MarketPosition`,
       },
       options: {
         showContent: true,
@@ -21,6 +21,8 @@ const useLpMarketPositionData = (
       gcTime: 10000,
       enabled: !!address && !!maturity && !!marketState,
       select: (data) => {
+        console.log("data", data)
+
         return data.data
           .map(
             (item) =>

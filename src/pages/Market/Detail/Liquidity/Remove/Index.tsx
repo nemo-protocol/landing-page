@@ -1,7 +1,6 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
-import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
@@ -52,6 +51,7 @@ export default function Remove() {
     address,
     coinConfig?.marketStateId,
     coinConfig?.maturity,
+    coinConfig?.nemoContractId,
   )
 
   const { data: pyPositionData } = usePyPositionData(
@@ -91,7 +91,7 @@ export default function Remove() {
         if (!pyPositionData?.length) {
           created = true
           pyPosition = tx.moveCall({
-            target: `${PackageAddress}::py::init_py_position`,
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
@@ -103,7 +103,7 @@ export default function Remove() {
         }
 
         tx.moveCall({
-          target: `${PackageAddress}::market::burn_lp`,
+          target: `${coinConfig.nemoContractId}::market::burn_lp`,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.address(address),

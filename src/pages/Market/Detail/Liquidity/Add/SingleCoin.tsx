@@ -2,7 +2,6 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
 import { useCurrentWallet } from "@mysten/dapp-kit"
@@ -86,7 +85,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         if (!pyPositionData?.length) {
           created = true
           pyPosition = tx.moveCall({
-            target: `${PackageAddress}::py::init_py_position`,
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
@@ -113,7 +112,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         )
 
         const [syCoinForPY] = tx.moveCall({
-          target: `${PackageAddress}::sy::deposit`,
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
           arguments: [
             tx.object(coinConfig.version),
             splitCoinForPY,
@@ -129,8 +128,10 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
+        // tx.transferObjects([syCoinForPY, splitCoin], address)
+
         const [priceVoucher] = tx.moveCall({
-          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
             tx.object(coinConfig.providerVersion),
             tx.object(coinConfig.providerMarket),
@@ -140,8 +141,10 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
+        // tx.transferObjects([priceVoucher, syCoinForPY, splitCoin], address)
+
         tx.moveCall({
-          target: `${PackageAddress}::yield_factory::mint_py`,
+          target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
           arguments: [
             tx.object(coinConfig.version),
             syCoinForPY,
@@ -155,7 +158,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         })
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy::deposit`,
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
           arguments: [
             tx.object(coinConfig.version),
             splitCoin,
@@ -172,8 +175,19 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
+        const [priceVoucherForMintLp] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
+          arguments: [
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
+            tx.object("0x6"),
+          ],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        })
+
         const [lp, mp] = tx.moveCall({
-          target: `${PackageAddress}::market::mint_lp`,
+          target: `${coinConfig.nemoContractId}::market::mint_lp`,
           arguments: [
             tx.object(coinConfig.version),
             syCoin,
@@ -183,7 +197,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                 .div(new Decimal(ratio || 1).add(1))
                 .toFixed(0),
             ),
-            priceVoucher,
+            priceVoucherForMintLp,
             pyPosition,
             tx.object(coinConfig.pyState),
             tx.object(coinConfig.yieldFactoryConfigId),
@@ -193,7 +207,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        tx.transferObjects([lp, mp, priceVoucher], address)
+        tx.transferObjects([lp, mp], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
