@@ -51,7 +51,7 @@ export default function Remove() {
     address,
     coinConfig?.marketStateId,
     coinConfig?.maturity,
-    coinConfig?.nemoContractId,
+    // coinConfig?.nemoContractId,
   )
 
   const { data: pyPositionData } = usePyPositionData(
@@ -167,7 +167,7 @@ export default function Remove() {
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
             <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF]"
+              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
               onClick={() => setOpen(false)}
             >
               OK
@@ -250,7 +250,7 @@ export default function Remove() {
         <span>{coinConfig?.lpApy || 0}</span>
       </div> */}
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>
       ) : (

@@ -189,7 +189,7 @@ export default function Header() {
                     .map((account) => (
                       <li
                         key={account.address}
-                        className="cursor-pointer bg-[#0E0F16] px-2 py-1.5 text-white/50 hover:text-white w-full"
+                        className="cursor-pointer bg-[#0E0F16] px-4 py-2 text-white/50 hover:text-white w-full"
                         onClick={() => {
                           switchAccount(
                             { account },

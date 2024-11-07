@@ -1,4 +1,3 @@
-import { PackageAddress } from "@/contract"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 
 const usePyPositionData = (
@@ -11,7 +10,8 @@ const usePyPositionData = (
     {
       owner: address!,
       filter: {
-        StructType: `${PackageAddress}::py::PyPosition`,
+        StructType:
+          "0xa73001d5f5a504bc232ace51fe8e460cbd5b8ac129dae28747693eae0444aa24::py_position::PyPosition",
       },
       options: {
         showContent: true,

@@ -25,11 +25,18 @@ export function useQueryFixedReturnInfos() {
   })
 }
 
-function getCoinConfig(coinType: string, maturity: string) {
-  return nemoApi<CoinConfig>("/api/v1/market/config/detail").get({
-    coinType,
-    maturity,
-  })
+function getCoinConfig(coinType: string, maturity: string, address?: string) {
+  const headers = new Headers()
+  if (address) {
+    headers.set("userAddress", address)
+  }
+  return nemoApi<CoinConfig>("/api/v1/market/config/detail").get(
+    {
+      coinType,
+      maturity,
+    },
+    headers,
+  )
 }
 
 function getPortfolioList() {
@@ -135,12 +142,16 @@ export function useQueryLPRatio(
   })
 }
 
-export function useCoinConfig(coinType?: string, maturity?: string) {
+export function useCoinConfig(
+  coinType?: string,
+  maturity?: string,
+  address?: string,
+) {
   return useQuery({
     enabled: !!coinType && !!maturity,
     // FIXME： queryKey dose not work
-    queryKey: ["coinConfig", coinType, maturity],
-    queryFn: () => getCoinConfig(coinType!, maturity!),
+    queryKey: ["coinConfig", coinType, maturity, address],
+    queryFn: () => getCoinConfig(coinType!, maturity!, address),
   })
 }
 

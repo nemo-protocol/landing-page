@@ -2,7 +2,6 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
@@ -81,7 +80,14 @@ export default function Mint() {
   }, [ptBalance, ytBalance, ptRedeemValue, ytRedeemValue])
 
   async function redeem() {
-    if (!insufficientBalance && coinConfig && coinType && address) {
+    if (
+      !insufficientBalance &&
+      coinConfig &&
+      coinType &&
+      address &&
+      ptRedeemValue &&
+      ytRedeemValue
+    ) {
       try {
         const tx = new Transaction()
 
@@ -90,7 +96,7 @@ export default function Mint() {
         if (!pyPositionData?.length) {
           created = true
           pyPosition = tx.moveCall({
-            target: `${PackageAddress}::py::init_py_position`,
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
@@ -102,7 +108,7 @@ export default function Mint() {
         }
 
         const [priceVoucher] = tx.moveCall({
-          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
             tx.object(coinConfig.providerVersion),
             tx.object(coinConfig.providerMarket),
@@ -113,7 +119,7 @@ export default function Mint() {
         })
 
         const [sy] = tx.moveCall({
-          target: `${PackageAddress}::yield_factory::redeem_py`,
+          target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(new Decimal(ytRedeemValue).mul(1e9).toString()),
@@ -127,7 +133,7 @@ export default function Mint() {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        tx.transferObjects([sy, priceVoucher], address)
+        tx.transferObjects([sy], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -192,7 +198,7 @@ export default function Mint() {
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
             <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF]"
+              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
               onClick={() => setOpen(false)}
             >
               OK
@@ -218,7 +224,6 @@ export default function Mint() {
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
-              value={ptRedeemValue}
               disabled={!isConnected}
               onChange={(e) =>
                 debouncedSetPTValue(new Decimal(e.target.value).toString())
@@ -272,7 +277,6 @@ export default function Mint() {
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
-              value={ytRedeemValue}
               disabled={!isConnected}
               onChange={(e) =>
                 debouncedSetYTValue(new Decimal(e.target.value).toString())

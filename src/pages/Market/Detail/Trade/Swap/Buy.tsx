@@ -3,7 +3,6 @@ import Decimal from "decimal.js"
 import { GAS_BUDGET, network } from "@/config"
 import { Info } from "lucide-react"
 import { debounce } from "@/lib/utils"
-import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { useEffect, useMemo, useState } from "react"
@@ -105,7 +104,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         if (!pyPositionData?.length) {
           created = true
           pyPosition = tx.moveCall({
-            target: `${PackageAddress}::py::init_py_position`,
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
@@ -121,7 +120,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         ])
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy::deposit`,
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
           arguments: [
             tx.object(coinConfig.version),
             splitCoin,
@@ -138,7 +137,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         })
 
         const [priceVoucher] = tx.moveCall({
-          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
             tx.object(coinConfig.providerVersion),
             tx.object(coinConfig.providerMarket),
@@ -150,7 +149,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         if (tokenType === "pt") {
           const [sy] = tx.moveCall({
-            target: `${PackageAddress}::market::swap_sy_for_exact_pt`,
+            target: `${coinConfig.nemoContractId}::market::swap_sy_for_exact_pt`,
             arguments: [
               tx.object(coinConfig.version),
               tx.pure.u64(
@@ -173,7 +172,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           tx.transferObjects([sy], address)
         } else {
           const [sy] = tx.moveCall({
-            target: `${PackageAddress}::market::swap_sy_for_exact_yt`,
+            target: `${coinConfig.nemoContractId}::market::swap_sy_for_exact_yt`,
             arguments: [
               tx.object(coinConfig.version),
               tx.pure.u64(
@@ -194,7 +193,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             ],
             typeArguments: [coinConfig.syCoinType],
           })
-          tx.transferObjects([sy, priceVoucher], address)
+          tx.transferObjects([sy], address)
         }
 
         if (created) {
@@ -244,7 +243,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
             <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF]"
+              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
               onClick={() => setOpen(false)}
             >
               OK

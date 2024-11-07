@@ -40,7 +40,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType, maturity)
+  const { data: coinConfig } = useCoinConfig(coinType, maturity, address)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyState,
@@ -128,8 +128,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        // tx.transferObjects([syCoinForPY, splitCoin], address)
-
         const [priceVoucher] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
@@ -140,8 +138,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           ],
           typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
-
-        // tx.transferObjects([priceVoucher, syCoinForPY, splitCoin], address)
 
         tx.moveCall({
           target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,

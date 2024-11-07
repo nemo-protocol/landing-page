@@ -1,8 +1,7 @@
 import Decimal from "decimal.js"
-import { GAS_BUDGET, network } from "@/config"
+import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
 import { useCurrentWallet } from "@mysten/dapp-kit"
@@ -79,7 +78,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         if (!pyPositionData?.length) {
           created = true
           pyPosition = tx.moveCall({
-            target: `${PackageAddress}::py::init_py_position`,
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
@@ -95,7 +94,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         ])
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy::deposit`,
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
           arguments: [
             tx.object(coinConfig.version),
             splitCoin,
@@ -111,7 +110,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         })
 
         const [priceVoucher] = tx.moveCall({
-          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
             tx.object(coinConfig.providerVersion),
             tx.object(coinConfig.providerMarket),
@@ -121,10 +120,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
-        // tx.transferObjects([syCoin], address)
-
         tx.moveCall({
-          target: `${PackageAddress}::yield_factory::mint_py`,
+          target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
           arguments: [
             tx.object(coinConfig.version),
             syCoin,
@@ -137,13 +134,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        tx.transferObjects([priceVoucher], address)
-
         if (created) {
           tx.transferObjects([pyPosition], address)
         }
-
-        tx.setGasBudget(GAS_BUDGET)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),
@@ -197,7 +190,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
             <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF]"
+              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
               onClick={() => setOpen(false)}
             >
               OK
@@ -223,7 +216,6 @@ export default function Mint({ slippage }: { slippage: string }) {
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
-              value={mintValue}
               disabled={!isConnected}
               onChange={(e) =>
                 debouncedSetMintValue(new Decimal(e.target.value).toString())

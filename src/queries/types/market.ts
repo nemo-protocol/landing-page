@@ -49,6 +49,7 @@ export interface CoinConfig {
   syCoinType: string
   underlyingCoinType: string
   nemoContractId: string
+  decimal: number
 }
 
 export interface PortfolioItem {

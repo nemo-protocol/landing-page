@@ -1,5 +1,4 @@
 import Decimal from "decimal.js"
-import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
 import { useCurrentWallet } from "@mysten/dapp-kit"
@@ -47,7 +46,7 @@ export default function Sell() {
     if (_tokenType) {
       setTokenType(_tokenType)
     }
-  }, [])
+  }, [_tokenType])
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
@@ -87,8 +86,11 @@ export default function Sell() {
   }, [pyPositionData])
 
   const insufficientBalance = useMemo(
-    () => new Decimal(Number(ptBalance)).lt(redeemValue || 0),
-    [ptBalance, redeemValue],
+    () =>
+      tokenType == "pt"
+        ? new Decimal(Number(ptBalance)).lt(redeemValue || 0)
+        : new Decimal(Number(ytBalance)).lt(redeemValue || 0),
+    [ptBalance, ytBalance, redeemValue, tokenType],
   )
 
   async function redeem() {
@@ -101,7 +103,7 @@ export default function Sell() {
         if (!pyPositionData?.length) {
           created = true
           pyPosition = tx.moveCall({
-            target: `${PackageAddress}::py::init_py_position`,
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
               tx.object(coinConfig.pyState),
@@ -109,11 +111,13 @@ export default function Sell() {
             typeArguments: [coinConfig.syCoinType],
           })[0]
         } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
+          pyPosition = tx.object(pyPositionData[1].id.id)
         }
 
+        console.log("created", created)
+
         const [priceVoucher] = tx.moveCall({
-          target: `${PackageAddress}::oracle::get_price_voucher_from_x_oracle`,
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
             tx.object(coinConfig.providerVersion),
             tx.object(coinConfig.providerMarket),
@@ -124,7 +128,7 @@ export default function Sell() {
         })
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::market::swap_exact_${tokenType}_for_sy`,
+          target: `${coinConfig.nemoContractId}::market::swap_exact_${tokenType}_for_sy`,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(new Decimal(redeemValue).mul(1e9).toString()),
@@ -136,10 +140,10 @@ export default function Sell() {
             tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType, coinConfig.syCoinType],
+          typeArguments: [coinConfig.syCoinType],
         })
 
-        tx.transferObjects([syCoin, priceVoucher], address)
+        tx.transferObjects([syCoin], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -197,7 +201,7 @@ export default function Sell() {
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
             <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF]"
+              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
               onClick={() => setOpen(false)}
             >
               OK
@@ -213,7 +217,11 @@ export default function Sell() {
             <WalletIcon />
             <span>
               Balance:{" "}
-              {isConnected ? (coinType === "pt" ? ptBalance : ytBalance) : "--"}
+              {isConnected
+                ? tokenType === "pt"
+                  ? ptBalance
+                  : ytBalance
+                : "--"}
             </span>
           </div>
         </div>
@@ -295,7 +303,10 @@ export default function Sell() {
             disabled
             type="text"
             value={
-              redeemValue && new Decimal(redeemValue).div(ratio || 0).toString()
+              redeemValue &&
+              new Decimal(redeemValue)
+                .div(ratio || 0)
+                .toFixed(coinConfig?.decimal ?? 9)
             }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
@@ -308,7 +319,7 @@ export default function Sell() {
         </span>
       </div> */}
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>
       ) : (
