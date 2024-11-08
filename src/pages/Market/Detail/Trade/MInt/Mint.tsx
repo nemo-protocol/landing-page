@@ -1,84 +1,55 @@
 import Decimal from "decimal.js"
+import { network } from "@/config"
+import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress } from "@/contract"
+import { useParams } from "react-router-dom"
+import useCoinData from "@/hooks/useCoinData"
+import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
+import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import {
-  useSuiClient,
-  useCurrentWallet,
-  useSuiClientQuery,
-  useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit"
-import { useParams } from "react-router-dom"
-import { network } from "@/config"
-
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
+  AlertDialogTitle,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
-import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
-import { debounce } from "@/lib/utils"
+import usePyPositionData from "@/hooks/usePyPositionData"
 
 export default function Mint({ slippage }: { slippage: string }) {
-  const client = useSuiClient()
-  const { coinType } = useParams()
+  const { coinType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
   const [mintValue, setMintValue] = useState("")
+
   const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction({
-      execute: async ({ bytes, signature }) =>
-        await client.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            showInput: false,
-            showEvents: false,
-            showEffects: true,
-            showRawInput: false,
-            showRawEffects: true,
-            showObjectChanges: false,
-            showBalanceChanges: false,
-          },
-        }),
-    })
+    useCustomSignAndExecuteTransaction()
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
-
-  const { data: coinData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: coinType!,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
+  const { data: coinConfig } = useCoinConfig(coinType, maturity)
+  const { data: pyPositionData } = usePyPositionData(
+    address,
+    coinConfig?.pyState,
+    coinConfig?.maturity,
+    coinConfig?.pyPositionType,
   )
 
+  const { data: coinData } = useCoinData(address, coinType)
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
       return coinData
@@ -89,9 +60,9 @@ export default function Mint({ slippage }: { slippage: string }) {
     return 0
   }, [coinData])
 
-  const { data: mintPYRatio } = useQueryMintPYRatio(
-    coinConfig?.marketConfigId ?? "",
-  )
+  const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
+  const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
+  const ytRatio = useMemo(() => mintPYRatio?.syYtRate ?? 1, [mintPYRatio])
 
   const insufficientBalance = useMemo(
     () => new Decimal(coinBalance).lt(mintValue || 0),
@@ -99,46 +70,74 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function mint() {
-    if (!insufficientBalance) {
+    if (!insufficientBalance && coinConfig && coinType && address) {
       try {
         const tx = new Transaction()
+
+        let pyPosition
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = tx.moveCall({
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
+            typeArguments: [coinConfig.syCoinType],
+          })[0]
+        } else {
+          pyPosition = tx.object(pyPositionData[0].id.id)
+        }
 
         const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
           new Decimal(mintValue).mul(1e9).toString(),
         ])
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit`,
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
           arguments: [
+            tx.object(coinConfig.version),
             splitCoin,
             tx.pure.u64(
               new Decimal(mintValue)
                 .mul(1e9)
-                .mul(1 - Number(slippage))
+                .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toNumber(),
             ),
-            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig.syState),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        const [ptCoin, ytCoin] = tx.moveCall({
-          target: `${PackageAddress}::yield_factory::mint_py`,
+        const [priceVoucher] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
-            syCoin,
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.ptStructId),
-            tx.object(coinConfig!.ytStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
-        tx.transferObjects([ptCoin, ytCoin], address!)
+        tx.moveCall({
+          target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
+          arguments: [
+            tx.object(coinConfig.version),
+            syCoin,
+            priceVoucher,
+            pyPosition,
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
+            tx.object("0x6"),
+          ],
+          typeArguments: [coinConfig.syCoinType],
+        })
 
-        // tx.setGasBudget(GAS_BUDGET)
+        if (created) {
+          tx.transferObjects([pyPosition], address)
+        }
 
         const { digest } = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),
@@ -192,7 +191,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
             <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF]"
+              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
               onClick={() => setOpen(false)}
             >
               OK
@@ -212,7 +211,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
             <SSUIIcon className="size-6" />
-            <span className="px-2">sSUI</span>
+            <span className="px-2">{coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
@@ -260,16 +259,13 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span className="px-2">PT sSUI</span>
+            <span className="px-2">PT {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <input
             disabled
             type="text"
-            value={
-              mintValue &&
-              new Decimal(mintValue).div(mintPYRatio?.syPtRate ?? 0).toString()
-            }
+            value={mintValue && new Decimal(mintValue).div(ptRatio).toString()}
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
@@ -278,21 +274,18 @@ export default function Mint({ slippage }: { slippage: string }) {
       <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
         <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
           <SSUIIcon className="size-6" />
-          <span className="px-2">YT sSUI</span>
+          <span className="px-2">YT {coinConfig?.coinName}</span>
           {/* <DownArrowIcon /> */}
         </div>
         <input
           disabled
           type="text"
-          value={
-            mintValue &&
-            new Decimal(mintValue).div(mintPYRatio?.syYtRate ?? 0).toString()
-          }
+          value={mintValue && new Decimal(mintValue).div(ytRatio).toString()}
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
           Insufficient Balance
         </div>
       ) : (
@@ -300,7 +293,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           onClick={mint}
           disabled={mintValue === ""}
           className={[
-            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
             mintValue === ""
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import MultiCoin from "./MultiCoin"
+// import MultiCoin from "./MultiCoin"
 import SingleCoin from "./SingleCoin"
 
 export default function TradeMint({ slippage }: { slippage: string }) {
@@ -27,7 +27,7 @@ export default function TradeMint({ slippage }: { slippage: string }) {
         </div>
       </div>
       {nav === "Single-coin" && <SingleCoin slippage={slippage} />}
-      {nav === "Multi-coin" && <MultiCoin slippage={slippage} />}
+      {nav === "Multi-coin" && <SingleCoin slippage={slippage} />}
     </>
   )
 }

@@ -1,11 +1,5 @@
 import Decimal from "decimal.js"
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 
 const COLORS = ["#2DF4DD", "#0E0F16"]
 
@@ -17,7 +11,7 @@ interface PChartProps {
 }
 
 const PChart = ({ cap, tvl, decimal, price }: PChartProps) => {
-  const total = new Decimal(cap).div(decimal).mul(price)
+  const total = new Decimal(cap || 0).div(decimal).mul(price)
   const tvlValue = new Decimal(tvl).div(total)
   const data = [
     { name: "tvl", value: tvlValue.toNumber() },

@@ -23,7 +23,7 @@ function App() {
               <Route path="/market" element={<Market />} />
               <Route
                 element={<Detail />}
-                path="/market/detail/:coinType/:operation?/:action?/:tokenType?"
+                path="/market/detail/:coinType/:maturity/:operation?/:action?/:tokenType?"
               />
               <Route path="/learn" element={<Learn />} />
               <Route path="/portfolio" element={<Portfolio />} />

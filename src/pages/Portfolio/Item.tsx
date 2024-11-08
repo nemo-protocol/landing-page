@@ -129,11 +129,13 @@ export default function Item({
           <TableCell align="center" className="space-x-2 text-white">
             {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
               <>
-                <Link to={`/market/detail/${coinType}/swap/buy/pt`}>
-                  <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
+                <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/pt`}>
+                  <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">Buy</button>
                 </Link>
-                <Link to={`/market/detail/${coinType}/swap/sell/pt`}>
-                  <button className="rounded-3xl bg-[#FF7474] w-24">
+                <Link
+                  to={`/market/detail/${coinType}/${maturity}/swap/sell/pt`}
+                >
+                  <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
                     Sell
                   </button>
                 </Link>
@@ -179,10 +181,10 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell align="center" className="space-x-2 text-white">
-            <Link to={`/market/detail/${coinType}/swap/buy/yt`}>
+            <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/yt`}>
               <button className="rounded-3xl bg-[#00B795] w-24">Buy</button>
             </Link>
-            <Link to={`/market/detail/${coinType}/swap/sell/yt`}>
+            <Link to={`/market/detail/${coinType}/${maturity}/swap/sell/yt`}>
               <button className="rounded-3xl bg-[#FF7474] w-24">Sell</button>
             </Link>
           </TableCell>
@@ -207,10 +209,14 @@ export default function Item({
           <TableCell align="center" className="space-x-2 text-white">
             {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
               <>
-                <Link to={`/market/detail/${coinType}/liquidity/add`}>
+                <Link
+                  to={`/market/detail/${coinType}/${maturity}/liquidity/add`}
+                >
                   <button className="rounded-3xl bg-[#0F60FF] w-24">Add</button>
                 </Link>
-                <Link to={`/market/detail/${coinType}/liquidity/remove`}>
+                <Link
+                  to={`/market/detail/${coinType}/${maturity}/liquidity/remove`}
+                >
                   <button className="rounded-3xl bg-[#FF7474] w-24">
                     Remove
                   </button>

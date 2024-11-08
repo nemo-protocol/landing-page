@@ -2,21 +2,18 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress } from "@/contract"
 import { useParams } from "react-router-dom"
+import useCoinData from "@/hooks/useCoinData"
+import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
+import usePyPositionData from "@/hooks/usePyPositionData"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
-import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
+import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import {
-  useSuiClient,
-  useCurrentWallet,
-  useSuiClientQuery,
-  useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit"
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   AlertDialog,
   AlertDialogTitle,
@@ -27,64 +24,37 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function Mint({ slippage }: { slippage: string }) {
-  const client = useSuiClient()
-  const { coinType } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
+
   const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction({
-      execute: async ({ bytes, signature }) =>
-        await client.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            showInput: false,
-            showEvents: false,
-            showEffects: true,
-            showRawInput: false,
-            showRawEffects: true,
-            showObjectChanges: false,
-            showBalanceChanges: false,
-          },
-        }),
-    })
+    useCustomSignAndExecuteTransaction()
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
+  const { data: coinConfig } = useCoinConfig(coinType, maturity, address)
+  const { data: pyPositionData } = usePyPositionData(
+    address,
+    coinConfig?.pyState,
+    coinConfig?.maturity,
+    coinConfig?.pyPositionType,
+  )
+
   const { data: dataRatio } = useQueryLPRatio(
-    coinConfig?.marketConfigId ?? "",
-    {
-      enabled: !!coinConfig?.marketConfigId,
-    },
+    address,
+    coinConfig?.marketStateId,
   )
-  const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio])
-  // const ratio = 1
+  const ratio = useMemo(() => dataRatio?.syLpRate ?? 1, [dataRatio])
 
-  const { data: coinData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: coinType!,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address && !!coinType,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
-  )
-
+  const { data: coinData } = useCoinData(address, coinType)
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
       return coinData
@@ -101,11 +71,34 @@ export default function Mint({ slippage }: { slippage: string }) {
   )
 
   async function add() {
-    if (!insufficientBalance && ratio && coinType && address) {
+    if (
+      address &&
+      coinType &&
+      coinConfig &&
+      coinData?.length &&
+      !insufficientBalance
+    ) {
       try {
         const tx = new Transaction()
+
+        let pyPosition
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = tx.moveCall({
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
+            typeArguments: [coinConfig.syCoinType],
+          })[0]
+        } else {
+          pyPosition = tx.object(pyPositionData[0].id.id)
+        }
+
         const [splitCoinForPY, splitCoin] = tx.splitCoins(
-          coinData![0].coinObjectId,
+          coinData[0].coinObjectId,
           [
             new Decimal(addValue)
               .mul(1e9)
@@ -113,79 +106,111 @@ export default function Mint({ slippage }: { slippage: string }) {
               .toFixed(0),
             new Decimal(addValue)
               .mul(1e9)
-              .mul(ratio)
+              .mul(ratio || 1)
               .div(new Decimal(ratio).add(1))
               .toFixed(0),
           ],
         )
 
         const [syCoinForPY] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit`,
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
           arguments: [
+            tx.object(coinConfig.version),
             splitCoinForPY,
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(1e9)
-                .div(new Decimal(ratio).add(1))
-                .mul(1 - Number(slippage))
+                .div(new Decimal(ratio || 1).add(1))
+                .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
-            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig.syState),
           ],
-          typeArguments: [coinType],
+          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        const [ptCoin, ytCoin] = tx.moveCall({
-          target: `${PackageAddress}::yield_factory::mint_py`,
+        const [priceVoucher] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
-            syCoinForPY,
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.ptStructId),
-            tx.object(coinConfig!.ytStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
-        tx.transferObjects([ytCoin], address!)
+        tx.moveCall({
+          target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
+          arguments: [
+            tx.object(coinConfig.version),
+            syCoinForPY,
+            priceVoucher,
+            pyPosition,
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
+            tx.object("0x6"),
+          ],
+          typeArguments: [coinConfig.syCoinType],
+        })
 
         const [syCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::deposit`,
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
           arguments: [
+            tx.object(coinConfig.version),
             splitCoin,
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(1e9)
-                .mul(ratio)
-                .div(new Decimal(ratio).add(1))
-                .mul(1 - Number(slippage))
+                .mul(ratio || 1)
+                .div(new Decimal(ratio || 1).add(1))
+                .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
-            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig.syState),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        const [p, y, lp] = tx.moveCall({
-          target: `${PackageAddress}::market::mint_lp`,
+        const [priceVoucherForMintLp] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
-            ptCoin,
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
+            tx.object("0x6"),
+          ],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        })
+
+        const [lp, mp] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::market::mint_lp`,
+          arguments: [
+            tx.object(coinConfig.version),
             syCoin,
-            tx.object(coinConfig!.yieldFactoryConfigId),
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.marketConfigId),
+            tx.pure.u64(
+              new Decimal(addValue)
+                .mul(1e9)
+                .div(new Decimal(ratio || 1).add(1))
+                .toFixed(0),
+            ),
+            priceVoucherForMintLp,
+            pyPosition,
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig!.marketStateId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinConfig.syCoinType],
         })
 
-        tx.transferObjects([p, y, lp], address!)
+        tx.transferObjects([lp, mp], address)
 
-        // tx.setGasBudget(0.01 * 1e9)
+        if (created) {
+          tx.transferObjects([pyPosition], address)
+        }
+
+        tx.setGasBudget(0.1 * 1e9)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
@@ -202,147 +227,6 @@ export default function Mint({ slippage }: { slippage: string }) {
       }
     }
   }
-
-  // async function add() {
-  //   if (!insufficientBalance && ratio) {
-  //     try {
-  //       const tx1 = new Transaction()
-  //       const [splitCoinForPY, splitCoin] = tx1.splitCoins(
-  //         coinData![0].coinObjectId,
-  //         [
-  //           new Decimal(addValue)
-  //             .mul(1e9)
-  //             .div(new Decimal(ratio).add(1))
-  //             .toFixed(0),
-  //           new Decimal(addValue)
-  //             .mul(1e9)
-  //             .mul(ratio)
-  //             .div(new Decimal(ratio).add(1))
-  //             .toFixed(0),
-  //         ],
-  //       )
-
-  //       const [syCoin] = tx1.moveCall({
-  //         target: `${PackageAddress}::sy_sSui::deposit`,
-  //         arguments: [
-  //           tx1.pure.address(address!),
-  //           splitCoin,
-  //           tx1.pure.u64(
-  //             new Decimal(addValue)
-  //               .mul(1e9)
-  //               .mul(ratio)
-  //               .div(new Decimal(ratio).add(1))
-  //               .mul(1 - Number(slippage))
-  //               .toFixed(0),
-  //           ),
-  //           tx1.object(coinConfig!.syStructId),
-  //         ],
-  //         typeArguments: [coinType!],
-  //       })
-
-  //       tx1.transferObjects([splitCoinForPY, syCoin], address!)
-
-  //       const data = await signAndExecuteTransaction({
-  //         transaction: tx1,
-  //         chain: `sui:${network}`,
-  //       })
-
-  //       console.log("data", data)
-
-  //       const sy = data!.effects!.created![0].reference.objectId
-  //       const sSUIForPT = data!.effects!.created![1].reference.objectId
-
-  //       console.log("sy", sy)
-  //       console.log("sSUIForPT", sSUIForPT)
-
-  //       const tx2 = new Transaction()
-
-  //       const [syCoinForPY] = tx2.moveCall({
-  //         target: `${PackageAddress}::sy_sSui::deposit`,
-  //         arguments: [
-  //           tx2.pure.address(address!),
-  //           tx2.object(sSUIForPT),
-  //           tx2.pure.u64(
-  //             new Decimal(addValue)
-  //               .mul(1e9)
-  //               .div(new Decimal(ratio).add(1))
-  //               .mul(1 - Number(slippage))
-  //               .toFixed(0),
-  //           ),
-  //           tx2.object(coinConfig!.syStructId),
-  //         ],
-  //         typeArguments: [coinType!],
-  //       })
-
-  //       const [ptCoin, ytCoin] = tx2.moveCall({
-  //         target: `${PackageAddress}::yield_factory::mintPY`,
-  //         arguments: [
-  //           tx2.pure.address(address!),
-  //           tx2.pure.address(address!),
-  //           syCoinForPY,
-  //           tx2.object(coinConfig!.syStructId),
-  //           tx2.object(coinConfig!.ptStructId),
-  //           tx2.object(coinConfig!.ytStructId),
-  //           tx2.object(coinConfig!.tokenConfigId),
-  //           tx2.object(coinConfig!.yieldFactoryConfigId),
-  //           tx2.object("0x6"),
-  //         ],
-  //         typeArguments: [coinType!],
-  //       })
-
-  //       tx2.transferObjects([ptCoin, ytCoin], address!)
-
-  //       tx2.setGasBudget(0.01 * 1e9)
-
-  //       const data1 = await signAndExecuteTransaction({
-  //         transaction: tx2,
-  //         chain: `sui:${network}`,
-  //       })
-
-  //       console.log(data1)
-
-  //       const yt = data1!.effects!.created![0].reference.objectId
-  //       const pt = data1!.effects!.created![1].reference.objectId
-
-  //       console.log("pt", pt)
-  //       console.log("yt", yt)
-
-  //       const tx3 = new Transaction()
-
-  //       tx3.moveCall({
-  //         target: `${PackageAddress}::market::mint_lp`,
-  //         arguments: [
-  //           tx3.pure.address(address!),
-  //           tx3.object(pt),
-  //           tx3.object(sy),
-  //           tx3.object(coinConfig!.yieldFactoryConfigId),
-  //           tx3.object(coinConfig!.syStructId),
-  //           tx3.object(coinConfig!.tokenConfigId),
-  //           tx3.object(coinConfig!.marketConfigId),
-  //           tx3.object(coinConfig!.marketStateId),
-  //           tx3.object("0x6"),
-  //         ],
-  //         typeArguments: [coinType!],
-  //       })
-
-  //       tx3.setGasBudget(0.01 * 1e9)
-
-  //       const data2 = await signAndExecuteTransaction({
-  //         transaction: tx3,
-  //         chain: `sui:${network}`,
-  //       })
-
-  //       setTxId(data2.digest)
-  //       setOpen(true)
-  //       debouncedSetAddValue("")
-  //       setStatus("Success")
-  //     } catch (error) {
-  //       setOpen(true)
-  //       setStatus("Failed")
-  //       setMessage((error as Error)?.message ?? error)
-  //     }
-  //   }
-  // }
 
   const debouncedSetAddValue = debounce((value: string) => {
     setAddValue(value)
@@ -452,10 +336,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           <input
             disabled
             type="text"
-            value={
-              addValue &&
-              new Decimal(addValue).mul(dataRatio?.syLpRate || 0).toString()
-            }
+            value={addValue && new Decimal(addValue).mul(ratio).toString()}
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
@@ -465,7 +346,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         <span>{coinConfig?.lpApy || 0}</span>
       </div> */}
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full cursor-pointer h-14">
           Insufficient Balance
         </div>
       ) : (
@@ -475,9 +356,9 @@ export default function Mint({ slippage }: { slippage: string }) {
             addValue === "" || Number(addValue) <= 0 || insufficientBalance
           }
           className={[
-            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            "mt-7.5 px-8 py-2.5 rounded-full w-full",
             addValue === "" || Number(addValue) <= 0 || insufficientBalance
-              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
+              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer h-14"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >

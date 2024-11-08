@@ -35,8 +35,13 @@ const chartConfig = {
 
 export default function Home() {
   const navigate = useNavigate()
-  const { coinType, operation = "swap" } = useParams<{
+  const {
+    coinType,
+    maturity,
+    operation = "swap",
+  } = useParams<{
     coinType: string
+    maturity: string
     operation?: string
   }>()
   const [type, setType] = useState<"APY" | "Price">("APY")
@@ -60,7 +65,7 @@ export default function Home() {
               <div
                 onClick={() =>
                   !["swap", "mint"].includes(operation) &&
-                  navigate(`/market/detail/${coinType}/swap`)
+                  navigate(`/market/detail/${coinType}/${maturity}/swap`)
                 }
                 className={[
                   "flex-1 rounded-[40px] h-full flex items-center justify-center",
@@ -74,7 +79,7 @@ export default function Home() {
               <div
                 onClick={() =>
                   operation !== "liquidity" &&
-                  navigate(`/market/detail/${coinType}/liquidity`)
+                  navigate(`/market/detail/${coinType}/${maturity}/liquidity`)
                 }
                 className={[
                   "flex-1 rounded-[40px] h-full flex items-center justify-center",

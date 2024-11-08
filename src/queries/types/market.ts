@@ -20,15 +20,20 @@ export interface CoinInfo {
 }
 
 export interface CoinConfig {
+  underlyingApy: number
+  ytApy: number
+  pyStore: string
+  syStore: string
+  pyState: string
+  syState: string
   yieldFactoryConfigId: string
-  syStructId: string
-  yieldTokenStoreId: string
-  tokenConfigId: string
-  ytStructId: string
-  ptStructId: string
+  // syStructId: string
+  // yieldTokenStoreId: string
+  // tokenConfigId: string
+  // ytStructId: string
+  // ptStructId: string
   coinType: string
   marketStateId: string
-  marketConfigId: string
   marketFactoryConfigId: string
   sCoinPrice: string
   ptPrice: string
@@ -38,6 +43,15 @@ export interface CoinConfig {
   coinPrice: string
   coinName: string
   maturity: string
+  version: string
+  providerVersion: string
+  providerMarket: string
+  syCoinType: string
+  underlyingCoinType: string
+  nemoContractId: string
+  decimal: number
+  pyPositionType: string
+  marketPositionType: string
 }
 
 export interface PortfolioItem {
@@ -65,4 +79,5 @@ export interface FixedReturnItem {
   fixedApy: number
   coinLogo: string
   coinType: string
+  maturity: string
 }

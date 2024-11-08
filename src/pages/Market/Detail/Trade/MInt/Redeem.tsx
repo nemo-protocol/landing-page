@@ -1,36 +1,30 @@
 import Decimal from "decimal.js"
+import { network } from "@/config"
 import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-import { PackageAddress } from "@/contract"
+import { useParams } from "react-router-dom"
+import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
+import usePyPositionData from "@/hooks/usePyPositionData"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
+import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import {
-  useSuiClient,
-  useCurrentWallet,
-  useSuiClientQuery,
-  useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit"
-import { useParams } from "react-router-dom"
-
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
+  AlertDialogTitle,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
-import { network } from "@/config"
-import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 
-export default function Mint({ slippage }: { slippage: string }) {
-  const client = useSuiClient()
-  const { coinType } = useParams()
+export default function Mint() {
+  const { coinType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
@@ -38,97 +32,46 @@ export default function Mint({ slippage }: { slippage: string }) {
   const { currentWallet, isConnected } = useCurrentWallet()
   const [ptRedeemValue, setPTRedeemValue] = useState("")
   const [ytRedeemValue, setYTRedeemValue] = useState("")
+
   const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction({
-      execute: async ({ bytes, signature }) =>
-        await client.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            showInput: false,
-            showEvents: false,
-            showEffects: true,
-            showRawInput: false,
-            showRawEffects: true,
-            showObjectChanges: false,
-            showBalanceChanges: false,
-          },
-        }),
-    })
+    useCustomSignAndExecuteTransaction()
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType!)
-
-  const { data: mintPYRatio } = useQueryMintPYRatio(
-    coinConfig?.marketConfigId ?? "",
+  const { data: coinConfig } = useCoinConfig(coinType, maturity)
+  const { data: pyPositionData } = usePyPositionData(
+    address,
+    coinConfig?.pyState,
+    coinConfig?.maturity,
+    coinConfig?.pyPositionType,
   )
 
-  const ptytRatio = useMemo(() => {
-    if (mintPYRatio) {
-      return new Decimal(mintPYRatio?.syYtRate)
-        .div(mintPYRatio?.syPtRate)
-        .toString()
-    }
-    return 0
-  }, [mintPYRatio])
-
-  const { data: ptData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: `${PackageAddress}::pt::PTCoin<${coinType!}>`,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
-  )
-
-  const { data: ytData } = useSuiClientQuery(
-    "getCoins",
-    {
-      owner: address!,
-      coinType: `${PackageAddress}::yt::YTCoin<${coinType!}>`,
-    },
-    {
-      gcTime: 10000,
-      enabled: !!address,
-      select: (data) => {
-        return data.data.sort((a, b) =>
-          new Decimal(b.balance).comparedTo(new Decimal(a.balance)),
-        )
-      },
-    },
-  )
+  const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
+  const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
+  const ytRatio = useMemo(() => mintPYRatio?.syYtRate ?? 1, [mintPYRatio])
 
   const ptBalance = useMemo(() => {
-    if (ptData?.length) {
-      return ptData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+    if (pyPositionData?.length) {
+      return pyPositionData
+        .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
         .div(1e9)
         .toString()
     }
     return 0
-  }, [ptData])
+  }, [pyPositionData])
 
   const ytBalance = useMemo(() => {
-    if (ytData?.length) {
-      return ytData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+    if (pyPositionData?.length) {
+      return pyPositionData
+        .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
         .div(1e9)
         .toString()
     }
     return 0
-  }, [ytData])
+  }, [pyPositionData])
 
   const insufficientBalance = useMemo(() => {
     return (
@@ -138,51 +81,64 @@ export default function Mint({ slippage }: { slippage: string }) {
   }, [ptBalance, ytBalance, ptRedeemValue, ytRedeemValue])
 
   async function redeem() {
-    if (!insufficientBalance) {
+    if (
+      !insufficientBalance &&
+      coinConfig &&
+      coinType &&
+      address &&
+      ptRedeemValue &&
+      ytRedeemValue
+    ) {
       try {
         const tx = new Transaction()
 
-        const [ptCoin] = tx.splitCoins(ptData![0].coinObjectId, [
-          new Decimal(ptRedeemValue).mul(1e9).toString(),
-        ])
-        const [ytCoin] = tx.splitCoins(ytData![0].coinObjectId, [
-          new Decimal(ytRedeemValue).mul(1e9).toString(),
-        ])
+        let pyPosition
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = tx.moveCall({
+            target: `${coinConfig.nemoContractId}::py::init_py_position`,
+            arguments: [
+              tx.object(coinConfig.version),
+              tx.object(coinConfig.pyState),
+            ],
+            typeArguments: [coinConfig.syCoinType],
+          })[0]
+        } else {
+          pyPosition = tx.object(pyPositionData[0].id.id)
+        }
 
-        const [pt, yt, syCoin] = tx.moveCall({
-          target: `${PackageAddress}::yield_factory::redeem_py`,
+        const [priceVoucher] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
           arguments: [
-            ptCoin,
-            ytCoin,
-            tx.object(coinConfig!.syStructId),
-            tx.object(coinConfig!.tokenConfigId),
-            tx.object(coinConfig!.ptStructId),
-            tx.object(coinConfig!.ytStructId),
-            tx.object(coinConfig!.yieldFactoryConfigId),
+            tx.object(coinConfig.providerVersion),
+            tx.object(coinConfig.providerMarket),
+            tx.object(coinConfig.syState),
             tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
         })
 
-        tx.transferObjects([pt, yt], address!)
-
-        const [sCoin] = tx.moveCall({
-          target: `${PackageAddress}::sy_sSui::redeem_with_coin_back`,
+        const [sy] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
           arguments: [
-            tx.pure.address(address!),
-            syCoin,
-            tx.pure.u64(
-              new Decimal(ptRedeemValue)
-                .mul(1e9)
-                .mul(1 - Number(slippage))
-                .toNumber(),
-            ),
-            tx.object(coinConfig!.syStructId),
+            tx.object(coinConfig.version),
+            tx.pure.u64(new Decimal(ytRedeemValue).mul(1e9).toString()),
+            tx.pure.u64(new Decimal(ptRedeemValue).mul(1e9).toString()),
+            priceVoucher,
+            pyPosition,
+            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.yieldFactoryConfigId),
+            tx.object("0x6"),
           ],
-          typeArguments: [coinType!],
+          typeArguments: [coinConfig.syCoinType],
         })
 
-        tx.transferObjects([sCoin], address!)
+        tx.transferObjects([sy], address)
+
+        if (created) {
+          tx.transferObjects([pyPosition], address)
+        }
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
@@ -203,12 +159,12 @@ export default function Mint({ slippage }: { slippage: string }) {
 
   const debouncedSetPTValue = debounce((value: string) => {
     setPTRedeemValue(value)
-    setYTRedeemValue(new Decimal(value).div(ptytRatio).toFixed(9))
+    setYTRedeemValue(new Decimal(value).div(ptRatio).toFixed(9))
   }, 300)
 
   const debouncedSetYTValue = debounce((value: string) => {
     setYTRedeemValue(value)
-    setPTRedeemValue(new Decimal(value).mul(ptytRatio).toFixed(9))
+    setPTRedeemValue(new Decimal(value).mul(ytRatio).toFixed(9))
   }, 300)
 
   return (
@@ -243,7 +199,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
             <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF]"
+              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
               onClick={() => setOpen(false)}
             >
               OK
@@ -263,7 +219,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>PT sSUI</span>
+            <span>PT {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
@@ -316,7 +272,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <SSUIIcon className="size-6" />
-            <span>YT sSUI</span>
+            <span>YT {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
@@ -373,12 +329,8 @@ export default function Mint({ slippage }: { slippage: string }) {
             value={
               (ptRedeemValue || ytRedeemValue) &&
               Math.min(
-                new Decimal(ptRedeemValue || 0)
-                  .div(mintPYRatio?.syPtRate ?? 1)
-                  .toNumber(),
-                new Decimal(ytRedeemValue || 0)
-                  .div(mintPYRatio?.syYtRate ?? 1)
-                  .toNumber(),
+                new Decimal(ptRedeemValue || 0).div(ptRatio).toNumber(),
+                new Decimal(ytRedeemValue || 0).div(ytRatio).toNumber(),
               ).toFixed(9)
             }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
@@ -386,14 +338,14 @@ export default function Mint({ slippage }: { slippage: string }) {
         </div>
       </div>
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-3xl w-56 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
           Insufficient Balance
         </div>
       ) : (
         <button
           onClick={redeem}
           className={[
-            "mt-7.5 px-8 py-2.5 rounded-3xl w-56",
+            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
             ptRedeemValue === "" || ytRedeemValue === "" || insufficientBalance
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",

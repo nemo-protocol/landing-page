@@ -3,6 +3,7 @@ import App from "./App.tsx"
 import { network } from "./config"
 import ReactDOM from "react-dom/client"
 import { Toaster } from "@/components/ui/toaster"
+import { ToastProvider } from "@/components/Toast"
 import { getFullnodeUrl } from "@mysten/sui/client"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import {
@@ -16,6 +17,8 @@ import "./index.css"
 
 const queryClient = new QueryClient()
 const { networkConfig } = createNetworkConfig({
+  // TODO: support muilt rpc
+  // mainnet: { url: "https://sui-mainnet-endpoint.blockvision.org" },
   mainnet: { url: getFullnodeUrl("mainnet") },
   testnet: { url: getFullnodeUrl("testnet") },
 })
@@ -26,7 +29,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
         <WalletProvider>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </WalletProvider>
       </SuiClientProvider>
     </QueryClientProvider>

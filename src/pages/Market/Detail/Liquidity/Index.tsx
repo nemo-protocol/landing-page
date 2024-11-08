@@ -13,8 +13,13 @@ import {
 export default function Trade() {
   const navigate = useNavigate()
   const [slippage, setSlippage] = useState("0.5")
-  const { action = "add", coinType } = useParams<{
+  const {
+    action = "add",
+    coinType,
+    maturity,
+  } = useParams<{
     action?: string
+    maturity: string
     coinType: string
   }>()
   return (
@@ -24,7 +29,7 @@ export default function Trade() {
           <span
             onClick={() =>
               action !== "add" &&
-              navigate(`/market/detail/${coinType}/liquidity/add`)
+              navigate(`/market/detail/${coinType}/${maturity}/liquidity/add`)
             }
             className={
               action === "add" ? "text-white" : "text-white/50 cursor-pointer"
@@ -35,10 +40,14 @@ export default function Trade() {
           <span
             onClick={() =>
               action !== "remove" &&
-              navigate(`/market/detail/${coinType}/liquidity/remove`)
+              navigate(
+                `/market/detail/${coinType}/${maturity}/liquidity/remove`,
+              )
             }
             className={
-              action === "remove" ? "text-white" : "text-white/50 cursor-pointer"
+              action === "remove"
+                ? "text-white"
+                : "text-white/50 cursor-pointer"
             }
           >
             Remove

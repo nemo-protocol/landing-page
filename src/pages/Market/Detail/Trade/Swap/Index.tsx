@@ -4,8 +4,13 @@ import { useNavigate, useParams } from "react-router-dom"
 
 export default function TradeMint({ slippage }: { slippage: string }) {
   const navigate = useNavigate()
-  const { action = "buy", coinType } = useParams<{
+  const {
+    coinType,
+    maturity,
+    action = "buy",
+  } = useParams<{
     action?: string
+    maturity: string
     coinType: string
   }>()
   return (
@@ -13,7 +18,8 @@ export default function TradeMint({ slippage }: { slippage: string }) {
       <div className="flex items-center rounded-[40px] w-40 my-6 bg-[#242632]">
         <div
           onClick={() =>
-            action !== "buy" && navigate(`/market/detail/${coinType}/swap/buy`)
+            action !== "buy" &&
+            navigate(`/market/detail/${coinType}/${maturity}/swap/buy`)
           }
           className={[
             "text-white text-sm flex-1 py-1.5 rounded-[40px] flex items-center justify-center",
@@ -25,7 +31,7 @@ export default function TradeMint({ slippage }: { slippage: string }) {
         <div
           onClick={() =>
             action !== "sell" &&
-            navigate(`/market/detail/${coinType}/swap/sell`)
+            navigate(`/market/detail/${coinType}/${maturity}/swap/sell`)
           }
           className={[
             "text-white text-sm flex-1 py-1.5 rounded-[40px] flex items-center justify-center",
