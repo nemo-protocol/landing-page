@@ -112,10 +112,8 @@ export default function Sell() {
             typeArguments: [coinConfig.syCoinType],
           })[0]
         } else {
-          pyPosition = tx.object(pyPositionData[1].id.id)
+          pyPosition = tx.object(pyPositionData[0].id.id)
         }
-
-        console.log("created", created)
 
         const [priceVoucher] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,

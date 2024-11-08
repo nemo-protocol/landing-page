@@ -6,7 +6,7 @@ export default function TradeMint({ slippage }: { slippage: string }) {
   const [nav, setNav] = useState<"Single-coin" | "Multi-coin">("Single-coin")
   return (
     <>
-      <div className="flex items-center rounded-[40px] w-60 my-6 bg-[#242632]">
+      <div className="flex items-center rounded-[40px] w-60 my-6 bg-[#242632] hidden">
         <div
           onClick={() => setNav("Single-coin")}
           className={[
