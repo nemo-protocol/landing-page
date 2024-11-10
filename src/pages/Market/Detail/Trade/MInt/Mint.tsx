@@ -285,7 +285,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         />
       </div>
       {insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>
       ) : (

@@ -21,31 +21,29 @@ const useLpMarketPositionData = (
       gcTime: 10000,
       enabled: !!address && !!maturity && !!marketStateId && !!positionType,
       select: (data) => {
-        return (
-          data.data
-            .map(
-              (item) =>
-                (
-                  item.data?.content as {
-                    fields?: {
-                      name: string
-                      expiry: string
-                      id: { id: string }
-                      lp_amount: string
-                      description: string
-                      market_state_id: string
-                    }
+        return data.data
+          .map(
+            (item) =>
+              (
+                item.data?.content as {
+                  fields?: {
+                    name: string
+                    expiry: string
+                    id: { id: string }
+                    lp_amount: string
+                    description: string
+                    market_state_id: string
                   }
-                )?.fields,
-            )
-            .filter((item) => !!item)
-            // .filter((item) => item.market_state_id === marketState)
-            .filter(
-              (item) =>
-                item.expiry === maturity &&
-                item.market_state_id === marketStateId,
-            )
-        )
+                }
+              )?.fields,
+          )
+          .filter((item) => !!item)
+          .filter((item) => item.market_state_id === marketStateId)
+        // .filter(
+        //   (item) =>
+        //     item.expiry === maturity &&
+        //     item.market_state_id === marketStateId,
+        // )
       },
     },
   )
