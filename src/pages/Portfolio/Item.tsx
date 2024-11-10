@@ -339,9 +339,9 @@ export default function Item({
             ${new Decimal(ptBalance).mul(ptPrice).toFixed(2)}
           </TableCell>
           <TableCell className="text-center">{ptBalance}</TableCell>
-          <TableCell align="center" className="space-x-2 text-white">
+          <TableCell align="center" className="text-white">
             {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
-              <>
+              <div className="flex md:flex-row flex-col items-center gap-2">
                 <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/pt`}>
                   <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
                     Buy
@@ -354,7 +354,7 @@ export default function Item({
                     Sell
                   </button>
                 </Link>
-              </>
+              </div>
             ) : (
               <button className="rounded-3xl bg-[#0F60FF] w-24">Redeem</button>
             )}
@@ -398,17 +398,19 @@ export default function Item({
               </button>
             </div>
           </TableCell>
-          <TableCell align="center" className="space-x-2 text-white">
-            <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/yt`}>
-              <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
-                Buy
-              </button>
-            </Link>
-            <Link to={`/market/detail/${coinType}/${maturity}/swap/sell/yt`}>
-              <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
-                Sell
-              </button>
-            </Link>
+          <TableCell align="center" className="text-white">
+            <div className="flex md:flex-row flex-col items-center gap-2">
+              <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/yt`}>
+                <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
+                  Buy
+                </button>
+              </Link>
+              <Link to={`/market/detail/${coinType}/${maturity}/swap/sell/yt`}>
+                <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
+                  Sell
+                </button>
+              </Link>
+            </div>
           </TableCell>
         </TableRow>
       )}
@@ -428,9 +430,9 @@ export default function Item({
             ${new Decimal(lpCoinBalance).mul(lpPrice).toFixed(2)}
           </TableCell>
           <TableCell className="text-center">{lpCoinBalance}</TableCell>
-          <TableCell align="center" className="space-x-2 text-white">
+          <TableCell align="center" className="text-white">
             {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
-              <>
+              <div className="flex md:flex-row flex-col items-center gap-2">
                 <Link
                   to={`/market/detail/${coinType}/${maturity}/liquidity/add`}
                 >
@@ -445,7 +447,7 @@ export default function Item({
                     Remove
                   </button>
                 </Link>
-              </>
+              </div>
             ) : (
               <button
                 className="rounded-3xl bg-[#0F60FF] h-8 w-24"
