@@ -106,7 +106,7 @@ export default function Item({
   }, [lppMarketPositionData])
 
   async function claim() {
-    if (coinType && address) {
+    if (coinType && address && ytBalance) {
       try {
         const tx = new Transaction()
 
