@@ -2,7 +2,7 @@ import { useSuiClientQuery } from "@mysten/dapp-kit"
 
 const usePyPositionData = (
   address?: string,
-  pyState?: string,
+  pyStateId?: string,
   maturity?: string,
   positionType?: string,
 ) => {
@@ -19,30 +19,33 @@ const usePyPositionData = (
     },
     {
       gcTime: 10000,
-      enabled: !!address && !!maturity && !!pyState && !!positionType,
+      enabled: !!address && !!maturity && !!pyStateId && !!positionType,
       select: (data) => {
-        return data.data
-          .map(
-            (item) =>
-              (
-                item.data?.content as {
-                  fields?: {
-                    name: string
-                    expiry: string
-                    id: { id: string }
-                    pt_balance: string
-                    yt_balance: string
-                    description: string
-                    py_state_id: string
+        return (
+          data.data
+            .map(
+              (item) =>
+                (
+                  item.data?.content as {
+                    fields?: {
+                      name: string
+                      expiry: string
+                      id: { id: string }
+                      pt_balance: string
+                      yt_balance: string
+                      description: string
+                      py_state_id: string
+                    }
                   }
-                }
-              )?.fields,
-          )
-          .filter((item) => !!item)
-          .filter((item) => item.py_state_id === pyState)
-        // .filter(
-        //   (item) => item.expiry === maturity && item.py_state_id === pyState,
-        // )
+                )?.fields,
+            )
+            .filter((item) => !!item)
+            // .filter((item) => item.py_state_id === pyStateId)
+            .filter(
+              (item) =>
+                item.expiry === maturity && item.py_state_id === pyStateId,
+            )
+        )
       },
     },
   )

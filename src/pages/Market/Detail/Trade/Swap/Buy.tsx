@@ -63,7 +63,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   const { data: coinConfig } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
-    coinConfig?.pyState,
+    coinConfig?.pyStateId,
     coinConfig?.maturity,
     coinConfig?.pyPositionType,
   )
@@ -108,7 +108,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
-              tx.object(coinConfig.pyState),
+              tx.object(coinConfig.pyStateId),
             ],
             typeArguments: [coinConfig.syCoinType],
           })[0]
@@ -132,7 +132,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                 .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
-            tx.object(coinConfig.syState),
+            tx.object(coinConfig.syStateId),
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
         })
@@ -142,7 +142,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           arguments: [
             tx.object(coinConfig.providerVersion),
             tx.object(coinConfig.providerMarket),
-            tx.object(coinConfig.syState),
+            tx.object(coinConfig.syStateId),
             tx.object("0x6"),
           ],
           typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
@@ -162,7 +162,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               syCoin,
               priceVoucher,
               pyPosition,
-              tx.object(coinConfig.pyState),
+              tx.object(coinConfig.pyStateId),
               tx.object(coinConfig.yieldFactoryConfigId),
               tx.object(coinConfig.marketFactoryConfigId),
               tx.object(coinConfig.marketStateId),
@@ -185,8 +185,8 @@ export default function Mint({ slippage }: { slippage: string }) {
               syCoin,
               priceVoucher,
               pyPosition,
-              tx.object(coinConfig.pyState),
-              tx.object(coinConfig.syState),
+              tx.object(coinConfig.pyStateId),
+              tx.object(coinConfig.syStateId),
               tx.object(coinConfig.yieldFactoryConfigId),
               tx.object(coinConfig.marketFactoryConfigId),
               tx.object(coinConfig.marketStateId),

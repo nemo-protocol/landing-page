@@ -22,16 +22,9 @@ export interface CoinInfo {
 export interface CoinConfig {
   underlyingApy: number
   ytApy: number
-  pyStore: string
-  syStore: string
-  pyState: string
-  syState: string
+  pyStateId: string
+  syStateId: string
   yieldFactoryConfigId: string
-  // syStructId: string
-  // yieldTokenStoreId: string
-  // tokenConfigId: string
-  // ytStructId: string
-  // ptStructId: string
   coinType: string
   marketStateId: string
   marketFactoryConfigId: string
@@ -68,6 +61,19 @@ export interface PortfolioItem {
   decimal: string
   rewardCoinType: string
   rewardCoinPrice: string
+  pyStateId: string
+  pyPositionType: string
+  marketStateId: string
+  marketPositionType: string
+  nemoContractId: string
+  version: string
+  syCoinType: string
+  providerVersion: string
+  providerMarket: string
+  syStateId: string
+  underlyingCoinType: string
+  yieldFactoryConfigId: string
+  marketFactoryConfigId: string
 }
 
 export interface FixedReturnItem {

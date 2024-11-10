@@ -56,7 +56,7 @@ export default function Remove() {
 
   const { data: pyPositionData } = usePyPositionData(
     address,
-    coinConfig?.pyState,
+    coinConfig?.pyStateId,
     coinConfig?.maturity,
     coinConfig?.pyPositionType,
   )
@@ -95,7 +95,7 @@ export default function Remove() {
             target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
-              tx.object(coinConfig.pyState),
+              tx.object(coinConfig.pyStateId),
             ],
             typeArguments: [coinConfig.syCoinType],
           })[0]

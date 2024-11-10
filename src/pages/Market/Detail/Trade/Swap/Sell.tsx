@@ -56,7 +56,7 @@ export default function Sell() {
   const { data: coinConfig } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
-    coinConfig?.pyState,
+    coinConfig?.pyStateId,
     coinConfig?.maturity,
     coinConfig?.pyPositionType,
   )
@@ -107,7 +107,7 @@ export default function Sell() {
             target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
-              tx.object(coinConfig.pyState),
+              tx.object(coinConfig.pyStateId),
             ],
             typeArguments: [coinConfig.syCoinType],
           })[0]
@@ -120,7 +120,7 @@ export default function Sell() {
           arguments: [
             tx.object(coinConfig.providerVersion),
             tx.object(coinConfig.providerMarket),
-            tx.object(coinConfig.syState),
+            tx.object(coinConfig.syStateId),
             tx.object("0x6"),
           ],
           typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
@@ -132,7 +132,7 @@ export default function Sell() {
             tx.object(coinConfig.version),
             tx.pure.u64(new Decimal(redeemValue).mul(1e9).toString()),
             pyPosition,
-            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.pyStateId),
             priceVoucher,
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig.marketFactoryConfigId),

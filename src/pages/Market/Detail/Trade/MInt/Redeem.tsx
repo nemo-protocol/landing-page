@@ -44,7 +44,7 @@ export default function Mint() {
   const { data: coinConfig } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
-    coinConfig?.pyState,
+    coinConfig?.pyStateId,
     coinConfig?.maturity,
     coinConfig?.pyPositionType,
   )
@@ -100,7 +100,7 @@ export default function Mint() {
             target: `${coinConfig.nemoContractId}::py::init_py_position`,
             arguments: [
               tx.object(coinConfig.version),
-              tx.object(coinConfig.pyState),
+              tx.object(coinConfig.pyStateId),
             ],
             typeArguments: [coinConfig.syCoinType],
           })[0]
@@ -113,7 +113,7 @@ export default function Mint() {
           arguments: [
             tx.object(coinConfig.providerVersion),
             tx.object(coinConfig.providerMarket),
-            tx.object(coinConfig.syState),
+            tx.object(coinConfig.syStateId),
             tx.object("0x6"),
           ],
           typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
@@ -127,7 +127,7 @@ export default function Mint() {
             tx.pure.u64(new Decimal(ptRedeemValue).mul(1e9).toString()),
             priceVoucher,
             pyPosition,
-            tx.object(coinConfig.pyState),
+            tx.object(coinConfig.pyStateId),
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
