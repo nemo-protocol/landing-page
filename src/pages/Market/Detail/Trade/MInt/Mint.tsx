@@ -4,7 +4,7 @@ import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
-import { useCurrentWallet } from "@mysten/dapp-kit"
+import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
@@ -32,6 +32,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { currentWallet, isConnected } = useCurrentWallet()
   const [mintValue, setMintValue] = useState("")
+  const [openConnect, setOpenConnect] = useState(false)
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -284,7 +285,17 @@ export default function Mint({ slippage }: { slippage: string }) {
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>
-      {insufficientBalance ? (
+      {!isConnected ? (
+        <ConnectModal
+          open={openConnect}
+          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+          trigger={
+            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+              Connect Wallet
+            </button>
+          }
+        />
+      ) :insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>

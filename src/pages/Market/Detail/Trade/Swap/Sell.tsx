@@ -1,7 +1,7 @@
 import Decimal from "decimal.js"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
-import { useCurrentWallet } from "@mysten/dapp-kit"
+import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
@@ -41,6 +41,7 @@ export default function Sell() {
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
+  const [openConnect, setOpenConnect] = useState(false)
 
   useEffect(() => {
     if (_tokenType) {
@@ -317,7 +318,17 @@ export default function Sell() {
           {tokenType === "pt" ? coinConfig?.ptApy || 0 : coinConfig?.ytApy || 0}
         </span>
       </div> */}
-      {insufficientBalance ? (
+      {!isConnected ? (
+        <ConnectModal
+          open={openConnect}
+          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+          trigger={
+            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+              Connect Wallet
+            </button>
+          }
+        />
+      ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>

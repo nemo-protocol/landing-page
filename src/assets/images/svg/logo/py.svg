@@ -23,14 +23,18 @@
         stroke="color(display-p3 .1765 .9569 .8667)" stroke-width="5.332" />
     <rect x="108" y="660" width="1084" height="463" rx="85.313" fill="#fff" fill-opacity=".09" />
     <rect x="110.666" y="662.666" width="1078.67" height="457.668" rx="82.647" stroke="#fff" stroke-width="5.332" />
-    <image href="https://nemoprotocol.com/static/sui.svg" x="188" y="720" width="115" /><text x="314" y="800"
+    <image href="https://nemoprotocol.com/static/sui.svg" x="188" y="720" width="115" />
+    <text x="314" y="800"
         font-size="50" font-weight="bold" fill="#fff">
         sUSDC
-    </text><text x="672" y="800" font-size="60" fill="#fff">
+    </text>
+    <text x="672" y="800" font-size="60" fill="#fff">
         Maturity  352 day
-    </text><text x="320" y="980" font-size="60" font-weight="bold" fill="#fff">
+    </text>
+    <text x="320" y="980" font-size="60" font-weight="bold" fill="#fff">
         0.00%
-    </text><text x="840" y="980" font-size="60" font-weight="bold" fill="#fff">
+    </text>
+    <text x="840" y="980" font-size="60" font-weight="bold" fill="#fff">
         32.122
     </text><text x="320" y="1040" font-size="40" fill="#fff" fill-opacity=".78">
         $0.00

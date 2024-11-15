@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
-import { useCurrentWallet } from "@mysten/dapp-kit"
+import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
@@ -30,6 +30,7 @@ export default function Remove() {
   const [message, setMessage] = useState<string>()
   const { currentWallet, isConnected } = useCurrentWallet()
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [openConnect, setOpenConnect] = useState(false)
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -250,7 +251,17 @@ export default function Remove() {
         <span className="text-white/80">Total Pool APY</span>
         <span>{coinConfig?.lpApy || 0}</span>
       </div> */}
-      {insufficientBalance ? (
+      {!isConnected ? (
+        <ConnectModal
+          open={openConnect}
+          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+          trigger={
+            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+              Connect Wallet
+            </button>
+          }
+        />
+      ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>
