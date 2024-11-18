@@ -68,7 +68,12 @@ function getErrorMessage(errorCode: number): string {
 }
 
 export const parseErrorMessage = (errorString: string) => {
-  const errorCodeMatch = errorString.match(/0x[0-9A-Fa-f]+/)
-  const errorCode = errorCodeMatch ? parseInt(errorCodeMatch[0], 16) : null
+  const errorCodeMatch = errorString.match(/(\d+)\) in command/)
+  const errorCode = errorCodeMatch
+    ? parseInt(
+        errorCodeMatch[1] || errorCodeMatch[0],
+        errorCodeMatch[1] ? 10 : 16,
+      )
+    : null
   return errorCode ? getErrorMessage(errorCode) : errorString
 }
