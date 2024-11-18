@@ -11,6 +11,7 @@ import { useState } from "react"
 import Empty from "@/assets/images/png/empty.png"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import WalletNotConnect from "@/assets/images/svg/walletNotConnect.svg?react"
+import { Link } from "react-router-dom"
 
 export default function List() {
   const { isConnected } = useCurrentWallet()
@@ -75,7 +76,7 @@ export default function List() {
             <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
-        {isConnected&& list?.length && (
+        {isConnected && list?.length && (
           <TableBody>
             {list.map((item) => (
               <Item {...item} selectType={selectType} />
@@ -83,11 +84,14 @@ export default function List() {
           </TableBody>
         )}
       </Table>
-      {!isConnected&&<WalletNotConnect className="size-[200px] mx-auto" />}
-      {!list?.length&&isConnected && (
-        <div className="flex flex-col items-center w-full justify-center">
+      {!isConnected && <WalletNotConnect className="size-[200px] mx-auto" />}
+      {!list?.length && isConnected && (
+        <div className="flex flex-col items-center w-full justify-center gap-y-4">
           <img src={Empty} alt="No Data" className="size-[120px]" />
           <span className="text-white/60">You don't have any position yet</span>
+          <Link to="/market" className="px-4 py-2 rounded-full bg-[#0F60FF]">
+            <span className="text-white">View Markets</span>
+          </Link>
         </div>
       )}
     </>
