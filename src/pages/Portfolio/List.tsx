@@ -8,10 +8,14 @@ import {
   TableHeader,
 } from "@/components/ui/table"
 import { useState } from "react"
+import Empty from "@/assets/images/png/empty.png"
+import { useCurrentWallet } from "@mysten/dapp-kit"
+import WalletNotConnect from "@/assets/images/svg/walletNotConnect.svg?react"
 
 export default function List() {
-  const [selectType, setSelectType] = useState<"pt" | "yt" | "lp">("pt")
+  const { isConnected } = useCurrentWallet()
   const { data: list } = usePortfolioList()
+  const [selectType, setSelectType] = useState<"pt" | "yt" | "lp">("pt")
   return (
     <>
       <div className="flex items-center gap-x-4">
@@ -71,12 +75,21 @@ export default function List() {
             <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {(list ?? []).map((item) => (
-            <Item {...item} selectType={selectType} />
-          ))}
-        </TableBody>
+        {isConnected&& list?.length && (
+          <TableBody>
+            {list.map((item) => (
+              <Item {...item} selectType={selectType} />
+            ))}
+          </TableBody>
+        )}
       </Table>
+      {!isConnected&&<WalletNotConnect className="size-[200px] mx-auto" />}
+      {!list?.length&&isConnected && (
+        <div className="flex flex-col items-center w-full justify-center">
+          <img src={Empty} alt="No Data" className="size-[120px]" />
+          <span className="text-white/60">You don't have any position yet</span>
+        </div>
+      )}
     </>
   )
 }
