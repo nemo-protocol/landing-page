@@ -29,6 +29,7 @@ import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import { debounce } from "@/lib/utils"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import usePyPositionData from "@/hooks/usePyPositionData"
+import { parseErrorMessage } from "@/lib/errorMapping"
 
 export default function Sell() {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -149,11 +150,17 @@ export default function Sell() {
           tx.transferObjects([pyPosition], address)
         }
 
-        const { digest } = await signAndExecuteTransaction({
+        const res = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,
         })
-        setTxId(digest)
+        if (res.effects?.status.status === "failure") {
+          setOpen(true)
+          setStatus("Failed")
+          setMessage(parseErrorMessage(res.effects?.status.error || ""))
+          return
+        }
+        setTxId(res.digest)
         setOpen(true)
         setRedeemValue("")
         setStatus("Success")

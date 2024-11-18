@@ -22,6 +22,7 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
+import { parseErrorMessage } from "@/lib/errorMapping"
 
 export default function Mint() {
   const { coinType, maturity } = useParams()
@@ -141,11 +142,17 @@ export default function Mint() {
           tx.transferObjects([pyPosition], address)
         }
 
-        const { digest } = await signAndExecuteTransaction({
+        const res = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,
         })
-        setTxId(digest)
+        if (res.effects?.status.status === "failure") {
+          setOpen(true)
+          setStatus("Failed")
+          setMessage(parseErrorMessage(res.effects?.status.error || ""))
+          return
+        }
+        setTxId(res.digest)
         setOpen(true)
         setPTRedeemValue("")
         setYTRedeemValue("")

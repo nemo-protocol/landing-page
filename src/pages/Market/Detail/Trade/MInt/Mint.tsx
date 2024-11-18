@@ -23,6 +23,7 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
 import usePyPositionData from "@/hooks/usePyPositionData"
+import { parseErrorMessage } from "@/lib/errorMapping"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const { coinType, maturity } = useParams()
@@ -140,11 +141,17 @@ export default function Mint({ slippage }: { slippage: string }) {
           tx.transferObjects([pyPosition], address)
         }
 
-        const { digest } = await signAndExecuteTransaction({
+        const res = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),
           chain: `sui:${network}`,
         })
-        setTxId(digest)
+        if (res.effects?.status.status === "failure") {
+          setOpen(true)
+          setStatus("Failed")
+          setMessage(parseErrorMessage(res.effects?.status.error || ""))
+          return
+        }
+        setTxId(res.digest)
         setOpen(true)
         setMintValue("")
         setStatus("Success")
@@ -295,7 +302,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             </button>
           }
         />
-      ) :insufficientBalance ? (
+      ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>

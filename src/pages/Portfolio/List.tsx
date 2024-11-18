@@ -79,7 +79,7 @@ export default function List() {
         {isConnected && list?.length && (
           <TableBody>
             {list.map((item) => (
-              <Item {...item} selectType={selectType} />
+              <Item {...item} selectType={selectType} key={item.name} />
             ))}
           </TableBody>
         )}

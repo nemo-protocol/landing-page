@@ -22,6 +22,7 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
+import { parseErrorMessage } from "@/lib/errorMapping"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")
@@ -213,11 +214,17 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         tx.setGasBudget(0.1 * 1e9)
 
-        const { digest } = await signAndExecuteTransaction({
+        const res = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,
         })
-        setTxId(digest)
+        if (res.effects?.status.status === "failure") {
+          setOpen(true)
+          setStatus("Failed")
+          setMessage(parseErrorMessage(res.effects?.status.error || ""))
+          return
+        }
+        setTxId(res.digest)
         setOpen(true)
         setAddValue("")
         setStatus("Success")

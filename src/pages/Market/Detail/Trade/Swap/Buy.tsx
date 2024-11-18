@@ -8,6 +8,7 @@ import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { useEffect, useMemo, useState } from "react"
 import { Transaction } from "@mysten/sui/transactions"
 import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
@@ -37,10 +38,13 @@ import {
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import useCoinData from "@/hooks/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
+import { parseErrorMessage } from "@/lib/errorMapping"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [message, setMessage] = useState<string>()
+  const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
   const [swapValue, setSwapValue] = useState("")
   const [tokenType, setTokenType] = useState("pt")
@@ -54,7 +58,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     if (_tokenType) {
       setTokenType(_tokenType)
     }
-  }, [])
+  }, [_tokenType])
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
@@ -204,15 +208,24 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         tx.setGasBudget(GAS_BUDGET)
 
-        const { digest } = await signAndExecuteTransaction({
+        const res = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),
           chain: `sui:${network}`,
         })
-        setTxId(digest)
+        if (res.effects?.status.status === "failure") {
+          setOpen(true)
+          setStatus("Failed")
+          setMessage(parseErrorMessage(res.effects?.status.error || ""))
+          return
+        }
+        setStatus("Success")
+        setTxId(res.digest)
         setOpen(true)
         setSwapValue("")
       } catch (error) {
-        console.log("error", error)
+        setOpen(true)
+        setStatus("Failed")
+        setMessage((error as Error)?.message ?? error)
       }
     }
   }
@@ -227,20 +240,28 @@ export default function Mint({ slippage }: { slippage: string }) {
         <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-white">
-              Success
+              {status}
             </AlertDialogTitle>
             <AlertDialogDescription className="flex flex-col items-center">
-              <SuccessIcon />
-              <div className="py-2 flex flex-col items-center">
-                <p className=" text-white/50">Transaction submitted!</p>
-                <a
-                  className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                  target="_blank"
-                >
-                  View details
-                </a>
-              </div>
+              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
+              {status === "Success" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-white/50">Transaction submitted!</p>
+                  <a
+                    className="text-[#8FB5FF] underline"
+                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
+                    target="_blank"
+                  >
+                    View details
+                  </a>
+                </div>
+              )}
+              {status === "Failed" && (
+                <div className="py-2 flex flex-col items-center">
+                  <p className=" text-red-400">Transaction Error</p>
+                  <p className="text-red-500 break-all">{message}</p>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center justify-center">
