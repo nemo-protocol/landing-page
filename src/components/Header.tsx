@@ -49,19 +49,22 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="py-6">
-      <div className=" w-full mx-auto flex items-center justify-between text-xs">
-        <div className="flex items-center gap-x-6">
+    <header className="h-16">
+      <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
+        <div className="flex items-center gap-x-6 h-full">
           <Link to="/" className="flex gap-x-2">
             <NemoLogo />
             <div className="text-[#44E0C3] py-1 px-2 rounded-full bg-[#ECFBF9]/10 text-xs">
               Beta
             </div>
           </Link>
-          <ul className="md:flex items-center text-sm hidden">
+          <ul className="md:flex items-center text-sm hidden h-full">
             <li
               className={[
-                "text-center bg-transparent py-2 rounded-full cursor-pointer hidden",
+                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center hidden",
+                location.pathname === "/fixed-return"
+                  ? "bg-[#12121B] border-b border-b-white"
+                  : "",
               ].join(" ")}
             >
               <Link
@@ -79,7 +82,10 @@ export default function Header() {
             </li>
             <li
               className={[
-                "w-24 text-center bg-transparent py-2 rounded-full cursor-pointer",
+                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
+                location.pathname === "/market"
+                  ? "bg-[#12121B] border-b border-b-white"
+                  : "",
               ].join(" ")}
             >
               <Link
@@ -95,7 +101,10 @@ export default function Header() {
             </li>
             <li
               className={[
-                "w-24 text-center bg-transparent rounded-full cursor-pointer",
+                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
+                location.pathname === "/portfolio"
+                  ? "bg-[#12121B] border-b border-b-white"
+                  : "",
               ].join(" ")}
             >
               <Link
@@ -111,7 +120,10 @@ export default function Header() {
             </li>
             <li
               className={[
-                "w-24 text-center bg-transparent rounded-full cursor-pointer",
+                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
+                location.pathname === "/learn"
+                  ? "bg-[#12121B] border-b border-b-white"
+                  : "",
               ].join(" ")}
             >
               <Link
@@ -128,7 +140,10 @@ export default function Header() {
             {IS_DEV && (
               <li
                 className={[
-                  "w-24 text-center bg-transparent rounded-full cursor-pointer",
+                  "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
+                  location.pathname === "/test"
+                    ? "bg-[#12121B] border-b border-b-white"
+                    : "",
                 ].join(" ")}
               >
                 <Link
@@ -145,7 +160,7 @@ export default function Header() {
             )}
           </ul>
         </div>
-        <div className="flex items-center gap-x-6">
+        <div className="flex items-center gap-x-6 h-full">
           <Squares2X2Icon
             className="md:hidden text-white cursor-pointer"
             onClick={() => setIsOpen((isOpen) => !isOpen)}

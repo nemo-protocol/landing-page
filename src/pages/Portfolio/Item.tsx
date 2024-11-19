@@ -1,5 +1,5 @@
 import dayjs from "dayjs"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Decimal from "decimal.js"
 import { Link } from "react-router-dom"
 import { useCurrentWallet } from "@mysten/dapp-kit"
@@ -21,6 +21,7 @@ import {
 import { network } from "@/config"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
+import usePortfolio from "@/hooks/usePortfolio"
 
 export default function Item({
   name,
@@ -47,6 +48,7 @@ export default function Item({
   underlyingCoinType,
   yieldFactoryConfigId,
   marketFactoryConfigId,
+  lpReward,
 }: PortfolioItem & { selectType: "pt" | "yt" | "lp" | "all" }) {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
@@ -55,6 +57,35 @@ export default function Item({
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
+
+  const { updatePortfolio } = usePortfolio()
+
+  useEffect(() => {
+    if (currentWallet) {
+      updatePortfolio(
+        coinType + "_" + maturity + "_" + selectType,
+        selectType === "pt"
+          ? new Decimal(ptPrice).mul(ptPrice).toNumber()
+          : selectType === "yt"
+            ? new Decimal(ytReward || 0).mul(rewardCoinPrice || 0).toNumber()
+            : new Decimal(lpPrice).mul(lpPrice).toNumber(),
+        selectType === "lp"
+          ? new Decimal(lpReward || 0).mul(rewardCoinPrice || 0).toNumber()
+          : 0,
+      )
+    }
+  }, [
+    currentWallet,
+    selectType,
+    coinType,
+    maturity,
+    ptPrice,
+    ytReward,
+    rewardCoinPrice,
+    lpPrice,
+    lpReward,
+    updatePortfolio,
+  ])
 
   const address = useMemo(
     () => currentWallet?.accounts[0].address,
@@ -341,7 +372,7 @@ export default function Item({
           <TableCell className="text-center">{ptBalance}</TableCell>
           <TableCell align="center" className="text-white">
             {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
-              <div className="flex md:flex-row flex-col items-center gap-2">
+              <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/pt`}>
                   <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
                     Buy
@@ -399,7 +430,7 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">
-            <div className="flex md:flex-row flex-col items-center gap-2">
+            <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
               <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/yt`}>
                 <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
                   Buy
@@ -432,7 +463,7 @@ export default function Item({
           <TableCell className="text-center">{lpCoinBalance}</TableCell>
           <TableCell align="center" className="text-white">
             {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
-              <div className="flex md:flex-row flex-col items-center gap-2">
+              <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
                   to={`/market/detail/${coinType}/${maturity}/liquidity/add`}
                 >

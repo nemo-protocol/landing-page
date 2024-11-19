@@ -1,4 +1,3 @@
-import { usePortfolioList } from "@/queries"
 import Item from "./Item"
 import {
   Table,
@@ -8,18 +7,24 @@ import {
   TableHeader,
 } from "@/components/ui/table"
 import { useState } from "react"
+import { motion } from "framer-motion"
 import Empty from "@/assets/images/png/empty.png"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import WalletNotConnect from "@/assets/images/svg/walletNotConnect.svg?react"
 import { Link } from "react-router-dom"
+import { PortfolioItem } from "@/queries/types/market"
 
-export default function List() {
+export default function List({ list }: { list?: PortfolioItem[] }) {
   const { isConnected } = useCurrentWallet()
-  const { data: list } = usePortfolioList()
   const [selectType, setSelectType] = useState<"pt" | "yt" | "lp">("pt")
   return (
-    <>
-      <div className="flex items-center gap-x-4">
+    <motion.div
+      className="w-full transition-all duration-200 ease-in-out"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="flex items-center gap-x-4 mb-5">
         <span
           className={
             selectType === "pt"
@@ -79,7 +84,11 @@ export default function List() {
         {isConnected && list?.length && (
           <TableBody>
             {list.map((item) => (
-              <Item {...item} selectType={selectType} key={item.name} />
+              <Item
+                {...item}
+                selectType={selectType}
+                key={item.name + item.maturity}
+              />
             ))}
           </TableBody>
         )}
@@ -94,6 +103,6 @@ export default function List() {
           </Link>
         </div>
       )}
-    </>
+    </motion.div>
   )
 }

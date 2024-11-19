@@ -16,7 +16,7 @@ function App() {
     <HashRouter>
       <Suspense fallback={<div className="h-[100%]">Loading...</div>}>
         <div className="relative">
-          <div className="min-h-screen xl:max-w-[1200px] xl:mx-auto w-full px-7.5 xl:px-0 bg-transparent">
+          <div className="min-h-screen w-full bg-transparent">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/fixed-return" element={<FixedReturn />} />

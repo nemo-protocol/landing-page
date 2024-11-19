@@ -17,6 +17,7 @@ export interface CoinInfo {
   ptPrice: number
   ytPrice: number
   poolApy: number
+  bgGradient: string
 }
 
 export interface CoinConfig {
