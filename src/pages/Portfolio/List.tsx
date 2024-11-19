@@ -9,13 +9,14 @@ import {
 import { useState } from "react"
 import { motion } from "framer-motion"
 import Empty from "@/assets/images/png/empty.png"
-import { useCurrentWallet } from "@mysten/dapp-kit"
-import WalletNotConnect from "@/assets/images/svg/walletNotConnect.svg?react"
+import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+import WalletNotConnect from "@/assets/images/png/WalletNotConnect.png"
 import { Link } from "react-router-dom"
 import { PortfolioItem } from "@/queries/types/market"
 
 export default function List({ list }: { list?: PortfolioItem[] }) {
   const { isConnected } = useCurrentWallet()
+  const [openConnect, setOpenConnect] = useState(false)
   const [selectType, setSelectType] = useState<"pt" | "yt" | "lp">("pt")
   return (
     <motion.div
@@ -93,9 +94,29 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
           </TableBody>
         )}
       </Table>
-      {!isConnected && <WalletNotConnect className="size-[200px] mx-auto" />}
+      {!isConnected && (
+        <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px]">
+          <img
+            src={WalletNotConnect}
+            alt="Wallet no connect"
+            className="size-[120px]"
+          />
+          <span className="text-white/60">
+            Please connect your wallet first.
+          </span>
+          <ConnectModal
+            open={openConnect}
+            onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+            trigger={
+              <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
+                Connect Wallet
+              </button>
+            }
+          />
+        </div>
+      )}
       {!list?.length && isConnected && (
-        <div className="flex flex-col items-center w-full justify-center gap-y-4">
+        <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px]">
           <img src={Empty} alt="No Data" className="size-[120px]" />
           <span className="text-white/60">You don't have any position yet</span>
           <Link to="/market" className="px-4 py-2 rounded-full bg-[#0F60FF]">

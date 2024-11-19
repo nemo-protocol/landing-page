@@ -61,10 +61,10 @@ export default function Header() {
           <ul className="md:flex items-center text-sm hidden h-full">
             <li
               className={[
-                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center hidden",
+                "w-24 h-full text-center cursor-pointer flex items-center justify-center hidden",
                 location.pathname === "/fixed-return"
-                  ? "bg-[#12121B] border-b border-b-white"
-                  : "",
+                  ? "!bg-[#12121B] border-b border-b-white"
+                  : "bg-transparent",
               ].join(" ")}
             >
               <Link
@@ -82,10 +82,10 @@ export default function Header() {
             </li>
             <li
               className={[
-                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
+                "w-24 h-full text-center cursor-pointer flex items-center justify-center",
                 location.pathname === "/market"
                   ? "bg-[#12121B] border-b border-b-white"
-                  : "",
+                  : "bg-transparent",
               ].join(" ")}
             >
               <Link
@@ -101,10 +101,10 @@ export default function Header() {
             </li>
             <li
               className={[
-                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
+                "w-24 h-full text-center cursor-pointer flex items-center justify-center",
                 location.pathname === "/portfolio"
                   ? "bg-[#12121B] border-b border-b-white"
-                  : "",
+                  : "bg-transparent",
               ].join(" ")}
             >
               <Link
@@ -120,10 +120,10 @@ export default function Header() {
             </li>
             <li
               className={[
-                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
+                "w-24 h-full text-center cursor-pointer flex items-center justify-center",
                 location.pathname === "/learn"
                   ? "bg-[#12121B] border-b border-b-white"
-                  : "",
+                  : "bg-transparent",
               ].join(" ")}
             >
               <Link
