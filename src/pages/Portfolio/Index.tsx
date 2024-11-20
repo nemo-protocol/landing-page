@@ -22,7 +22,7 @@ export default function Portfolio() {
         <div className="flex items-center justify-between">
           <div>
             <h6 className="flex items-center gap-x-2">
-              <span className="text-xl">My Portfolio</span>
+              <span className="text-[28px] font-black">My Portfolio</span>
               <Eye className="size-3.5 hidden" />
             </h6>
             <div className="flex items-center gap-x-16 py-4">
