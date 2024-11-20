@@ -10,6 +10,7 @@ import MarketPNG from "@/assets/images/png/market.png"
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Link } from "react-router-dom"
+import { ReactTyped } from "react-typed"
 
 export const containerStyles = "w-full lg:max-w-[75rem] lg:mx-auto"
 
@@ -61,8 +62,12 @@ export default function Home() {
                 transition={{ duration: 0.5 }}
                 className="xs:text-center mt-4 text-white text-balance"
               >
-                Revolutionize investment strategy and maximize returns with
-                yield trading.
+                <ReactTyped
+                  strings={[
+                    "Revolutionize investment strategy and maximize returns with yield trading.",
+                  ]}
+                  typeSpeed={25}
+                />
               </motion.h6>
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
