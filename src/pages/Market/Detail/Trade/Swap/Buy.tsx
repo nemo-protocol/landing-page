@@ -2,12 +2,12 @@ import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { GAS_BUDGET, network } from "@/config"
 import { Info } from "lucide-react"
-import { debounce } from "@/lib/utils"
+// import { debounce } from "@/lib/utils"
 import { useParams } from "react-router-dom"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { useEffect, useMemo, useState } from "react"
 import { Transaction } from "@mysten/sui/transactions"
-import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+// import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
@@ -225,14 +225,15 @@ export default function Mint({ slippage }: { slippage: string }) {
       } catch (error) {
         setOpen(true)
         setStatus("Failed")
-        setMessage((error as Error)?.message ?? error)
+        const msg = (error as Error)?.message ?? error
+        setMessage(parseErrorMessage(msg || ""))
       }
     }
   }
 
-  const debouncedSetMintValue = debounce((value: string) => {
-    setSwapValue(value)
-  }, 300)
+  // const debouncedSetMintValue = debounce((value: string) => {
+  //   setSwapValue(value)
+  // }, 300)
 
   return (
     <div className="flex flex-col items-center">
@@ -284,15 +285,21 @@ export default function Mint({ slippage }: { slippage: string }) {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span className="px-2">sSUI</span>
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
+              value={swapValue}
               disabled={!isConnected}
-              onChange={(e) =>
-                debouncedSetMintValue(new Decimal(e.target.value).toString())
+              onChange={
+                (e) => setSwapValue(e.target.value)
+                // debouncedSetMintValue(new Decimal(e.target.value).toString())
               }
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
@@ -330,7 +337,11 @@ export default function Mint({ slippage }: { slippage: string }) {
       <div className="flex flex-col w-full gap-y-4.5 mt-4">
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <Select
               value={tokenType}
               onValueChange={(value) => setTokenType(value)}

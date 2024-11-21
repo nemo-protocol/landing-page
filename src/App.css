@@ -1,3 +1,3 @@
 #root {
-  @apply w-full m-0 bg-black overflow-x-hidden;
+  @apply w-full m-0 bg-black overflow-x-hidden font-sans;
 }

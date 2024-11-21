@@ -42,7 +42,7 @@ export default function TradeMint({ slippage }: { slippage: string }) {
         </div>
       </div>
       {action === "buy" && <Buy slippage={slippage} />}
-      {action === "sell" && <Sell />}
+      {action === "sell" && <Sell slippage={slippage} />}
     </>
   )
 }

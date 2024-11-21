@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-import { debounce } from "@/lib/utils"
+// import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
@@ -8,7 +8,6 @@ import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
@@ -158,14 +157,15 @@ export default function Mint({ slippage }: { slippage: string }) {
       } catch (error) {
         setOpen(true)
         setStatus("Failed")
-        setMessage((error as Error)?.message ?? error)
+        const msg = (error as Error)?.message ?? error
+        setMessage(parseErrorMessage(msg || ""))
       }
     }
   }
 
-  const debouncedSetMintValue = debounce((value: string) => {
-    setMintValue(value)
-  }, 300)
+  // const debouncedSetMintValue = debounce((value: string) => {
+  //   setMintValue(value)
+  // }, 300)
 
   return (
     <div className="flex flex-col items-center">
@@ -218,16 +218,22 @@ export default function Mint({ slippage }: { slippage: string }) {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span className="px-2">{coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
+              value={mintValue}
               disabled={!isConnected}
-              onChange={(e) =>
-                debouncedSetMintValue(new Decimal(e.target.value).toString())
+              onChange={
+                (e) => setMintValue(e.target.value)
+                // debouncedSetMintValue(new Decimal(e.target.value).toString())
               }
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
@@ -266,14 +272,21 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span className="px-2">PT {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <input
             disabled
             type="text"
-            value={mintValue && new Decimal(mintValue).div(ptRatio).toString()}
+            value={
+              mintValue &&
+              new Decimal(mintValue).div(ptRatio).toFixed(coinConfig?.decimal)
+            }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
         </div>
@@ -281,14 +294,21 @@ export default function Mint({ slippage }: { slippage: string }) {
       <AddIcon className="mx-auto mt-5" />
       <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
         <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-          <SSUIIcon className="size-6" />
+          <img
+            src={coinConfig?.coinLogo}
+            alt={coinConfig?.coinName}
+            className="size-6"
+          />
           <span className="px-2">YT {coinConfig?.coinName}</span>
           {/* <DownArrowIcon /> */}
         </div>
         <input
           disabled
           type="text"
-          value={mintValue && new Decimal(mintValue).div(ytRatio).toString()}
+          value={
+            mintValue &&
+            new Decimal(mintValue).div(ytRatio).toFixed(coinConfig?.decimal)
+          }
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>

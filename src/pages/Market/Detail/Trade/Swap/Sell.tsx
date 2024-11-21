@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
@@ -26,12 +25,12 @@ import {
 } from "@/components/ui/alert-dialog"
 import { network } from "@/config"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
-import { debounce } from "@/lib/utils"
+// import { debounce } from "@/lib/utils"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 
-export default function Sell() {
+export default function Sell({ slippage }: { slippage: string }) {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
@@ -144,7 +143,25 @@ export default function Sell() {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        tx.transferObjects([syCoin], address)
+        //  tx.transferObjects([syCoin], address)
+
+        const [sSUI] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::sy::redeem`,
+          arguments: [
+            tx.object(coinConfig.version),
+            syCoin,
+            tx.pure.u64(
+              new Decimal(redeemValue)
+                .mul(1e9)
+                .mul(1 - new Decimal(slippage).div(100).toNumber())
+                .toFixed(0),
+            ),
+            tx.object(coinConfig.syStateId),
+          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
+        })
+
+        tx.transferObjects([sSUI], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -167,14 +184,15 @@ export default function Sell() {
       } catch (error) {
         setOpen(true)
         setStatus("Failed")
-        setMessage((error as Error)?.message ?? error)
+        const msg = (error as Error)?.message ?? error
+        setMessage(parseErrorMessage(msg || ""))
       }
     }
   }
 
-  const debouncedSetRedeemValue = debounce((value: string) => {
-    setRedeemValue(value)
-  }, 300)
+  // const debouncedSetRedeemValue = debounce((value: string) => {
+  //   setRedeemValue(value)
+  // }, 300)
 
   return (
     <div className="flex flex-col items-center">
@@ -234,15 +252,19 @@ export default function Sell() {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <Select
               value={tokenType}
               onValueChange={(value) => setTokenType(value)}
             >
-              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent">
+              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent border-none">
                 <SelectValue placeholder="Select token type" />
               </SelectTrigger>
-              <SelectContent className="border-none outline-none bg-[#0E0F16]">
+              <SelectContent className="bg-black border-none shadow-lg">
                 <SelectGroup>
                   <SelectItem value="pt" className="cursor-pointer text-white">
                     PT {coinConfig?.coinName}
@@ -257,10 +279,9 @@ export default function Sell() {
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
+              value={redeemValue}
               disabled={!isConnected}
-              onChange={(e) =>
-                debouncedSetRedeemValue(new Decimal(e.target.value).toString())
-              }
+              onChange={(e) => setRedeemValue(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
@@ -281,17 +302,17 @@ export default function Sell() {
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
+            disabled={!isConnected || !ptBalance}
             onClick={() =>
-              setRedeemValue(new Decimal(ptBalance!).div(2).toFixed(9))
+              setRedeemValue(new Decimal(ptBalance).div(2).toFixed(9))
             }
           >
             Half
           </button>
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() => setRedeemValue(new Decimal(ptBalance!).toFixed(9))}
+            disabled={!isConnected || !ptBalance}
+            onClick={() => setRedeemValue(new Decimal(ptBalance).toFixed(9))}
           >
             Max
           </button>
@@ -302,7 +323,11 @@ export default function Sell() {
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span className="px-2">{coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>

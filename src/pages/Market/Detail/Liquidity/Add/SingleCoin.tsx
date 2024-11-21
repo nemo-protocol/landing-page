@@ -1,18 +1,19 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-import { debounce } from "@/lib/utils"
+// import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
-import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
+import { parseErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+// import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
+import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   AlertDialog,
@@ -22,7 +23,6 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
-import { parseErrorMessage } from "@/lib/errorMapping"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")
@@ -231,14 +231,15 @@ export default function Mint({ slippage }: { slippage: string }) {
       } catch (error) {
         setOpen(true)
         setStatus("Failed")
-        setMessage((error as Error)?.message ?? error)
+        const msg = (error as Error)?.message ?? error
+        setMessage(parseErrorMessage(msg || ""))
       }
     }
   }
 
-  const debouncedSetAddValue = debounce((value: string) => {
-    setAddValue(value)
-  }, 300)
+  // const debouncedSetAddValue = debounce((value: string) => {
+  //   setAddValue(value)
+  // }, 300)
 
   return (
     <div className="flex flex-col items-center">
@@ -291,15 +292,21 @@ export default function Mint({ slippage }: { slippage: string }) {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-            <SSUIIcon className="size-6" />
-            <span className="px-2">sSUI</span>
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
+            <span className="px-2">{coinConfig?.coinName}</span>
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
+              value={addValue}
               disabled={!isConnected}
-              onChange={(e) =>
-                debouncedSetAddValue(new Decimal(e.target.value).toString())
+              onChange={
+                (e) => setAddValue(new Decimal(e.target.value).toString())
+                // debouncedSetAddValue(new Decimal(e.target.value).toString())
               }
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
@@ -319,7 +326,9 @@ export default function Mint({ slippage }: { slippage: string }) {
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setAddValue(new Decimal(coinBalance!).div(2).toFixed(9))
+              setAddValue(
+                new Decimal(coinBalance!).div(2).toFixed(coinConfig?.decimal),
+              )
             }
           >
             Half
@@ -327,7 +336,11 @@ export default function Mint({ slippage }: { slippage: string }) {
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
-            onClick={() => setAddValue(new Decimal(coinBalance!).toFixed(9))}
+            onClick={() =>
+              setAddValue(
+                new Decimal(coinBalance!).toFixed(coinConfig?.decimal),
+              )
+            }
           >
             Max
           </button>
@@ -338,8 +351,12 @@ export default function Mint({ slippage }: { slippage: string }) {
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
-            <span className="px-2">LP sSUI</span>
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
+            <span className="px-2">LP {coinConfig?.coinName}</span>
           </div>
           <input
             disabled
@@ -363,7 +380,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             </button>
           }
         />
-      ) :insufficientBalance ? (
+      ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full cursor-pointer h-14 flex items-center justify-center">
           Insufficient Balance
         </div>

@@ -1,13 +1,13 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-import { debounce } from "@/lib/utils"
+// import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+// import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
@@ -160,20 +160,21 @@ export default function Mint() {
       } catch (error) {
         setOpen(true)
         setStatus("Failed")
-        setMessage((error as Error)?.message ?? error)
+        const msg = (error as Error)?.message ?? error
+        setMessage(parseErrorMessage(msg || ""))
       }
     }
   }
 
-  const debouncedSetPTValue = debounce((value: string) => {
-    setPTRedeemValue(value)
-    setYTRedeemValue(new Decimal(value).div(ptRatio).toFixed(9))
-  }, 300)
+  // const debouncedSetPTValue = debounce((value: string) => {
+  //   setPTRedeemValue(value)
+  //   setYTRedeemValue(new Decimal(value).div(ptRatio).toFixed(9))
+  // }, 300)
 
-  const debouncedSetYTValue = debounce((value: string) => {
-    setYTRedeemValue(value)
-    setPTRedeemValue(new Decimal(value).mul(ytRatio).toFixed(9))
-  }, 300)
+  // const debouncedSetYTValue = debounce((value: string) => {
+  //   setYTRedeemValue(value)
+  //   setPTRedeemValue(new Decimal(value).mul(ytRatio).toFixed(9))
+  // }, 300)
 
   return (
     <div className="flex flex-col items-center">
@@ -226,16 +227,22 @@ export default function Mint() {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span>PT {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
+              value={ptRedeemValue}
               disabled={!isConnected}
-              onChange={(e) =>
-                debouncedSetPTValue(new Decimal(e.target.value).toString())
+              onChange={
+                (e) => setPTRedeemValue(e.target.value)
+                // debouncedSetPTValue(new Decimal(e.target.value).toString())
               }
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
@@ -255,7 +262,9 @@ export default function Mint() {
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setPTRedeemValue(new Decimal(ptBalance).div(2).toFixed(9))
+              setPTRedeemValue(
+                new Decimal(ptBalance).div(2).toFixed(coinConfig?.decimal),
+              )
             }
           >
             Half
@@ -263,7 +272,11 @@ export default function Mint() {
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
-            onClick={() => setPTRedeemValue(new Decimal(ptBalance).toFixed(9))}
+            onClick={() =>
+              setPTRedeemValue(
+                new Decimal(ptBalance).toFixed(coinConfig?.decimal),
+              )
+            }
           >
             Max
           </button>
@@ -279,16 +292,22 @@ export default function Mint() {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span>YT {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
               type="text"
+              value={ytRedeemValue}
               disabled={!isConnected}
-              onChange={(e) =>
-                debouncedSetYTValue(new Decimal(e.target.value).toString())
+              onChange={
+                (e) => setYTRedeemValue(e.target.value)
+                // debouncedSetYTValue(new Decimal(e.target.value).toString())
               }
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
@@ -308,7 +327,9 @@ export default function Mint() {
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setYTRedeemValue(new Decimal(ytBalance).div(2).toFixed(9))
+              setYTRedeemValue(
+                new Decimal(ytBalance).div(2).toFixed(coinConfig?.decimal),
+              )
             }
           >
             Half
@@ -316,7 +337,11 @@ export default function Mint() {
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
-            onClick={() => setYTRedeemValue(new Decimal(ytBalance).toFixed(9))}
+            onClick={() =>
+              setYTRedeemValue(
+                new Decimal(ytBalance).toFixed(coinConfig?.decimal),
+              )
+            }
           >
             Max
           </button>
@@ -327,7 +352,11 @@ export default function Mint() {
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span>sSUI</span>
             {/* <DownArrowIcon /> */}
           </div>
@@ -355,7 +384,7 @@ export default function Mint() {
             </button>
           }
         />
-      ) :insufficientBalance ? (
+      ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
           Insufficient Balance
         </div>

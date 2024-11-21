@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
+// import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
@@ -139,7 +139,8 @@ export default function Remove() {
       } catch (error) {
         setOpen(true)
         setStatus("Failed")
-        setMessage((error as Error)?.message ?? error)
+        const msg = (error as Error)?.message ?? error
+        setMessage(parseErrorMessage(msg || ""))
       }
     }
   }
@@ -196,7 +197,11 @@ export default function Remove() {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span>LP {coinConfig?.coinName}</span>
             {/* <DownArrowIcon /> */}
           </div>
@@ -224,7 +229,9 @@ export default function Remove() {
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setLpValue(new Decimal(lpCoinBalance!).div(2).toFixed(9))
+              setLpValue(
+                new Decimal(lpCoinBalance!).div(2).toFixed(coinConfig?.decimal),
+              )
             }
           >
             Half
@@ -232,7 +239,11 @@ export default function Remove() {
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
-            onClick={() => setLpValue(new Decimal(lpCoinBalance!).toFixed(9))}
+            onClick={() =>
+              setLpValue(
+                new Decimal(lpCoinBalance!).toFixed(coinConfig?.decimal),
+              )
+            }
           >
             Max
           </button>
@@ -243,7 +254,11 @@ export default function Remove() {
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <SSUIIcon className="size-6" />
+            <img
+              src={coinConfig?.coinLogo}
+              alt={coinConfig?.coinName}
+              className="size-6"
+            />
             <span>{coinConfig?.coinName}</span>
           </div>
           <input
