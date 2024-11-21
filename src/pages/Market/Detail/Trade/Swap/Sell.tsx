@@ -143,29 +143,26 @@ export default function Sell({ slippage }: { slippage: string }) {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        //  tx.transferObjects([syCoin], address)
-
-        const [sSUI] = tx.moveCall({
+        const [sCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::redeem`,
           arguments: [
             tx.object(coinConfig.version),
             syCoin,
-            tx.pure.u64(
-              new Decimal(redeemValue)
-                .mul(1e9)
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
-                .toFixed(0),
-            ),
+            // FIXME: This is a temporary fix for the slippage issue
+            // tx.pure.u64(new Decimal(redeemValue)
+            // .div(ratio || 0)
+            // .mul(10 ** coinConfig.decimal)
+            // .mul(1 - new Decimal(slippage).div(100).toNumber())
+            // .toFixed(0)),
+            tx.pure.u64(0),
             tx.object(coinConfig.syStateId),
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        tx.transferObjects([sSUI], address)
+        tx.transferObjects([sCoin], address)
 
-        if (created) {
-          tx.transferObjects([pyPosition], address)
-        }
+        // tx.setGasBudget(10000000)
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
