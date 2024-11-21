@@ -305,7 +305,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               value={addValue}
               disabled={!isConnected}
               onChange={
-                (e) => setAddValue(new Decimal(e.target.value).toString())
+                (e) => setAddValue(e.target.value)
                 // debouncedSetAddValue(new Decimal(e.target.value).toString())
               }
               placeholder={!isConnected ? "Please connect wallet" : ""}
