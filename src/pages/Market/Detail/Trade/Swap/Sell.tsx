@@ -164,6 +164,10 @@ export default function Sell({ slippage }: { slippage: string }) {
 
         tx.transferObjects([sCoin], address)
 
+        if (created) {
+          tx.transferObjects([pyPosition], address)
+        }
+
         // tx.setGasBudget(10000000)
 
         const res = await signAndExecuteTransaction({
