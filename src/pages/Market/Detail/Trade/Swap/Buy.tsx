@@ -175,7 +175,26 @@ export default function Mint({ slippage }: { slippage: string }) {
             ],
             typeArguments: [coinConfig.syCoinType],
           })
-          tx.transferObjects([sy], address)
+          const [sCoin] = tx.moveCall({
+            target: `${coinConfig.nemoContractId}::sy::redeem`,
+            arguments: [
+              tx.object(coinConfig.version),
+              sy,
+              // FIXME: This is a temporary fix for the slippage issue
+              // tx.pure.u64(new Decimal(redeemValue)
+              tx.pure.u64(
+                new Decimal(0)
+                  .div(ratio || 0)
+                  .mul(10 ** coinConfig.decimal)
+                  .mul(1 - new Decimal(slippage).div(100).toNumber())
+                  .toFixed(0),
+              ),
+              tx.object(coinConfig.syStateId),
+            ],
+            typeArguments: [coinType, coinConfig.syCoinType],
+          })
+
+          tx.transferObjects([sCoin], address)
         } else {
           const [sy] = tx.moveCall({
             target: `${coinConfig.nemoContractId}::market::swap_sy_for_exact_yt`,
@@ -199,7 +218,27 @@ export default function Mint({ slippage }: { slippage: string }) {
             ],
             typeArguments: [coinConfig.syCoinType],
           })
-          tx.transferObjects([sy], address)
+          // tx.transferObjects([sy], address)
+          const [sCoin] = tx.moveCall({
+            target: `${coinConfig.nemoContractId}::sy::redeem`,
+            arguments: [
+              tx.object(coinConfig.version),
+              sy,
+              // FIXME: This is a temporary fix for the slippage issue
+              // tx.pure.u64(new Decimal(redeemValue)
+              tx.pure.u64(
+                new Decimal(0)
+                  .div(ratio || 0)
+                  .mul(10 ** coinConfig.decimal)
+                  .mul(1 - new Decimal(slippage).div(100).toNumber())
+                  .toFixed(0),
+              ),
+              tx.object(coinConfig.syStateId),
+            ],
+            typeArguments: [coinType, coinConfig.syCoinType],
+          })
+
+          tx.transferObjects([sCoin], address)
         }
 
         if (created) {
