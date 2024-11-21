@@ -150,11 +150,13 @@ export default function Sell({ slippage }: { slippage: string }) {
             syCoin,
             // FIXME: This is a temporary fix for the slippage issue
             // tx.pure.u64(new Decimal(redeemValue)
-            // .div(ratio || 0)
-            // .mul(10 ** coinConfig.decimal)
-            // .mul(1 - new Decimal(slippage).div(100).toNumber())
-            // .toFixed(0)),
-            tx.pure.u64(0),
+            tx.pure.u64(
+              new Decimal(0)
+                .div(ratio || 0)
+                .mul(10 ** coinConfig.decimal)
+                .mul(1 - new Decimal(slippage).div(100).toNumber())
+                .toFixed(0),
+            ),
             tx.object(coinConfig.syStateId),
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
