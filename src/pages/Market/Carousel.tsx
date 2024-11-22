@@ -22,7 +22,7 @@ export default function Carousel({ images, interval = 3000 }: CarouselProps) {
   }
 
   return (
-    <div className="relative w-[600px] h-[215px] overflow-hidden shrink-0 mx-auto">
+    <div className="relative w-[600px] h-[215px] overflow-hidden shrink-0 mx-auto lg:mx-0">
       <AnimatePresence initial={false}>
         <motion.img
           key={currentIndex}

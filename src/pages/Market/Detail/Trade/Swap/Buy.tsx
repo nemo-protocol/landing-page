@@ -414,7 +414,10 @@ export default function Mint({ slippage }: { slippage: string }) {
             disabled
             type="text"
             value={
-              swapValue && new Decimal(swapValue).mul(ratio || 0).toString()
+              swapValue &&
+              new Decimal(swapValue)
+                .mul(ratio || 0)
+                .toFixed(coinConfig?.decimal)
             }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />

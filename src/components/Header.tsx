@@ -58,108 +58,102 @@ export default function Header() {
               Beta
             </div>
           </Link>
-          <ul className="md:flex items-center text-sm hidden h-full">
-            <li
-              className={[
-                "w-24 h-full text-center cursor-pointer flex items-center justify-center hidden",
-                location.pathname === "/fixed-return"
-                  ? "!bg-[#12121B] border-b border-b-white"
-                  : "bg-transparent",
-              ].join(" ")}
-            >
-              <Link
-                to="/fixed-return"
-                className={[
-                  location.pathname === "/fixed-return"
-                    ? "text-white"
-                    : "text-white/50",
-                  "flex items-center gap-x-1",
-                ].join(" ")}
-              >
-                <span>Fixed Return</span>
-                <HotIcon />
-              </Link>
-            </li>
-            <li
-              className={[
-                "w-24 h-full text-center cursor-pointer flex items-center justify-center",
-                location.pathname === "/market"
-                  ? "bg-[#12121B] border-b border-b-white"
-                  : "bg-transparent",
-              ].join(" ")}
-            >
-              <Link
-                to="/market"
-                className={
-                  location.pathname === "/market"
-                    ? "text-white"
-                    : "text-white/50"
-                }
-              >
-                Market
-              </Link>
-            </li>
-            <li
-              className={[
-                "w-24 h-full text-center cursor-pointer flex items-center justify-center",
-                location.pathname === "/portfolio"
-                  ? "bg-[#12121B] border-b border-b-white"
-                  : "bg-transparent",
-              ].join(" ")}
-            >
-              <Link
-                to="/portfolio"
-                className={
-                  location.pathname === "/portfolio"
-                    ? "text-white"
-                    : "text-white/50"
-                }
-              >
-                Portfolio
-              </Link>
-            </li>
-            <li
-              className={[
-                "w-24 h-full text-center cursor-pointer flex items-center justify-center",
-                location.pathname === "/learn"
-                  ? "bg-[#12121B] border-b border-b-white"
-                  : "bg-transparent",
-              ].join(" ")}
-            >
-              <Link
-                to="/learn"
-                className={
-                  location.pathname === "/learn"
-                    ? "text-white"
-                    : "text-white/50"
-                }
-              >
-                Learn
-              </Link>
-            </li>
-            {IS_DEV && (
-              <li
-                className={[
-                  "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
-                  location.pathname === "/test"
-                    ? "bg-[#12121B] border-b border-b-white"
-                    : "",
-                ].join(" ")}
-              >
-                <Link
-                  to="/test"
-                  className={
-                    location.pathname === "/test"
-                      ? "text-white"
-                      : "text-white/50"
-                  }
-                >
-                  Test
-                </Link>
-              </li>
-            )}
-          </ul>
         </div>
+        <ul className="md:flex items-center text-sm hidden h-full">
+          <li
+            className={[
+              "w-24 h-full text-center cursor-pointer flex items-center justify-center hidden",
+              location.pathname === "/fixed-return"
+                ? "!bg-[#12121B] border-b border-b-white"
+                : "bg-transparent",
+            ].join(" ")}
+          >
+            <Link
+              to="/fixed-return"
+              className={[
+                location.pathname === "/fixed-return"
+                  ? "text-white"
+                  : "text-white/50",
+                "flex items-center gap-x-1",
+              ].join(" ")}
+            >
+              <span>Fixed Return</span>
+              <HotIcon />
+            </Link>
+          </li>
+          <li
+            className={[
+              "w-24 h-full text-center cursor-pointer flex items-center justify-center",
+              location.pathname === "/market"
+                ? "bg-[#12121B] border-b border-b-white"
+                : "bg-transparent",
+            ].join(" ")}
+          >
+            <Link
+              to="/market"
+              className={
+                location.pathname === "/market" ? "text-white" : "text-white/50"
+              }
+            >
+              Market
+            </Link>
+          </li>
+          <li
+            className={[
+              "w-24 h-full text-center cursor-pointer flex items-center justify-center",
+              location.pathname === "/portfolio"
+                ? "bg-[#12121B] border-b border-b-white"
+                : "bg-transparent",
+            ].join(" ")}
+          >
+            <Link
+              to="/portfolio"
+              className={
+                location.pathname === "/portfolio"
+                  ? "text-white"
+                  : "text-white/50"
+              }
+            >
+              Portfolio
+            </Link>
+          </li>
+          <li
+            className={[
+              "w-24 h-full text-center cursor-pointer flex items-center justify-center",
+              location.pathname === "/learn"
+                ? "bg-[#12121B] border-b border-b-white"
+                : "bg-transparent",
+            ].join(" ")}
+          >
+            <Link
+              to="/learn"
+              className={
+                location.pathname === "/learn" ? "text-white" : "text-white/50"
+              }
+            >
+              Learn
+            </Link>
+          </li>
+          {IS_DEV && (
+            <li
+              className={[
+                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
+                location.pathname === "/test"
+                  ? "bg-[#12121B] border-b border-b-white"
+                  : "",
+              ].join(" ")}
+            >
+              <Link
+                to="/test"
+                className={
+                  location.pathname === "/test" ? "text-white" : "text-white/50"
+                }
+              >
+                Test
+              </Link>
+            </li>
+          )}
+        </ul>
         <div className="flex items-center gap-x-6 h-full">
           <Squares2X2Icon
             className="md:hidden text-white cursor-pointer"

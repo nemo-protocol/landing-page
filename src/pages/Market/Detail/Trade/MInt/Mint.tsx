@@ -169,6 +169,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
   return (
     <div className="flex flex-col items-center">
+      {/* TODO: Add AlertDialog component */}
       <AlertDialog open={open}>
         <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
           <AlertDialogHeader>
@@ -208,6 +209,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           <AlertDialogFooter></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* TODO: Add animation */}
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
           <div className="text-white">Input</div>

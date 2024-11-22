@@ -25,13 +25,14 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="flex items-center gap-x-4 mb-5">
+      <div className="flex items-center gap-x-4 mb-6">
         <span
-          className={
+          className={[
             selectType === "pt"
-              ? "text-white font-bold"
-              : "text-white/80 cursor-pointer"
-          }
+              ? "text-white font-bold bg-[#0052F2]"
+              : "text-white/80 cursor-pointer border border-[#1A1D20]",
+            "rounded-full px-5 py-1.5 text-sm",
+          ].join(" ")}
           onClick={() => {
             if (selectType !== "pt") {
               setSelectType("pt")
@@ -41,11 +42,12 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
           PT
         </span>
         <span
-          className={
+          className={[
             selectType === "yt"
-              ? "text-white font-bold"
-              : "text-white/80 cursor-pointer"
-          }
+              ? "text-white font-bold bg-[#0052F2]"
+              : "text-white/80 cursor-pointer border border-[#1A1D20]",
+            "rounded-full px-5 py-1.5 text-sm",
+          ].join(" ")}
           onClick={() => {
             if (selectType !== "yt") {
               setSelectType("yt")
@@ -55,11 +57,12 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
           YT
         </span>
         <span
-          className={
+          className={[
             selectType === "lp"
-              ? "text-white font-bold"
-              : "text-white/80 cursor-pointer"
-          }
+              ? "text-white font-bold bg-[#0052F2]"
+              : "text-white/80 cursor-pointer border border-[#1A1D20]",
+            "rounded-full px-5 py-1.5 text-sm",
+          ].join(" ")}
           onClick={() => {
             if (selectType !== "lp") {
               setSelectType("lp")
@@ -69,61 +72,75 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
           LP
         </span>
       </div>
-      <Table>
-        <TableHeader className="bg-[#1A1D1E]">
-          <TableRow className="text-white/80 text-xs">
-            <TableHead>Assets</TableHead>
-            <TableHead className="text-center">Type</TableHead>
-            <TableHead className="text-center">Value</TableHead>
-            <TableHead className="text-center">Amount</TableHead>
-            {selectType === "yt" && (
-              <TableHead className="text-center">Rewards</TableHead>
-            )}
-            <TableHead className="text-center">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        {isConnected && list?.length && (
-          <TableBody>
-            {list.map((item) => (
-              <Item
-                {...item}
-                selectType={selectType}
-                key={item.name + item.maturity}
-              />
-            ))}
-          </TableBody>
+      <div
+        className="rounded-3xl"
+        style={{
+          background: "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
+        }}
+      >
+        <Table>
+          <TableHeader
+            style={{
+              background:
+                "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
+            }}
+          >
+            <TableRow className="text-white/80 text-xs">
+              <TableHead>Assets</TableHead>
+              <TableHead className="text-center">Type</TableHead>
+              <TableHead className="text-center">Value</TableHead>
+              <TableHead className="text-center">Amount</TableHead>
+              {selectType === "yt" && (
+                <TableHead className="text-center">Rewards</TableHead>
+              )}
+              <TableHead className="text-center">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          {isConnected && list?.length && (
+            <TableBody>
+              {list.map((item) => (
+                <Item
+                  {...item}
+                  selectType={selectType}
+                  key={item.name + item.maturity}
+                />
+              ))}
+            </TableBody>
+          )}
+        </Table>
+        {!isConnected && (
+          <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px]">
+            <img
+              src={WalletNotConnect}
+              alt="Wallet no connect"
+              className="size-[120px]"
+            />
+            <span className="text-white/60">
+              Please connect your wallet first.
+            </span>
+            <ConnectModal
+              open={openConnect}
+              onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+              trigger={
+                <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
+                  Connect Wallet
+                </button>
+              }
+            />
+          </div>
         )}
-      </Table>
-      {!isConnected && (
-        <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px]">
-          <img
-            src={WalletNotConnect}
-            alt="Wallet no connect"
-            className="size-[120px]"
-          />
-          <span className="text-white/60">
-            Please connect your wallet first.
-          </span>
-          <ConnectModal
-            open={openConnect}
-            onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-            trigger={
-              <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
-                Connect Wallet
-              </button>
-            }
-          />
-        </div>
-      )}
-      {!list?.length && isConnected && (
-        <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px]">
-          <img src={Empty} alt="No Data" className="size-[120px]" />
-          <span className="text-white/60">You don't have any position yet</span>
-          <Link to="/market" className="px-4 py-2 rounded-full bg-[#0F60FF]">
-            <span className="text-white">View Markets</span>
-          </Link>
-        </div>
-      )}
+        {!list?.length && isConnected && (
+          <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px]">
+            <img src={Empty} alt="No Data" className="size-[120px]" />
+            <span className="text-white/60">
+              You don't have any position yet
+            </span>
+            <Link to="/market" className="px-4 py-2 rounded-full bg-[#0F60FF]">
+              <span className="text-white">View Markets</span>
+            </Link>
+          </div>
+        )}
+      </div>
     </motion.div>
   )
 }
