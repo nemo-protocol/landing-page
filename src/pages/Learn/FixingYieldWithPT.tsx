@@ -7,7 +7,7 @@ export default function FixingYieldWithPT() {
       <p className="mt-4 text-white/[0.68]">
         Let's learn about PT step by step.
       </p>
-      <img src={FixingYieldWithPTPNG} alt="" className="mt-7.5 scale-75 origin-top" />
+      <img src={FixingYieldWithPTPNG} alt="" className="mt-7.5 pr-4" />
     </div>
   );
 }

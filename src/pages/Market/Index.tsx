@@ -6,16 +6,27 @@ import PieChart from "./components/PieChart.tsx"
 import { Link, useNavigate } from "react-router-dom"
 import Star from "@/assets/images/svg/market/star.svg"
 import Crown from "@/assets/images/svg/market/crown.svg"
-// import StarIcon from "@/assets/images/svg/star.svg?react"
 import Diamond from "@/assets/images/svg/market/diamond.svg"
-// import Logo from "@/assets/images/svg/market/logo.svg?react"
-// import Blcok from "@/assets/images/png/block.png"
 import { motion } from "framer-motion"
 import Carousel from "./Carousel.tsx"
 
 import banner01 from "@/assets/images/png/banner/banner01.png"
 import banner02 from "@/assets/images/png/banner/banner02.png"
 import banner03 from "@/assets/images/png/banner/banner03.png"
+
+const textVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+}
+
+const carouselVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+}
 
 export default function Home() {
   const navigate = useNavigate()
@@ -30,7 +41,12 @@ export default function Home() {
       </div>
       <div className="py-10 relative xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0">
         <div className="flex flex-col-reverse lg:flex-row lg:items-center gap-y-8 lg:gap-y-0 lg:justify-between">
-          <div>
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={textVariants}
+            transition={{ duration: 0.5 }}
+          >
             <h3 className="text-[28px] text-white font-black">Market</h3>
             <h6 className="text-white/70 mt-8">
               Dive into the yield trading market and maximize your profit
@@ -58,8 +74,15 @@ export default function Home() {
                 <span className="text-xs">Popular</span>
               </button>
             </div>
-          </div>
-          <Carousel interval={5000} images={[banner01, banner02, banner03]} />
+          </motion.div>
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={carouselVariants}
+            transition={{ duration: 0.5 }}
+          >
+            <Carousel interval={5000} images={[banner01, banner02, banner03]} />
+          </motion.div>
         </div>
         <motion.div
           className="mt-[30px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 transition-all duration-200 ease-in-out"
@@ -81,7 +104,7 @@ export default function Home() {
                   <div className="flex items-center gap-x-2">
                     <h6 className="text-white">{item.coinName}</h6>
                   </div>
-                  <div className="rounded-full bg-[#1A1B27] py-1 px-2 flex items-center gap-x-2">
+                  <div className="rounded-full bg-white bg-opacity-5 py-1 px-2 flex items-center gap-x-2">
                     <img
                       alt="scallop"
                       className="size-4 block"

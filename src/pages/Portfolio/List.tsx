@@ -7,12 +7,12 @@ import {
   TableHeader,
 } from "@/components/ui/table"
 import { useState } from "react"
-import { motion } from "framer-motion"
 import Empty from "@/assets/images/png/empty.png"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import WalletNotConnect from "@/assets/images/png/WalletNotConnect.png"
 import { Link } from "react-router-dom"
 import { PortfolioItem } from "@/queries/types/market"
+import { motion } from "framer-motion"
 
 export default function List({ list }: { list?: PortfolioItem[] }) {
   const { isConnected } = useCurrentWallet()
@@ -26,54 +26,23 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
       transition={{ duration: 0.2 }}
     >
       <div className="flex items-center gap-x-4 mb-6">
-        <span
-          className={[
-            selectType === "pt"
-              ? "text-white font-bold bg-[#0052F2]"
-              : "text-white/80 cursor-pointer border border-[#1A1D20]",
-            "rounded-full px-5 py-1.5 text-sm",
-          ].join(" ")}
-          onClick={() => {
-            if (selectType !== "pt") {
-              setSelectType("pt")
-            }
-          }}
-        >
-          PT
-        </span>
-        <span
-          className={[
-            selectType === "yt"
-              ? "text-white font-bold bg-[#0052F2]"
-              : "text-white/80 cursor-pointer border border-[#1A1D20]",
-            "rounded-full px-5 py-1.5 text-sm",
-          ].join(" ")}
-          onClick={() => {
-            if (selectType !== "yt") {
-              setSelectType("yt")
-            }
-          }}
-        >
-          YT
-        </span>
-        <span
-          className={[
-            selectType === "lp"
-              ? "text-white font-bold bg-[#0052F2]"
-              : "text-white/80 cursor-pointer border border-[#1A1D20]",
-            "rounded-full px-5 py-1.5 text-sm",
-          ].join(" ")}
-          onClick={() => {
-            if (selectType !== "lp") {
-              setSelectType("lp")
-            }
-          }}
-        >
-          LP
-        </span>
+        {["pt", "yt", "lp"].map((type) => (
+          <span
+            key={type}
+            className={[
+              selectType === type
+                ? "text-white font-bold bg-[#0052F2]"
+                : "text-white/80 cursor-pointer border border-[#1A1D20]",
+              "rounded-full px-5 py-1.5 text-sm",
+            ].join(" ")}
+            onClick={() => setSelectType(type as "pt" | "yt" | "lp")}
+          >
+            {type.toUpperCase()}
+          </span>
+        ))}
       </div>
       <div
-        className="rounded-3xl"
+        className="rounded-3xl border border-white/20 overflow-hidden"
         style={{
           background: "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
         }}
@@ -109,7 +78,7 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
           )}
         </Table>
         {!isConnected && (
-          <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px]">
+          <div className="flex flex-col items-center w-full justify-center gap-y-4 py-[30px]">
             <img
               src={WalletNotConnect}
               alt="Wallet no connect"

@@ -7,7 +7,7 @@ export default function LongingYieldWithYT() {
       <p className="mt-4 text-white/[0.68]">
         YT looks a bit like PT, yet there are still quite big differences.
       </p>
-      <img src={LongingYieldWithYTPNG} alt="" className="mt-8 scale-75 origin-top" />
+      <img src={LongingYieldWithYTPNG} alt="" className="mt-8 pr-4" />
     </div>
   );
 }

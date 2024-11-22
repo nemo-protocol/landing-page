@@ -1,5 +1,4 @@
 import { IS_DEV } from "@/config"
-import { motion } from "framer-motion"
 import { truncateStr } from "@/lib/utils"
 import { ChevronDown } from "lucide-react"
 import { useToast } from "@/components/Toast"
@@ -17,6 +16,18 @@ import {
   useDisconnectWallet,
   useSwitchAccount,
 } from "@mysten/dapp-kit"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+const variants = {
+  hidden: { opacity: 0, y: -10 },
+  visible: { opacity: 1, y: 0 },
+}
 
 export default function Header() {
   const toast = useToast()
@@ -49,7 +60,7 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="h-16">
+    <header className="h-16 px-4 xl:px-0">
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
         <div className="flex items-center gap-x-6 h-full">
           <Link to="/" className="flex gap-x-2">
@@ -134,31 +145,62 @@ export default function Header() {
               Learn
             </Link>
           </li>
-          {IS_DEV && (
-            <li
-              className={[
-                "w-24 h-full text-center bg-transparent cursor-pointer flex items-center justify-center",
-                location.pathname === "/test"
-                  ? "bg-[#12121B] border-b border-b-white"
-                  : "",
-              ].join(" ")}
-            >
-              <Link
-                to="/test"
-                className={
-                  location.pathname === "/test" ? "text-white" : "text-white/50"
-                }
-              >
-                Test
-              </Link>
-            </li>
-          )}
         </ul>
         <div className="flex items-center gap-x-6 h-full">
           <Squares2X2Icon
             className="md:hidden text-white cursor-pointer"
             onClick={() => setIsOpen((isOpen) => !isOpen)}
           />
+          <span
+            className={[
+              "relative h-full text-center cursor-pointer flex items-center justify-center",
+              "bg-transparent",
+            ].join(" ")}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-x-1 border-none outline-none">
+                <span>More</span>
+                <ChevronDown className="size-3 mt-1" />
+              </DropdownMenuTrigger>
+              <AnimatePresence>
+                <DropdownMenuContent
+                  asChild
+                  className="bg-[#0E0F16] border-none"
+                >
+                  <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={variants}
+                    transition={{ duration: 0.2 }}
+                    style={{
+                      borderRadius: "12px",
+                      boxShadow: "0px 2px 4px -1px rgba(0, 0, 0, 0.12)",
+                      padding: "6px",
+                    }}
+                  >
+                    <DropdownMenuItem>
+                      <Link
+                        to="/mint"
+                        className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
+                      >
+                        Mint
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <a
+                        className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
+                        href="https://www.sentio.xyz/"
+                        target="_blank"
+                      >
+                        Sentio
+                      </a>
+                    </DropdownMenuItem>
+                  </motion.div>
+                </DropdownMenuContent>
+              </AnimatePresence>
+            </DropdownMenu>
+          </span>
           <Network />
           {isConnected ? (
             <div className="relative" ref={subNavRef}>

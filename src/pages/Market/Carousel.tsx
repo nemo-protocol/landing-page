@@ -22,18 +22,20 @@ export default function Carousel({ images, interval = 3000 }: CarouselProps) {
   }
 
   return (
-    <div className="relative w-[600px] h-[215px] overflow-hidden shrink-0 mx-auto lg:mx-0">
+    <div className="relative overflow-hidden shrink-0 mx-auto lg:mx-0">
       <AnimatePresence initial={false}>
-        <motion.img
-          key={currentIndex}
-          src={images[currentIndex]}
-          alt={`Slide ${currentIndex + 1}`}
-          className="absolute w-full h-full object-cover"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-        />
+        <div className="w-full xl:w-[600px] xl:h-[215px]">
+          <motion.img
+            key={currentIndex}
+            src={images[currentIndex]}
+            alt={`Slide ${currentIndex + 1}`}
+            className="relative w-full h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
       </AnimatePresence>
       <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
         {images.map((_, index) => (

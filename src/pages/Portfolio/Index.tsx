@@ -22,21 +22,26 @@ export default function Portfolio() {
 
       <div className="py-10 px-6 xl:px-0 space-y-4 xl:max-w-[1200px] xl:mx-auto">
         <div className="w-full">
-          <h6 className="flex items-center gap-x-2">
+          <motion.h6
+            className="flex items-center gap-x-2"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <span className="text-[28px] font-black">My Portfolio</span>
             <Eye className="size-3.5 hidden" />
-          </h6>
+          </motion.h6>
           <div className="flex flex-row items-center justify-between py-4">
             <div className="w-full md:w-fit flex flex-col md:flex-row items-center gap-5">
               <motion.div
-                className="flex items-center justify-between gap-x-4 px-5 py-6 rounded-3xl w-full md:w-[360px] h-[120px]"
+                className="flex items-center justify-between gap-x-4 px-5 py-6 rounded-3xl w-full md:w-[360px] h-[120px] border border-white/20"
                 style={{
                   background:
                     "linear-gradient(240deg, #072120 -7.71%, #050908 68.1%)",
                 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <div className="flex flex-col gap-y-2">
                   <span className="text-white/60 text-xs">Current balance</span>
@@ -53,15 +58,16 @@ export default function Portfolio() {
                 </div>
                 <BalanceIcon />
               </motion.div>
+
               <motion.div
-                className="flex items-center justify-between gap-x-4 px-5 py-6 rounded-3xl w-full md:w-[360px] h-[120px]"
+                className="flex items-center justify-between gap-x-4 px-5 py-6 rounded-3xl w-full md:w-[360px] h-[120px] border border-white/20"
                 style={{
                   background:
                     "linear-gradient(45deg, rgba(14, 15, 22, 0.65) 27.28%, rgba(3, 91, 250, 0.19) 124.06%)",
                 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
               >
                 <div className="flex flex-col gap-y-2">
                   <span className="text-white/60 text-xs">
@@ -92,7 +98,7 @@ export default function Portfolio() {
               className="w-[200px] hidden lg:block"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
+              transition={{ duration: 0.5, delay: 0.9 }}
             />
           </div>
         </div>
