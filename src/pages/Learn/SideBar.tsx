@@ -6,11 +6,11 @@ export default function SideBar({
   setStep: (value: number) => void
 }) {
   return (
-    <ul className="w-48">
+    <ul className="flex items-center justify-between w-full">
       <li
         onClick={() => setStep(0)}
         className={[
-          "text-center w-full py-4.5 text-xs text-white rounded-lg cursor-pointer",
+          "text-center w-[180px] py-4.5 text-xs text-white rounded-full cursor-pointer",
           step === 0 && "bg-blue-primary",
         ].join(" ")}
       >
@@ -19,7 +19,7 @@ export default function SideBar({
       <li
         onClick={() => setStep(1)}
         className={[
-          "text-center w-full py-4.5 text-xs text-white rounded-lg cursor-pointer",
+          "text-center w-[180px] py-4.5 text-xs text-white rounded-full cursor-pointer",
           step === 1 && "bg-blue-primary",
         ].join(" ")}
       >
@@ -28,7 +28,7 @@ export default function SideBar({
       <li
         onClick={() => setStep(2)}
         className={[
-          "text-center w-full py-4.5 text-xs text-white rounded-lg cursor-pointer",
+          "text-center w-[180px] py-4.5 text-xs text-white rounded-full cursor-pointer",
           step === 2 && "bg-blue-primary",
         ].join(" ")}
       >
@@ -37,7 +37,7 @@ export default function SideBar({
       <li
         onClick={() => setStep(3)}
         className={[
-          "text-center w-full py-4.5 text-xs text-white rounded-lg cursor-pointer",
+          "text-center w-[180px] py-4.5 text-xs text-white rounded-full cursor-pointer",
           step === 3 && "bg-blue-primary",
         ].join(" ")}
       >
@@ -46,7 +46,7 @@ export default function SideBar({
       <li
         onClick={() => setStep(4)}
         className={[
-          "text-center w-full py-4.5 text-xs text-white rounded-lg cursor-pointer",
+          "text-center w-[180px] py-4.5 text-xs text-white rounded-full cursor-pointer",
           step === 4 && "bg-blue-primary",
         ].join(" ")}
       >
