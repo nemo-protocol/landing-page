@@ -42,7 +42,7 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
         ))}
       </div>
       <div
-        className="rounded-3xl border border-white/20 overflow-hidden"
+        className="rounded-3xl border border-white/5 overflow-hidden"
         style={{
           background: "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
         }}
