@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface CarouselProps {
@@ -8,17 +8,32 @@ interface CarouselProps {
 
 export default function Carousel({ images, interval = 3000 }: CarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const timerRef = useRef<number>()
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length)
-    }, interval)
+    const startTimer = () => {
+      timerRef.current = setInterval(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length)
+      }, interval)
+    }
 
-    return () => clearInterval(timer)
+    startTimer()
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+    }
   }, [images.length, interval])
 
   const handleDotClick = (index: number) => {
     setCurrentIndex(index)
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+    timerRef.current = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length)
+    }, interval)
   }
 
   return (

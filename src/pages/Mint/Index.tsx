@@ -1,9 +1,7 @@
 import { useState } from "react"
-import Trade from "./Trade/Index.tsx"
 import Header from "@/components/Header"
-import Liquidity from "./Liquidity/Index.tsx"
 import sSUI from "@/assets/images/svg/sSUI.svg"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import {
@@ -12,6 +10,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+
+import Mint from "./components/Index"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -35,15 +35,6 @@ const chartConfig = {
 
 export default function Home() {
   const navigate = useNavigate()
-  const {
-    coinType,
-    maturity,
-    operation = "swap",
-  } = useParams<{
-    coinType: string
-    maturity: string
-    operation?: string
-  }>()
   const [type, setType] = useState<"APY" | "Price">("APY")
   const [tab, setTab] = useState<"Details" | "Calculator">("Details")
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
@@ -64,38 +55,7 @@ export default function Home() {
           <span>Back</span>
         </h3>
         <div className="mt-9 flex xl:flex-row flex-col gap-x-8 justify-center">
-          <div className="w-full xl:w-[500px] flex flex-col gap-y-5">
-            <div className="w-full flex items-center h-[50px] bg-[#0E0F16] rounded-[40px]">
-              <div
-                onClick={() =>
-                  !["swap"].includes(operation) &&
-                  navigate(`/market/detail/${coinType}/${maturity}/swap`)
-                }
-                className={[
-                  "flex-1 rounded-[40px] h-full flex items-center justify-center",
-                  ["swap"].includes(operation)
-                    ? "bg-[#0F60FF]"
-                    : "cursor-pointer",
-                ].join(" ")}
-              >
-                Swap
-              </div>
-              <div
-                onClick={() =>
-                  operation !== "liquidity" &&
-                  navigate(`/market/detail/${coinType}/${maturity}/liquidity`)
-                }
-                className={[
-                  "flex-1 rounded-[40px] h-full flex items-center justify-center",
-                  operation === "liquidity" ? "bg-[#0F60FF]" : "cursor-pointer",
-                ].join(" ")}
-              >
-                Liquidity
-              </div>
-            </div>
-            {["swap", "mint"].includes(operation) && <Trade />}
-            {operation === "liquidity" && <Liquidity />}
-          </div>
+          <Mint />
           <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
             <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
               <div className="flex items-center gap-x-4 w-full md:w-auto">

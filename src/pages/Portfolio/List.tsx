@@ -99,7 +99,7 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
           </div>
         )}
         {!list?.length && isConnected && (
-          <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px]">
+          <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px] py-[30px]">
             <img src={Empty} alt="No Data" className="size-[120px]" />
             <span className="text-white/60">
               You don't have any position yet

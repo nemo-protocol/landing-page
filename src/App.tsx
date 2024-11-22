@@ -7,6 +7,7 @@ const Home = lazy(() => import("./pages/Home/Index"))
 const Test = lazy(() => import("./pages/Test/Index"))
 const Learn = lazy(() => import("./pages/Learn/Index"))
 const Market = lazy(() => import("./pages/Market/Index"))
+const Mint = lazy(() => import("./pages/Mint/Index"))
 const Portfolio = lazy(() => import("./pages/Portfolio/Index"))
 const Detail = lazy(() => import("./pages/Market/Detail/Index"))
 const FixedReturn = lazy(() => import("./pages/FixedReturn/Index"))
@@ -21,6 +22,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/fixed-return" element={<FixedReturn />} />
               <Route path="/market" element={<Market />} />
+              <Route path="/mint/:action?" element={<Mint />} />
               <Route
                 element={<Detail />}
                 path="/market/detail/:coinType/:maturity/:operation?/:action?/:tokenType?"

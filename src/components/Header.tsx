@@ -60,7 +60,7 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="h-16 px-4 xl:px-0">
+    <header className="h-16">
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
         <div className="flex items-center gap-x-6 h-full">
           <Link to="/" className="flex gap-x-2">
@@ -266,7 +266,8 @@ export default function Header() {
                   disabled={!!currentAccount}
                   className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
                 >
-                  Connect Wallet
+                  <span className="hidden md:inline-block">Connect Wallet</span>
+                  <span className="inline-block md:hidden text-xs">Connect</span>
                 </button>
               }
             />

@@ -422,8 +422,12 @@ export default function Item({
                 </span>
               </div>
               <button
-                className="rounded-3xl bg-[#0F60FF] py-1 px-2"
+                className={[
+                  "rounded-3xl py-1 px-2",
+                  ytBalance ? "bg-[#0F60FF]" : "bg-[#0F60FF]/50 cursor-not-allowed",
+                ].join(" ")}
                 onClick={claim}
+                disabled={!ytBalance}
               >
                 Claim
               </button>

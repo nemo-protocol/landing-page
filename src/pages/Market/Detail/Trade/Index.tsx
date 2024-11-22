@@ -1,5 +1,5 @@
-import Mint from "./MInt/Index"
-import Swap from "./Swap/Index"
+import Buy from "./Swap/Buy"
+import Sell from "./Swap/Sell"
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import SwitchIcon from "@/assets/images/svg/switch.svg?react"
@@ -16,41 +16,37 @@ export default function Trade() {
   const {
     coinType,
     maturity,
-    operation = "swap",
+    action = "buy",
   } = useParams<{
     coinType: string
     maturity: string
-    operation?: string
+    action?: string
   }>()
   return (
     <div className="w-full bg-[#0E0F16] rounded-[40px] px-5 py-7">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-x-7">
           <span
             onClick={() =>
-              operation !== "swap" &&
-              navigate(`/market/detail/${coinType}/${maturity}/swap`)
+              action !== "buy" &&
+              navigate(`/market/detail/${coinType}/${maturity}/swap/buy`)
             }
             className={
-              operation === "swap"
-                ? "text-white"
-                : "text-white/50 cursor-pointer"
+              action === "buy" ? "text-white" : "text-white/50 cursor-pointer"
             }
           >
-            Swap
+            Buy
           </span>
           <span
             onClick={() =>
-              operation !== "mint" &&
-              navigate(`/market/detail/${coinType}/${maturity}/mint`)
+              action !== "sell" &&
+              navigate(`/market/detail/${coinType}/${maturity}/swap/sell`)
             }
             className={
-              operation === "mint"
-                ? "text-white"
-                : "text-white/50 cursor-pointer"
+              action === "sell" ? "text-white" : "text-white/50 cursor-pointer"
             }
           >
-            Mint
+            Sell
           </span>
         </div>
         <div className="flex items-center gap-x-2 w-auto">
@@ -105,8 +101,8 @@ export default function Trade() {
           </div>
         </div>
       </div>
-      {operation === "mint" && <Mint slippage={slippage} />}
-      {operation === "swap" && <Swap slippage={slippage} />}
+      {action === "buy" && <Buy slippage={slippage} />}
+      {action === "sell" && <Sell slippage={slippage} />}
     </div>
   )
 }
