@@ -19,11 +19,9 @@ import {
 } from "@/components/ui/select"
 import { useCoinInfoList } from "@/queries"
 import dayjs from "dayjs"
-import { useCurrentWallet } from "@mysten/dapp-kit"
 
 export default function Trade() {
   const navigate = useNavigate()
-  const { isConnected } = useCurrentWallet()
   const { data: list } = useCoinInfoList()
   const [slippage, setSlippage] = useState("0.5")
   const { action = "mint" } = useParams<{
@@ -59,33 +57,32 @@ export default function Trade() {
             </span>
           </div>
           {}
-          {isConnected && (
-            <Select
-              onValueChange={(item) => {
-                const [coinAddress, maturity] = item.split("-")
-                setCoinType(coinAddress)
-                setMaturity(maturity)
-              }}
-            >
-              <SelectTrigger className="w-[150px] text-wrap border-none bg-[#131520]">
-                <SelectValue placeholder="Select a pool" />
-              </SelectTrigger>
-              <SelectContent className="border-none bg-[#131520]">
-                <SelectGroup className="flex flex-col gap-y-2">
-                  {list?.map((item) => (
-                    <SelectItem
-                      className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-2 rounded-md"
-                      key={item.coinAddress + "-" + item.maturity}
-                      value={item.coinAddress + "-" + item.maturity}
-                    >
-                      {item.coinName}-
-                      {dayjs(parseInt(item.maturity)).diff(dayjs(), "day")}DAYS
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          )}
+
+          <Select
+            onValueChange={(item) => {
+              const [coinAddress, maturity] = item.split("-")
+              setCoinType(coinAddress)
+              setMaturity(maturity)
+            }}
+          >
+            <SelectTrigger className="w-[150px] text-wrap border-none bg-[#131520]">
+              <SelectValue placeholder="Select a pool" />
+            </SelectTrigger>
+            <SelectContent className="border-none bg-[#131520]">
+              <SelectGroup className="flex flex-col gap-y-2">
+                {list?.map((item) => (
+                  <SelectItem
+                    className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-2 rounded-md"
+                    key={item.coinAddress + "-" + item.maturity}
+                    value={item.coinAddress + "-" + item.maturity}
+                  >
+                    {item.coinName}-
+                    {dayjs(parseInt(item.maturity)).diff(dayjs(), "day")}DAYS
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex items-center gap-x-2 w-auto">
           <LoadingIcon />

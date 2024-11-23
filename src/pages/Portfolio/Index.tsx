@@ -34,7 +34,7 @@ export default function Portfolio() {
           <div className="flex flex-row items-center justify-between py-4">
             <div className="w-full md:w-fit flex flex-col md:flex-row items-center gap-5">
               <motion.div
-                className="flex items-center justify-between gap-x-4 px-5 py-6 rounded-3xl w-full md:w-[360px] h-[120px] border border-white/20"
+                className="flex items-center justify-between gap-x-4 px-5 py-6 rounded-3xl w-full md:w-[360px] h-[120px] border border-white/5"
                 style={{
                   background:
                     "linear-gradient(240deg, #072120 -7.71%, #050908 68.1%)",
@@ -60,7 +60,7 @@ export default function Portfolio() {
               </motion.div>
 
               <motion.div
-                className="flex items-center justify-between gap-x-4 px-5 py-6 rounded-3xl w-full md:w-[360px] h-[120px] border border-white/20"
+                className="flex items-center justify-between gap-x-4 px-5 py-6 rounded-3xl w-full md:w-[360px] h-[120px] border border-white/5"
                 style={{
                   background:
                     "linear-gradient(45deg, rgba(14, 15, 22, 0.65) 27.28%, rgba(3, 91, 250, 0.19) 124.06%)",

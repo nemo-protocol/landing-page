@@ -16,18 +16,13 @@ import {
   useDisconnectWallet,
   useSwitchAccount,
 } from "@mysten/dapp-kit"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-const variants = {
-  hidden: { opacity: 0, y: -10 },
-  visible: { opacity: 1, y: 0 },
-}
 
 export default function Header() {
   const toast = useToast()
@@ -60,7 +55,7 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="h-16">
+    <header className="h-16 shrink-0">
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
         <div className="flex items-center gap-x-6 h-full">
           <Link to="/" className="flex gap-x-2">
@@ -162,43 +157,25 @@ export default function Header() {
                 <span>More</span>
                 <ChevronDown className="size-3 mt-1" />
               </DropdownMenuTrigger>
-              <AnimatePresence>
-                <DropdownMenuContent
-                  asChild
-                  className="bg-[#0E0F16] border-none"
-                >
-                  <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    variants={variants}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                      borderRadius: "12px",
-                      boxShadow: "0px 2px 4px -1px rgba(0, 0, 0, 0.12)",
-                      padding: "6px",
-                    }}
+              <DropdownMenuContent asChild className="bg-[#0E0F16] border-none">
+                <DropdownMenuItem>
+                  <Link
+                    to="/mint"
+                    className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
                   >
-                    <DropdownMenuItem>
-                      <Link
-                        to="/mint"
-                        className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
-                      >
-                        Mint
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <a
-                        className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
-                        href="https://www.sentio.xyz/"
-                        target="_blank"
-                      >
-                        Sentio
-                      </a>
-                    </DropdownMenuItem>
-                  </motion.div>
-                </DropdownMenuContent>
-              </AnimatePresence>
+                    Mint
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <a
+                    className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
+                    href="https://www.sentio.xyz/"
+                    target="_blank"
+                  >
+                    Sentio
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
           </span>
           <Network />
@@ -267,7 +244,9 @@ export default function Header() {
                   className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
                 >
                   <span className="hidden md:inline-block">Connect Wallet</span>
-                  <span className="inline-block md:hidden text-xs">Connect</span>
+                  <span className="inline-block md:hidden text-xs">
+                    Connect
+                  </span>
                 </button>
               }
             />
