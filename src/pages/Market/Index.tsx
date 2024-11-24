@@ -47,12 +47,14 @@ export default function Home() {
             variants={textVariants}
             transition={{ duration: 0.5 }}
           >
-            <h3 className="text-[28px] text-white font-black">Market</h3>
-            <h6 className="text-white/70 mt-8">
+            <h3 className="text-[28px] text-white font-black sm:text-[24px] text-lg">
+              Market
+            </h3>
+            <h6 className="text-white/70 md:mt-8 mt-4">
               Dive into the yield trading market and maximize your profit
               potential.
             </h6>
-            <p className="text-white/70">
+            <p className="text-white/70 sm:text-sm">
               Learn More&nbsp;&nbsp;
               <Link
                 to="/learn"
