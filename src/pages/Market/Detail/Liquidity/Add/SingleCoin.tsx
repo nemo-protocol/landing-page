@@ -301,14 +301,11 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
-              type="text"
+              min={0}
+              type="number"
               value={addValue}
               disabled={!isConnected}
-              onChange={
-                (e) => setAddValue(e.target.value)
-                // debouncedSetAddValue(new Decimal(e.target.value).toString())
-              }
-              placeholder={!isConnected ? "Please connect wallet" : ""}
+              onChange={(e) => setAddValue(e.target.value)}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
             {isConnected && (

@@ -281,7 +281,8 @@ export default function Sell({ slippage }: { slippage: string }) {
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
-              type="text"
+              min={0}
+              type="number"
               value={redeemValue}
               disabled={!isConnected}
               onChange={(e) => setRedeemValue(e.target.value)}

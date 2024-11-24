@@ -241,7 +241,8 @@ export default function Mint({
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
-              type="text"
+              min={0}
+              type="number"
               value={mintValue}
               disabled={!isConnected}
               onChange={

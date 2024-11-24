@@ -207,7 +207,8 @@ export default function Remove() {
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
-              type="text"
+              min={0}
+              type="number"
               value={lpValue}
               disabled={!isConnected}
               onChange={(e) => setLpValue(e.target.value)}

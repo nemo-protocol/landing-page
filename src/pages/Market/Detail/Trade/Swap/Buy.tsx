@@ -155,7 +155,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         if (tokenType === "pt") {
           const [sy] = tx.moveCall({
-            target: `${coinConfig.nemoContractId}::market::swap_sy_for_exact_pt`,
+            target: `${coinConfig.nemoContractId}::market::swap_exact_sy_for_pt`,
             arguments: [
               tx.object(coinConfig.version),
               tx.pure.u64(
@@ -333,7 +333,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
-              type="text"
+              min={0}
+              type="number"
               value={swapValue}
               disabled={!isConnected}
               onChange={
@@ -529,7 +530,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           }
         />
       ) : insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>
       ) : (

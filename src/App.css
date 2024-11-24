@@ -1,3 +1,13 @@
 #root {
   @apply w-full m-0 bg-black overflow-x-hidden font-sans;
 }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  /* Firefox中移除按钮 */
+}

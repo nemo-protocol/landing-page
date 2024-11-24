@@ -244,7 +244,8 @@ export default function Redeem({
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
-              type="text"
+              min={0}
+              type="number"
               value={ptRedeemValue}
               disabled={!isConnected}
               onChange={
@@ -311,7 +312,8 @@ export default function Redeem({
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
-              type="text"
+              min={0}
+              type="number"
               value={ytRedeemValue}
               disabled={!isConnected}
               onChange={
@@ -396,7 +398,7 @@ export default function Redeem({
           }
         />
       ) : insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
+        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance
         </div>
       ) : (
