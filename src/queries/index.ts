@@ -150,7 +150,7 @@ export function useCoinConfig(
   return useQuery({
     enabled: !!coinType && !!maturity,
     // FIXME： queryKey dose not work
-    queryKey: ["coinConfig", coinType, maturity, address],
+    queryKey: ["coinConfig", coinType, maturity],
     queryFn: () => getCoinConfig(coinType!, maturity!, address),
   })
 }

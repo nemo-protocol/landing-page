@@ -1,6 +1,5 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-// import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
@@ -8,21 +7,13 @@ import { Transaction } from "@mysten/sui/transactions"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
-// import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
-import FailIcon from "@/assets/images/svg/fail.svg?react"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
-import {
-  AlertDialog,
-  AlertDialogTitle,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog"
+import { getPriceVoucher } from "@/lib/txHelper"
+import { LoaderCircle } from "lucide-react"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")
@@ -42,7 +33,12 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType, maturity, address)
+  const { data: coinConfig, isLoading } = useCoinConfig(
+    coinType,
+    maturity,
+    address,
+  )
+
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
@@ -131,16 +127,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        const [priceVoucher] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
-          arguments: [
-            tx.object(coinConfig.providerVersion),
-            tx.object(coinConfig.providerMarket),
-            tx.object(coinConfig.syStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
-        })
+        const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
         tx.moveCall({
           target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
@@ -174,16 +161,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        const [priceVoucherForMintLp] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
-          arguments: [
-            tx.object(coinConfig.providerVersion),
-            tx.object(coinConfig.providerMarket),
-            tx.object(coinConfig.syStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
-        })
+        const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
 
         const [lp, mp] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::market::mint_lp`,
@@ -212,14 +190,13 @@ export default function Mint({ slippage }: { slippage: string }) {
           tx.transferObjects([pyPosition], address)
         }
 
-        tx.setGasBudget(0.1 * 1e9)
-
         const res = await signAndExecuteTransaction({
           transaction: tx,
           chain: `sui:${network}`,
         })
         if (res.effects?.status.status === "failure") {
           setOpen(true)
+          setTxId(res.digest)
           setStatus("Failed")
           setMessage(parseErrorMessage(res.effects?.status.error || ""))
           return
@@ -237,51 +214,16 @@ export default function Mint({ slippage }: { slippage: string }) {
     }
   }
 
-  // const debouncedSetAddValue = debounce((value: string) => {
-  //   setAddValue(value)
-  // }, 300)
-
   return (
     <div className="flex flex-col items-center">
-      <AlertDialog open={open}>
-        <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-white">
-              {status}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="flex flex-col items-center">
-              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
-              {status === "Success" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-white/50">Transaction submitted!</p>
-                  <a
-                    className="text-[#8FB5FF] underline"
-                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                    target="_blank"
-                  >
-                    View details
-                  </a>
-                </div>
-              )}
-              {status === "Failed" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-red-400">Transaction Error</p>
-                  <p className="text-red-500 break-all">{message}</p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center justify-center">
-            <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
-              onClick={() => setOpen(false)}
-            >
-              OK
-            </button>
-          </div>
-          <AlertDialogFooter></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TransactionStatusDialog
+        open={open}
+        status={status}
+        network={network}
+        txId={txId}
+        message={message}
+        onClose={() => setOpen(false)}
+      />
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
           <div className="text-white">Input</div>
@@ -291,21 +233,28 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-            <img
-              src={coinConfig?.coinLogo}
-              alt={coinConfig?.coinName}
-              className="size-6"
-            />
-            <span className="px-2">{coinConfig?.coinName}</span>
+          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-6"
+                />
+                <span className="px-2">{coinConfig?.coinName}</span>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
               min={0}
               type="number"
               value={addValue}
-              disabled={!isConnected}
+              disabled={!isConnected || isLoading}
               onChange={(e) => setAddValue(e.target.value)}
+              placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
             {isConnected && (
@@ -318,42 +267,50 @@ export default function Mint({ slippage }: { slippage: string }) {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() =>
-              setAddValue(
-                new Decimal(coinBalance!).div(2).toFixed(coinConfig?.decimal),
-              )
-            }
-          >
-            Half
-          </button>
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() =>
-              setAddValue(
-                new Decimal(coinBalance!).toFixed(coinConfig?.decimal),
-              )
-            }
-          >
-            Max
-          </button>
-        </div>
+        {isConnected && !isLoading && (
+          <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
+            <button
+              className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+              disabled={!isConnected}
+              onClick={() =>
+                setAddValue(
+                  new Decimal(coinBalance!).div(2).toFixed(coinConfig?.decimal),
+                )
+              }
+            >
+              Half
+            </button>
+            <button
+              className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+              disabled={!isConnected}
+              onClick={() =>
+                setAddValue(
+                  new Decimal(coinBalance!).toFixed(coinConfig?.decimal),
+                )
+              }
+            >
+              Max
+            </button>
+          </div>
+        )}
       </div>
       <SwapIcon className="mx-auto mt-5" />
       <div className="flex flex-col w-full gap-y-4.5">
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <img
-              src={coinConfig?.coinLogo}
-              alt={coinConfig?.coinName}
-              className="size-6"
-            />
-            <span className="px-2">LP {coinConfig?.coinName}</span>
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-6"
+                />
+                <span className="px-2">LP {coinConfig?.coinName}</span>
+              </>
+            )}
           </div>
           <input
             disabled

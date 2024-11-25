@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { network } from "@/config"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
-// import { debounce } from "@/lib/utils"
+import { LoaderCircle } from "lucide-react"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
@@ -54,7 +54,7 @@ export default function Sell({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType, maturity)
+  const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
@@ -255,29 +255,41 @@ export default function Sell({ slippage }: { slippage: string }) {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <img
-              src={coinConfig?.coinLogo}
-              alt={coinConfig?.coinName}
-              className="size-6"
-            />
-            <Select
-              value={tokenType}
-              onValueChange={(value) => setTokenType(value)}
-            >
-              <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent border-none">
-                <SelectValue placeholder="Select token type" />
-              </SelectTrigger>
-              <SelectContent className="bg-black border-none shadow-lg">
-                <SelectGroup>
-                  <SelectItem value="pt" className="cursor-pointer text-white">
-                    PT {coinConfig?.coinName}
-                  </SelectItem>
-                  <SelectItem value="yt" className="cursor-pointer text-white">
-                    YT {coinConfig?.coinName}
-                  </SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-6"
+                />
+                <Select
+                  value={tokenType}
+                  onValueChange={(value) => setTokenType(value)}
+                >
+                  <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent border-none p-0">
+                    <SelectValue placeholder="Select token type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black border-none shadow-lg">
+                    <SelectGroup>
+                      <SelectItem
+                        value="pt"
+                        className="cursor-pointer text-white"
+                      >
+                        PT {coinConfig?.coinName}
+                      </SelectItem>
+                      <SelectItem
+                        value="yt"
+                        className="cursor-pointer text-white"
+                      >
+                        YT {coinConfig?.coinName}
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
@@ -327,13 +339,18 @@ export default function Sell({ slippage }: { slippage: string }) {
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <img
-              src={coinConfig?.coinLogo}
-              alt={coinConfig?.coinName}
-              className="size-6"
-            />
-            <span className="px-2">{coinConfig?.coinName}</span>
-            {/* <DownArrowIcon /> */}
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-6"
+                />
+                <span className="px-2">{coinConfig?.coinName}</span>
+              </>
+            )}
           </div>
           <input
             disabled

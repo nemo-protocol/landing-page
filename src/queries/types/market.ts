@@ -22,6 +22,7 @@ export interface CoinInfo {
 
 export interface CoinConfig {
   underlyingApy: number
+  underlyingCoinName: string
   ytApy: number
   pyStateId: string
   syStateId: string
@@ -46,6 +47,8 @@ export interface CoinConfig {
   decimal: number
   pyPositionType: string
   marketPositionType: string
+  nativePool: string
+  metadataId: string
 }
 
 export interface PortfolioItem {

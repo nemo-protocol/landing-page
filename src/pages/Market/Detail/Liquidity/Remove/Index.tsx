@@ -5,23 +5,14 @@ import { useParams } from "react-router-dom"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
-// import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
-import FailIcon from "@/assets/images/svg/fail.svg?react"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
-import {
-  AlertDialog,
-  AlertDialogTitle,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog"
 import { parseErrorMessage } from "@/lib/errorMapping"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { LoaderCircle } from "lucide-react"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -41,7 +32,7 @@ export default function Remove() {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType, maturity)
+  const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
 
   const { data: dataRatio } = useQueryLPRatio(
     address,
@@ -129,6 +120,7 @@ export default function Remove() {
         if (res.effects?.status.status === "failure") {
           setOpen(true)
           setStatus("Failed")
+          setTxId(res.digest)
           setMessage(parseErrorMessage(res.effects?.status.error || ""))
           return
         }
@@ -147,45 +139,14 @@ export default function Remove() {
 
   return (
     <div className="flex flex-col items-center">
-      <AlertDialog open={open}>
-        <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-white">
-              {status}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="flex flex-col items-center">
-              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
-              {status === "Success" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-white/50">Transaction submitted!</p>
-                  <a
-                    className="text-[#8FB5FF] underline"
-                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                    target="_blank"
-                  >
-                    View details
-                  </a>
-                </div>
-              )}
-              {status === "Failed" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-red-400">Transaction Error</p>
-                  <p className="text-red-500 break-all">{message}</p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center justify-center">
-            <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
-              onClick={() => setOpen(false)}
-            >
-              OK
-            </button>
-          </div>
-          <AlertDialogFooter></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TransactionStatusDialog
+        open={open}
+        status={status}
+        network={network}
+        txId={txId}
+        message={message}
+        onClose={() => setOpen(false)}
+      />
 
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
@@ -197,13 +158,18 @@ export default function Remove() {
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <img
-              src={coinConfig?.coinLogo}
-              alt={coinConfig?.coinName}
-              className="size-6"
-            />
-            <span>LP {coinConfig?.coinName}</span>
-            {/* <DownArrowIcon /> */}
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-6"
+                />
+                <span>LP {coinConfig?.coinName}</span>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
@@ -225,42 +191,52 @@ export default function Remove() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() =>
-              setLpValue(
-                new Decimal(lpCoinBalance!).div(2).toFixed(coinConfig?.decimal),
-              )
-            }
-          >
-            Half
-          </button>
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() =>
-              setLpValue(
-                new Decimal(lpCoinBalance!).toFixed(coinConfig?.decimal),
-              )
-            }
-          >
-            Max
-          </button>
-        </div>
+        {isConnected && !isLoading && (
+          <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
+            <button
+              className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+              disabled={!isConnected}
+              onClick={() =>
+                setLpValue(
+                  new Decimal(lpCoinBalance!)
+                    .div(2)
+                    .toFixed(coinConfig?.decimal),
+                )
+              }
+            >
+              Half
+            </button>
+            <button
+              className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+              disabled={!isConnected}
+              onClick={() =>
+                setLpValue(
+                  new Decimal(lpCoinBalance!).toFixed(coinConfig?.decimal),
+                )
+              }
+            >
+              Max
+            </button>
+          </div>
+        )}
       </div>
       <SwapIcon className="mx-auto mt-5" />
       <div className="flex flex-col w-full gap-y-4.5">
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <img
-              src={coinConfig?.coinLogo}
-              alt={coinConfig?.coinName}
-              className="size-6"
-            />
-            <span>{coinConfig?.coinName}</span>
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-6"
+                />
+                <span>{coinConfig?.coinName}</span>
+              </>
+            )}
           </div>
           <input
             disabled

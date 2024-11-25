@@ -22,6 +22,7 @@ import {
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
+import { LoaderCircle } from "lucide-react"
 
 export default function Mint({
   slippage,
@@ -48,7 +49,7 @@ export default function Mint({
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType, maturity)
+  const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
@@ -227,17 +228,22 @@ export default function Mint({
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-            <img
-              src={coinConfig?.coinLogo ?? logo}
-              alt={coinConfig?.coinName}
-              className={
-                coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
-              }
-            />
-            <span className={coinConfig?.coinName && "px-2"}>
-              {coinConfig?.coinName}
-            </span>
-            {/* <DownArrowIcon /> */}
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo ?? logo}
+                  alt={coinConfig?.coinName}
+                  className={
+                    coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
+                  }
+                />
+                <span className={coinConfig?.coinName && "px-2"}>
+                  {coinConfig?.coinName}
+                </span>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
@@ -286,15 +292,20 @@ export default function Mint({
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <img
-              src={coinConfig?.coinLogo ?? logo}
-              alt={coinConfig?.coinName}
-              className={
-                coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
-              }
-            />
-            <span className="px-2">PT {coinConfig?.coinName}</span>
-            {/* <DownArrowIcon /> */}
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo ?? logo}
+                  alt={coinConfig?.coinName}
+                  className={
+                    coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
+                  }
+                />
+                <span className="px-2">PT {coinConfig?.coinName}</span>
+              </>
+            )}
           </div>
           <input
             disabled
@@ -310,13 +321,20 @@ export default function Mint({
       <AddIcon className="mx-auto mt-5" />
       <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
         <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-          <img
-            src={coinConfig?.coinLogo ?? logo}
-            alt={coinConfig?.coinName}
-            className={coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"}
-          />
-          <span className="px-2">YT {coinConfig?.coinName}</span>
-          {/* <DownArrowIcon /> */}
+          {isLoading ? (
+            <LoaderCircle className="animate-spin size-6 text-white/60" />
+          ) : (
+            <>
+              <img
+                src={coinConfig?.coinLogo ?? logo}
+                alt={coinConfig?.coinName}
+                className={
+                  coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
+                }
+              />
+              <span className="px-2">YT {coinConfig?.coinName}</span>
+            </>
+          )}
         </div>
         <input
           disabled

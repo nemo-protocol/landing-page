@@ -2,17 +2,13 @@ import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { GAS_BUDGET, network } from "@/config"
 import { Info } from "lucide-react"
-// import { debounce } from "@/lib/utils"
 import { useParams } from "react-router-dom"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { useEffect, useMemo, useState } from "react"
 import { Transaction } from "@mysten/sui/transactions"
-// import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
-import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import {
   Select,
   SelectContent,
@@ -27,18 +23,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import useCoinData from "@/hooks/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
+import { LoaderCircle } from "lucide-react"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { formatDecimalValue } from "@/lib/utils"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")
@@ -65,7 +56,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     [currentWallet],
   )
 
-  const { data: coinConfig } = useCoinConfig(coinType, maturity)
+  const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
@@ -132,7 +123,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             splitCoin,
             tx.pure.u64(
               new Decimal(swapValue)
-                .mul(1e9)
+                .mul(10 ** coinConfig.decimal)
                 .div(new Decimal(ratio || 1).add(1))
                 .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
@@ -160,7 +151,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.version),
               tx.pure.u64(
                 new Decimal(swapValue)
-                  .mul(1e9)
+                  .mul(10 ** coinConfig.decimal)
                   .mul(1 - new Decimal(slippage).div(100).toNumber())
                   .toNumber(),
               ),
@@ -275,46 +266,15 @@ export default function Mint({ slippage }: { slippage: string }) {
   // }, 300)
 
   return (
-    <div className="flex flex-col items-center">
-      <AlertDialog open={open}>
-        <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-white">
-              {status}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="flex flex-col items-center">
-              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
-              {status === "Success" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-white/50">Transaction submitted!</p>
-                  <a
-                    className="text-[#8FB5FF] underline"
-                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                    target="_blank"
-                  >
-                    View details
-                  </a>
-                </div>
-              )}
-              {status === "Failed" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-red-400">Transaction Error</p>
-                  <p className="text-red-500 break-all">{message}</p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center justify-center">
-            <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
-              onClick={() => setOpen(false)}
-            >
-              OK
-            </button>
-          </div>
-          <AlertDialogFooter></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+    <div className="flex flex-col items-center gap-y-4">
+      <TransactionStatusDialog
+        open={open}
+        status={status}
+        network={network}
+        txId={txId}
+        message={message}
+        onClose={() => setOpen(false)}
+      />
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-end w-full">
           <div className="flex items-center gap-x-1">
@@ -323,13 +283,19 @@ export default function Mint({ slippage }: { slippage: string }) {
           </div>
         </div>
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16]">
-            <img
-              src={coinConfig?.coinLogo}
-              alt={coinConfig?.coinName}
-              className="size-6"
-            />
-            <span className="px-2">sSUI</span>
+          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-6"
+                />
+                <span className="px-2">{coinConfig?.coinName}</span>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
@@ -337,10 +303,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               type="number"
               value={swapValue}
               disabled={!isConnected}
-              onChange={
-                (e) => setSwapValue(e.target.value)
-                // debouncedSetMintValue(new Decimal(e.target.value).toString())
-              }
+              onChange={(e) => setSwapValue(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
@@ -354,83 +317,84 @@ export default function Mint({ slippage }: { slippage: string }) {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() =>
-              setSwapValue(new Decimal(coinBalance!).div(2).toFixed(9))
-            }
-          >
-            Half
-          </button>
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected}
-            onClick={() => setSwapValue(new Decimal(coinBalance!).toFixed(9))}
-          >
-            Max
-          </button>
-        </div>
+        {isConnected && !isLoading && (
+          <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
+            <button
+              className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+              disabled={!isConnected}
+              onClick={() =>
+                setSwapValue(new Decimal(coinBalance!).div(2).toFixed(9))
+              }
+            >
+              Half
+            </button>
+            <button
+              className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+              disabled={!isConnected}
+              onClick={() => setSwapValue(new Decimal(coinBalance!).toFixed(9))}
+            >
+              Max
+            </button>
+          </div>
+        )}
       </div>
       <SwapIcon className="mx-auto" />
-      <div className="flex flex-col w-full gap-y-4.5 mt-4">
+      <div className="flex flex-col w-full gap-y-4.5">
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <img
-              src={coinConfig?.coinLogo}
-              alt={coinConfig?.coinName}
-              className="size-6"
-            />
-            <Select
-              value={tokenType}
-              onValueChange={(value) => setTokenType(value)}
-            >
-              {/* <Select defaultValue="yt"> */}
-              <SelectTrigger className="w-24 border-none focus:ring-0 focus:outline-none bg-transparent">
-                <SelectValue placeholder="Select token type" />
-              </SelectTrigger>
-              <SelectContent className="border-none outline-none bg-[#0E0F16]">
-                <SelectGroup>
-                  <SelectItem
-                    value="pt"
-                    className="cursor-pointer text-white"
-                    onClick={() => setTokenType("pt")}
-                  >
-                    PT {coinConfig?.coinName}
-                  </SelectItem>
-                  <SelectItem
-                    value="yt"
-                    className="cursor-pointer text-white"
-                    onClick={() => setTokenType("yt")}
-                  >
-                    YT {coinConfig?.coinName}
-                  </SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {/* <DownArrowIcon /> */}
+            {isLoading ? (
+              <LoaderCircle className="animate-spin size-6 text-white/60" />
+            ) : (
+              <>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-6"
+                />
+                <Select
+                  value={tokenType}
+                  onValueChange={(value) => {
+                    setTokenType(value)
+                    setSwapValue("")
+                  }}
+                >
+                  {/* <Select defaultValue="yt"> */}
+                  <SelectTrigger className="w-24 border-none focus:ring-0 focus:outline-none bg-transparent">
+                    <SelectValue placeholder="Select token type" />
+                  </SelectTrigger>
+                  <SelectContent className="border-none outline-none bg-[#0E0F16]">
+                    <SelectGroup>
+                      <SelectItem
+                        value="pt"
+                        className="cursor-pointer text-white"
+                        onClick={() => setTokenType("pt")}
+                      >
+                        PT {coinConfig?.coinName}
+                      </SelectItem>
+                      <SelectItem
+                        value="yt"
+                        className="cursor-pointer text-white"
+                        onClick={() => setTokenType("yt")}
+                      >
+                        YT {coinConfig?.coinName}
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </>
+            )}
           </div>
-          <input
-            disabled
-            type="text"
-            value={
-              swapValue &&
-              new Decimal(swapValue)
-                .mul(ratio || 0)
-                .toFixed(coinConfig?.decimal)
-            }
-            className="bg-transparent h-full outline-none grow text-right min-w-0"
-          />
+          {swapValue && (
+            <span className="ml-auto">
+              {formatDecimalValue(
+                new Decimal(swapValue).mul(ratio || 0),
+                coinConfig?.decimal,
+              )}
+            </span>
+          )}
         </div>
       </div>
-      {/* <div className="bg-[#2426325C] px-6 py-4 flex items-center justify-between w-full mt-6 rounded-xl">
-        <span className="text-white/80">Total Pool APY</span>
-        <span>
-          {tokenType === "pt" ? coinConfig?.ptApy || 0 : coinConfig?.ytApy || 0}
-        </span>
-      </div> */}
-      {
+      {isConnected && !isLoading && (
         <div className="bg-[#44E0C30F]/[0.08] px-6 py-4 flex flex-col gap-y-2 w-full mt-6 rounded-lg">
           <div className="flex items-center justify-between">
             {tokenType === "pt" ? (
@@ -474,15 +438,20 @@ export default function Mint({ slippage }: { slippage: string }) {
               <div className="flex items-center gap-x-2">
                 <img
                   className="size-6"
-                  src={
-                    coinConfig?.coinLogo ||
-                    "https://nemoprotocol.com/static/sui.svg"
-                  }
-                  alt=""
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
                 />
                 <div className="flex flex-col gap-y-0.5">
-                  <span className="text-white text-sm">
-                    {swapValue || 0} {coinConfig?.coinName}
+                  <span className="text-white text-sm space-x-1">
+                    <span>
+                      {formatDecimalValue(
+                        new Decimal(swapValue || 0).mul(ratio || 0),
+                        coinConfig?.decimal,
+                      )}
+                    </span>
+                    {coinConfig?.underlyingCoinName && (
+                      <span>{coinConfig.underlyingCoinName}</span>
+                    )}
                   </span>
                   <span className="text-white/60 text-xs">
                     $
@@ -498,18 +467,20 @@ export default function Mint({ slippage }: { slippage: string }) {
             )}
 
             {tokenType === "pt" ? (
-              <span className="text-[#44E0C3] text-sm">
-                {new Decimal(swapValue || 0)
-                  .mul(ratio || 0)
-                  .mul(coinConfig?.coinPrice || 0)
-                  .minus(
-                    new Decimal(swapValue || 0).mul(
-                      coinConfig?.sCoinPrice || 0,
-                    ),
-                  )
-                  .toFixed(2)}
-                &nbsp;
-                {coinConfig?.coinName}
+              <span className="text-[#44E0C3] text-sm space-x-1">
+                <span>
+                  {new Decimal(swapValue || 0)
+                    .mul(ratio || 0)
+                    .mul(
+                      new Decimal(coinConfig?.sCoinPrice || 0).minus(
+                        coinConfig?.coinPrice || 0,
+                      ),
+                    )
+                    .toFixed(2)}
+                </span>
+                {coinConfig?.underlyingCoinName && (
+                  <span>{coinConfig.underlyingCoinName}</span>
+                )}
               </span>
             ) : (
               <span className="text-[#44E0C3] text-sm">
@@ -518,7 +489,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             )}
           </div>
         </div>
-      }
+      )}
       {!isConnected ? (
         <ConnectModal
           open={openConnect}
