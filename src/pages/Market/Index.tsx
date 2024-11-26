@@ -40,7 +40,7 @@ export default function Home() {
         </div>
       </div>
       <div className="py-10 relative xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0">
-        <div className="flex flex-col-reverse lg:flex-row lg:items-center gap-y-8 lg:gap-y-0 lg:justify-between">
+        <div className="flex flex-col-reverse gap-x-8 lg:flex-row lg:items-center gap-y-8 lg:gap-y-0 lg:justify-between">
           <motion.div
             initial="hidden"
             animate="visible"
