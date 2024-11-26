@@ -6,7 +6,7 @@ import BalanceIcon from "@/assets/images/svg/balance.svg?react"
 import RewardsIcon from "@/assets/images/svg/reward.svg?react"
 import usePortfolio from "@/hooks/usePortfolio"
 import Decimal from "decimal.js"
-import Income from "@/assets/images/png/income.png"
+import Income from "@/assets/images/svg/income.svg"
 import { motion } from "framer-motion"
 
 export default function Portfolio() {

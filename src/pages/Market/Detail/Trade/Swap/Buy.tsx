@@ -30,6 +30,7 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import { LoaderCircle } from "lucide-react"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { formatDecimalValue } from "@/lib/utils"
+import { initPyPosition } from "@/lib/txHelper"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")
@@ -100,14 +101,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = tx.moveCall({
-            target: `${coinConfig.nemoContractId}::py::init_py_position`,
-            arguments: [
-              tx.object(coinConfig.version),
-              tx.object(coinConfig.pyStateId),
-            ],
-            typeArguments: [coinConfig.syCoinType],
-          })[0]
+          pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
@@ -358,10 +352,10 @@ export default function Mint({ slippage }: { slippage: string }) {
                     setSwapValue("")
                   }}
                 >
-                  {/* <Select defaultValue="yt"> */}
-                  <SelectTrigger className="w-24 border-none focus:ring-0 focus:outline-none bg-transparent">
+                  <SelectTrigger className="border-none focus:ring-0 focus:outline-none bg-transparent">
                     <SelectValue placeholder="Select token type" />
                   </SelectTrigger>
+                  {/* TODO： add animate */}
                   <SelectContent className="border-none outline-none bg-[#0E0F16]">
                     <SelectGroup>
                       <SelectItem

@@ -29,6 +29,7 @@ import { LoaderCircle } from "lucide-react"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
+import { initPyPosition } from "@/lib/txHelper"
 
 export default function Sell({ slippage }: { slippage: string }) {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -104,14 +105,7 @@ export default function Sell({ slippage }: { slippage: string }) {
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = tx.moveCall({
-            target: `${coinConfig.nemoContractId}::py::init_py_position`,
-            arguments: [
-              tx.object(coinConfig.version),
-              tx.object(coinConfig.pyStateId),
-            ],
-            typeArguments: [coinConfig.syCoinType],
-          })[0]
+          pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
@@ -239,8 +233,7 @@ export default function Sell({ slippage }: { slippage: string }) {
         </AlertDialogContent>
       </AlertDialog>
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between w-full">
-          <div className="text-white">Input</div>
+        <div className="flex items-center justify-end w-full">
           <div className="flex items-center gap-x-1">
             <WalletIcon />
             <span>
@@ -336,7 +329,6 @@ export default function Sell({ slippage }: { slippage: string }) {
       </div>
       <SwapIcon className="mx-auto mt-5" />
       <div className="flex flex-col gap-y-4.5 w-full">
-        <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             {isLoading ? (

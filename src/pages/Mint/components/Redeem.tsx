@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
+import { initPyPosition } from "@/lib/txHelper"
 
 export default function Redeem({
   maturity,
@@ -103,14 +104,7 @@ export default function Redeem({
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = tx.moveCall({
-            target: `${coinConfig.nemoContractId}::py::init_py_position`,
-            arguments: [
-              tx.object(coinConfig.version),
-              tx.object(coinConfig.pyStateId),
-            ],
-            typeArguments: [coinConfig.syCoinType],
-          })[0]
+          pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }

@@ -26,3 +26,19 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
       })
   }
 }
+
+export const initPyPosition = (tx: Transaction, coinConfig: CoinConfig) => {
+  const [pyPosition] = tx.moveCall({
+    target: `${coinConfig.nemoContractId}::py::init_py_position`,
+    arguments: [
+      tx.object(coinConfig.version),
+      tx.object(coinConfig.pyStateId),
+      tx.object("0x6"),
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  })
+  if (pyPosition === undefined) {
+    throw new Error("initPyPosition failed")
+  }
+  return pyPosition
+}

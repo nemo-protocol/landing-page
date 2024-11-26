@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Noto Sans"', 'sans-serif'],
+        sans: ['Numans', 'sans-serif'],
       },
       screens: {
         xs: "30rem",

@@ -9,7 +9,7 @@ import {
 import { useState } from "react"
 import Empty from "@/assets/images/png/empty.png"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
-import WalletNotConnect from "@/assets/images/png/WalletNotConnect.png"
+import WalletNotConnect from "@/assets/images/svg/wallet-no-connect.svg"
 import { Link } from "react-router-dom"
 import { PortfolioItem } from "@/queries/types/market"
 import { motion } from "framer-motion"

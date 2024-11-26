@@ -13,6 +13,7 @@ import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteT
 import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { LoaderCircle } from "lucide-react"
+import { initPyPosition } from "@/lib/txHelper"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -84,14 +85,7 @@ export default function Remove() {
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = tx.moveCall({
-            target: `${coinConfig.nemoContractId}::py::init_py_position`,
-            arguments: [
-              tx.object(coinConfig.version),
-              tx.object(coinConfig.pyStateId),
-            ],
-            typeArguments: [coinConfig.syCoinType],
-          })[0]
+          pyPosition = pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }

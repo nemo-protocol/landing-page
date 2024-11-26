@@ -11,7 +11,7 @@ import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
-import { getPriceVoucher } from "@/lib/txHelper"
+import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 import { LoaderCircle } from "lucide-react"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 
@@ -83,14 +83,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = tx.moveCall({
-            target: `${coinConfig.nemoContractId}::py::init_py_position`,
-            arguments: [
-              tx.object(coinConfig.version),
-              tx.object(coinConfig.pyStateId),
-            ],
-            typeArguments: [coinConfig.syCoinType],
-          })[0]
+          pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }

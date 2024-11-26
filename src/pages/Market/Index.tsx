@@ -46,6 +46,7 @@ export default function Home() {
             animate="visible"
             variants={textVariants}
             transition={{ duration: 0.5 }}
+            className="max-w-[584px]"
           >
             <h3 className="text-[28px] text-white font-black sm:text-[24px] text-lg">
               Market
@@ -54,8 +55,8 @@ export default function Home() {
               Dive into the yield trading market and maximize your profit
               potential.
             </h6>
-            <p className="text-white/70 sm:text-sm">
-              Learn More&nbsp;&nbsp;
+            <p className="text-white/70 sm:text-sm space-x-2">
+              <span>Learn More</span>
               <Link
                 to="/learn"
                 className="underline text-white/70 underline-offset-2"
