@@ -13,6 +13,15 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
         ],
         typeArguments: [coinConfig.syCoinType],
       })
+    case "0x83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI":
+      return tx.moveCall({
+        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_spring`,
+        arguments: [
+          tx.object(coinConfig.lstInfoId),
+          tx.object(coinConfig.syStateId),
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      })
     default:
       return tx.moveCall({
         target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,

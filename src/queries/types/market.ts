@@ -49,6 +49,7 @@ export interface CoinConfig {
   marketPositionType: string
   nativePool: string
   metadataId: string
+  lstInfoId: string
 }
 
 export interface PortfolioItem {
