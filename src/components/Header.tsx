@@ -87,55 +87,41 @@ export default function Header() {
               <HotIcon />
             </Link>
           </li>
-          <li
-            className={[
-              "w-24 h-full text-center cursor-pointer flex items-center justify-center",
-              location.pathname === "/market"
-                ? "bg-[#12121B] border-b border-b-white"
-                : "bg-transparent",
-            ].join(" ")}
-          >
+          <li className={["w-24 h-full text-center"].join(" ")}>
             <Link
               to="/market"
-              className={
-                location.pathname === "/market" ? "text-white" : "text-white/50"
-              }
+              className={[
+                location.pathname === "/market"
+                  ? "text-white bg-[#12121B] border-b border-b-white"
+                  : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
+                "flex items-center justify-center h-full",
+              ].join(" ")}
             >
               Market
             </Link>
           </li>
-          <li
-            className={[
-              "w-24 h-full text-center cursor-pointer flex items-center justify-center",
-              location.pathname === "/portfolio"
-                ? "bg-[#12121B] border-b border-b-white"
-                : "bg-transparent",
-            ].join(" ")}
-          >
+          <li className={["w-24 h-full text-center"].join(" ")}>
             <Link
               to="/portfolio"
-              className={
+              className={[
                 location.pathname === "/portfolio"
-                  ? "text-white"
-                  : "text-white/50"
-              }
+                  ? "text-white bg-[#12121B] border-b border-b-white"
+                  : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
+                "flex items-center justify-center h-full",
+              ].join(" ")}
             >
-              Portfolio
+              portfolio
             </Link>
           </li>
-          <li
-            className={[
-              "w-24 h-full text-center cursor-pointer flex items-center justify-center",
-              location.pathname === "/learn"
-                ? "bg-[#12121B] border-b border-b-white"
-                : "bg-transparent",
-            ].join(" ")}
-          >
+          <li className={["w-24 h-full text-center"].join(" ")}>
             <Link
               to="/learn"
-              className={
-                location.pathname === "/learn" ? "text-white" : "text-white/50"
-              }
+              className={[
+                location.pathname === "/learn"
+                  ? "text-white bg-[#12121B] border-b border-b-white"
+                  : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
+                "flex items-center justify-center h-full",
+              ].join(" ")}
             >
               Learn
             </Link>

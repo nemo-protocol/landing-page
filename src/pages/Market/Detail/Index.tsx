@@ -55,7 +55,7 @@ export default function Home() {
           <Header />
         </div>
       </div>
-      <div className="py-10 relative px-6 xl:px-0 xl:max-w-[1200px] xl:mx-auto">
+      <div className="py-10 relative px-6 xl:px-0 max-w-[600px] mx-auto">
         <h3
           onClick={() => navigate("/market")}
           className="text-lg text-white flex items-center gap-x-2 cursor-pointer"

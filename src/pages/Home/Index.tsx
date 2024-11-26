@@ -118,7 +118,7 @@ export default function Home() {
             className="text-3xl xs:text-5xl text-center text-white text-balance"
           >
             Yield often fluctuates with the market, So&nbsp;
-            <span className="text-[#65A2FF]">Nemo</span> Separates yields for
+            <span className="text-[#65A2FF]">Nemo</span> separates yields for
             everyone.
           </motion.h1>
           <div className="grow">
@@ -197,7 +197,7 @@ export default function Home() {
               </a>
             </div>
             <span className="text-sm xs:text-base text-white">
-              2024 Nemolab Inc.
+              2024 NemoLab Inc.
             </span>
           </motion.div>
         </div>
