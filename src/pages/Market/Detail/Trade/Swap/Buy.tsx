@@ -254,7 +254,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         coinBalance={coinBalance}
         setBalance={setSwapValue}
         price={coinConfig?.sCoinPrice}
-        coinNameComponent={<span className="px-2">{coinConfig?.coinName}</span>}
+        coinNameComponent={<span>{coinConfig?.coinName}</span>}
       />
       <SwapIcon className="mx-auto" />
       <BalanceInput
@@ -277,7 +277,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               setSwapValue("")
             }}
           >
-            <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent">
+            <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-base">
               <SelectValue placeholder="Select token type" />
             </SelectTrigger>
             <SelectContent className="border-none outline-none bg-[#0E0F16]">

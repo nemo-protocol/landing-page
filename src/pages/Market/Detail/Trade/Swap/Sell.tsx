@@ -216,7 +216,7 @@ export default function Sell({ slippage }: { slippage: string }) {
             value={tokenType}
             onValueChange={(value) => setTokenType(value)}
           >
-            <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent border-none p-0">
+            <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-base">
               <SelectValue placeholder="Select token type" />
             </SelectTrigger>
             <SelectContent className="bg-black border-none shadow-lg">

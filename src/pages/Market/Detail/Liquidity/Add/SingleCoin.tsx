@@ -264,7 +264,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         coinBalance={coinBalance}
         setBalance={setAddValue}
         price={coinConfig?.sCoinPrice}
-        coinNameComponent={<span className="px-2">{coinConfig?.coinName}</span>}
+        coinNameComponent={<span>{coinConfig?.coinName}</span>}
       />
       <SwapIcon className="mx-auto" />
       <BalanceInput
@@ -280,7 +280,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         coinConfig={coinConfig}
         isConnected={isConnected}
         coinNameComponent={
-          <span className="px-2">LP {coinConfig?.coinName}</span>
+          <span>LP {coinConfig?.coinName}</span>
         }
       />
       <ActionButton
