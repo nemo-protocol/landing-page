@@ -1,10 +1,12 @@
+import animate from 'tailwindcss-animate'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./src/**/*.{html,ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Numans', 'sans-serif'],
+        sans: ["Numans", "sans-serif"],
       },
       screens: {
         xs: "30rem",
@@ -19,4 +21,5 @@ export default {
       },
     },
   },
+  plugins: [animate],
 }

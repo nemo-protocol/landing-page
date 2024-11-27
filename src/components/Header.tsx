@@ -94,7 +94,7 @@ export default function Header() {
                 location.pathname === "/market"
                   ? "text-white bg-[#12121B] border-b border-b-white"
                   : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
-                "flex items-center justify-center h-full",
+                "flex items-center justify-center h-full cursor-pointer",
               ].join(" ")}
             >
               Market
@@ -107,10 +107,10 @@ export default function Header() {
                 location.pathname === "/portfolio"
                   ? "text-white bg-[#12121B] border-b border-b-white"
                   : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
-                "flex items-center justify-center h-full",
+                "flex items-center justify-center h-full cursor-pointer",
               ].join(" ")}
             >
-              portfolio
+              Portfolio
             </Link>
           </li>
           <li className={["w-24 h-full text-center"].join(" ")}>
@@ -120,7 +120,7 @@ export default function Header() {
                 location.pathname === "/learn"
                   ? "text-white bg-[#12121B] border-b border-b-white"
                   : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
-                "flex items-center justify-center h-full",
+                "flex items-center justify-center h-full cursor-pointer",
               ].join(" ")}
             >
               Learn
@@ -140,10 +140,10 @@ export default function Header() {
           >
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-x-1 border-none outline-none">
-                <span>More</span>
+                <span className="text-white">More</span>
                 <ChevronDown className="size-3 mt-1" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent asChild className="bg-[#0E0F16] border-none">
+              <DropdownMenuContent className="bg-[#0E0F16] border-none">
                 <DropdownMenuItem>
                   <Link
                     to="/mint"

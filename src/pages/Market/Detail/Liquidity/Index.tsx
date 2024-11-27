@@ -2,7 +2,7 @@ import Add from "./Add/Index"
 import Remove from "./Remove/Index"
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import SwitchIcon from "@/assets/images/svg/switch.svg?react"
+// import SwitchIcon from "@/assets/images/svg/switch.svg?react"
 import LoadingIcon from "@/assets/images/svg/loading.svg?react"
 import {
   Popover,
@@ -56,7 +56,7 @@ export default function Trade() {
         <div className="flex items-center gap-x-2 w-auto">
           <LoadingIcon />
           <div className="flex items-center gap-x-2 bg-[#242632]/30 rounded-md py-1.5 px-2.5">
-            <SwitchIcon />
+            {/* <SwitchIcon /> */}
             <Popover>
               <PopoverTrigger asChild>
                 <span className="text-white cursor-pointer">{slippage}%</span>

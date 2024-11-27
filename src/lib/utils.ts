@@ -33,5 +33,5 @@ export const formatDecimalValue = (
   const value = _value instanceof Decimal ? _value : new Decimal(_value || 0)
   return value.decimalPlaces() > decimal
     ? value.toFixed(decimal)
-    : value.toString()
+    : value.toFixed(value.decimalPlaces())
 }

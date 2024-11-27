@@ -1,12 +1,10 @@
 import Decimal from "decimal.js"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
-import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+import { useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import FailIcon from "@/assets/images/svg/fail.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import {
   Select,
   SelectContent,
@@ -15,21 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { network } from "@/config"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
-import { LoaderCircle } from "lucide-react"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { initPyPosition } from "@/lib/txHelper"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import BalanceInput from "@/components/BalanceInput"
+import ActionButton from "@/components/ActionButton"
+import { formatDecimalValue } from "@/lib/utils"
 
 export default function Sell({ slippage }: { slippage: string }) {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -187,210 +180,82 @@ export default function Sell({ slippage }: { slippage: string }) {
     }
   }
 
-  // const debouncedSetRedeemValue = debounce((value: string) => {
-  //   setRedeemValue(value)
-  // }, 300)
-
   return (
-    <div className="flex flex-col items-center">
-      <AlertDialog open={open}>
-        <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-white">
-              {status}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="flex flex-col items-center">
-              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
-              {status === "Success" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-white/50">Transaction submitted!</p>
-                  <a
-                    className="text-[#8FB5FF] underline"
-                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                    target="_blank"
-                  >
-                    View details
-                  </a>
-                </div>
-              )}
-              {status === "Failed" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-red-400">Transaction Error</p>
-                  <p className="text-red-500 break-all">{message}</p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center justify-center">
-            <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
-              onClick={() => setOpen(false)}
-            >
-              OK
-            </button>
-          </div>
-          <AlertDialogFooter></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <div className="flex flex-col w-full">
-        <div className="flex items-center justify-end w-full">
-          <div className="flex items-center gap-x-1">
-            <WalletIcon />
-            <span>
-              Balance:{" "}
-              {isConnected
-                ? tokenType === "pt"
-                  ? ptBalance
-                  : ytBalance
-                : "--"}
-            </span>
-          </div>
-        </div>
-        <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
-          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            {isLoading ? (
-              <LoaderCircle className="animate-spin size-6 text-white/60" />
-            ) : (
-              <>
-                <img
-                  src={coinConfig?.coinLogo}
-                  alt={coinConfig?.coinName}
-                  className="size-6"
-                />
-                <Select
-                  value={tokenType}
-                  onValueChange={(value) => setTokenType(value)}
-                >
-                  <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent border-none p-0">
-                    <SelectValue placeholder="Select token type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black border-none shadow-lg">
-                    <SelectGroup>
-                      <SelectItem
-                        value="pt"
-                        className="cursor-pointer text-white"
-                      >
-                        PT {coinConfig?.coinName}
-                      </SelectItem>
-                      <SelectItem
-                        value="yt"
-                        className="cursor-pointer text-white"
-                      >
-                        YT {coinConfig?.coinName}
-                      </SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-          </div>
-          <div className="flex flex-col items-end gap-y-1">
-            <input
-              min={0}
-              type="number"
-              value={redeemValue}
-              disabled={!isConnected}
-              onChange={(e) => setRedeemValue(e.target.value)}
-              placeholder={!isConnected ? "Please connect wallet" : ""}
-              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
-            />
-            {isConnected && (
-              <span className="text-xs text-white/80">
-                $
-                {new Decimal(
-                  tokenType === "pt"
-                    ? coinConfig?.ptPrice || 0
-                    : coinConfig?.ytPrice || 0,
-                )
-                  .mul(redeemValue || 0)
-                  .toFixed(2)}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected || !ptBalance}
-            onClick={() =>
-              setRedeemValue(new Decimal(ptBalance).div(2).toFixed(9))
-            }
-          >
-            Half
-          </button>
-          <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
-            disabled={!isConnected || !ptBalance}
-            onClick={() => setRedeemValue(new Decimal(ptBalance).toFixed(9))}
-          >
-            Max
-          </button>
-        </div>
-      </div>
-      <SwapIcon className="mx-auto mt-5" />
-      <div className="flex flex-col gap-y-4.5 w-full">
-        <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
-          <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            {isLoading ? (
-              <LoaderCircle className="animate-spin size-6 text-white/60" />
-            ) : (
-              <>
-                <img
-                  src={coinConfig?.coinLogo}
-                  alt={coinConfig?.coinName}
-                  className="size-6"
-                />
-                <span className="px-2">{coinConfig?.coinName}</span>
-              </>
-            )}
-          </div>
-          <input
-            disabled
-            type="text"
-            value={
-              redeemValue &&
-              new Decimal(redeemValue)
-                .div(ratio || 0)
-                .toFixed(coinConfig?.decimal ?? 9)
-            }
-            className="bg-transparent h-full outline-none grow text-right min-w-0"
-          />
-        </div>
-      </div>
-      {/* <div className="bg-[#2426325C] px-6 py-4 flex items-center justify-between w-full mt-6 rounded-xl">
-        <span className="text-white/80">Total Pool APY</span>
-        <span>
-          {tokenType === "pt" ? coinConfig?.ptApy || 0 : coinConfig?.ytApy || 0}
+    <div className="flex flex-col items-center gap-y-4">
+      <TransactionStatusDialog
+        open={open}
+        status={status}
+        network={network}
+        txId={txId}
+        message={message}
+        onClose={() => {
+          setTxId("")
+          setOpen(false)
+        }}
+      />
+      <div className="flex items-center justify-end gap-x-1 w-full">
+        <WalletIcon />
+        <span className="space-x-1">
+          <span>Balance:</span>
+          <span>
+            {isConnected ? (tokenType === "pt" ? ptBalance : ytBalance) : "--"}
+          </span>
         </span>
-      </div> */}
-      {!isConnected ? (
-        <ConnectModal
-          open={openConnect}
-          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          trigger={
-            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-              Connect Wallet
-            </button>
-          }
-        />
-      ) : insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
-          Insufficient Balance
-        </div>
-      ) : (
-        <button
-          onClick={redeem}
-          className={[
-            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
-            redeemValue === ""
-              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
-              : "bg-[#0F60FF] text-white",
-          ].join(" ")}
-          disabled={redeemValue === ""}
-        >
-          Sell
-        </button>
-      )}
+      </div>
+      <BalanceInput
+        showPrice={true}
+        isLoading={isLoading}
+        balance={redeemValue}
+        coinConfig={coinConfig}
+        isConnected={isConnected}
+        coinBalance={tokenType === "pt" ? ptBalance : ytBalance}
+        setBalance={setRedeemValue}
+        price={tokenType === "pt" ? coinConfig?.ptPrice : coinConfig?.ytPrice}
+        coinNameComponent={
+          <Select
+            value={tokenType}
+            onValueChange={(value) => setTokenType(value)}
+          >
+            <SelectTrigger className="w-24 focus:ring-0 focus:border-none focus:outline-none bg-transparent border-none p-0">
+              <SelectValue placeholder="Select token type" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border-none shadow-lg">
+              <SelectGroup>
+                <SelectItem value="pt" className="cursor-pointer text-white">
+                  PT {coinConfig?.coinName}
+                </SelectItem>
+                <SelectItem value="yt" className="cursor-pointer text-white">
+                  YT {coinConfig?.coinName}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        }
+      />
+      <SwapIcon className="mx-auto" />
+      <BalanceInput
+        showPrice={false}
+        isLoading={isLoading}
+        balance={
+          redeemValue &&
+          formatDecimalValue(
+            new Decimal(redeemValue).div(ratio && ratio !== "0" ? ratio : 1),
+            coinConfig?.decimal,
+          )
+        }
+        coinConfig={coinConfig}
+        isConnected={isConnected}
+        coinBalance={tokenType === "pt" ? ptBalance : ytBalance}
+        coinNameComponent={<span className="px-2">{coinConfig?.coinName}</span>}
+      />
+      <ActionButton
+        btnText="Sell"
+        onClick={redeem}
+        openConnect={openConnect}
+        setOpenConnect={setOpenConnect}
+        insufficientBalance={insufficientBalance}
+        disabled={["", undefined].includes(redeemValue)}
+      />
     </div>
   )
 }

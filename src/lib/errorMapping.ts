@@ -59,6 +59,13 @@ const errorMapping: { [key: number]: string } = {
   836: "Create market invalid sender", // 0x0000344
   837: "Invalid epoch", // 0x0000345
   838: "Swap exact yt amount mismatch", // 0x0000346
+
+  65537: "Denominator error", // 0x10001
+  131074: "The quotient value would be too large to be held in a u128", // 0x20002
+  131075: "The multiplied value would be too large to be held in a u128", // 0x20003
+  65540: "A division by zero was encountered", // 0x10004
+  131077: "The computed ratio when converting to a FixedPoint64 would be unrepresentable", // 0x20005
+  65542: "Abort code on calculation result is negative", // 0x10006
 }
 
 export default errorMapping

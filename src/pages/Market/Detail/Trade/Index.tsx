@@ -3,7 +3,7 @@ import Sell from "./Swap/Sell"
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import SwitchIcon from "@/assets/images/svg/switch.svg?react"
-import LoadingIcon from "@/assets/images/svg/loading.svg?react"
+// import LoadingIcon from "@/assets/images/svg/loading.svg?react"
 import {
   Popover,
   PopoverContent,
@@ -50,12 +50,14 @@ export default function Trade() {
           </span>
         </div>
         <div className="flex items-center gap-x-2 w-auto">
-          <LoadingIcon />
-          <div className="flex items-center gap-x-2 bg-[#242632]/30 rounded-md py-1.5 px-2.5">
-            <SwitchIcon />
+          {/* <LoadingIcon /> */}
+          <div className="bg-[#242632]/30 rounded-md py-1.5 px-2.5">
             <Popover>
               <PopoverTrigger asChild>
-                <span className="text-white cursor-pointer">{slippage}%</span>
+                <div className="flex items-center gap-x-2 cursor-pointer">
+                  <SwitchIcon />
+                  <span className="text-white">{slippage}%</span>
+                </div>
               </PopoverTrigger>
               <PopoverContent className="w-80 bg-[#161720] border-none rounded-3xl">
                 <div className="grid gap-4">
