@@ -55,11 +55,11 @@ export default function Mint({ slippage }: { slippage: string }) {
     if (coinData?.length) {
       return coinData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(1e9)
-        .toFixed(9)
+        .div(10 ** (coinConfig?.decimal ?? 0))
+        .toFixed(coinConfig?.decimal ?? 0)
     }
     return 0
-  }, [coinData])
+  }, [coinData, coinConfig])
 
   const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
   const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
@@ -85,7 +85,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         }
 
         const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
-          new Decimal(mintValue).mul(1e9).toString(),
+          new Decimal(mintValue).mul(10 ** coinConfig.decimal).toString(),
         ])
 
         const [syCoin] = tx.moveCall({
@@ -95,7 +95,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             splitCoin,
             tx.pure.u64(
               new Decimal(mintValue)
-                .mul(1e9)
+                .mul(10 ** coinConfig.decimal)
                 .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toNumber(),
             ),

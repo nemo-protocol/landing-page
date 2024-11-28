@@ -60,7 +60,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     if (coinData?.length) {
       return coinData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(1e9)
+        .div(10 ** (coinConfig?.decimal ?? 0))
         .toFixed(9)
     }
     return 0
@@ -91,14 +91,9 @@ export default function Mint({ slippage }: { slippage: string }) {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const [splitCoinForAdd] = tx.splitCoins(
-          coinData[0].coinObjectId,
-          [
-            new Decimal(addValue)
-              .mul(1e9)
-              .toFixed(0),
-          ],
-        )
+        const [splitCoinForAdd] = tx.splitCoins(coinData[0].coinObjectId, [
+          new Decimal(addValue).mul(10 ** coinConfig.decimal).toFixed(0),
+        ])
 
         const [syCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::deposit`,
@@ -107,7 +102,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             splitCoinForAdd,
             tx.pure.u64(
               new Decimal(addValue)
-                .mul(1e9)
+                .mul(10 ** coinConfig.decimal)
                 .mul(ratio || 1)
                 .div(new Decimal(ratio || 1).add(1))
                 .mul(1 - new Decimal(slippage).div(100).toNumber())
@@ -147,7 +142,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                 new Decimal(addValue)
                   .mul(10 ** coinConfig.decimal)
                   .mul(1 - new Decimal(slippage).div(100).toNumber())
-                  .toNumber(),
+                  .toFixed(0),
               ),
               priceVoucherForMintLp,
               pyPosition,

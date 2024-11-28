@@ -2,7 +2,7 @@ import dayjs from "dayjs"
 import { useEffect, useMemo, useState } from "react"
 import Decimal from "decimal.js"
 import { Link } from "react-router-dom"
-import { useCurrentWallet } from "@mysten/dapp-kit"
+import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import { PortfolioItem } from "@/queries/types/market"
 import usePyPositionData from "@/hooks/usePyPositionData"
@@ -57,6 +57,7 @@ export default function Item({
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
+  const currentAccount = useCurrentAccount()
 
   const { updatePortfolio } = usePortfolio()
 
@@ -87,22 +88,19 @@ export default function Item({
     updatePortfolio,
   ])
 
-  const address = useMemo(
-    () => currentWallet?.accounts[0].address,
-    [currentWallet],
-  )
+  const address = useMemo(() => currentAccount?.address, [currentAccount])
 
   const { data: lppMarketPositionData } = useLpMarketPositionData(
     address,
     marketStateId,
-    maturity,
+    maturity.toString(),
     marketPositionType,
   )
 
   const { data: pyPositionData } = usePyPositionData(
     address,
     pyStateId,
-    maturity,
+    maturity.toString(),
     pyPositionType,
   )
 
@@ -424,7 +422,9 @@ export default function Item({
               <button
                 className={[
                   "rounded-3xl py-1 px-2",
-                  ytBalance ? "bg-[#0F60FF]" : "bg-[#0F60FF]/50 cursor-not-allowed",
+                  ytBalance
+                    ? "bg-[#0F60FF]"
+                    : "bg-[#0F60FF]/50 cursor-not-allowed",
                 ].join(" ")}
                 onClick={claim}
                 disabled={!ytBalance}

@@ -57,7 +57,7 @@ export default function Remove() {
     if (lppMarketPositionData?.length) {
       return lppMarketPositionData
         .reduce((total, item) => total.add(item.lp_amount), new Decimal(0))
-        .div(1e9)
+        .div(10 ** (coinConfig?.decimal ?? 0))
         .toFixed(9)
     }
     return 0
@@ -99,7 +99,7 @@ export default function Remove() {
           ],
           typeArguments: [coinConfig.syCoinType],
         })
-        let [yieldToken] = tx.moveCall({
+        const [yieldToken] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::redeem`,
           arguments: [
             tx.object(coinConfig.version),

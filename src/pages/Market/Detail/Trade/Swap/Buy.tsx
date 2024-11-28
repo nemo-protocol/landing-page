@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { GAS_BUDGET, network } from "@/config"
+import { network } from "@/config"
 import { Info } from "lucide-react"
 import { useParams } from "react-router-dom"
 import { useCurrentAccount } from "@mysten/dapp-kit"
@@ -74,11 +74,11 @@ export default function Mint({ slippage }: { slippage: string }) {
     if (coinData?.length) {
       return coinData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(1e9)
-        .toFixed(9)
+        .div(10 ** (coinConfig?.decimal ?? 0))
+        .toFixed(coinConfig?.decimal ?? 0)
     }
     return 0
-  }, [coinData])
+  }, [coinData, coinConfig])
 
   const insufficientBalance = useMemo(
     () => new Decimal(coinBalance).lt(swapValue || 0),
@@ -105,8 +105,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
-          new Decimal(swapValue).mul(1e9).toString(),
+        const [splitCoin] = tx.splitCoins(coinData[0].coinObjectId, [
+          new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
         ])
 
         const [syCoin] = tx.moveCall({
@@ -137,7 +137,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                 new Decimal(swapValue)
                   .mul(10 ** coinConfig.decimal)
                   .mul(1 - new Decimal(slippage).div(100).toNumber())
-                  .toNumber(),
+                  .toFixed(0),
               ),
               syCoin,
               priceVoucher,
@@ -157,9 +157,9 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.version),
               tx.pure.u64(
                 new Decimal(swapValue)
-                  .mul(1e9)
+                  .mul(10 ** coinConfig.decimal)
                   .mul(1 - new Decimal(slippage).div(100).toNumber())
-                  .toNumber(),
+                  .toFixed(0),
               ),
               syCoin,
               priceVoucher,
@@ -200,24 +200,26 @@ export default function Mint({ slippage }: { slippage: string }) {
           tx.transferObjects([pyPosition], address)
         }
 
-        tx.setGasBudget(GAS_BUDGET)
+        // tx.setGasBudget(GAS_BUDGET)
 
         const res = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),
           chain: `sui:${network}`,
         })
+        setTxId(res.digest)
         if (res.effects?.status.status === "failure") {
           setOpen(true)
           setStatus("Failed")
-          setTxId(res.digest)
           setMessage(parseErrorMessage(res.effects?.status.error || ""))
           return
         }
         setStatus("Success")
-        setTxId(res.digest)
         setOpen(true)
         setSwapValue("")
       } catch (error) {
+        console.log("error", error)
+        console.log("error", (error as Error)?.message)
+
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error

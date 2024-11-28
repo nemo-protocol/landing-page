@@ -64,14 +64,15 @@ const errorMapping: { [key: number]: string } = {
   131074: "The quotient value would be too large to be held in a u128", // 0x20002
   131075: "The multiplied value would be too large to be held in a u128", // 0x20003
   65540: "A division by zero was encountered", // 0x10004
-  131077: "The computed ratio when converting to a FixedPoint64 would be unrepresentable", // 0x20005
+  131077:
+    "The computed ratio when converting to a FixedPoint64 would be unrepresentable", // 0x20005
   65542: "Abort code on calculation result is negative", // 0x10006
 }
 
 export default errorMapping
 
-function getErrorMessage(errorCode: number): string {
-  return errorMapping[errorCode] || "Unknown error"
+function getErrorMessage(errorCode: number, errorString: string): string {
+  return errorMapping[errorCode] || errorString
 }
 
 export const parseErrorMessage = (errorString: string) => {
@@ -82,5 +83,7 @@ export const parseErrorMessage = (errorString: string) => {
         errorCodeMatch[1] ? 10 : 16,
       )
     : null
-  return errorCode ? getErrorMessage(errorCode) : errorString
+  console.log("errorCode", errorCode)
+
+  return errorCode ? getErrorMessage(errorCode, errorString) : errorString
 }

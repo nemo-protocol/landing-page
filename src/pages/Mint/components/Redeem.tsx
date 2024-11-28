@@ -65,21 +65,21 @@ export default function Redeem({
     if (pyPositionData?.length) {
       return pyPositionData
         .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
-        .div(1e9)
-        .toString()
+        .div(10 ** (coinConfig?.decimal ?? 0))
+        .toFixed(coinConfig?.decimal ?? 0)
     }
     return 0
-  }, [pyPositionData])
+  }, [pyPositionData, coinConfig])
 
   const ytBalance = useMemo(() => {
     if (pyPositionData?.length) {
       return pyPositionData
         .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
-        .div(1e9)
-        .toString()
+        .div(10 ** (coinConfig?.decimal ?? 0))
+        .toFixed(coinConfig?.decimal ?? 0)
     }
     return 0
-  }, [pyPositionData])
+  }, [pyPositionData, coinConfig])
 
   const insufficientBalance = useMemo(() => {
     return (
@@ -124,8 +124,16 @@ export default function Redeem({
           target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
           arguments: [
             tx.object(coinConfig.version),
-            tx.pure.u64(new Decimal(ytRedeemValue).mul(1e9).toString()),
-            tx.pure.u64(new Decimal(ptRedeemValue).mul(1e9).toString()),
+            tx.pure.u64(
+              new Decimal(ytRedeemValue)
+                .mul(10 ** coinConfig.decimal)
+                .toString(),
+            ),
+            tx.pure.u64(
+              new Decimal(ptRedeemValue)
+                .mul(10 ** coinConfig.decimal)
+                .toString(),
+            ),
             priceVoucher,
             pyPosition,
             tx.object(coinConfig.pyStateId),
