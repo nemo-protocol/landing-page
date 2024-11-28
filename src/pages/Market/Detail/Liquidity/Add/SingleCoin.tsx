@@ -161,16 +161,10 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         if (lpSupply === "" || lpSupply === "0") {
           const [lp, mp] = tx.moveCall({
-            target: `${coinConfig.nemoContractId}::market::mint_lp`,
+            target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
             arguments: [
               tx.object(coinConfig.version),
               syCoin,
-              tx.pure.u64(
-                new Decimal(addValue)
-                  .mul(10 ** coinConfig.decimal)
-                  .div(new Decimal(ratio).add(1))
-                  .toFixed(0),
-              ),
               priceVoucherForMintLp,
               pyPosition,
               tx.object(coinConfig.pyStateId),
