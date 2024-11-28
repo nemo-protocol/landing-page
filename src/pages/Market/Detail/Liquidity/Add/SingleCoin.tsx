@@ -9,7 +9,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit"
+import { useCurrentAccount } from "@mysten/dapp-kit"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
@@ -25,7 +25,6 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [addValue, setAddValue] = useState("")
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const { isConnected } = useCurrentWallet()
   const [openConnect, setOpenConnect] = useState(false)
   const currentAccount = useCurrentAccount()
 
@@ -33,6 +32,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     useCustomSignAndExecuteTransaction()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
+  const isConnected = useMemo(() => !!address, [address])
 
   const { data: coinConfig, isLoading } = useCoinConfig(
     coinType,
@@ -249,7 +249,7 @@ export default function Mint({ slippage }: { slippage: string }) {
       />
       <div className="flex items-center justify-end gap-x-1 w-full">
         <WalletIcon />
-        <span>Balance: {isConnected ? coinBalance : "--"}</span>
+        <span>Balance: {address ? coinBalance : "--"}</span>
       </div>
       <BalanceInput
         showPrice={true}

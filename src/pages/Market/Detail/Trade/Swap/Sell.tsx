@@ -1,7 +1,7 @@
 import Decimal from "decimal.js"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
-import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit"
+import { useCurrentAccount } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
@@ -30,7 +30,6 @@ export default function Sell({ slippage }: { slippage: string }) {
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState("pt")
-  const { isConnected } = useCurrentWallet()
   const [redeemValue, setRedeemValue] = useState("")
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { mutateAsync: signAndExecuteTransaction } =
@@ -45,6 +44,7 @@ export default function Sell({ slippage }: { slippage: string }) {
   }, [_tokenType])
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
+  const isConnected = useMemo(() => !!address, [address])
 
   const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(

@@ -12,7 +12,6 @@ import {
   ConnectModal,
   useAccounts,
   useCurrentAccount,
-  useCurrentWallet,
   useDisconnectWallet,
   useSwitchAccount,
 } from "@mysten/dapp-kit"
@@ -30,7 +29,6 @@ export default function Header() {
   const accounts = useAccounts()
   const [open, setOpen] = useState(false)
   const currentAccount = useCurrentAccount()
-  const { isConnected } = useCurrentWallet()
   const [isOpen, setIsOpen] = useState(false)
   const [isDrop, setIsDrop] = useState(false)
   const { mutate: switchAccount } = useSwitchAccount()
@@ -165,10 +163,7 @@ export default function Header() {
             </DropdownMenu>
           </span>
           <Network />
-          <span>
-            isConnected:{isConnected} {typeof isConnected}
-          </span>
-          {isConnected&&currentAccount?.address ? (
+          {currentAccount?.address ? (
             <div className="relative" ref={subNavRef}>
               <div
                 onClick={() => setIsDrop((isDrop) => !isDrop)}
