@@ -9,7 +9,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
-import { useCurrentWallet } from "@mysten/dapp-kit"
+import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
@@ -25,16 +25,14 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [addValue, setAddValue] = useState("")
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const { currentWallet, isConnected } = useCurrentWallet()
+  const { isConnected } = useCurrentWallet()
   const [openConnect, setOpenConnect] = useState(false)
+  const currentAccount = useCurrentAccount()
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
 
-  const address = useMemo(
-    () => currentWallet?.accounts[0].address,
-    [currentWallet],
-  )
+  const address = useMemo(() => currentAccount?.address, [currentAccount])
 
   const { data: coinConfig, isLoading } = useCoinConfig(
     coinType,
@@ -55,7 +53,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     address,
     coinConfig?.marketStateId,
   )
-  const ratio = useMemo(() => dataRatio?.syLpRate ?? 0, [dataRatio])
+  const ratio = useMemo(() => dataRatio?.syLpRate ?? 1, [dataRatio])
 
   const { data: coinData } = useCoinData(address, coinType)
   const coinBalance = useMemo(() => {
@@ -169,8 +167,8 @@ export default function Mint({ slippage }: { slippage: string }) {
               syCoin,
               tx.pure.u64(
                 new Decimal(addValue)
-                  .mul(1e9)
-                  .div(new Decimal(ratio || 1).add(1))
+                  .mul(10 ** coinConfig.decimal)
+                  .div(new Decimal(ratio).add(1))
                   .toFixed(0),
               ),
               priceVoucherForMintLp,
@@ -218,22 +216,20 @@ export default function Mint({ slippage }: { slippage: string }) {
           transaction: tx,
           chain: `sui:${network}`,
         })
+        setTxId(res.digest)
         if (res.effects?.status.status === "failure") {
-          setOpen(true)
-          setTxId(res.digest)
           setStatus("Failed")
           setMessage(parseErrorMessage(res.effects?.status.error || ""))
           return
         }
-        setTxId(res.digest)
-        setOpen(true)
         setAddValue("")
         setStatus("Success")
       } catch (error) {
-        setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))
+      } finally {
+        setOpen(true)
       }
     }
   }
@@ -279,9 +275,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         }
         coinConfig={coinConfig}
         isConnected={isConnected}
-        coinNameComponent={
-          <span>LP {coinConfig?.coinName}</span>
-        }
+        coinNameComponent={<span>LP {coinConfig?.coinName}</span>}
       />
       <ActionButton
         btnText="Add Liquidity"

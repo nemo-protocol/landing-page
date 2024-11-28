@@ -3,7 +3,7 @@ import Decimal from "decimal.js"
 import { GAS_BUDGET, network } from "@/config"
 import { Info } from "lucide-react"
 import { useParams } from "react-router-dom"
-import { useCurrentWallet } from "@mysten/dapp-kit"
+import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit"
 import { useEffect, useMemo, useState } from "react"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
@@ -42,7 +42,8 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [swapValue, setSwapValue] = useState("")
   const [tokenType, setTokenType] = useState("pt")
   const { coinType, tokenType: _tokenType, maturity } = useParams()
-  const { currentWallet, isConnected } = useCurrentWallet()
+  const { isConnected } = useCurrentWallet()
+  const currentAccount = useCurrentAccount()
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -53,10 +54,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     }
   }, [_tokenType])
 
-  const address = useMemo(
-    () => currentWallet?.accounts[0].address,
-    [currentWallet],
-  )
+  const address = useMemo(() => currentAccount?.address, [currentAccount])
 
   const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(

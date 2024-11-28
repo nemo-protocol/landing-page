@@ -165,7 +165,10 @@ export default function Header() {
             </DropdownMenu>
           </span>
           <Network />
-          {isConnected ? (
+          <span>
+            isConnected:{isConnected} {typeof isConnected}
+          </span>
+          {isConnected&&currentAccount?.address ? (
             <div className="relative" ref={subNavRef}>
               <div
                 onClick={() => setIsDrop((isDrop) => !isDrop)}

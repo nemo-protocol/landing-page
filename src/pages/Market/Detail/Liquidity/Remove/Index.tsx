@@ -2,7 +2,11 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
-import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+import {
+  ConnectModal,
+  useCurrentAccount,
+  useCurrentWallet,
+} from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import usePyPositionData from "@/hooks/usePyPositionData"
@@ -21,17 +25,15 @@ export default function Remove() {
   const { coinType, maturity } = useParams()
   const [lpValue, setLpValue] = useState("")
   const [message, setMessage] = useState<string>()
-  const { currentWallet, isConnected } = useCurrentWallet()
+  const { isConnected } = useCurrentWallet()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
+  const currentAccount = useCurrentAccount()
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
 
-  const address = useMemo(
-    () => currentWallet?.accounts[0].address,
-    [currentWallet],
-  )
+  const address = useMemo(() => currentAccount?.address, [currentAccount])
 
   const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
 

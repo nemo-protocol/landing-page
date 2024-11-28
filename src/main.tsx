@@ -28,7 +28,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <Toaster />
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
-        <WalletProvider>
+        <WalletProvider autoConnect={true}>
           <ToastProvider>
             <AnimatePresence>
               <App />
