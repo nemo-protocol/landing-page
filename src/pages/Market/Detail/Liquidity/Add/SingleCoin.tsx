@@ -91,59 +91,20 @@ export default function Mint({ slippage }: { slippage: string }) {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const [splitCoinForPY, splitCoin] = tx.splitCoins(
+        const [splitCoinForAdd] = tx.splitCoins(
           coinData[0].coinObjectId,
           [
             new Decimal(addValue)
               .mul(1e9)
-              .div(new Decimal(ratio).add(1))
-              .toFixed(0),
-            new Decimal(addValue)
-              .mul(1e9)
-              .mul(ratio || 1)
-              .div(new Decimal(ratio).add(1))
               .toFixed(0),
           ],
         )
-
-        const [syCoinForPY] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::sy::deposit`,
-          arguments: [
-            tx.object(coinConfig.version),
-            splitCoinForPY,
-            tx.pure.u64(
-              new Decimal(addValue)
-                .mul(1e9)
-                .div(new Decimal(ratio || 1).add(1))
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
-                .toFixed(0),
-            ),
-            tx.object(coinConfig.syStateId),
-          ],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
-
-        const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-
-        tx.moveCall({
-          target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
-          arguments: [
-            tx.object(coinConfig.version),
-            syCoinForPY,
-            priceVoucher,
-            pyPosition,
-            tx.object(coinConfig.pyStateId),
-            tx.object(coinConfig.yieldFactoryConfigId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        })
 
         const [syCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::deposit`,
           arguments: [
             tx.object(coinConfig.version),
-            splitCoin,
+            splitCoinForAdd,
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(1e9)
@@ -160,7 +121,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
 
         if (lpSupply === "" || lpSupply === "0") {
-          const [lp, mp] = tx.moveCall({
+          const [lp] = tx.moveCall({
             target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
             arguments: [
               tx.object(coinConfig.version),
@@ -175,7 +136,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             typeArguments: [coinConfig.syCoinType],
           })
 
-          tx.transferObjects([lp, mp], address)
+          tx.transferObjects([lp], address)
         } else {
           const [mp] = tx.moveCall({
             target: `${coinConfig.nemoContractId}::market::add_liquidity_single_sy`,
