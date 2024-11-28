@@ -88,11 +88,10 @@ export default function Remove() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        tx.moveCall({
+        const [sy] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::market::burn_lp`,
           arguments: [
             tx.object(coinConfig.version),
-            tx.pure.address(address),
             tx.pure.u64(new Decimal(lpValue).mul(1e9).toFixed(0)),
             pyPosition,
             tx.object(coinConfig.marketStateId),
@@ -100,6 +99,17 @@ export default function Remove() {
           ],
           typeArguments: [coinConfig.syCoinType],
         })
+        let [yieldToken] = tx.moveCall({
+          target: `${coinConfig.nemoContractId}::sy::redeem`,
+          arguments: [
+            tx.object(coinConfig.version),
+            sy,
+            tx.pure.u64(new Decimal(0).toFixed(0)),
+            tx.object(coinConfig.syStateId),
+          ],
+          typeArguments: [coinConfig.coinType, coinConfig.syCoinType],
+        })
+        tx.transferObjects([yieldToken], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
