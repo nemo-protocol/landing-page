@@ -126,7 +126,7 @@ export default function Mint({ slippage }: { slippage: string }) {
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        const priceVoucher = getPriceVoucher(tx, coinConfig)
+        const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
         if (tokenType === "pt") {
           tx.moveCall({
