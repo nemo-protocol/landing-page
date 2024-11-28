@@ -138,11 +138,9 @@ export default function Mint({ slippage }: { slippage: string }) {
             arguments: [
               tx.object(coinConfig.version),
               syCoin,
+              //todo: we should calculate the min out correctly
               tx.pure.u64(
-                new Decimal(addValue)
-                  .mul(10 ** coinConfig.decimal)
-                  .mul(1 - new Decimal(slippage).div(100).toNumber())
-                  .toFixed(0),
+                new Decimal(0).toFixed(0),
               ),
               priceVoucherForMintLp,
               pyPosition,
