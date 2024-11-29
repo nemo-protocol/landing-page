@@ -64,7 +64,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         .toFixed(9)
     }
     return 0
-  }, [coinData])
+  }, [coinData, coinConfig])
 
   const insufficientBalance = useMemo(
     () => new Decimal(coinBalance).lt(new Decimal(addValue || 0)),
@@ -139,9 +139,7 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.version),
               syCoin,
               //todo: we should calculate the min out correctly
-              tx.pure.u64(
-                new Decimal(0).toFixed(0),
-              ),
+              tx.pure.u64(new Decimal(0).toFixed(0)),
               priceVoucherForMintLp,
               pyPosition,
               tx.object(coinConfig.pyStateId),
