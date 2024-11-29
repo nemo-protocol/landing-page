@@ -61,46 +61,19 @@ export default function Item({
 
   const { updatePortfolio } = usePortfolio()
 
-  useEffect(() => {
-    if (currentWallet) {
-      updatePortfolio(
-        coinType + "_" + maturity + "_" + selectType,
-        selectType === "pt"
-          ? new Decimal(ptPrice).mul(ptPrice).toNumber()
-          : selectType === "yt"
-            ? new Decimal(ytReward || 0).mul(rewardCoinPrice || 0).toNumber()
-            : new Decimal(lpPrice).mul(lpPrice).toNumber(),
-        selectType === "lp"
-          ? new Decimal(lpReward || 0).mul(rewardCoinPrice || 0).toNumber()
-          : 0,
-      )
-    }
-  }, [
-    currentWallet,
-    selectType,
-    coinType,
-    maturity,
-    ptPrice,
-    ytReward,
-    rewardCoinPrice,
-    lpPrice,
-    lpReward,
-    updatePortfolio,
-  ])
-
   const address = useMemo(() => currentAccount?.address, [currentAccount])
 
   const { data: lppMarketPositionData } = useLpMarketPositionData(
     address,
     marketStateId,
-    maturity.toString(),
+    maturity,
     marketPositionType,
   )
 
   const { data: pyPositionData } = usePyPositionData(
     address,
     pyStateId,
-    maturity.toString(),
+    maturity,
     pyPositionType,
   )
 
@@ -133,6 +106,45 @@ export default function Item({
     }
     return 0
   }, [lppMarketPositionData])
+
+  useEffect(() => {
+    if (currentWallet && address) {
+      console.log("updatePortfolio", coinType + "_" + maturity)
+
+      updatePortfolio(
+        coinType + "_" + maturity,
+        new Decimal(ptBalance)
+          .mul(ptPrice && ptPrice !== "" ? ptPrice : 0)
+          .add(
+            new Decimal(ytBalance).mul(ytPrice && ytPrice !== "" ? ytPrice : 0),
+          )
+          .add(
+            new Decimal(lpCoinBalance).mul(
+              lpPrice && lpPrice !== "" ? lpPrice : 0,
+            ),
+          )
+          .toNumber(),
+        new Decimal(lpReward && lpReward !== "" ? lpReward : 0)
+          .mul(rewardCoinPrice && rewardCoinPrice !== "" ? rewardCoinPrice : 0)
+          .toNumber(),
+      )
+    }
+  }, [
+    currentWallet,
+    address,
+    selectType,
+    coinType,
+    maturity,
+    ptPrice,
+    ytPrice,
+    rewardCoinPrice,
+    lpPrice,
+    lpReward,
+    updatePortfolio,
+    ptBalance,
+    ytBalance,
+    lpCoinBalance,
+  ])
 
   async function claim() {
     if (coinType && address && ytBalance) {

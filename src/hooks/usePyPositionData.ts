@@ -42,8 +42,8 @@ const usePyPositionData = (
           .filter((item) => !!item)
           .filter(
             (item) =>
-              item.expiry === maturity?.toString() &&
-              item.py_state_id === pyStateId,
+              (!maturity || item.expiry === maturity.toString()) &&
+              (!pyStateId || item.py_state_id === pyStateId),
           )
       },
     },
