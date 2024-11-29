@@ -376,8 +376,9 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell className="text-center">PT</TableCell>
-          <TableCell className="text-center">
-            ${new Decimal(ptBalance).mul(ptPrice).toFixed(2)}
+          <TableCell className="text-center space-x-1">
+            <span>{new Decimal(ptBalance).mul(ptPrice).gt(0) && "≈"}</span>
+            <span>${new Decimal(ptBalance).mul(ptPrice).toFixed(2)}</span>
           </TableCell>
           <TableCell className="text-center">{ptBalance}</TableCell>
           <TableCell align="center" className="text-white">
@@ -414,8 +415,9 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell className="text-center">YT</TableCell>
-          <TableCell className="text-center">
-            ${new Decimal(ytBalance).mul(ytPrice).toFixed(2)}
+          <TableCell className="text-center space-x-1">
+            <span>{new Decimal(ytBalance).mul(ytPrice).gt(0) && "≈"}</span>
+            <span>${new Decimal(ytBalance).mul(ytPrice).toFixed(2)}</span>
           </TableCell>
           <TableCell className="text-center">{ytBalance}</TableCell>
           <TableCell className="text-center">
@@ -473,8 +475,9 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell className="text-center">LP</TableCell>
-          <TableCell className="text-center">
-            ${new Decimal(lpCoinBalance).mul(lpPrice).toFixed(2)}
+          <TableCell className="text-center space-x-1">
+            <span>{new Decimal(lpCoinBalance).mul(lpPrice).gt(0) && "≈"}</span>
+            <span>${new Decimal(lpCoinBalance).mul(lpPrice).toFixed(2)}</span>
           </TableCell>
           <TableCell className="text-center">{lpCoinBalance}</TableCell>
           <TableCell align="center" className="text-white">
