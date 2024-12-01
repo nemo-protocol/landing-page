@@ -368,7 +368,7 @@ export default function Item({
         <TableRow className="cursor-pointer">
           <TableCell className="flex items-center gap-x-3">
             <img src={icon} alt="" className="size-10" />
-            <div className="flex items-center gap-x-2">
+            <div className="flex flex-col md:flex-row md:items-center gap-2">
               <span>PT {name}</span>
               <span className="text-white/50 text-xs">
                 {dayjs(parseInt(maturity)).format("MMM DD YYYY")}

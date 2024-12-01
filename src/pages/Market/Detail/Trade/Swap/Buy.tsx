@@ -40,6 +40,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
   const [swapValue, setSwapValue] = useState("")
+  const [targetValue, setTargetValue] = useState("")
   const [tokenType, setTokenType] = useState("pt")
   const { coinType, tokenType: _tokenType, maturity } = useParams()
   const currentAccount = useCurrentAccount()
@@ -64,9 +65,16 @@ export default function Mint({ slippage }: { slippage: string }) {
     coinConfig?.pyPositionType,
   )
 
-  const { data: ratio } = useQuerySwapRatio(
+  const { data: swapRatio } = useQuerySwapRatio(
     coinConfig?.marketStateId,
     tokenType,
+    "buy",
+  )
+
+  const ratio = useMemo(() => swapRatio?.exchangeRate, [swapRatio])
+  const convertionRate = useMemo(
+    () => swapRatio?.convertionRate ?? 0,
+    [swapRatio],
   )
 
   const { data: coinData } = useCoinData(address, coinType)
@@ -200,12 +208,11 @@ export default function Mint({ slippage }: { slippage: string }) {
           tx.transferObjects([pyPosition], address)
         }
 
-        // tx.setGasBudget(GAS_BUDGET)
-
         const res = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),
           chain: `sui:${network}`,
         })
+
         setTxId(res.digest)
         if (res.effects?.status.status === "failure") {
           setOpen(true)
@@ -217,9 +224,6 @@ export default function Mint({ slippage }: { slippage: string }) {
         setOpen(true)
         setSwapValue("")
       } catch (error) {
-        console.log("error", error)
-        console.log("error", (error as Error)?.message)
-
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
@@ -252,23 +256,34 @@ export default function Mint({ slippage }: { slippage: string }) {
         coinConfig={coinConfig}
         isConnected={isConnected}
         coinBalance={coinBalance}
-        setBalance={setSwapValue}
+        onChange={(value) => {
+          setSwapValue(value)
+          setTargetValue(
+            formatDecimalValue(
+              new Decimal(value).mul(ratio || 0),
+              coinConfig?.decimal,
+            ),
+          )
+        }}
         price={coinConfig?.sCoinPrice}
         coinNameComponent={<span>{coinConfig?.coinName}</span>}
       />
       <SwapIcon className="mx-auto" />
       <BalanceInput
         showPrice={false}
-        balance={
-          swapValue &&
-          formatDecimalValue(
-            new Decimal(swapValue).mul(ratio || 0),
-            coinConfig?.decimal,
-          )
-        }
+        balance={targetValue}
         isLoading={isLoading}
         coinConfig={coinConfig}
         isConnected={isConnected}
+        onChange={(value) => {
+          setTargetValue(value)
+          setSwapValue(
+            formatDecimalValue(
+              new Decimal(value).div(ratio || 1),
+              coinConfig?.decimal,
+            ),
+          )
+        }}
         coinNameComponent={
           <Select
             value={tokenType}
@@ -301,8 +316,8 @@ export default function Mint({ slippage }: { slippage: string }) {
           </Select>
         }
       />
-      {isConnected && !isLoading && (
-        <div className="bg-[#44E0C30F]/[0.08] px-6 py-4 flex flex-col gap-y-2 w-full mt-6 rounded-lg">
+      {!isLoading && (
+        <div className="bg-[#44E0C30F]/[0.08] px-6 py-4 flex flex-col gap-y-2 w-full rounded-lg">
           <div className="flex items-center justify-between">
             {tokenType === "pt" ? (
               <span className="text-[#44E0C3] text-sm">
@@ -352,7 +367,7 @@ export default function Mint({ slippage }: { slippage: string }) {
                   <span className="text-white text-sm space-x-1">
                     <span>
                       {formatDecimalValue(
-                        new Decimal(swapValue || 0).mul(ratio || 0),
+                        new Decimal(targetValue || 0).mul(convertionRate || 0),
                         coinConfig?.decimal,
                       )}
                     </span>
@@ -362,9 +377,13 @@ export default function Mint({ slippage }: { slippage: string }) {
                   </span>
                   <span className="text-white/60 text-xs">
                     $
-                    {new Decimal(swapValue || 0)
+                    {new Decimal(
+                      formatDecimalValue(
+                        new Decimal(targetValue || 0).mul(convertionRate || 0),
+                        coinConfig?.decimal,
+                      ),
+                    )
                       .mul(coinConfig?.coinPrice || 0)
-                      .mul(ratio || 0)
                       .toFixed(2)}
                   </span>
                 </div>

@@ -23,6 +23,7 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [open, setOpen] = useState(false)
   const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
+  const [targetValue, setTargetValue] = useState("")
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
@@ -53,7 +54,7 @@ export default function Mint({ slippage }: { slippage: string }) {
     address,
     coinConfig?.marketStateId,
   )
-  const ratio = useMemo(() => dataRatio?.syLpRate ?? 1, [dataRatio])
+  const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio])
 
   const { data: coinData } = useCoinData(address, coinType)
   const coinBalance = useMemo(() => {
@@ -138,7 +139,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             arguments: [
               tx.object(coinConfig.version),
               syCoin,
-              //todo: we should calculate the min out correctly
+              //FIXME: we should calculate the min out correctly
               tx.pure.u64(new Decimal(0).toFixed(0)),
               priceVoucherForMintLp,
               pyPosition,
@@ -204,7 +205,15 @@ export default function Mint({ slippage }: { slippage: string }) {
         coinConfig={coinConfig}
         isConnected={isConnected}
         coinBalance={coinBalance}
-        setBalance={setAddValue}
+        onChange={(value) => {
+          setAddValue(value)
+          setTargetValue(
+            formatDecimalValue(
+              new Decimal(value).mul(ratio || 0),
+              coinConfig?.decimal,
+            ),
+          )
+        }}
         price={coinConfig?.sCoinPrice}
         coinNameComponent={<span>{coinConfig?.coinName}</span>}
       />
@@ -212,16 +221,19 @@ export default function Mint({ slippage }: { slippage: string }) {
       <BalanceInput
         showPrice={false}
         isLoading={isLoading}
-        balance={
-          addValue &&
-          formatDecimalValue(
-            new Decimal(addValue).mul(ratio),
-            coinConfig?.decimal,
-          )
-        }
+        balance={targetValue}
         coinConfig={coinConfig}
         isConnected={isConnected}
         coinNameComponent={<span>LP {coinConfig?.coinName}</span>}
+        onChange={(value) => {
+          setTargetValue(value)
+          setAddValue(
+            formatDecimalValue(
+              new Decimal(value).div(ratio || 1),
+              coinConfig?.decimal,
+            ),
+          )
+        }}
       />
       <ActionButton
         btnText="Add Liquidity"

@@ -11,8 +11,8 @@ interface BalanceInputProps {
   isConnected: boolean
   coinConfig?: CoinConfig
   coinBalance?: number | string
+  onChange: (value: string) => void
   coinNameComponent: React.ReactNode
-  setBalance?: (value: string) => void
 }
 
 const formatDecimalValue = (value: Decimal, decimalPlaces: number): string => {
@@ -27,7 +27,7 @@ const BalanceInput: React.FC<BalanceInputProps> = ({
   showPrice,
   isLoading,
   coinConfig,
-  setBalance,
+  onChange,
   coinBalance,
   isConnected,
   coinNameComponent,
@@ -55,8 +55,7 @@ const BalanceInput: React.FC<BalanceInputProps> = ({
             type="number"
             value={balance}
             placeholder={"0"}
-            disabled={!setBalance}
-            onChange={(e) => setBalance && setBalance(e.target.value)}
+            onChange={(e) => onChange && onChange(e.target.value)}
             className="bg-transparent h-full outline-none grow text-right min-w-0 placeholder:text-3xl p-0 text-3xl font-bold"
           />
         </div>
@@ -69,13 +68,14 @@ const BalanceInput: React.FC<BalanceInputProps> = ({
           </div>
         )}
       </div>
-      {isConnected && !!coinBalance && setBalance && !isLoading && (
+      {isConnected && !!coinBalance && !isLoading && (
         <div className="flex items-center gap-x-2 justify-end w-full">
           <button
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setBalance(
+              onChange &&
+              onChange(
                 formatDecimalValue(
                   new Decimal(coinBalance).div(2),
                   coinConfig?.decimal || 0,
@@ -89,7 +89,8 @@ const BalanceInput: React.FC<BalanceInputProps> = ({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setBalance(
+              onChange &&
+              onChange(
                 formatDecimalValue(
                   new Decimal(coinBalance),
                   coinConfig?.decimal || 0,

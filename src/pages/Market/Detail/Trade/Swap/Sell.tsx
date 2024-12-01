@@ -31,6 +31,7 @@ export default function Sell({ slippage }: { slippage: string }) {
   const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState("pt")
   const [redeemValue, setRedeemValue] = useState("")
+  const [targetValue, setTargetValue] = useState("")
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -54,10 +55,13 @@ export default function Sell({ slippage }: { slippage: string }) {
     coinConfig?.pyPositionType,
   )
 
-  const { data: ratio } = useQuerySwapRatio(
+  const { data: swapRatio } = useQuerySwapRatio(
     coinConfig?.marketStateId,
     tokenType,
+    "sell",
   )
+
+  const ratio = useMemo(() => swapRatio?.exchangeRate, [swapRatio])
 
   const ptBalance = useMemo(() => {
     if (pyPositionData?.length) {
@@ -209,7 +213,15 @@ export default function Sell({ slippage }: { slippage: string }) {
         coinConfig={coinConfig}
         isConnected={isConnected}
         coinBalance={tokenType === "pt" ? ptBalance : ytBalance}
-        setBalance={setRedeemValue}
+        onChange={(value) => {
+          setRedeemValue(value)
+          setTargetValue(
+            formatDecimalValue(
+              new Decimal(value).mul(ratio || 0),
+              coinConfig?.decimal,
+            ),
+          )
+        }}
         price={tokenType === "pt" ? coinConfig?.ptPrice : coinConfig?.ytPrice}
         coinNameComponent={
           <Select
@@ -236,16 +248,19 @@ export default function Sell({ slippage }: { slippage: string }) {
       <BalanceInput
         showPrice={false}
         isLoading={isLoading}
-        balance={
-          redeemValue &&
-          formatDecimalValue(
-            new Decimal(redeemValue).div(ratio && ratio !== "0" ? ratio : 1),
-            coinConfig?.decimal,
-          )
-        }
+        balance={targetValue}
         coinConfig={coinConfig}
         isConnected={isConnected}
         coinBalance={tokenType === "pt" ? ptBalance : ytBalance}
+        onChange={(value) => {
+          setTargetValue(value)
+          setRedeemValue(
+            formatDecimalValue(
+              new Decimal(value).div(ratio || 1),
+              coinConfig?.decimal,
+            ),
+          )
+        }}
         coinNameComponent={<span className="px-2">{coinConfig?.coinName}</span>}
       />
       <ActionButton

@@ -58,10 +58,19 @@ async function getMintLpAmount(
   return amount
 }
 
-async function getSwapRatio(marketStateId: string, tokenType: string) {
-  return await nemoApi<string>("/api/v1/market/swap/exchangeRate").get({
+async function getSwapRatio(
+  marketStateId: string,
+  tokenType: string,
+  swapType = "buy",
+) {
+  return await nemoApi<{
+    fixReturn: string
+    exchangeRate: string
+    convertionRate: string
+  }>("/api/v1/market/swap/exchangeRateDetail").get({
     marketStateId,
     tokenType,
+    swapType,
   })
 }
 
@@ -118,11 +127,15 @@ export function useQueryMintLpAmount(
   })
 }
 
-export function useQuerySwapRatio(marketStateId?: string, tokenType?: string) {
+export function useQuerySwapRatio(
+  marketStateId?: string,
+  tokenType?: string,
+  swapType?: "buy" | "sell",
+) {
   return useQuery({
     // FIXME： queryKey dose not work
-    queryKey: ["swapRatio", marketStateId, tokenType],
-    queryFn: () => getSwapRatio(marketStateId!, tokenType!),
+    queryKey: ["swapRatio", marketStateId, tokenType, swapType],
+    queryFn: () => getSwapRatio(marketStateId!, tokenType!, swapType),
     refetchInterval: 1000 * 30,
     enabled: !!marketStateId && !!tokenType,
   })
