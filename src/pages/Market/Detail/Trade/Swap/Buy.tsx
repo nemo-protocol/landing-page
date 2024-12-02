@@ -73,7 +73,7 @@ export default function Mint({ slippage }: { slippage: string }) {
 
   const ratio = useMemo(() => swapRatio?.exchangeRate, [swapRatio])
   const convertionRate = useMemo(
-    () => swapRatio?.convertionRate ?? 0,
+    () => swapRatio?.conversionRate ?? 0,
     [swapRatio],
   )
 

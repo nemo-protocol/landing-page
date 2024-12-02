@@ -66,7 +66,7 @@ async function getSwapRatio(
   return await nemoApi<{
     fixReturn: string
     exchangeRate: string
-    convertionRate: string
+    conversionRate: string
   }>("/api/v1/market/swap/exchangeRateDetail").get({
     marketStateId,
     tokenType,
