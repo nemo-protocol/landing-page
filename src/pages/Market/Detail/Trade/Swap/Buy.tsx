@@ -3,7 +3,7 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { Info } from "lucide-react"
 import { useParams } from "react-router-dom"
-import { useCurrentAccount } from "@mysten/dapp-kit"
+// import { useCurrentAccount } from "@mysten/dapp-kit"
 import { useEffect, useMemo, useState } from "react"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
@@ -32,6 +32,7 @@ import { formatDecimalValue } from "@/lib/utils"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
+import { useWallet } from "@suiet/wallet-kit"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")
@@ -43,10 +44,11 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [targetValue, setTargetValue] = useState("")
   const [tokenType, setTokenType] = useState("pt")
   const { coinType, tokenType: _tokenType, maturity } = useParams()
-  const currentAccount = useCurrentAccount()
+  // const currentAccount = useCurrentAccount()
+  const { account: currentAccount, signAndExecuteTransaction } = useWallet()
 
-  const { mutateAsync: signAndExecuteTransaction } =
-    useCustomSignAndExecuteTransaction()
+  // const { mutateAsync: signAndExecuteTransaction } =
+  //   useCustomSignAndExecuteTransaction()
 
   useEffect(() => {
     if (_tokenType) {
@@ -210,16 +212,17 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         const res = await signAndExecuteTransaction({
           transaction: Transaction.from(tx),
-          chain: `sui:${network}`,
+          // chain: `sui:${network}`,
         })
 
         setTxId(res.digest)
-        if (res.effects?.status.status === "failure") {
-          setOpen(true)
-          setStatus("Failed")
-          setMessage(parseErrorMessage(res.effects?.status.error || ""))
-          return
-        }
+        //TODO: handle failure
+        // if (res.effects?.status.status === "failure") {
+        //   setOpen(true)
+        //   setStatus("Failed")
+        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
+        //   return
+        // }
         setStatus("Success")
         setOpen(true)
         setSwapValue("")

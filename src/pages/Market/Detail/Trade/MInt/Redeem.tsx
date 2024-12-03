@@ -1,9 +1,9 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
 // import { debounce } from "@/lib/utils"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
-import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { initPyPosition } from "@/lib/txHelper"
+import { ConnectModal, useWallet } from "@suiet/wallet-kit"
 
 export default function Mint() {
   const { coinType, maturity } = useParams()
@@ -31,17 +32,25 @@ export default function Mint() {
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const { currentWallet, isConnected } = useCurrentWallet()
+  // const { currentWallet, isConnected } = useCurrentWallet()
   const [openConnect, setOpenConnect] = useState(false)
   const [ptRedeemValue, setPTRedeemValue] = useState("")
   const [ytRedeemValue, setYTRedeemValue] = useState("")
+  const [currentWallet, setCurrentWallet] = useState<any>([])
+  const { getAccounts, connected: isConnected, signAndExecuteTransaction } = useWallet()
 
-  const { mutateAsync: signAndExecuteTransaction } =
-    useCustomSignAndExecuteTransaction()
+  useEffect(() => {
+    if (isConnected) {
+      setCurrentWallet(getAccounts())
+    }
+  }, [isConnected])
+
+  // const { mutateAsync: signAndExecuteTransaction } =
+  //   useCustomSignAndExecuteTransaction()
 
   const address = useMemo(
-    () => currentWallet?.accounts[0].address,
-    [currentWallet],
+    () => currentWallet.length != 0 && currentWallet?.accounts[0].address,
+    [isConnected],
   )
 
   const { data: coinConfig } = useCoinConfig(coinType, maturity)
@@ -146,14 +155,15 @@ export default function Mint() {
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          chain: `sui:${network}`,
+          // chain: `sui:${network}`,
         })
-        if (res.effects?.status.status === "failure") {
-          setOpen(true)
-          setStatus("Failed")
-          setMessage(parseErrorMessage(res.effects?.status.error || ""))
-          return
-        }
+        //TODO handle error
+        // if (res.effects?.status.status === "failure") {
+        //   setOpen(true)
+        //   setStatus("Failed")
+        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
+        //   return
+        // }
         setTxId(res.digest)
         setOpen(true)
         setPTRedeemValue("")
@@ -380,12 +390,16 @@ export default function Mint() {
         <ConnectModal
           open={openConnect}
           onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          trigger={
-            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-              Connect Wallet
-            </button>
-          }
-        />
+        // trigger={
+        //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+        //     Connect Wallet
+        //   </button>
+        // }
+        >
+          <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+            Connect Wallet
+          </button>
+        </ConnectModal>
       ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer">
           Insufficient Balance

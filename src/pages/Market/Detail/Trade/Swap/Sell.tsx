@@ -1,7 +1,7 @@
 import Decimal from "decimal.js"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
-import { useCurrentAccount } from "@mysten/dapp-kit"
+// import { useCurrentAccount } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
@@ -23,6 +23,7 @@ import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue } from "@/lib/utils"
+import { useWallet } from "@suiet/wallet-kit"
 
 export default function Sell({ slippage }: { slippage: string }) {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -36,7 +37,8 @@ export default function Sell({ slippage }: { slippage: string }) {
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
   const [openConnect, setOpenConnect] = useState(false)
-  const currentAccount = useCurrentAccount()
+  // const currentAccount = useCurrentAccount()
+  const { account: currentAccount } = useWallet()
 
   useEffect(() => {
     if (_tokenType) {
@@ -162,7 +164,7 @@ export default function Sell({ slippage }: { slippage: string }) {
         // tx.setGasBudget(10000000)
 
         const res = await signAndExecuteTransaction({
-          transaction: tx,
+          transaction: tx.toString(),
           chain: `sui:${network}`,
         })
         if (res.effects?.status.status === "failure") {

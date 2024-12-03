@@ -1,8 +1,8 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
 // import { debounce } from "@/lib/utils"
-import { useMemo, useState } from "react"
-import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+import { useEffect, useMemo, useState } from "react"
+// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
@@ -24,6 +24,7 @@ import {
 import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
 import { initPyPosition } from "@/lib/txHelper"
+import { useWallet, ConnectModal } from "@suiet/wallet-kit"
 
 export default function Redeem({
   maturity,
@@ -36,17 +37,25 @@ export default function Redeem({
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const { currentWallet, isConnected } = useCurrentWallet()
+  // const { currentWallet, isConnected } = useCurrentWallet()
   const [openConnect, setOpenConnect] = useState(false)
   const [ptRedeemValue, setPTRedeemValue] = useState("")
   const [ytRedeemValue, setYTRedeemValue] = useState("")
 
-  const { mutateAsync: signAndExecuteTransaction } =
-    useCustomSignAndExecuteTransaction()
+  // const { mutateAsync: signAndExecuteTransaction } =
+  //   useCustomSignAndExecuteTransaction()
 
+  const [currentWallet, setCurrentWallet] = useState<any>([])
+  const { getAccounts, connected: isConnected, signAndExecuteTransaction } = useWallet()
+
+  useEffect(() => {
+    if (isConnected) {
+      setCurrentWallet(getAccounts())
+    }
+  }, [isConnected])
   const address = useMemo(
-    () => currentWallet?.accounts[0].address,
-    [currentWallet],
+    () => currentWallet.length != 0 && currentWallet?.accounts[0].address,
+    [isConnected],
   )
 
   const { data: coinConfig } = useCoinConfig(coinType, maturity)
@@ -151,14 +160,15 @@ export default function Redeem({
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          chain: `sui:${network}`,
+          // chain: `sui:${network}`,
         })
-        if (res.effects?.status.status === "failure") {
-          setOpen(true)
-          setStatus("Failed")
-          setMessage(parseErrorMessage(res.effects?.status.error || ""))
-          return
-        }
+        //TODO: handle error
+        // if (res.effects?.status.status === "failure") {
+        //   setOpen(true)
+        //   setStatus("Failed")
+        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
+        //   return
+        // }
         setTxId(res.digest)
         setOpen(true)
         setPTRedeemValue("")
@@ -393,12 +403,16 @@ export default function Redeem({
         <ConnectModal
           open={openConnect}
           onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          trigger={
-            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-              Connect Wallet
-            </button>
-          }
-        />
+        // trigger={
+        //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+        //     Connect Wallet
+        //   </button>
+        // }
+        >
+          <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+            Connect Wallet
+          </button>
+        </ConnectModal>
       ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance

@@ -2,7 +2,7 @@ import dayjs from "dayjs"
 import { useEffect, useMemo, useState } from "react"
 import Decimal from "decimal.js"
 import { Link } from "react-router-dom"
-import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit"
+// import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import { PortfolioItem } from "@/queries/types/market"
 import usePyPositionData from "@/hooks/usePyPositionData"
@@ -22,6 +22,7 @@ import { network } from "@/config"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import usePortfolio from "@/hooks/usePortfolio"
+import { useWallet } from "@suiet/wallet-kit"
 
 export default function Item({
   name,
@@ -52,13 +53,21 @@ export default function Item({
 }: PortfolioItem & { selectType: "pt" | "yt" | "lp" | "all" }) {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
-  const { currentWallet } = useCurrentWallet()
+  // const { currentWallet } = useCurrentWallet()
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const { mutateAsync: signAndExecuteTransaction } =
-    useCustomSignAndExecuteTransaction()
-  const currentAccount = useCurrentAccount()
+  // const { mutateAsync: signAndExecuteTransaction } =
+  //   useCustomSignAndExecuteTransaction()
+  // const currentAccount = useCurrentAccount()
+  const { account: currentAccount } = useWallet()
+  const [currentWallet, setCurrentWallet] = useState<any>([])
+  const { getAccounts, connected: isConnected, signAndExecuteTransaction } = useWallet()
 
+  useEffect(() => {
+    if (isConnected) {
+      setCurrentWallet(getAccounts())
+    }
+  }, [isConnected])
   const { updatePortfolio } = usePortfolio()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
@@ -194,7 +203,7 @@ export default function Item({
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
-          chain: `sui:${network}`,
+          // chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
@@ -260,7 +269,7 @@ export default function Item({
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
-          chain: `sui:${network}`,
+          // chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
@@ -310,7 +319,7 @@ export default function Item({
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
-          chain: `sui:${network}`,
+          // chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
