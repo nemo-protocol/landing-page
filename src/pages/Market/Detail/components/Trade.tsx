@@ -408,7 +408,7 @@ export default function Trade() {
             <div className="flex items-center gap-x-1">
               <img
                 className="size-3.5"
-                src={coinConfig?.coinLogo}
+                src={coinConfig?.underlyingProtocolLogo}
                 alt={coinConfig?.underlyingProtocol}
               />
               <div className="text-xs">{coinConfig?.underlyingProtocol}</div>

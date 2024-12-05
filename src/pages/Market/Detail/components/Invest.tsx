@@ -387,7 +387,7 @@ export default function Invest() {
         </div>
         <ActionButton
           onClick={swap}
-          btnText="Invert"
+          btnText="Invest"
           openConnect={openConnect}
           setOpenConnect={setOpenConnect}
           insufficientBalance={insufficientBalance}

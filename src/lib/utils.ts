@@ -31,7 +31,6 @@ export const formatDecimalValue = (
   decimal = 0,
 ): string => {
   const value = _value instanceof Decimal ? _value : new Decimal(_value || 0)
-  console.log(value.decimalPlaces(), decimal, value.toFixed(decimal))
   return value.decimalPlaces() > decimal
     ? value.toFixed(decimal)
     : value.toFixed(value.decimalPlaces())

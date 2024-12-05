@@ -20,7 +20,7 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
           tx.object(coinConfig.lstInfoId),
           tx.object(coinConfig.syStateId),
         ],
-        typeArguments: [coinConfig.syCoinType],
+        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       })
     default:
       return tx.moveCall({

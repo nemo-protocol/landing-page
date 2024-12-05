@@ -26,6 +26,7 @@ export interface CoinConfig {
   underlyingCoinLogo: string
   underlyingPrice: string
   underlyingProtocol: string
+  underlyingProtocolLogo: string
   ptApy: string
   ytApy: string
   pyStateId: string
