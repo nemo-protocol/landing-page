@@ -151,7 +151,7 @@ export default function Invest() {
             tx.pure.u64(
               new Decimal(swapValue)
                 .mul(10 ** coinConfig.decimal)
-                .mul(new Decimal(ratio).add(1))
+                .div(new Decimal(ratio).add(1))
                 .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
@@ -288,7 +288,7 @@ export default function Invest() {
           <hr className="border-t border-[#2D2D48] mt-6" />
           <div className="flex items-center justify-between mt-6">
             <span>Fixed APY</span>
-            <span>{coinConfig?.ptApy ? `${coinConfig.ptApy} %` : "--"}</span>
+            <span className="underline">{coinConfig?.ptApy ? `${coinConfig.ptApy} %` : "--"}</span>
           </div>
           <div className="flex items-center justify-between mt-6">
             <span className="flex items-center gap-x-1">

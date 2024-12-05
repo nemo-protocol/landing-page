@@ -25,7 +25,7 @@ function App() {
               <Route path="/mint/:action?" element={<Mint />} />
               <Route
                 element={<Detail />}
-                path="/market/detail/:coinType/:maturity/:operation?/:action?/:tokenType?"
+                path="/market/detail/:coinType/:maturity/:operation?/:tokenType?"
               />
               <Route path="/learn" element={<Learn />} />
               <Route path="/portfolio" element={<Portfolio />} />

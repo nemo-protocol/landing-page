@@ -384,13 +384,13 @@ export default function Item({
           <TableCell align="center" className="text-white">
             {dayjs(parseInt(maturity)).diff(dayjs(), "day") > 0 ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
-                <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/pt`}>
+                <Link to={`/market/detail/${coinType}/${maturity}/swap/pt`}>
                   <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
                     Buy
                   </button>
                 </Link>
                 <Link
-                  to={`/market/detail/${coinType}/${maturity}/swap/sell/pt`}
+                  to={`/market/detail/${coinType}/${maturity}/sell/pt`}
                 >
                   <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
                     Sell
@@ -449,12 +449,12 @@ export default function Item({
           </TableCell>
           <TableCell align="center" className="text-white">
             <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
-              <Link to={`/market/detail/${coinType}/${maturity}/swap/buy/yt`}>
+              <Link to={`/market/detail/${coinType}/${maturity}/swap/yt`}>
                 <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
                   Buy
                 </button>
               </Link>
-              <Link to={`/market/detail/${coinType}/${maturity}/swap/sell/yt`}>
+              <Link to={`/market/detail/${coinType}/${maturity}/sell/yt`}>
                 <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
                   Sell
                 </button>

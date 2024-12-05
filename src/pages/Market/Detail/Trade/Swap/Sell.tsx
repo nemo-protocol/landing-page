@@ -23,8 +23,10 @@ import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue } from "@/lib/utils"
+import SlippageSetting from "@/components/SlippageSetting"
 
-export default function Sell({ slippage }: { slippage: string }) {
+export default function Sell() {
+  const [slippage, setSlippage] = useState("0.5")
   const { coinType, tokenType: _tokenType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
@@ -197,14 +199,22 @@ export default function Sell({ slippage }: { slippage: string }) {
           setOpen(false)
         }}
       />
-      <div className="flex items-center justify-end gap-x-1 w-full">
-        <WalletIcon />
-        <span className="space-x-1">
-          <span>Balance:</span>
-          <span>
-            {isConnected ? (tokenType === "pt" ? ptBalance : ytBalance) : "--"}
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-x-1">
+          <WalletIcon />
+          <span className="space-x-1">
+            <span>Balance:</span>
+            <span>
+              {isConnected
+                ? tokenType === "pt"
+                  ? ptBalance
+                  : ytBalance
+                : "--"}
+            </span>
           </span>
-        </span>
+        </div>
+
+        <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
       </div>
       <BalanceInput
         showPrice={true}

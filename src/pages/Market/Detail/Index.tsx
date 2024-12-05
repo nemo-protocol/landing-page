@@ -1,5 +1,5 @@
 import { useState } from "react"
-import Trade from "./Trade/Index.tsx"
+import Sell from "./Trade/Index.tsx"
 import Header from "@/components/Header"
 import { ArrowLeft } from "lucide-react"
 import Liquidity from "./Liquidity/Index.tsx"
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/chart"
 
 import Invest from "./components/Invest.tsx"
+import Trade from "./components/Trade.tsx"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -64,154 +65,164 @@ export default function Home() {
         >
           <ArrowLeft />
         </h3>
-      </div>
-
-      <div className="py-10 relative px-6 xl:px-0 max-w-[600px] mx-auto">
-        <div className="mt-9 flex xl:flex-row flex-col gap-x-8 justify-center">
-          <div className="w-full xl:w-[500px] flex flex-col gap-y-5">
-            {operation === "swap" && tokenType === "pt" && <Invest />}
-            {operation === "swap" && tokenType === "yt" && <Trade />}
-            {operation === "liquidity" && <Liquidity />}
-          </div>
-          <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
-            <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
-              <div className="flex items-center gap-x-4 w-full md:w-auto">
-                <img src={sSUI} alt="" className="size-[60px]" />
-                <div className="flex flex-col">
-                  <span className="text-white text-lg">PT sSUI</span>
-                  <span className="text-white text-xs">
-                    28 Aug 2024 <span className="text-[#2DF4DD]">41 DAYS</span>
-                  </span>
-                </div>
+        <div className="mt-5 md:mt-20 relative">
+          <div className="flex xl:flex-row flex-col gap-x-8 justify-center">
+            {operation === "swap" && tokenType === "yt" ? (
+              <Trade />
+            ) : (
+              <div className="w-full xl:w-[500px] flex flex-col gap-y-5">
+                {operation === "swap" && tokenType === "pt" && <Invest />}
+                {operation === "sell" && <Sell />}
+                {operation === "liquidity" && <Liquidity />}
               </div>
-              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
-                <span className="text-white text-lg">$232,523,76.36</span>
-                <span className="text-white/50 text-xs">TVL</span>
-              </div>
-              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
-                <span className="text-white text-lg">Apr 24 2025</span>
-                <span className="text-white/50 text-xs">Maturity</span>
-              </div>
-              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
-                <span className="text-white text-lg">3.56%</span>
-                <span className="text-white/50 text-xs">Underlying APY</span>
-              </div>
-              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
-                <span className="text-white text-lg">6.66%</span>
-                <span className="text-white/50 text-xs">Fixed APY</span>
-              </div>
-            </div>
-            <div className="bg-[#0E0F16] rounded-3xl md:p-7.5">
-              <div>
-                <div className="flex items-center gap-x-7">
-                  <span
-                    onClick={() => setTab("Details")}
-                    className={[
-                      tab === "Details" ? "text-white" : "text-white/40",
-                      "cursor-pointer",
-                    ].join(" ")}
-                  >
-                    Details
-                  </span>
-                  <span
-                    onClick={() => setTab("Calculator")}
-                    className={[
-                      tab === "Calculator" ? "text-white" : "text-white/40",
-                      "cursor-pointer",
-                    ].join(" ")}
-                  >
-                    Calculator
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-x-4 mt-7">
-                    <span
-                      onClick={() => setTimeRange("1h")}
-                      className={[
-                        timeRange === "1h" ? "rounded-[20px] bg-[#1E212B]" : "",
-                        "py-1 px-2 cursor-pointer",
-                      ].join(" ")}
-                    >
-                      1h
-                    </span>
-                    <span
-                      onClick={() => setTimeRange("1D")}
-                      className={[
-                        timeRange === "1D" ? "rounded-[20px] bg-[#1E212B]" : "",
-                        "py-1 px-2 cursor-pointer",
-                      ].join(" ")}
-                    >
-                      1D
-                    </span>
-                    <span
-                      onClick={() => setTimeRange("1W")}
-                      className={[
-                        timeRange === "1W" ? "rounded-[20px] bg-[#1E212B]" : "",
-                        "py-1 px-2 cursor-pointer",
-                      ].join(" ")}
-                    >
-                      1W
-                    </span>
-                  </div>
-                  <div className="bg-[#242632] rounded-[30px] text-sm">
-                    <span
-                      onClick={() => setType("APY")}
-                      className={[
-                        type === "APY" && "bg-[#0F60FF] rounded-[30px]",
-                        "py-1 px-3.5 cursor-pointer",
-                      ].join(" ")}
-                    >
-                      APY
-                    </span>
-                    <span
-                      onClick={() => setType("Price")}
-                      className={[
-                        type === "Price" && "bg-[#0F60FF] rounded-[30px]",
-                        "py-1 px-3.5 cursor-pointer",
-                      ].join(" ")}
-                    >
-                      Price
+            )}
+            <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
+              <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
+                <div className="flex items-center gap-x-4 w-full md:w-auto">
+                  <img src={sSUI} alt="" className="size-[60px]" />
+                  <div className="flex flex-col">
+                    <span className="text-white text-lg">PT sSUI</span>
+                    <span className="text-white text-xs">
+                      28 Aug 2024{" "}
+                      <span className="text-[#2DF4DD]">41 DAYS</span>
                     </span>
                   </div>
                 </div>
+                <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
+                  <span className="text-white text-lg">$232,523,76.36</span>
+                  <span className="text-white/50 text-xs">TVL</span>
+                </div>
+                <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
+                  <span className="text-white text-lg">Apr 24 2025</span>
+                  <span className="text-white/50 text-xs">Maturity</span>
+                </div>
+                <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
+                  <span className="text-white text-lg">3.56%</span>
+                  <span className="text-white/50 text-xs">Underlying APY</span>
+                </div>
+                <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
+                  <span className="text-white text-lg">6.66%</span>
+                  <span className="text-white/50 text-xs">Fixed APY</span>
+                </div>
               </div>
-              <ChartContainer config={chartConfig} className="mt-14">
-                <LineChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: 12,
-                    right: 12,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent />}
-                  />
-                  <Line
-                    dataKey="desktop"
-                    type="monotone"
-                    stroke="#0F60FF"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                  <Line
-                    dataKey="mobile"
-                    type="monotone"
-                    stroke="#44E0C3"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ChartContainer>
+              <div className="bg-[#0E0F16] rounded-3xl md:p-7.5">
+                <div>
+                  <div className="flex items-center gap-x-7">
+                    <span
+                      onClick={() => setTab("Details")}
+                      className={[
+                        tab === "Details" ? "text-white" : "text-white/40",
+                        "cursor-pointer",
+                      ].join(" ")}
+                    >
+                      Details
+                    </span>
+                    <span
+                      onClick={() => setTab("Calculator")}
+                      className={[
+                        tab === "Calculator" ? "text-white" : "text-white/40",
+                        "cursor-pointer",
+                      ].join(" ")}
+                    >
+                      Calculator
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-x-4 mt-7">
+                      <span
+                        onClick={() => setTimeRange("1h")}
+                        className={[
+                          timeRange === "1h"
+                            ? "rounded-[20px] bg-[#1E212B]"
+                            : "",
+                          "py-1 px-2 cursor-pointer",
+                        ].join(" ")}
+                      >
+                        1h
+                      </span>
+                      <span
+                        onClick={() => setTimeRange("1D")}
+                        className={[
+                          timeRange === "1D"
+                            ? "rounded-[20px] bg-[#1E212B]"
+                            : "",
+                          "py-1 px-2 cursor-pointer",
+                        ].join(" ")}
+                      >
+                        1D
+                      </span>
+                      <span
+                        onClick={() => setTimeRange("1W")}
+                        className={[
+                          timeRange === "1W"
+                            ? "rounded-[20px] bg-[#1E212B]"
+                            : "",
+                          "py-1 px-2 cursor-pointer",
+                        ].join(" ")}
+                      >
+                        1W
+                      </span>
+                    </div>
+                    <div className="bg-[#242632] rounded-[30px] text-sm">
+                      <span
+                        onClick={() => setType("APY")}
+                        className={[
+                          type === "APY" && "bg-[#0F60FF] rounded-[30px]",
+                          "py-1 px-3.5 cursor-pointer",
+                        ].join(" ")}
+                      >
+                        APY
+                      </span>
+                      <span
+                        onClick={() => setType("Price")}
+                        className={[
+                          type === "Price" && "bg-[#0F60FF] rounded-[30px]",
+                          "py-1 px-3.5 cursor-pointer",
+                        ].join(" ")}
+                      >
+                        Price
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <ChartContainer config={chartConfig} className="mt-14">
+                  <LineChart
+                    accessibilityLayer
+                    data={chartData}
+                    margin={{
+                      left: 12,
+                      right: 12,
+                    }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="month"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => value.slice(0, 3)}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent />}
+                    />
+                    <Line
+                      dataKey="desktop"
+                      type="monotone"
+                      stroke="#0F60FF"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      dataKey="mobile"
+                      type="monotone"
+                      stroke="#44E0C3"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </div>
             </div>
           </div>
         </div>

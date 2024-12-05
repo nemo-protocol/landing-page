@@ -183,7 +183,7 @@ export default function Home() {
                       className="px-2 py-1.5 bg-[#0F60FF] rounded-xl flex items-center justify-between pl-5 pr-3 h-14 cursor-pointer border border-transparent hover:border-white"
                       onClick={() =>
                         navigate(
-                          `/market/detail/${item.coinAddress}/${item.maturity}/swap/buy/yt`,
+                          `/market/detail/${item.coinAddress}/${item.maturity}/swap/yt`,
                         )
                       }
                     >
@@ -201,7 +201,7 @@ export default function Home() {
                       className="px-4 py-3 bg-[#2DF5DD] rounded-xl flex items-center justify-between text-black pl-5 pr-3 h-14 cursor-pointer border border-transparent hover:border-white"
                       onClick={() =>
                         navigate(
-                          `/market/detail/${item.coinAddress}/${item.maturity}/swap/buy/pt`,
+                          `/market/detail/${item.coinAddress}/${item.maturity}/swap/pt`,
                         )
                       }
                     >

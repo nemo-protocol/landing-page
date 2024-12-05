@@ -53,7 +53,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
               <div>
                 {coinNameComponent}
                 <div
-                  className="flex items-center gap-x-1"
+                  className="flex items-center gap-x-1 hover:cursor-pointer hover:underline"
                   onClick={() =>
                     isConnected &&
                     coinBalance &&
