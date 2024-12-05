@@ -10,10 +10,6 @@ import Diamond from "@/assets/images/svg/market/diamond.svg"
 import { motion } from "framer-motion"
 import Carousel from "./Carousel.tsx"
 
-import banner01 from "@/assets/images/png/banner/banner01.png"
-import banner02 from "@/assets/images/png/banner/banner02.png"
-import banner03 from "@/assets/images/png/banner/banner03.png"
-
 const textVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
@@ -84,7 +80,14 @@ export default function Home() {
             variants={carouselVariants}
             transition={{ duration: 0.5 }}
           >
-            <Carousel interval={5000} images={[banner01, banner02, banner03]} />
+            <Carousel
+              interval={5000}
+              images={[
+                "/images/carousel/carousel01.png",
+                "/images/carousel/carousel02.png",
+                "/images/carousel/carousel03.png",
+              ]}
+            />
           </motion.div>
         </div>
         <motion.div

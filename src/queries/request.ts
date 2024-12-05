@@ -1,4 +1,4 @@
-const baseUrl = import.meta.env.VITE_API_URL
+const baseUrl = import.meta.env.VITE_API_URL || ""
 
 type OptionParams = Record<string, string | number | undefined>
 

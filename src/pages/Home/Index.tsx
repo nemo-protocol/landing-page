@@ -6,7 +6,6 @@ import Nemo from "@/assets/images/png/nemo.png"
 import RightArrow from "@/assets/images/svg/right-arrow.svg?react"
 import Telegram from "@/assets/images/svg/telegram.svg?react"
 import X from "@/assets/images/svg/x.svg?react"
-import MarketPNG from "@/assets/images/png/market.png"
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Link } from "react-router-dom"
@@ -37,7 +36,7 @@ export default function Home() {
   })
 
   return (
-    <div>
+    <div className="px-4 md:px-8">
       <div
         style={{ backgroundImage: `url(${bg1})` }}
         className="w-full h-screen bg-no-repeat bg-top bg-cover absolute top-0 left-0"
@@ -45,13 +44,16 @@ export default function Home() {
       <div className="overflow-hidden">
         <div className="min-h-screen flex flex-col">
           <Header />
-          <div ref={ref1} className="pt-12 md:pt-[7.125rem] relative lg:grow">
+          <div
+            ref={ref1}
+            className="flex flex-col items-center justify-center relative grow gap-y-12 md:gap-y-9"
+          >
             <div className={["flex flex-col", containerStyles].join(" ")}>
               <motion.h1
                 initial={{ opacity: 0, x: -50 }}
                 animate={ref1InView ? { opacity: 1, x: 0 } : {}}
                 transition={{ duration: 0.5 }}
-                className="text-3xl xs:text-5xl xs:text-center text-white text-balance"
+                className="text-3xl md:text-5xl xl:text-6xl xs:text-center text-white text-balance"
               >
                 Yield <span className="text-[#65A2FF]">Trading</span> For
                 Everyone
@@ -77,9 +79,9 @@ export default function Home() {
               >
                 <Link
                   to="/market"
-                  className="bg-[#1954FF] flex items-center gap-x-4 rounded-full px-5 py-3"
+                  className="bg-[#1954FF] flex items-center gap-x-4 rounded-full px-3 py-1.5 md:px-5 md:py-3 text-sm md:text-base"
                 >
-                  <span className="text-sm xs:text-base text-white">
+                  <span className="text-xs md:text-base text-white">
                     Enter Now
                   </span>
                   <RightArrow />
@@ -87,16 +89,18 @@ export default function Home() {
                 <a
                   target="_blank"
                   href="https://docs.nemoprotocol.com/"
-                  className="rounded-full border border-white text-white bg-transparent px-5 py-3 active:border-[#1954FF] active:text-[#1954FF] hover:text-[#1954FF]"
+                  className="rounded-full border border-white text-white bg-transparent px-3 py-1.5 md:px-5 md:py-3 active:border-[#1954FF] active:text-[#1954FF] hover:text-[#1954FF] text-xs md:text-base"
                 >
-                  <span className="text-sm xs:text-base">Learn More</span>
+                  <span className="text-sm xs:text-base text-white">
+                    Learn More
+                  </span>
                 </a>
               </motion.div>
             </div>
             <motion.img
               alt=""
-              src={MarketPNG}
-              className={["mt-9", containerStyles, "px-0"].join(" ")}
+              src="/images/home/market.png"
+              className="mx-auto max-w-[750px] w-full md:w-fit"
               initial={{ opacity: 0, y: 50 }}
               animate={ref1InView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5 }}
@@ -115,11 +119,11 @@ export default function Home() {
             initial={{ opacity: 0, y: -100 }}
             animate={ref2InView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="text-3xl xs:text-5xl text-center text-white text-balance"
+            className="text-2xl md:text-3xl lg:text-5xl text-center text-white text-pretty"
           >
-            Yield often fluctuates with the market, So&nbsp;
-            <span className="text-[#65A2FF]">Nemo</span> separates yields for
-            everyone.
+            Fixed return, points multiplier, leveraged spread,everything you
+            need to maximize yield, only on{" "}
+            <span className="text-[#65A2FF]">Nemo</span>.
           </motion.h1>
           <div className="grow">
             <div className="flex flex-col lg:flex-row items-center mt-10 justify-center gap-8">
@@ -127,7 +131,7 @@ export default function Home() {
                 alt=""
                 ref={ref5}
                 src={Nemo}
-                className="w-full lg:hidden"
+                className="w-full lg:hidden max-w-[300px] mx-auto"
                 initial={{ opacity: 0, y: 50 }}
                 animate={ref5InView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5 }}
@@ -154,7 +158,7 @@ export default function Home() {
               <motion.img
                 alt=""
                 src={Nemo}
-                className="w-[605px] hidden lg:inline-block"
+                className="hidden lg:inline-block mx-auto max-w-[400px]"
                 initial={{ opacity: 0, y: 50 }}
                 animate={ref3InView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5 }}

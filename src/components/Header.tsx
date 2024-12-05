@@ -1,4 +1,5 @@
 import { IS_DEV } from "@/config"
+import { cn } from "@/lib/utils"
 import { truncateStr } from "@/lib/utils"
 import { ChevronDown } from "lucide-react"
 import { useToast } from "@/components/Toast"
@@ -23,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export default function Header() {
+export default function Header({ className }: { className?: string }) {
   const toast = useToast()
   const location = useLocation()
   const accounts = useAccounts()
@@ -53,7 +54,7 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="h-16 shrink-0">
+    <header className={cn("h-16 shrink-0", className)}>
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
         <div className="flex items-center gap-x-6 h-full">
           <Link to="/" className="flex gap-x-2">

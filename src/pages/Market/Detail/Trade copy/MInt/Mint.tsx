@@ -8,7 +8,7 @@ import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
-import WalletIcon from "@/assets/images/svg/wallet.svg?react"
+import { Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
@@ -237,7 +237,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             {isConnected && (
               <span className="text-xs text-white/80">
                 $
-                {new Decimal(coinConfig?.sCoinPrice || 0)
+                {new Decimal(coinConfig?.underlyingPrice || 0)
                   .mul(mintValue || 0)
                   .toFixed(2)}
               </span>

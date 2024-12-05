@@ -1,10 +1,10 @@
 import { useState } from "react"
 import Trade from "./Trade/Index.tsx"
 import Header from "@/components/Header"
+import { ArrowLeft } from "lucide-react"
 import Liquidity from "./Liquidity/Index.tsx"
 import sSUI from "@/assets/images/svg/sSUI.svg"
 import { useNavigate, useParams } from "react-router-dom"
-import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import {
   ChartConfig,
@@ -12,6 +12,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+
+import Invest from "./components/Invest.tsx"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -35,13 +37,8 @@ const chartConfig = {
 
 export default function Home() {
   const navigate = useNavigate()
-  const {
-    coinType,
-    maturity,
-    operation = "swap",
-  } = useParams<{
-    coinType: string
-    maturity: string
+  const { tokenType, operation = "swap" } = useParams<{
+    tokenType: string
     operation?: string
   }>()
   const [type, setType] = useState<"APY" | "Price">("APY")
@@ -49,51 +46,31 @@ export default function Home() {
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
 
   return (
-    <>
-      <div className="bg-[#08080C]">
-        <div className="xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0 bg-[#08080C]">
+    <div
+      className="min-h-screen"
+      style={{
+        background: "linear-gradient(180deg, #0C0C14 0%, #07070C 100%)",
+      }}
+    >
+      <div className="w-full bg-[#08080C]">
+        <div className="xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0">
           <Header />
         </div>
       </div>
-      <div className="py-10 relative px-6 xl:px-0 max-w-[600px] mx-auto">
+      <div className="xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0">
         <h3
-          onClick={() => navigate("/market")}
+          onClick={() => navigate(-1)}
           className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
         >
-          <LeftArrow />
-          <span>Back</span>
+          <ArrowLeft />
         </h3>
+      </div>
+
+      <div className="py-10 relative px-6 xl:px-0 max-w-[600px] mx-auto">
         <div className="mt-9 flex xl:flex-row flex-col gap-x-8 justify-center">
           <div className="w-full xl:w-[500px] flex flex-col gap-y-5">
-            <div className="w-full flex items-center h-[50px] bg-[#0E0F16] rounded-[40px]">
-              <div
-                onClick={() =>
-                  !["swap"].includes(operation) &&
-                  navigate(`/market/detail/${coinType}/${maturity}/swap`)
-                }
-                className={[
-                  "flex-1 rounded-[40px] h-full flex items-center justify-center",
-                  ["swap"].includes(operation)
-                    ? "bg-[#0F60FF]"
-                    : "cursor-pointer",
-                ].join(" ")}
-              >
-                Swap
-              </div>
-              <div
-                onClick={() =>
-                  operation !== "liquidity" &&
-                  navigate(`/market/detail/${coinType}/${maturity}/liquidity`)
-                }
-                className={[
-                  "flex-1 rounded-[40px] h-full flex items-center justify-center",
-                  operation === "liquidity" ? "bg-[#0F60FF]" : "cursor-pointer",
-                ].join(" ")}
-              >
-                Liquidity
-              </div>
-            </div>
-            {["swap", "mint"].includes(operation) && <Trade />}
+            {operation === "swap" && tokenType === "pt" && <Invest />}
+            {operation === "swap" && tokenType === "yt" && <Trade />}
             {operation === "liquidity" && <Liquidity />}
           </div>
           <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
@@ -239,6 +216,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

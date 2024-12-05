@@ -8,7 +8,7 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
-import WalletIcon from "@/assets/images/svg/wallet.svg?react"
+import { Wallet as WalletIcon } from "lucide-react"
 import { useCurrentAccount } from "@mysten/dapp-kit"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
@@ -214,7 +214,7 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
           )
         }}
-        price={coinConfig?.sCoinPrice}
+        price={coinConfig?.underlyingPrice}
         coinNameComponent={<span>{coinConfig?.coinName}</span>}
       />
       <SwapIcon className="mx-auto" />

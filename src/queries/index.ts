@@ -136,7 +136,7 @@ export function useQuerySwapRatio(
     // FIXME： queryKey dose not work
     queryKey: ["swapRatio", marketStateId, tokenType, swapType],
     queryFn: () => getSwapRatio(marketStateId!, tokenType!, swapType),
-    refetchInterval: 1000 * 30,
+    refetchInterval: 1000 * 20,
     enabled: !!marketStateId && !!tokenType,
   })
 }

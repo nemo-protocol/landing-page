@@ -23,14 +23,16 @@ export interface CoinInfo {
 export interface CoinConfig {
   underlyingApy: number
   underlyingCoinName: string
-  ytApy: number
+  underlyingCoinLogo: string
+  underlyingPrice: string
+  ptApy: string
+  ytApy: string
   pyStateId: string
   syStateId: string
   yieldFactoryConfigId: string
   coinType: string
   marketStateId: string
   marketFactoryConfigId: string
-  sCoinPrice: string
   ptPrice: string
   ytPrice: string
   lpPrice: string
