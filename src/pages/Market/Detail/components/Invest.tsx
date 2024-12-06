@@ -71,7 +71,6 @@ export default function Invest() {
   )
 
   const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
-  const ptPrice = useMemo(() => coinConfig?.ptPrice, [coinConfig])
 
   const { data: pyPositionData } = usePyPositionData(
     address,
@@ -288,7 +287,9 @@ export default function Invest() {
           <hr className="border-t border-[#2D2D48] mt-6" />
           <div className="flex items-center justify-between mt-6">
             <span>Fixed APY</span>
-            <span className="underline">{coinConfig?.ptApy ? `${coinConfig.ptApy} %` : "--"}</span>
+            <span className="underline">
+              {coinConfig?.ptApy ? `${coinConfig.ptApy} %` : "--"}
+            </span>
           </div>
           <div className="flex items-center justify-between mt-6">
             <span className="flex items-center gap-x-1">
@@ -309,20 +310,14 @@ export default function Invest() {
             </span>
             <div className="flex items-center gap-x-1.5">
               <span>
-                {ratio &&
-                decimal &&
-                ptPrice &&
-                swapValue &&
-                coinConfig?.underlyingPrice
+                {ratio && decimal && swapValue
                   ? `+ ${formatDecimalValue(
                       new Decimal(swapValue)
                         .mul(ratio)
-                        .mul(ptPrice)
                         .minus(
-                          (tokenType === 0
+                          tokenType === 0
                             ? new Decimal(swapValue)
-                            : new Decimal(swapValue).div(conversionRate || 1)
-                          ).mul(coinConfig.underlyingPrice),
+                            : new Decimal(swapValue).div(conversionRate || 1),
                         ),
                       decimal,
                     )}`
@@ -340,20 +335,14 @@ export default function Invest() {
               days
             </span>
             <span>
-              {decimal &&
-              swapValue &&
-              ratio &&
-              ptPrice &&
-              coinConfig?.underlyingPrice
+              {decimal && swapValue && ratio && coinConfig?.underlyingPrice
                 ? `≈ $${formatDecimalValue(
                     new Decimal(swapValue)
                       .mul(ratio)
-                      .mul(ptPrice)
                       .minus(
-                        (tokenType === 0
+                        tokenType === 0
                           ? new Decimal(swapValue)
-                          : new Decimal(swapValue).div(conversionRate || 1)
-                        ).mul(coinConfig.underlyingPrice),
+                          : new Decimal(swapValue).div(conversionRate || 1),
                       )
                       .mul(coinConfig.underlyingPrice),
                     2,
