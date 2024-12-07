@@ -91,7 +91,7 @@ export default function Invest() {
     if (swapRatio) {
       if (tokenType === 0) {
         return new Decimal(swapRatio.exchangeRate)
-          .mul(swapRatio.conversionRate)
+          .div(swapRatio.conversionRate)
           .toString()
       } else {
         return swapRatio.exchangeRate
