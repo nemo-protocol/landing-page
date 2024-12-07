@@ -48,7 +48,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >
-          // TODO : remove tokenType
+          {/* TODO : remove tokenType */}
           {tokenType === 0 ? "Coming soon" : btnText}
         </button>
       )}
