@@ -323,7 +323,11 @@ export default function Invest() {
                     )}`
                   : "--"}
               </span>
-              <img src={coinLogo} alt={coinName} className="size-[28px]" />
+              <img
+                src={coinConfig?.underlyingCoinLogo}
+                alt={coinConfig?.underlyingCoinName}
+                className="size-[28px]"
+              />
             </div>
           </div>
           <div className="flex items-center justify-between mt-2 text-white/60 text-xs">

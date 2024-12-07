@@ -8,20 +8,10 @@ import Star from "@/assets/images/svg/market/star.svg"
 import Crown from "@/assets/images/svg/market/crown.svg"
 import Diamond from "@/assets/images/svg/market/diamond.svg"
 import { motion } from "framer-motion"
-import Carousel from "./Carousel.tsx"
 
 const textVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-}
-
-const carouselVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
 }
 
 export default function Home() {
@@ -73,21 +63,6 @@ export default function Home() {
                 <span className="text-xs">Popular</span>
               </button>
             </div>
-          </motion.div>
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={carouselVariants}
-            transition={{ duration: 0.5 }}
-          >
-            <Carousel
-              interval={5000}
-              images={[
-                "/images/carousel/carousel01.png",
-                "/images/carousel/carousel02.png",
-                "/images/carousel/carousel03.png",
-              ]}
-            />
           </motion.div>
         </div>
         <motion.div
