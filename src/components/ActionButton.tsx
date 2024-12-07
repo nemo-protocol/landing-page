@@ -3,6 +3,7 @@ import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 
 interface ActionButtonProps {
   btnText: string
+  tokenType: number
   disabled: boolean
   onClick: () => void
   openConnect: boolean
@@ -11,12 +12,13 @@ interface ActionButtonProps {
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({
+  onClick,
+  btnText,
+  disabled,
+  tokenType,
   openConnect,
   setOpenConnect,
   insufficientBalance,
-  disabled,
-  onClick,
-  btnText,
 }) => {
   const { isConnected } = useCurrentWallet()
   return (
@@ -42,11 +44,12 @@ const ActionButton: React.FC<ActionButtonProps> = ({
           className={[
             "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
             disabled
-              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
+              ? "bg-[#0F60FF]/50 text-white/50 cursor-not-allowed"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >
-          {btnText}
+          // TODO : remove tokenType
+          {tokenType === 0 ? "Coming soon" : btnText}
         </button>
       )}
     </>

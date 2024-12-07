@@ -359,7 +359,7 @@ export default function Invest() {
           <div className="flex items-center justify-between text-white/60">
             <span>Price</span>
             <div className="flex items-center gap-x-1">
-              <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} PT ${coinName}`}</span>
+              <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} PT ${coinConfig?.coinName}`}</span>
               <RotateCw
                 className={[
                   "size-5 cursor-pointer",
@@ -381,10 +381,11 @@ export default function Invest() {
         <ActionButton
           onClick={swap}
           btnText="Invest"
+          tokenType={tokenType}
           openConnect={openConnect}
           setOpenConnect={setOpenConnect}
           insufficientBalance={insufficientBalance}
-          disabled={["", undefined, "0"].includes(swapValue)}
+          disabled={["", undefined, "0"].includes(swapValue) || tokenType === 0}
         />
       </div>
     </div>
