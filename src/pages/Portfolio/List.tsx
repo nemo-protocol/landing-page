@@ -8,14 +8,16 @@ import {
 } from "@/components/ui/table"
 import { useState } from "react"
 import Empty from "@/assets/images/png/empty.png"
-import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import WalletNotConnect from "@/assets/images/svg/wallet-no-connect.svg"
 import { Link } from "react-router-dom"
 import { PortfolioItem } from "@/queries/types/market"
 import { motion } from "framer-motion"
+import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function List({ list }: { list?: PortfolioItem[] }) {
-  const { isConnected } = useCurrentWallet()
+  // const { isConnected } = useCurrentWallet()
+  const { connected: isConnected } = useWallet()
   const [openConnect, setOpenConnect] = useState(false)
   const [selectType, setSelectType] = useState<"pt" | "yt" | "lp">("pt")
   return (
@@ -90,12 +92,16 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
             <ConnectModal
               open={openConnect}
               onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-              trigger={
-                <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
-                  Connect Wallet
-                </button>
-              }
-            />
+            // trigger={
+            //   <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
+            //     Connect Wallet
+            //   </button>
+            // }
+            >
+              <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
+                Connect Wallet
+              </button>
+            </ConnectModal>
           </div>
         )}
         {!list?.length && isConnected && (

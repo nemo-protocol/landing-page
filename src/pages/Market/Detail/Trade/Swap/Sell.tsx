@@ -1,7 +1,7 @@
 import Decimal from "decimal.js"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
-import { useCurrentAccount } from "@mysten/dapp-kit"
+// import { useCurrentAccount } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { Wallet as WalletIcon } from "lucide-react"
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select"
 import { network } from "@/config"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
-import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+// import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { initPyPosition } from "@/lib/txHelper"
@@ -24,6 +24,7 @@ import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue } from "@/lib/utils"
 import SlippageSetting from "@/components/SlippageSetting"
+import { useWallet } from "@aricredemption/wallet-kit"
 
 export default function Sell() {
   const [slippage, setSlippage] = useState("0.5")
@@ -35,10 +36,15 @@ export default function Sell() {
   const [redeemValue, setRedeemValue] = useState("")
   const [targetValue, setTargetValue] = useState("")
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const { mutateAsync: signAndExecuteTransaction } =
-    useCustomSignAndExecuteTransaction()
+  // const { mutateAsync: signAndExecuteTransaction } =
+  //   useCustomSignAndExecuteTransaction()
   const [openConnect, setOpenConnect] = useState(false)
-  const currentAccount = useCurrentAccount()
+  // const currentAccount = useCurrentAccount()
+  // const { account: currentAccount } = useWallet()
+
+  const { address, signAndExecuteTransaction } = useWallet()
+
+  const isConnected = useMemo(() => !!address, [address])
 
   useEffect(() => {
     if (_tokenType) {
@@ -46,8 +52,8 @@ export default function Sell() {
     }
   }, [_tokenType])
 
-  const address = useMemo(() => currentAccount?.address, [currentAccount])
-  const isConnected = useMemo(() => !!address, [address])
+  // const address = useMemo(() => currentAccount?.address, [currentAccount])
+  // const isConnected = useMemo(() => !!address, [address])
 
   const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
@@ -165,14 +171,13 @@ export default function Sell() {
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          chain: `sui:${network}`,
         })
-        if (res.effects?.status.status === "failure") {
-          setOpen(true)
-          setStatus("Failed")
-          setMessage(parseErrorMessage(res.effects?.status.error || ""))
-          return
-        }
+        // if (res.effects?.status.status === "failure") {
+        //   setOpen(true)
+        //   setStatus("Failed")
+        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
+        //   return
+        // }
         setTxId(res.digest)
         setOpen(true)
         setRedeemValue("")

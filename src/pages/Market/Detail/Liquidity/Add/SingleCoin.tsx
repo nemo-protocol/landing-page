@@ -9,14 +9,15 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import { Wallet as WalletIcon } from "lucide-react"
-import { useCurrentAccount } from "@mysten/dapp-kit"
-import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+// import { useCurrentAccount } from "@mysten/dapp-kit"
+// // import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import BalanceInput from "@/components/BalanceInput"
 import { formatDecimalValue } from "@/lib/utils"
 import ActionButton from "@/components/ActionButton"
 import useMarketStateData from "@/hooks/useMarketStateData"
+import { useWallet } from "@aricredemption/wallet-kit"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")
@@ -27,10 +28,10 @@ export default function Mint({ slippage }: { slippage: string }) {
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
-  const currentAccount = useCurrentAccount()
+  const { account: currentAccount, signAndExecuteTransaction } = useWallet()
 
-  const { mutateAsync: signAndExecuteTransaction } =
-    useCustomSignAndExecuteTransaction()
+  // const { mutateAsync: signAndExecuteTransaction } =
+  //   useCustomSignAndExecuteTransaction()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -161,14 +162,15 @@ export default function Mint({ slippage }: { slippage: string }) {
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          chain: `sui:${network}`,
+          // chain: `sui:${network}`,
         })
         setTxId(res.digest)
-        if (res.effects?.status.status === "failure") {
-          setStatus("Failed")
-          setMessage(parseErrorMessage(res.effects?.status.error || ""))
-          return
-        }
+        //TODO : handle error
+        // if (res.effects?.status.status === "failure") {
+        //   setStatus("Failed")
+        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
+        //   return
+        // }
         setAddValue("")
         setStatus("Success")
       } catch (error) {

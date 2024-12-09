@@ -9,13 +9,15 @@ import HotIcon from "@/assets/images/svg/hot.svg?react"
 import NemoLogo from "@/assets/images/svg/logo.svg?react"
 import Network from "@/assets/images/svg/network.svg?react"
 import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
-import {
-  ConnectModal,
-  useAccounts,
-  useCurrentAccount,
-  useDisconnectWallet,
-  useSwitchAccount,
-} from "@mysten/dapp-kit"
+// import {
+//   ConnectModal,
+//   useAccounts,
+//   useCurrentAccount,
+//   useDisconnectWallet,
+//   useSwitchAccount,
+// } from "@mysten/dapp-kit"
+
+import { ConnectModal, useWallet } from "@aricredemption/wallet-kit"
 import { motion } from "framer-motion"
 import {
   DropdownMenu,
@@ -27,13 +29,13 @@ import {
 export default function Header({ className }: { className?: string }) {
   const toast = useToast()
   const location = useLocation()
-  const accounts = useAccounts()
+  // const { accounts } = useWallet()
   const [open, setOpen] = useState(false)
-  const currentAccount = useCurrentAccount()
+  const { account: currentAccount } = useWallet()
   const [isOpen, setIsOpen] = useState(false)
   const [isDrop, setIsDrop] = useState(false)
-  const { mutate: switchAccount } = useSwitchAccount()
-  const { mutate: disconnect } = useDisconnectWallet()
+  // const { mutate: switchAccount } = useSwitchAccount()
+  const { disconnect, connected } = useWallet()
 
   const subNavRef = useRef<HTMLDivElement>(null)
 
@@ -51,7 +53,7 @@ export default function Header({ className }: { className?: string }) {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [])
+  }, [connected])
 
   return (
     <header className={cn("h-16 shrink-0", className)}>
@@ -208,46 +210,58 @@ export default function Header({ className }: { className?: string }) {
                   >
                     Copy Address
                   </li>
-                  {accounts
-                    .filter(
-                      (account) => account.address !== currentAccount?.address,
-                    )
-                    .map((account) => (
-                      <li
-                        key={account.address}
-                        className="cursor-pointer bg-[#0E0F16] px-4 py-2 text-white/50 hover:text-white w-full"
-                        onClick={() => {
-                          switchAccount(
-                            { account },
-                            {
-                              onSuccess: () =>
-                                console.log(`switched to ${account.address}`),
-                            },
-                          )
-                        }}
-                      >
-                        {truncateStr(account?.address || "", 4)}
-                      </li>
-                    ))}
+                  {/* TODO: Add switch account feature */}
+                  {/* {accounts &&
+                    accounts
+                      .filter(
+                        (account) =>
+                          account.address !== currentAccount?.address,
+                      )
+                      .map((account) => (
+                        <li
+                          key={account.address}
+                          className="cursor-pointer bg-[#0E0F16] px-4 py-2 text-white/50 hover:text-white w-full"
+                          onClick={() => {
+                            // switchAccount(
+                            //   { account },
+                            //   {
+                            //     onSuccess: () =>
+                            //       console.log(`switched to ${account.address}`),
+                            //   },
+                            // )
+                          }}
+                        >
+                          {truncateStr(account?.address || "", 4)}
+                        </li>
+                      ))} */}
                 </ul>
               )}
             </div>
           ) : (
             <ConnectModal
+              theme="dark"
               open={open}
-              onOpenChange={(isOpen) => setOpen(isOpen)}
-              trigger={
-                <button
-                  disabled={!!currentAccount}
-                  className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
-                >
-                  <span className="hidden md:inline-block">Connect Wallet</span>
-                  <span className="inline-block md:hidden text-xs">
-                    Connect
-                  </span>
-                </button>
-              }
-            />
+              onOpenChange={(isOpen: boolean) => setOpen(isOpen)}
+              // trigger={
+              //   <button
+              //     disabled={!!currentAccount}
+              //     className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
+              //   >
+              //     <span className="hidden md:inline-block">Connect Wallet</span>
+              //     <span className="inline-block md:hidden text-xs">
+              //       Connect
+              //     </span>
+              //   </button>
+              // }
+            >
+              <button
+                disabled={!!currentAccount}
+                className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
+              >
+                <span className="hidden md:inline-block">Connect Wallet</span>
+                <span className="inline-block md:hidden text-xs">Connect</span>
+              </button>
+            </ConnectModal>
           )}
         </div>
       </div>

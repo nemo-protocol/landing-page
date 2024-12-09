@@ -2,18 +2,19 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
-import { ConnectModal, useCurrentAccount } from "@mysten/dapp-kit"
+// import { ConnectModal, useCurrentAccount } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import { Wallet as WalletIcon } from "lucide-react"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
-import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+// import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { LoaderCircle } from "lucide-react"
 import { initPyPosition } from "@/lib/txHelper"
+import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -23,10 +24,10 @@ export default function Remove() {
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
-  const currentAccount = useCurrentAccount()
+  const { account: currentAccount, signAndExecuteTransaction } = useWallet()
 
-  const { mutateAsync: signAndExecuteTransaction } =
-    useCustomSignAndExecuteTransaction()
+  // const { mutateAsync: signAndExecuteTransaction } =
+  //   useCustomSignAndExecuteTransaction()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -117,15 +118,16 @@ export default function Remove() {
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          chain: `sui:${network}`,
+          // chain: `sui:${network}`,
         })
-        if (res.effects?.status.status === "failure") {
-          setOpen(true)
-          setStatus("Failed")
-          setTxId(res.digest)
-          setMessage(parseErrorMessage(res.effects?.status.error || ""))
-          return
-        }
+        //TODO : handle error
+        // if (res.effects?.status.status === "failure") {
+        //   setOpen(true)
+        //   setStatus("Failed")
+        //   setTxId(res.digest)
+        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
+        //   return
+        // }
         setTxId(res.digest)
         setOpen(true)
         setLpValue("")
@@ -256,12 +258,16 @@ export default function Remove() {
         <ConnectModal
           open={openConnect}
           onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          trigger={
-            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-              Connect Wallet
-            </button>
-          }
-        />
+        // trigger={
+        //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+        //     Connect Wallet
+        //   </button>
+        // }
+        >
+          <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+            Connect Wallet
+          </button>
+        </ConnectModal>
       ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance

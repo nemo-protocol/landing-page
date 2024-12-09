@@ -8,21 +8,21 @@ import Star from "@/assets/images/svg/market/star.svg"
 import Crown from "@/assets/images/svg/market/crown.svg"
 import Diamond from "@/assets/images/svg/market/diamond.svg"
 import { motion } from "framer-motion"
-import Carousel from "./Carousel.tsx"
+// import Carousel from "./Carousel.tsx"
 
 const textVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 }
 
-const carouselVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-}
+// const carouselVariants = {
+//   hidden: { opacity: 0, scale: 0.9 },
+//   visible: {
+//     opacity: 1,
+//     scale: 1,
+//     transition: { duration: 0.6, ease: "easeOut" },
+//   },
+// }
 
 export default function Home() {
   const navigate = useNavigate()
@@ -74,7 +74,7 @@ export default function Home() {
               </button>
             </div>
           </motion.div>
-          <motion.div
+          {/* <motion.div
             initial="hidden"
             animate="visible"
             variants={carouselVariants}
@@ -88,7 +88,7 @@ export default function Home() {
                 "/images/carousel/carousel03.png",
               ]}
             />
-          </motion.div>
+          </motion.div> */}
         </div>
         <motion.div
           className="mt-[30px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 transition-all duration-200 ease-in-out"

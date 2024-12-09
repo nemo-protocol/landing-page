@@ -8,7 +8,7 @@ interface CarouselProps {
 
 export default function Carousel({ images, interval = 3000 }: CarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const timerRef = useRef<number>()
+  const timerRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
     const startTimer = () => {

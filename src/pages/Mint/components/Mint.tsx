@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
 import useCoinData from "@/hooks/useCoinData"
-import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import AddIcon from "@/assets/images/svg/add.svg?react"
 import SwapIcon from "@/assets/images/svg/swap.svg?react"
@@ -10,7 +10,7 @@ import FailIcon from "@/assets/images/svg/fail.svg?react"
 import { Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
-import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+// // import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   AlertDialog,
   AlertDialogTitle,
@@ -24,6 +24,7 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
 import { LoaderCircle } from "lucide-react"
 import { initPyPosition } from "@/lib/txHelper"
+import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function Mint({
   slippage,
@@ -38,17 +39,29 @@ export default function Mint({
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const { currentWallet, isConnected } = useCurrentWallet()
+
+  const { address, signAndExecuteTransaction } = useWallet()
+
+  const isConnected = useMemo(() => !!address, [address])
+  // const { currentWallet, isConnected } = useCurrentWallet()
+  // const { getAccounts, connected: isConnected, signAndExecuteTransaction } = useWallet()
+  // const [currentWallet, setCurrentWallet] = useState<any>([])
   const [mintValue, setMintValue] = useState("")
   const [openConnect, setOpenConnect] = useState(false)
 
-  const { mutateAsync: signAndExecuteTransaction } =
-    useCustomSignAndExecuteTransaction()
+  // const { mutateAsync: signAndExecuteTransaction } =
+  //   useCustomSignAndExecuteTransaction()
+  // console.log(currentWallet);
 
-  const address = useMemo(
-    () => currentWallet?.accounts[0].address,
-    [currentWallet],
-  )
+  // useEffect(() => {
+  //   if (isConnected) {
+  //     setCurrentWallet(getAccounts())
+  //   }
+  // }, [isConnected])
+  // const address = useMemo(
+  //   () => currentWallet.length != 0 && currentWallet?.accounts[0].address,
+  //   [isConnected],
+  // )
 
   const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
   const { data: pyPositionData } = usePyPositionData(
@@ -142,15 +155,16 @@ export default function Mint({
         }
 
         const res = await signAndExecuteTransaction({
-          transaction: Transaction.from(tx),
-          chain: `sui:${network}`,
+          transaction: tx,
+          // chain: `sui:${network}`,
         })
-        if (res.effects?.status.status === "failure") {
-          setOpen(true)
-          setStatus("Failed")
-          setMessage(parseErrorMessage(res.effects?.status.error || ""))
-          return
-        }
+        //TODO: Add error handling
+        // if (res.effects?.status.status === "failure") {
+        //   setOpen(true)
+        //   setStatus("Failed")
+        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
+        //   return
+        // }
         setTxId(res.digest)
         setOpen(true)
         setMintValue("")
@@ -344,12 +358,16 @@ export default function Mint({
         <ConnectModal
           open={openConnect}
           onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          trigger={
-            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-              Connect Wallet
-            </button>
-          }
-        />
+          // trigger={
+          //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+          //     Connect Wallet
+          //   </button>
+          // }
+        >
+          <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+            Connect Wallet
+          </button>
+        </ConnectModal>
       ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
           Insufficient Balance

@@ -1,5 +1,6 @@
 import React from "react"
-import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
+import { ConnectButton, useWallet } from "@aricredemption/wallet-kit"
 
 interface ActionButtonProps {
   btnText: string
@@ -11,25 +12,25 @@ interface ActionButtonProps {
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({
-  openConnect,
-  setOpenConnect,
+  // openConnect,
+  // setOpenConnect,
   insufficientBalance,
   disabled,
   onClick,
   btnText,
 }) => {
-  const { isConnected } = useCurrentWallet()
+  const wallet = useWallet()
   return (
     <>
-      {!isConnected ? (
-        <ConnectModal
-          open={openConnect}
-          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          trigger={
-            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-              Connect Wallet
-            </button>
-          }
+      {!wallet.connected ? (
+        <ConnectButton
+          // open={openConnect}
+          // onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+          // trigger={
+          //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+          //     Connect Wallet
+          //   </button>
+          // }
         />
       ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
