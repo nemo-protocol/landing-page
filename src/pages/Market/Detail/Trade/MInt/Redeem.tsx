@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { initPyPosition } from "@/lib/txHelper"
-import { ConnectModal, useWallet } from "@suiet/wallet-kit"
+import { ConnectModal, useWallet } from "@aricredemption/wallet-kit"
 
 export default function Mint() {
   const { coinType, maturity } = useParams()

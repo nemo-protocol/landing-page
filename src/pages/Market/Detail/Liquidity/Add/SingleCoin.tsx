@@ -10,14 +10,14 @@ import SwapIcon from "@/assets/images/svg/swap.svg?react"
 import { useCoinConfig, useQueryLPRatio } from "@/queries"
 import WalletIcon from "@/assets/images/svg/wallet.svg?react"
 // import { useCurrentAccount } from "@mysten/dapp-kit"
-import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+// import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import BalanceInput from "@/components/BalanceInput"
 import { formatDecimalValue } from "@/lib/utils"
 import ActionButton from "@/components/ActionButton"
 import useMarketStateData from "@/hooks/useMarketStateData"
-import { useWallet } from "@suiet/wallet-kit"
+import { useWallet } from "@aricredemption/wallet-kit"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")

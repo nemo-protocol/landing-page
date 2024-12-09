@@ -32,7 +32,7 @@ import { formatDecimalValue } from "@/lib/utils"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
-import { useWallet } from "@suiet/wallet-kit"
+import { useWallet } from "@aricredemption/wallet-kit"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const [txId, setTxId] = useState("")

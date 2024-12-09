@@ -14,10 +14,10 @@ import {
 import "@mysten/dapp-kit/dist/index.css"
 import "./index.css"
 import { AnimatePresence } from "framer-motion"
-import { WalletProvider } from "@suiet/wallet-kit"
-import '@suiet/wallet-kit/style.css';
+import { WalletProvider } from "@aricredemption/wallet-kit"
+import '@aricredemption/wallet-kit/style.css';
 
-import { useSuiClient } from "@suiet/wallet-kit"
+import { useSuiClient } from "@aricredemption/wallet-kit"
 const queryClient = new QueryClient()
 const { networkConfig } = createNetworkConfig({
   // TODO: support muilt rpc

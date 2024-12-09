@@ -23,7 +23,7 @@ import {
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { initPyPosition } from "@/lib/txHelper"
-import { ConnectModal, useWallet } from "@suiet/wallet-kit"
+import { ConnectModal, useWallet } from "@aricredemption/wallet-kit"
 
 export default function Mint({ slippage }: { slippage: string }) {
   const { coinType, maturity } = useParams()

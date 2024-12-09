@@ -16,7 +16,7 @@ import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
 //   useSwitchAccount,
 // } from "@mysten/dapp-kit"
 
-import { ConnectModal, useWallet } from "@suiet/wallet-kit"
+import { ConnectModal, useWallet } from "@aricredemption/wallet-kit"
 import { motion } from "framer-motion"
 import {
   DropdownMenu,
@@ -25,19 +25,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-
 export default function Header() {
   const toast = useToast()
   const location = useLocation()
-  const { getAccounts } = useWallet()
+  // const { accounts } = useWallet()
   const [open, setOpen] = useState(false)
   const { account: currentAccount } = useWallet()
   const [isOpen, setIsOpen] = useState(false)
   const [isDrop, setIsDrop] = useState(false)
   // const { mutate: switchAccount } = useSwitchAccount()
   const { disconnect, connected } = useWallet()
-  const [accounts, setAccounts] = useState<any>([])
-
 
   const subNavRef = useRef<HTMLDivElement>(null)
 
@@ -51,9 +48,6 @@ export default function Header() {
   }
 
   useEffect(() => {
-    if (connected) {
-      setAccounts(getAccounts())
-    }
     document.addEventListener("mousedown", handleClickOutside)
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
@@ -202,54 +196,56 @@ export default function Header() {
                   >
                     Copy Address
                   </li>
-                  {accounts
-                    .filter(
-                      (account: any) => account.address !== currentAccount?.address,
-                    )
-                    .map((account: any) => (
-                      <li
-                        key={account.address}
-                        className="cursor-pointer bg-[#0E0F16] px-4 py-2 text-white/50 hover:text-white w-full"
-                        onClick={() => {
-                          // switchAccount(
-                          //   { account },
-                          //   {
-                          //     onSuccess: () =>
-                          //       console.log(`switched to ${account.address}`),
-                          //   },
-                          // )
-                        }}
-                      >
-                        {truncateStr(account?.address || "", 4)}
-                      </li>
-                    ))}
+                  {/* TODO: Add switch account feature */}
+                  {/* {accounts &&
+                    accounts
+                      .filter(
+                        (account) =>
+                          account.address !== currentAccount?.address,
+                      )
+                      .map((account) => (
+                        <li
+                          key={account.address}
+                          className="cursor-pointer bg-[#0E0F16] px-4 py-2 text-white/50 hover:text-white w-full"
+                          onClick={() => {
+                            // switchAccount(
+                            //   { account },
+                            //   {
+                            //     onSuccess: () =>
+                            //       console.log(`switched to ${account.address}`),
+                            //   },
+                            // )
+                          }}
+                        >
+                          {truncateStr(account?.address || "", 4)}
+                        </li>
+                      ))} */}
                 </ul>
               )}
             </div>
           ) : (
             <ConnectModal
+              theme="dark"
               open={open}
-              onOpenChange={(isOpen) => setOpen(isOpen)}
-            // trigger={
-            //   <button
-            //     disabled={!!currentAccount}
-            //     className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
-            //   >
-            //     <span className="hidden md:inline-block">Connect Wallet</span>
-            //     <span className="inline-block md:hidden text-xs">
-            //       Connect
-            //     </span>
-            //   </button>
-            // }
+              onOpenChange={(isOpen: boolean) => setOpen(isOpen)}
+              // trigger={
+              //   <button
+              //     disabled={!!currentAccount}
+              //     className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
+              //   >
+              //     <span className="hidden md:inline-block">Connect Wallet</span>
+              //     <span className="inline-block md:hidden text-xs">
+              //       Connect
+              //     </span>
+              //   </button>
+              // }
             >
               <button
                 disabled={!!currentAccount}
                 className="text-white outline-none py-2 px-3 rounded-3xl bg-[#0052F2]"
               >
                 <span className="hidden md:inline-block">Connect Wallet</span>
-                <span className="inline-block md:hidden text-xs">
-                  Connect
-                </span>
+                <span className="inline-block md:hidden text-xs">Connect</span>
               </button>
             </ConnectModal>
           )}

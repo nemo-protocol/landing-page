@@ -14,7 +14,7 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { LoaderCircle } from "lucide-react"
 import { initPyPosition } from "@/lib/txHelper"
-import { useWallet, ConnectModal } from "@suiet/wallet-kit"
+import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")

@@ -24,7 +24,7 @@ import {
 import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
 import { initPyPosition } from "@/lib/txHelper"
-import { useWallet, ConnectModal } from "@suiet/wallet-kit"
+import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function Redeem({
   maturity,

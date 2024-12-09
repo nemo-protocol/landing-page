@@ -23,7 +23,7 @@ import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue } from "@/lib/utils"
-import { useWallet } from "@suiet/wallet-kit"
+import { useWallet } from "@aricredemption/wallet-kit"
 
 export default function Sell({ slippage }: { slippage: string }) {
   const { coinType, tokenType: _tokenType, maturity } = useParams()

@@ -1,6 +1,6 @@
 import React from "react"
 // import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
-import { ConnectButton, useWallet } from "@suiet/wallet-kit"
+import { ConnectButton, useWallet } from "@aricredemption/wallet-kit"
 
 interface ActionButtonProps {
   btnText: string

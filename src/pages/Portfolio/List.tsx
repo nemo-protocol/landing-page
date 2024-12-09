@@ -13,7 +13,7 @@ import WalletNotConnect from "@/assets/images/svg/wallet-no-connect.svg"
 import { Link } from "react-router-dom"
 import { PortfolioItem } from "@/queries/types/market"
 import { motion } from "framer-motion"
-import { useWallet, ConnectModal } from "@suiet/wallet-kit"
+import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function List({ list }: { list?: PortfolioItem[] }) {
   // const { isConnected } = useCurrentWallet()

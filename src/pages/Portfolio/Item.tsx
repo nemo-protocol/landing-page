@@ -22,7 +22,7 @@ import { network } from "@/config"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import usePortfolio from "@/hooks/usePortfolio"
-import { useWallet } from "@suiet/wallet-kit"
+import { useWallet } from "@aricredemption/wallet-kit"
 
 export default function Item({
   name,

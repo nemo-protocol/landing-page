@@ -24,7 +24,7 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
 import { LoaderCircle } from "lucide-react"
 import { initPyPosition } from "@/lib/txHelper"
-import { useWallet, ConnectModal } from "@suiet/wallet-kit"
+import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function Mint({
   slippage,
