@@ -2,11 +2,15 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
+  faStyle?: React.CSSProperties;
+}
+
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  TableProps
+>(({ className, faStyle, ...props }, ref) => (
+  <div className="relative w-full overflow-auto" style={faStyle}>
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}

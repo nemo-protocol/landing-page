@@ -82,7 +82,7 @@ export default function Trade() {
     if (swapRatio) {
       if (tokenType === 0) {
         return new Decimal(swapRatio.exchangeRate)
-          .div(swapRatio.conversionRate)
+          .mul(swapRatio.conversionRate)
           .toString()
       } else {
         return swapRatio.exchangeRate
@@ -315,7 +315,7 @@ export default function Trade() {
             <div className="flex items-center justify-between text-white/60">
               <span>Price</span>
               <div className="flex items-center gap-x-1">
-                <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} YT ${coinConfig?.coinName}`}</span>
+                <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} YT ${coinName}`}</span>
                 <RotateCw
                   className={[
                     "size-5 cursor-pointer",
@@ -335,15 +335,12 @@ export default function Trade() {
             </div>
           </div>
           <ActionButton
-            btnText="Buy"
             onClick={swap}
-            tokenType={tokenType}
+            btnText="Buy"
             openConnect={openConnect}
             setOpenConnect={setOpenConnect}
             insufficientBalance={insufficientBalance}
-            disabled={
-              ["", undefined, "0"].includes(swapValue) || tokenType === 0
-            }
+            disabled={["", undefined, "0"].includes(swapValue)}
           />
         </div>
       </div>
@@ -419,7 +416,7 @@ export default function Trade() {
           </div>
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
             <div className="text-white/60 text-xs">Underlying APY</div>
-            <div className="text-[#2DF4DD] text-xs">{coinConfig?.ytApy} %</div>
+            <div className="text-[#2DF4DD] text-xs">{coinConfig?.ytApy}</div>
           </div>
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
             <div className="text-white/60 text-xs">7D Avg. Underlying APY</div>

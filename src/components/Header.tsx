@@ -125,6 +125,19 @@ export default function Header({ className }: { className?: string }) {
               Learn
             </Link>
           </li>
+          <li className={["w-24 h-full text-center"].join(" ")}>
+            <Link
+              to="/rewards"
+              className={[
+                location.pathname === "/rewards"
+                  ? "text-white bg-[#12121B] border-b border-b-white"
+                  : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
+                "flex items-center justify-center h-full cursor-pointer",
+              ].join(" ")}
+            >
+              Rewards
+            </Link>
+          </li>
         </ul>
         <div className="flex items-center gap-x-6 h-full">
           <Squares2X2Icon
@@ -254,6 +267,9 @@ export default function Header({ className }: { className?: string }) {
           </Link>
           <Link to="/learn" className="py-2 text-white">
             Learn
+          </Link>
+          <Link to="/rewards" className="py-2 text-white">
+            Rewards
           </Link>
           {IS_DEV && (
             <Link to="/test" className="py-2 text-white">

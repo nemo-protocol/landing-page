@@ -11,7 +11,7 @@ interface PChartProps {
 }
 
 const PChart = ({ cap, tvl, decimal, price }: PChartProps) => {
-  const total = new Decimal(cap || 0)
+  const total = new Decimal(cap || 1)
     .div(10 ** (Number(decimal) || 0))
     .mul(price || 0)
   const tvlValue = new Decimal(tvl || 0)

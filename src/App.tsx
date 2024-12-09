@@ -6,6 +6,7 @@ import "./App.css"
 const Home = lazy(() => import("./pages/Home/Index"))
 const Test = lazy(() => import("./pages/Test/Index"))
 const Learn = lazy(() => import("./pages/Learn/Index"))
+const Rewards = lazy(() => import("./pages/Rewards/Index"))
 const Market = lazy(() => import("./pages/Market/Index"))
 const Mint = lazy(() => import("./pages/Mint/Index"))
 const Portfolio = lazy(() => import("./pages/Portfolio/Index"))
@@ -28,6 +29,7 @@ function App() {
                 path="/market/detail/:coinType/:maturity/:operation?/:tokenType?"
               />
               <Route path="/learn" element={<Learn />} />
+              <Route path="/Rewards" element={<Rewards />} />
               <Route path="/portfolio" element={<Portfolio />} />
               {IS_DEV && <Route path="/test" element={<Test />} />}
             </Routes>

@@ -91,7 +91,7 @@ export default function Invest() {
     if (swapRatio) {
       if (tokenType === 0) {
         return new Decimal(swapRatio.exchangeRate)
-          .div(swapRatio.conversionRate)
+          .mul(swapRatio.conversionRate)
           .toString()
       } else {
         return swapRatio.exchangeRate
@@ -323,11 +323,7 @@ export default function Invest() {
                     )}`
                   : "--"}
               </span>
-              <img
-                src={coinConfig?.underlyingCoinLogo}
-                alt={coinConfig?.underlyingCoinName}
-                className="size-[28px]"
-              />
+              <img src={coinLogo} alt={coinName} className="size-[28px]" />
             </div>
           </div>
           <div className="flex items-center justify-between mt-2 text-white/60 text-xs">
@@ -359,7 +355,7 @@ export default function Invest() {
           <div className="flex items-center justify-between text-white/60">
             <span>Price</span>
             <div className="flex items-center gap-x-1">
-              <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} PT ${coinConfig?.coinName}`}</span>
+              <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} PT ${coinName}`}</span>
               <RotateCw
                 className={[
                   "size-5 cursor-pointer",
@@ -381,11 +377,10 @@ export default function Invest() {
         <ActionButton
           onClick={swap}
           btnText="Invest"
-          tokenType={tokenType}
           openConnect={openConnect}
           setOpenConnect={setOpenConnect}
           insufficientBalance={insufficientBalance}
-          disabled={["", undefined, "0"].includes(swapValue) || tokenType === 0}
+          disabled={["", undefined, "0"].includes(swapValue)}
         />
       </div>
     </div>
