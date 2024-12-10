@@ -1,6 +1,5 @@
 import Decimal from "decimal.js"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
-import { } from "@aricredemption/wallet-kit"
 
 const useCoinData = (address?: string, coinType?: string) => {
   return useSuiClientQuery(

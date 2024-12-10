@@ -14,8 +14,8 @@ import {
 import "@mysten/dapp-kit/dist/index.css"
 import "./index.css"
 import { AnimatePresence } from "framer-motion"
-import { WalletProvider } from "@aricredemption/wallet-kit"
-import '@aricredemption/wallet-kit/style.css';
+import { WalletProvider as NemoWalletProvider } from "@aricredemption/wallet-kit"
+import "@aricredemption/wallet-kit/style.css"
 const queryClient = new QueryClient()
 const { networkConfig } = createNetworkConfig({
   // TODO: support muilt rpc
@@ -29,13 +29,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <Toaster />
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
-        <WalletProvider>
-          <ToastProvider>
-            <AnimatePresence>
-              <App />
-            </AnimatePresence>
-          </ToastProvider>
-        </WalletProvider>
+        {/* <WalletProvider> */}
+          <NemoWalletProvider>
+            <ToastProvider>
+              <AnimatePresence>
+                <App />
+              </AnimatePresence>
+            </ToastProvider>
+          </NemoWalletProvider>
+        {/* </WalletProvider> */}
       </SuiClientProvider>
     </QueryClientProvider>
   </React.StrictMode>,
