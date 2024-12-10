@@ -58,7 +58,7 @@ export default function Home() {
           <Header />
         </div>
       </div>
-      <div className="xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0">
+      <div className="xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0 pb-20">
         <h3
           onClick={() => navigate(-1)}
           className="text-lg text-white flex items-center gap-x-2 cursor-pointer"

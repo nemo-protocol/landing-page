@@ -1,10 +1,10 @@
-import React from "react"
-// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
-import { ConnectButton, useWallet } from "@aricredemption/wallet-kit"
+import React, { useMemo } from "react"
+import { ConnectModal, useWallet } from "@aricredemption/wallet-kit"
 
 interface ActionButtonProps {
   btnText: string
   disabled: boolean
+  tokenType?: number
   onClick: () => void
   openConnect: boolean
   insufficientBalance: boolean
@@ -12,25 +12,28 @@ interface ActionButtonProps {
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({
-  // openConnect,
-  // setOpenConnect,
-  insufficientBalance,
-  disabled,
   onClick,
   btnText,
+  disabled,
+  tokenType,
+  openConnect,
+  setOpenConnect,
+  insufficientBalance,
 }) => {
-  const wallet = useWallet()
+  const { address } = useWallet()
+
+  const isConnected = useMemo(() => !!address, [address])
   return (
     <>
-      {!wallet.connected ? (
-        <ConnectButton
-          // open={openConnect}
-          // onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          // trigger={
-          //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-          //     Connect Wallet
-          //   </button>
-          // }
+      {!isConnected ? (
+        <ConnectModal
+          open={openConnect}
+          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+          children={
+            <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+              Connect Wallet
+            </button>
+          }
         />
       ) : insufficientBalance ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
@@ -43,11 +46,12 @@ const ActionButton: React.FC<ActionButtonProps> = ({
           className={[
             "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
             disabled
-              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
+              ? "bg-[#0F60FF]/50 text-white/50 cursor-not-allowed"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >
-          {btnText}
+          {/* TODO : remove tokenType */}
+          {tokenType === 0 ? "Coming soon" : btnText}
         </button>
       )}
     </>

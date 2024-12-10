@@ -81,7 +81,7 @@ export default function Trade() {
     if (swapRatio) {
       if (tokenType === 0) {
         return new Decimal(swapRatio.exchangeRate)
-          .mul(swapRatio.conversionRate)
+          .div(swapRatio.conversionRate)
           .toString()
       } else {
         return swapRatio.exchangeRate
@@ -314,7 +314,7 @@ export default function Trade() {
             <div className="flex items-center justify-between text-white/60">
               <span>Price</span>
               <div className="flex items-center gap-x-1">
-                <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} YT ${coinName}`}</span>
+                <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} YT ${coinConfig?.coinName}`}</span>
                 <RotateCw
                   className={[
                     "size-5 cursor-pointer",
@@ -334,12 +334,15 @@ export default function Trade() {
             </div>
           </div>
           <ActionButton
-            onClick={swap}
             btnText="Buy"
+            onClick={swap}
+            tokenType={tokenType}
             openConnect={openConnect}
             setOpenConnect={setOpenConnect}
             insufficientBalance={insufficientBalance}
-            disabled={["", undefined, "0"].includes(swapValue)}
+            disabled={
+              ["", undefined, "0"].includes(swapValue) || tokenType === 0
+            }
           />
         </div>
       </div>

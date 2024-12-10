@@ -1,8 +1,7 @@
-import Buy from "./Buy"
 import Sell from "./Sell"
 import { useNavigate, useParams } from "react-router-dom"
 
-export default function TradeMint({ slippage }: { slippage: string }) {
+export default function TradeMint() {
   const navigate = useNavigate()
   const {
     coinType,
@@ -41,7 +40,7 @@ export default function TradeMint({ slippage }: { slippage: string }) {
           Sell
         </div>
       </div>
-      {action === "buy" && <Buy slippage={slippage} />}
+      {/* {action === "buy" && <Buy slippage={slippage} />} */}
       {action === "sell" && <Sell />}
     </>
   )
