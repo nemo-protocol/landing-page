@@ -9,19 +9,9 @@ import Item from "./Item";
 import { PointItem } from "./type";
 import CoinIcon from "@/assets/images/svg/rewards/coin.svg?react";
 
-const point: PointItem = {
-  rank: 1,
-  address: "0x1302342312121322244423",
-  pointsPerDay: 3572.6,
-  totalPoints: 1232321.32
-};
-const testData: PointItem[] = Array.from({ length: 10 }, (_, i) => ({
-  ...point,
-  rank: i + 1,
-}));
 
 export default function CustomTable({
-  list = testData
+  list
 }: {
   list?: PointItem[];
 }) {

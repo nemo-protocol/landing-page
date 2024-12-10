@@ -15,8 +15,8 @@ export default function Item({
     navigator.clipboard.writeText(address);
   }
 
-  const onShare = () => {
-    // TODO: Share address
+  const onShare = (address: string) => {
+      window.location.href = "https://suiscan.xyz/mainnet/account/" + address;  // 跳转到百度
   }
 
   return (
@@ -28,7 +28,7 @@ export default function Item({
         <div className="flex items-center justify-center gap-2">
           {shortenString(address)}
           <CopyIcon onClick={onCopy} />
-          <ShareIcon onClick={onShare} />
+          <ShareIcon onClick={() => onShare(address)} />
         </div>
       </TableCell>
       <TableCell className="text-center">

@@ -4,7 +4,7 @@ import {
   CoinInfo,
   CoinConfig,
   FixedReturnItem,
-  PortfolioItem,
+  PortfolioItem, PointItem
 } from "./types/market"
 
 function getCoinInfoList(name = "", address = "") {
@@ -16,6 +16,10 @@ function getCoinInfoList(name = "", address = "") {
 
 function getFixedReturnInfos() {
   return nemoApi<FixedReturnItem[]>("/api/v1/fixReturn/detail").get()
+}
+
+function getRewardList() {
+  return nemoApi<PointItem[]>("/api/v1/points/page").get()
 }
 
 export function useQueryFixedReturnInfos() {
@@ -181,5 +185,13 @@ export function useCoinInfoList(name = "", address = "") {
     // FIXME： queryKey dose not work
     queryKey: ["coinInfoList", name, address],
     queryFn: () => getCoinInfoList(name, address),
+  })
+}
+
+export function useRewardList() {
+  return useQuery({
+    // FIXME： queryKey dose not work
+    queryKey: ["RewardConfig"],
+    queryFn: () => getRewardList(),
   })
 }

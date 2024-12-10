@@ -2,6 +2,7 @@ import Header from "@/components/Header"
 import { motion, AnimatePresence } from "framer-motion"
 import NemoPoint from "./NemoPoint"
 import CustomTable from "./CustomTable"
+import { useRewardList } from "@/queries"
 
 const variants = {
   hidden: { opacity: 0, y: 20 },
@@ -9,12 +10,12 @@ const variants = {
 }
 
 export default function Rewards() {
+  const { data: list } = useRewardList()
   return (
     <div
       className="h-screen xl:max-w-[1200px] xl:mx-auto w-full flex flex-col overflow-hidden"
       style={{
-        backgroundImage: "url(./images/banner.svg)",
-        backgroundRepeat: "round",
+        background: "linear-gradient(to bottom, #000000 75%, rgb(25 84 255 / var(--tw-bg-opacity)))",
       }}
     >
       <Header />
@@ -41,7 +42,7 @@ export default function Rewards() {
               variants={variants}
               transition={{ duration: 0.3 }}
             >
-              <CustomTable />
+              <CustomTable list={list} />
             </motion.div>
           </AnimatePresence>
         </div>
