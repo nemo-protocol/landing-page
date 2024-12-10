@@ -30,8 +30,18 @@ export const formatDecimalValue = (
   _value?: string | number | Decimal,
   decimal = 0,
 ): string => {
+  console.log("_value", _value?.toString(), decimal)
+
   const value = _value instanceof Decimal ? _value : new Decimal(_value || 0)
   return value.decimalPlaces() > decimal
     ? value.toFixed(decimal)
     : value.toFixed(value.decimalPlaces())
+}
+
+export const safeDivide = (str?: string | number): number => {
+  const num = Number(str)
+  if (isNaN(num) || num === 0) {
+    return 1
+  }
+  return num
 }

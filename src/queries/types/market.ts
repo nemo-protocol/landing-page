@@ -56,33 +56,12 @@ export interface CoinConfig {
   lstInfoId: string
 }
 
-export interface PortfolioItem {
-  name: string
-  icon: string
-  maturity: string
-  ptPrice: string
-  ytPrice: string
-  lpPrice: string
-  coinType: string
-  ptReward: string
-  ytReward: string
-  lpReward: string
-  decimal: string
-  rewardCoinType: string
-  rewardCoinPrice: string
-  pyStateId: string
-  pyPositionType: string
-  marketStateId: string
-  marketPositionType: string
-  nemoContractId: string
-  version: string
-  syCoinType: string
-  providerVersion: string
-  providerMarket: string
-  syStateId: string
-  underlyingCoinType: string
-  yieldFactoryConfigId: string
-  marketFactoryConfigId: string
+export interface PortfolioItem extends CoinConfig {
+  name: string;
+  icon: string;
+  ptReward: string;
+  ytReward: string;
+  lpReward: string;
 }
 
 export interface FixedReturnItem {

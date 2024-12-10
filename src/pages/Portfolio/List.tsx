@@ -92,16 +92,12 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
             <ConnectModal
               open={openConnect}
               onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-            // trigger={
-            //   <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
-            //     Connect Wallet
-            //   </button>
-            // }
-            >
-              <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
-                Connect Wallet
-              </button>
-            </ConnectModal>
+              children={
+                <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
+                  Connect Wallet
+                </button>
+              }
+            />
           </div>
         )}
         {!list?.length && isConnected && (
