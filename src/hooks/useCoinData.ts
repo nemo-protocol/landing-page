@@ -1,7 +1,17 @@
 import Decimal from "decimal.js"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 
-const useCoinData = (address?: string, coinType?: string) => {
+import { UseQueryResult } from "@tanstack/react-query"
+
+interface CoinData {
+  balance: string
+  coinObjectId: string
+}
+
+const useCoinData = (
+  address?: string,
+  coinType?: string,
+): UseQueryResult<CoinData[], unknown> => {
   return useSuiClientQuery(
     "getCoins",
     {
