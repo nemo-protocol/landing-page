@@ -131,6 +131,10 @@ export default function Item({
     lpReward,
     isConnected,
     itemKey,
+    coinConfig.lpPrice,
+    coinConfig.ptPrice,
+    coinConfig.ytPrice,
+    coinConfig.underlyingPrice,
   ])
 
   async function claim() {

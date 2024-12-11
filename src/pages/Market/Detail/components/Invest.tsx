@@ -15,7 +15,12 @@ import { Info, ChevronsDown, RotateCw } from "lucide-react"
 import { formatDecimalValue, safeDivide } from "@/lib/utils"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import { getPriceVoucher, initPyPosition, swapScoin } from "@/lib/txHelper"
+import {
+  getPriceVoucher,
+  initPyPosition,
+  splitCoinHelper,
+  swapScoin,
+} from "@/lib/txHelper"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   Select,
@@ -104,7 +109,7 @@ export default function Invest() {
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
-  
+
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
       return coinData
@@ -136,10 +141,13 @@ export default function Invest() {
 
         const splitCoin =
           tokenType === 0
-            ? swapScoin(tx, coinConfig,coinData, swapValue)
-            : tx.splitCoins(coinData[0].coinObjectId, [
+            ? swapScoin(tx, coinConfig, coinData, swapValue)
+            : splitCoinHelper(
+                tx,
+                coinData,
                 new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
-              ])
+                coinType,
+              )
 
         const [syCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::deposit`,

@@ -23,7 +23,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
 import { LoaderCircle } from "lucide-react"
-import { initPyPosition } from "@/lib/txHelper"
+import { initPyPosition, splitCoinHelper } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function Mint({
@@ -92,7 +92,13 @@ export default function Mint({
   )
 
   async function mint() {
-    if (!insufficientBalance && coinConfig && coinType && address) {
+    if (
+      !insufficientBalance &&
+      coinConfig &&
+      coinType &&
+      coinData?.length &&
+      address
+    ) {
       try {
         const tx = new Transaction()
 
@@ -105,9 +111,16 @@ export default function Mint({
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
-          new Decimal(mintValue).mul(10 ** coinConfig.decimal).toFixed(0),
-        ])
+        const splitCoin = splitCoinHelper(
+          tx,
+          coinData,
+          new Decimal(mintValue).mul(10 ** coinConfig.decimal).toString(),
+          coinType,
+        )
+
+        // const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
+        //   new Decimal(mintValue).mul(10 ** coinConfig.decimal).toFixed(0),
+        // ])
 
         const [syCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::deposit`,

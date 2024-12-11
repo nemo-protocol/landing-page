@@ -20,7 +20,11 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { formatDecimalValue } from "@/lib/utils"
-import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
+import {
+  getPriceVoucher,
+  initPyPosition,
+  splitCoinHelper,
+} from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
 import SlippageSetting from "@/components/SlippageSetting"
@@ -126,9 +130,16 @@ export default function Trade() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const [splitCoin] = tx.splitCoins(coinData[0].coinObjectId, [
+        const splitCoin = splitCoinHelper(
+          tx,
+          coinData,
           new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
-        ])
+          coinType,
+        )
+
+        // const [splitCoin] = tx.splitCoins(coinData[0].coinObjectId, [
+        //   new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
+        // ])
 
         const [syCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::deposit`,

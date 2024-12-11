@@ -60,9 +60,13 @@ export const swapScoin = (
   coinData: CoinData[],
   swapValue: string,
 ) => {
-  const [splitCoin] = tx.splitCoins(coinData[0].coinObjectId, [
+  const splitCoin = splitCoinHelper(
+    tx,
+    coinData,
     new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
-  ])
+    coinConfig.underlyingCoinType,
+  )
+
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
       const SCALLOP_MARKET_OBJECT =
@@ -106,5 +110,54 @@ export const swapScoin = (
     //   })
     default:
       throw new Error("swapScoin failed")
+  }
+}
+
+export function splitCoinHelper(
+  tx: Transaction,
+  coinData: CoinData[],
+  targetAmount: string,
+  coinType?: string,
+) {
+  if (!coinType || coinType === "0x2::sui::SUI") {
+    const totalBalance = coinData.reduce(
+      (sum, coin) => sum.add(coin.balance),
+      new Decimal(0),
+    )
+
+    if (totalBalance.lt(targetAmount)) {
+      throw new Error(coinType + " " + "Insufficient balance")
+    }
+
+    return tx.splitCoins(tx.gas, [targetAmount])
+  } else {
+    const firstCoinBalance = new Decimal(coinData[0].balance)
+
+    if (firstCoinBalance.gt(targetAmount)) {
+      return tx.splitCoins(tx.object(coinData[0].coinObjectId), [targetAmount])
+    } else if (firstCoinBalance.eq(targetAmount)) {
+      return tx.object(coinData[0].coinObjectId)
+    }
+
+    let accumulatedBalance = new Decimal(0)
+    const coinsToUse: string[] = []
+
+    // 选择需要合并的币
+    for (const coin of coinData) {
+      accumulatedBalance = accumulatedBalance.add(coin.balance)
+      coinsToUse.push(coin.coinObjectId)
+
+      if (accumulatedBalance.gte(targetAmount)) {
+        break
+      }
+    }
+
+    if (accumulatedBalance.lt(targetAmount)) {
+      throw new Error(coinType + " " + "insufficient balance")
+    }
+
+    const mergedCoin = tx.mergeCoins(coinsToUse[0], coinsToUse.slice(1))
+
+    return tx.splitCoins(mergedCoin, [targetAmount])
   }
 }
