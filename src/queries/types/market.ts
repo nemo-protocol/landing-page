@@ -46,6 +46,7 @@ export interface CoinConfig {
   providerVersion: string
   providerMarket: string
   syCoinType: string
+  sCoinTreasure: string
   underlyingCoinType: string
   nemoContractId: string
   decimal: number

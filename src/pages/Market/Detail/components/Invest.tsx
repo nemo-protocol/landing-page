@@ -3,10 +3,20 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
-import { Info, ChevronsDown, RotateCw } from "lucide-react"
-// import { useCurrentAccount } from "@mysten/dapp-kit"
+import useCoinData from "@/hooks/useCoinData"
+import AmountInput from "@/components/AmountInput"
+import ActionButton from "@/components/ActionButton"
+import { useWallet } from "@aricredemption/wallet-kit"
 import { Transaction } from "@mysten/sui/transactions"
+import { parseErrorMessage } from "@/lib/errorMapping"
+import usePyPositionData from "@/hooks/usePyPositionData"
+import SlippageSetting from "@/components/SlippageSetting"
+import { Info, ChevronsDown, RotateCw } from "lucide-react"
+import { formatDecimalValue, safeDivide } from "@/lib/utils"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { getPriceVoucher, initPyPosition, swapScoin } from "@/lib/txHelper"
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   Select,
   SelectContent,
@@ -21,17 +31,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-// import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
-import useCoinData from "@/hooks/useCoinData"
-import usePyPositionData from "@/hooks/usePyPositionData"
-import { parseErrorMessage } from "@/lib/errorMapping"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import { formatDecimalValue, safeDivide } from "@/lib/utils"
-import { getPriceVoucher, initPyPosition, swapScoin } from "@/lib/txHelper"
-import ActionButton from "@/components/ActionButton"
-import AmountInput from "@/components/AmountInput"
-import SlippageSetting from "@/components/SlippageSetting"
-import { useWallet } from "@aricredemption/wallet-kit"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -42,10 +41,13 @@ export default function Invest() {
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
   const [openConnect, setOpenConnect] = useState(false)
-  const [tokenType, setTokenType] = useState<number>(1) // 0-native coin, 1-wrapped coin
+  const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
 
-  const { address, signAndExecuteTransaction } = useWallet()
+  const { mutateAsync: signAndExecuteTransaction } =
+    useCustomSignAndExecuteTransaction()
+
+  const { address } = useWallet()
 
   const isConnected = useMemo(() => !!address, [address])
 
@@ -98,7 +100,11 @@ export default function Invest() {
     }
   }, [swapRatio, tokenType, conversionRate])
 
-  const { data: coinData } = useCoinData(address, coinType)
+  const { data: coinData } = useCoinData(
+    address,
+    tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
+  )
+  
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
       return coinData
@@ -128,23 +134,12 @@ export default function Invest() {
         await refetch()
         const tx = new Transaction()
 
-        let pyPosition
-        let created = false
-        if (!pyPositionData?.length) {
-          created = true
-          pyPosition = initPyPosition(tx, coinConfig)
-        } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
-        }
-
-        const [splitCoin] =
+        const splitCoin =
           tokenType === 0
-            ? swapScoin(tx, coinConfig, swapValue)
+            ? swapScoin(tx, coinConfig,coinData, swapValue)
             : tx.splitCoins(coinData[0].coinObjectId, [
                 new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
               ])
-
-        // tx.transferObjects([splitCoin], address)
 
         const [syCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::deposit`,
@@ -162,6 +157,15 @@ export default function Invest() {
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
         })
+
+        let pyPosition
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = initPyPosition(tx, coinConfig)
+        } else {
+          pyPosition = tx.object(pyPositionData[0].id.id)
+        }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
@@ -193,7 +197,6 @@ export default function Invest() {
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          // chain: `sui:${network}`,
         })
 
         setTxId(res.digest)

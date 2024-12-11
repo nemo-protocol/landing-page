@@ -1,26 +1,43 @@
-import { SuiTransactionBlockResponse } from "@mysten/sui/client"
-import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit"
+import { useMutation } from "@tanstack/react-query"
+import { Transaction } from "@mysten/sui/transactions"
+import { useSuiClient, useWallet } from "@aricredemption/wallet-kit"
+import { SuiSignAndExecuteTransactionOutput } from "@mysten/wallet-standard"
 
-const useCustomSignAndExecuteTransaction = (): ReturnType<
-  typeof useSignAndExecuteTransaction<SuiTransactionBlockResponse>
-> => {
+interface SignAndExecuteParams {
+  transaction: Transaction
+  chain?: string
+}
+
+const useCustomSignAndExecuteTransaction = () => {
   const client = useSuiClient()
+  const { signAndExecuteTransaction } = useWallet()
 
-  return useSignAndExecuteTransaction({
-    execute: async ({ bytes, signature }) =>
-      await client.executeTransactionBlock({
-        transactionBlock: bytes,
-        signature,
-        options: {
-          showInput: false,
-          showEvents: false,
-          showEffects: true,
-          showRawInput: false,
-          showRawEffects: true,
-          showObjectChanges: false,
-          showBalanceChanges: false,
+  return useMutation({
+    mutationFn: async ({
+      transaction,
+    }: SignAndExecuteParams): Promise<SuiSignAndExecuteTransactionOutput> => {
+      return signAndExecuteTransaction(
+        {
+          transaction,
         },
-      }),
+        {
+          execute: async ({ bytes, signature }) =>
+            await client.executeTransactionBlock({
+              transactionBlock: bytes,
+              signature,
+              options: {
+                showInput: false,
+                showEvents: false,
+                showEffects: true,
+                showRawInput: false,
+                showRawEffects: true,
+                showObjectChanges: false,
+                showBalanceChanges: false,
+              },
+            }),
+        },
+      )
+    },
   })
 }
 

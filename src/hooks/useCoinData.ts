@@ -3,7 +3,7 @@ import { useSuiClientQuery } from "@mysten/dapp-kit"
 
 import { UseQueryResult } from "@tanstack/react-query"
 
-interface CoinData {
+export interface CoinData {
   balance: string
   coinObjectId: string
 }
