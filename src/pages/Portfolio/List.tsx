@@ -1,4 +1,11 @@
 import Item from "./Item"
+import { motion } from "framer-motion"
+import { Link } from "react-router-dom"
+import { useMemo, useState } from "react"
+import Empty from "@/assets/images/png/empty.png"
+import { PortfolioItem } from "@/queries/types/market"
+import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
+import WalletNotConnect from "@/assets/images/svg/wallet-no-connect.svg"
 import {
   Table,
   TableRow,
@@ -6,18 +13,10 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table"
-import { useState } from "react"
-import Empty from "@/assets/images/png/empty.png"
-// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
-import WalletNotConnect from "@/assets/images/svg/wallet-no-connect.svg"
-import { Link } from "react-router-dom"
-import { PortfolioItem } from "@/queries/types/market"
-import { motion } from "framer-motion"
-import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function List({ list }: { list?: PortfolioItem[] }) {
-  // const { isConnected } = useCurrentWallet()
-  const { connected: isConnected } = useWallet()
+  const { address } = useWallet()
+  const isConnected = useMemo(() => !!address, [address])
   const [openConnect, setOpenConnect] = useState(false)
   const [selectType, setSelectType] = useState<"pt" | "yt" | "lp">("pt")
   return (
@@ -73,7 +72,20 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
                 <Item
                   {...item}
                   selectType={selectType}
-                  key={item.name + item.maturity}
+                  key={
+                    item.underlyingProtocol +
+                    "_" +
+                    item.name +
+                    "_" +
+                    item.maturity
+                  }
+                  itemKey={
+                    item.underlyingProtocol +
+                    "_" +
+                    item.name +
+                    "_" +
+                    item.maturity
+                  }
                 />
               ))}
             </TableBody>

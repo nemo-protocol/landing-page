@@ -2,13 +2,12 @@ import dayjs from "dayjs"
 import { useEffect, useMemo, useState } from "react"
 import Decimal from "decimal.js"
 import { Link } from "react-router-dom"
-// import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import { PortfolioItem } from "@/queries/types/market"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { TableRow, TableCell } from "@/components/ui/table"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
-// import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 // TODO: 封装全局的提示框
 import {
   AlertDialog,
@@ -26,26 +25,26 @@ import { useWallet } from "@aricredemption/wallet-kit"
 import { getPriceVoucher } from "@/lib/txHelper"
 
 export default function Item({
+  itemKey,
   name,
   icon,
   ytReward,
   lpReward,
   selectType,
   ...coinConfig
-}: PortfolioItem & { selectType: "pt" | "yt" | "lp" | "all" }) {
+}: PortfolioItem & {
+  selectType: "pt" | "yt" | "lp" | "all"
+  itemKey: string
+}) {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
-  // const { currentWallet } = useCurrentWallet()
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  // const { mutateAsync: signAndExecuteTransaction } =
-  //   useCustomSignAndExecuteTransaction()
-  // const currentAccount = useCurrentAccount()
+  const { mutateAsync: signAndExecuteTransaction } =
+    useCustomSignAndExecuteTransaction()
 
   const { updatePortfolio } = usePortfolio()
-
-  const { address, signAndExecuteTransaction } = useWallet()
-
+  const { address } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
   const { data: lpMarketPositionData } = useLpMarketPositionData(
@@ -93,9 +92,11 @@ export default function Item({
   }, [lpMarketPositionData])
 
   useEffect(() => {
-    if (isConnected && address) {
+    if (isConnected) {
+      console.log("itemKey", itemKey)
+
       updatePortfolio(
-        coinConfig.coinType + "_" + coinConfig.maturity,
+        itemKey,
         new Decimal(ptBalance)
           .mul(
             coinConfig.ptPrice && coinConfig.ptPrice !== ""
@@ -123,15 +124,13 @@ export default function Item({
       )
     }
   }, [
-    address,
-    selectType,
-    coinConfig,
     updatePortfolio,
     ptBalance,
     ytBalance,
     lpCoinBalance,
     lpReward,
     isConnected,
+    itemKey,
   ])
 
   async function claim() {
