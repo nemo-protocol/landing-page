@@ -66,11 +66,11 @@ export default function Home() {
           <ArrowLeft />
         </h3>
         <div className="mt-5 md:mt-20 relative">
-          <div className="flex xl:flex-row flex-col gap-x-8 justify-center">
+          <div className="flex xl:flex-row flex-col gap-x-8 justify-center items-center">
             {operation === "swap" && tokenType === "yt" ? (
               <Trade />
             ) : (
-              <div className="w-full xl:w-[500px] flex flex-col gap-y-5">
+              <div className="w-full md:w-[500px] flex flex-col gap-y-5">
                 {operation === "swap" && tokenType === "pt" && <Invest />}
                 {operation === "sell" && <Sell />}
                 {operation === "liquidity" && <Liquidity />}

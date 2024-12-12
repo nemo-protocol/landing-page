@@ -93,8 +93,6 @@ export default function Item({
 
   useEffect(() => {
     if (isConnected) {
-      console.log("itemKey", itemKey)
-
       updatePortfolio(
         itemKey,
         new Decimal(ptBalance)
@@ -431,9 +429,9 @@ export default function Item({
           <TableCell className="text-center">{ytBalance}</TableCell>
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
-              <div className="flex flex-col items-center">
-                <span className="text-white text-sm">
-                  {ytReward} {coinConfig?.underlyingPrice}
+              <div className="flex flex-col items-center w-24">
+                <span className="text-white text-sm break-all">
+                  {ytReward || 0}
                 </span>
                 <span className="text-white/50 text-xs">
                   $

@@ -83,7 +83,6 @@ export const parseErrorMessage = (errorString: string) => {
         errorCodeMatch[1] ? 10 : 16,
       )
     : null
-  console.log("errorCode", errorCode)
 
   return errorCode ? getErrorMessage(errorCode, errorString) : errorString
 }

@@ -242,8 +242,8 @@ export default function Trade() {
   }
 
   return (
-    <div className="w-full flex flex-col xl:flex-row gap-5">
-      <div className="w-full xl:w-[500px] bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] shrink-0">
+    <div className="w-full flex flex-col lg:flex-row gap-5">
+      <div className="lg:w-[400px] bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] shrink-0">
         <div className="flex flex-col items-center gap-y-4">
           <h2 className="text-center text-xl">Trade</h2>
           {/* TODO: add into global */}
