@@ -29,6 +29,7 @@ import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
 import SlippageSetting from "@/components/SlippageSetting"
 import { useWallet } from "@aricredemption/wallet-kit"
+import dayjs from "dayjs"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -302,16 +303,35 @@ export default function Trade() {
           />
           <ChevronsDown className="size-6" />
           <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
-            <div className="flex items-center justify-between">
-              <span>Receiving</span>
-              <span>
-                {decimal && swapValue && ratio
-                  ? formatDecimalValue(
-                      new Decimal(swapValue).mul(ratio),
-                      decimal,
-                    )
+            <div className="flex flex-col items-end gap-y-1">
+              <div className="flex items-center justify-between w-full">
+                <span>Receiving</span>
+                <span>
+                  {decimal && swapValue && ratio ? (
+                    <span className="flex items-center gap-x-1.5">
+                      <span>
+                        {formatDecimalValue(
+                          new Decimal(swapValue).mul(ratio),
+                          decimal,
+                        )}
+                      </span>{" "}
+                      <span>YT {coinConfig?.coinName}</span>
+                      <img
+                        src={coinConfig?.coinLogo}
+                        alt={coinConfig?.coinName}
+                        className="size-[28px]"
+                      />
+                    </span>
+                  ) : (
+                    "--"
+                  )}
+                </span>
+              </div>
+              <div className="text-xs text-white/60">
+                {coinConfig?.maturity
+                  ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
                   : "--"}
-              </span>
+              </div>
             </div>
             <hr className="border-t border-[#2D2D48] mt-6" />
             <div className="flex items-center justify-between mt-6">

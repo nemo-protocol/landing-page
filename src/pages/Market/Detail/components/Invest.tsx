@@ -95,7 +95,7 @@ export default function Invest() {
 
   const ratio = useMemo(() => {
     if (swapRatio) {
-      if (tokenType === 0) {
+      if (tokenType === 0 && conversionRate && swapRatio.exchangeRate) {
         return new Decimal(swapRatio.exchangeRate)
           .div(safeDivide(conversionRate))
           .toString()
@@ -291,13 +291,35 @@ export default function Invest() {
         />
         <ChevronsDown className="size-6" />
         <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
-          <div className="flex items-center justify-between">
-            <span>Receiving</span>
-            <span>
-              {decimal && swapValue && ratio
-                ? formatDecimalValue(new Decimal(swapValue).mul(ratio), decimal)
+          <div className="flex flex-col items-end gap-y-1">
+            <div className="flex items-center justify-between w-full">
+              <span>Receiving</span>
+              <span>
+                {decimal && swapValue && ratio ? (
+                  <span className="flex items-center gap-x-1.5">
+                    <span>
+                      {formatDecimalValue(
+                        new Decimal(swapValue).mul(ratio),
+                        decimal,
+                      )}
+                    </span>{" "}
+                    <span>PT {coinConfig?.coinName}</span>
+                    <img
+                      src={coinConfig?.coinLogo}
+                      alt={coinConfig?.coinName}
+                      className="size-[28px]"
+                    />
+                  </span>
+                ) : (
+                  "--"
+                )}
+              </span>
+            </div>
+            <div className="text-xs text-white/60">
+              {coinConfig?.maturity
+                ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
                 : "--"}
-            </span>
+            </div>
           </div>
           <hr className="border-t border-[#2D2D48] mt-6" />
           <div className="flex items-center justify-between mt-6">
@@ -374,7 +396,7 @@ export default function Invest() {
           <div className="flex items-center justify-between text-white/60">
             <span>Price</span>
             <div className="flex items-center gap-x-1">
-              <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} PT ${coinConfig?.coinName}`}</span>
+              <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(4)} PT ${coinConfig?.coinName}`}</span>
               <RotateCw
                 className={[
                   "size-5 cursor-pointer",
