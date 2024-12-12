@@ -61,7 +61,7 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
               <TableHead className="text-center">Value</TableHead>
               <TableHead className="text-center">Amount</TableHead>
               {selectType === "yt" && (
-                <TableHead className="text-center">Rewards</TableHead>
+                <TableHead className="text-center">Accrued Yield</TableHead>
               )}
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
