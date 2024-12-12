@@ -146,7 +146,7 @@ export default function Header({ className }: { className?: string }) {
             </Link>
           </li>
         </ul>
-        <div className="flex items-center gap-x-6 h-full">
+        <div className="flex items-center gap-x-2 sm:gap-x-6 h-full">
           <span
             className={[
               "relative h-full text-center cursor-pointer flex items-center justify-center",
@@ -284,8 +284,8 @@ export default function Header({ className }: { className?: string }) {
         className="absolute left-0 right-0 text-sm md:hidden bg-[#0E0F16]/90 backdrop-blur-md relative z-10"
       >
         <div className="flex flex-col py-3 max-w-[1440px] mx-auto px-4">
-          <Link 
-            to="/market" 
+          <Link
+            to="/market"
             className="py-3 text-white/90 hover:text-white text-base"
           >
             Markets
@@ -296,21 +296,21 @@ export default function Header({ className }: { className?: string }) {
           >
             Portfolio
           </Link>
-          <Link 
-            to="/learn" 
+          <Link
+            to="/learn"
             className="py-3 text-white/90 hover:text-white text-base"
           >
             Learn
           </Link>
-          <Link 
-            to="/rewards" 
+          <Link
+            to="/rewards"
             className="py-3 text-white/90 hover:text-white text-base"
           >
             Rewards
           </Link>
           {IS_DEV && (
-            <Link 
-              to="/test" 
+            <Link
+              to="/test"
               className="py-3 text-white/90 hover:text-white text-base"
             >
               Test
