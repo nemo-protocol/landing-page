@@ -60,15 +60,7 @@ export default function Header({ className }: { className?: string }) {
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
         <div className="flex items-center gap-x-6 h-full">
           <Link to="/" className="flex gap-x-2">
-            <div className="hidden md:block">
-              <NemoLogo />
-            </div>
-            <div className="block md:hidden text-white text-lg font-bold">
-              Nemo
-            </div>
-            <div className="text-[#44E0C3] py-1 px-2 rounded-full bg-[#ECFBF9]/10 text-xs scale-75 origin-left">
-              Beta
-            </div>
+            <NemoLogo />
           </Link>
         </div>
         <ul className="md:flex items-center text-sm hidden h-full">
@@ -149,8 +141,8 @@ export default function Header({ className }: { className?: string }) {
         <div className="flex items-center gap-x-2 sm:gap-x-6 h-full">
           <span
             className={[
-              "relative h-full text-center cursor-pointer flex items-center justify-center",
-              "bg-transparent",
+              "relative h-full text-center cursor-pointer items-center justify-center",
+              "bg-transparent md:flex hidden",
             ].join(" ")}
           >
             <DropdownMenu>
@@ -308,6 +300,19 @@ export default function Header({ className }: { className?: string }) {
           >
             Rewards
           </Link>
+          <Link
+            to="/mint"
+            className="py-3 text-white/90 hover:text-white text-base"
+          >
+            Mint
+          </Link>
+          <a
+            href="https://www.sentio.xyz/"
+            target="_blank"
+            className="py-3 text-white/90 hover:text-white text-base"
+          >
+            Sentio
+          </a>
           {IS_DEV && (
             <Link
               to="/test"

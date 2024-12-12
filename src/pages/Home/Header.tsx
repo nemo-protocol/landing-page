@@ -126,22 +126,30 @@ export default function HomeHeader() {
           Launch App
         </button>
 
-        <Squares2X2Icon
-          className="md:hidden text-white cursor-pointer"
-          onClick={() => setIsOpen((isOpen) => !isOpen)}
-        />
+        <div className="flex items-center gap-x-4 md:hidden">
+          <button
+            className="border border-white bg-transparent rounded-full text-white py-1 px-2"
+            onClick={() => navigate("/market")}
+          >
+            Launch App
+          </button>
+          <Squares2X2Icon
+            className="text-white cursor-pointer"
+            onClick={() => setIsOpen((isOpen) => !isOpen)}
+          />
+        </div>
       </div>
       <motion.div
         initial={{ height: 0, opacity: 0 }}
         animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
         transition={{ duration: 0.3 }}
         style={{ overflow: "hidden" }}
-        className="flex gap-x-8 text-sm lg:hidden"
+        className="fixed left-4 right-4 top-20 text-sm md:hidden bg-[#0E0F16]/90 backdrop-blur-md z-50 rounded-2xl mx-auto max-w-screen-xl"
       >
-        <div className="flex flex-col">
+        <div className="flex flex-col p-4">
           <Link
             to="/"
-            className="py-2 text-white"
+            className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
             onClick={() => setSubNav(false)}
           >
             Home
@@ -152,14 +160,14 @@ export default function HomeHeader() {
               e.preventDefault()
               setSubNav((subNav) => !subNav)
             }}
-            className="py-2 cursor-pointer text-white"
+            className="py-3 text-white hover:bg-white/10 rounded-lg px-4 cursor-pointer"
           >
             Community
           </a>
           <a
             href="https://docs.nemoprotocol.com/"
             target="_blank"
-            className="py-2 text-white"
+            className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
             onClick={() => setSubNav(false)}
           >
             Docs
@@ -167,25 +175,25 @@ export default function HomeHeader() {
           <a
             href="https://docs.nemoprotocol.com/"
             target="_blank"
-            className="py-2 text-white"
+            className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
             onClick={() => setSubNav(false)}
           >
             Learn
           </a>
         </div>
         {subNav && (
-          <div className="flex flex-col">
+          <div className="flex flex-col p-4 border-t border-white/10">
             <a
               href="https://x.com/nemoprotocol"
               target="_blank"
-              className="py-2 text-white"
+              className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
             >
               Twitter
             </a>
             <a
               href="https://t.me/NemoProtocol"
               target="_blank"
-              className="py-2 text-white"
+              className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
             >
               Telegram
             </a>
