@@ -19,7 +19,7 @@ export default function Item({
   }
 
   const onShare = (address: string) => {
-    window.open("https://suiscan.xyz/mainnet/account/" + address, "_blank"); // 跳转到目标页面
+    window.open("https://suiscan.xyz/mainnet/account/" + address, "_blank");
   };
 
   return (
