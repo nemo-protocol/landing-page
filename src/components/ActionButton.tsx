@@ -4,7 +4,6 @@ import { ConnectModal, useWallet } from "@aricredemption/wallet-kit"
 interface ActionButtonProps {
   btnText: string
   disabled: boolean
-  tokenType?: number
   onClick: () => void
   openConnect: boolean
   insufficientBalance: boolean
@@ -15,7 +14,6 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   onClick,
   btnText,
   disabled,
-  tokenType,
   openConnect,
   setOpenConnect,
   insufficientBalance,
@@ -50,8 +48,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >
-          {/* TODO : remove tokenType */}
-          {tokenType === 0 ? "Coming soon" : btnText}
+          {btnText}
         </button>
       )}
     </>

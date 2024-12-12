@@ -24,6 +24,7 @@ import {
   getPriceVoucher,
   initPyPosition,
   splitCoinHelper,
+  swapScoin,
 } from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
@@ -122,25 +123,15 @@ export default function Trade() {
       try {
         const tx = new Transaction()
 
-        let pyPosition
-        let created = false
-        if (!pyPositionData?.length) {
-          created = true
-          pyPosition = initPyPosition(tx, coinConfig)
-        } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
-        }
-
-        const splitCoin = splitCoinHelper(
-          tx,
-          coinData,
-          new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
-          coinType,
-        )
-
-        // const [splitCoin] = tx.splitCoins(coinData[0].coinObjectId, [
-        //   new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
-        // ])
+        const splitCoin =
+          tokenType === 0
+            ? swapScoin(tx, coinConfig, coinData, swapValue)
+            : splitCoinHelper(
+                tx,
+                coinData,
+                new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
+                coinType,
+              )
 
         const [syCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::deposit`,
@@ -158,6 +149,15 @@ export default function Trade() {
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
         })
+
+        let pyPosition
+        let created = false
+        if (!pyPositionData?.length) {
+          created = true
+          pyPosition = initPyPosition(tx, coinConfig)
+        } else {
+          pyPosition = tx.object(pyPositionData[0].id.id)
+        }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
@@ -367,13 +367,10 @@ export default function Trade() {
           <ActionButton
             btnText="Buy"
             onClick={swap}
-            tokenType={tokenType}
             openConnect={openConnect}
             setOpenConnect={setOpenConnect}
             insufficientBalance={insufficientBalance}
-            disabled={
-              ["", undefined, "0"].includes(swapValue) || tokenType === 0
-            }
+            disabled={["", undefined, "0"].includes(swapValue)}
           />
         </div>
       </div>

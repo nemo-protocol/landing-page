@@ -345,27 +345,32 @@ export default function Invest() {
                 </Tooltip>
               </TooltipProvider>
             </span>
-            <div className="flex items-center gap-x-1.5">
-              <span>
-                {ratio && decimal && swapValue
-                  ? `+ ${formatDecimalValue(
-                      new Decimal(swapValue)
-                        .mul(ratio)
-                        .minus(
-                          tokenType === 0
-                            ? new Decimal(swapValue)
-                            : new Decimal(swapValue).mul(conversionRate || 1),
-                        ),
-                      decimal,
-                    )}`
-                  : "--"}
-              </span>
-              <img
-                src={coinConfig?.underlyingCoinLogo}
-                alt={coinConfig?.underlyingCoinName}
-                className="size-[28px]"
-              />
-            </div>
+
+            {ratio && decimal && swapValue && conversionRate ? (
+              <div className="flex items-center gap-x-1.5">
+                <span>
+                  + $
+                  {formatDecimalValue(
+                    new Decimal(swapValue)
+                      .mul(ratio)
+                      .minus(
+                        tokenType === 0
+                          ? new Decimal(swapValue)
+                          : new Decimal(swapValue).mul(conversionRate),
+                      ),
+                    decimal,
+                  )}
+                </span>
+                <span>{coinConfig?.underlyingCoinName}</span>
+                <img
+                  src={coinConfig?.underlyingCoinLogo}
+                  alt={coinConfig?.underlyingCoinName}
+                  className="size-[28px]"
+                />
+              </div>
+            ) : (
+              <span>--</span>
+            )}
           </div>
           <div className="flex items-center justify-between mt-2 text-white/60 text-xs">
             <span>
