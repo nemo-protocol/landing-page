@@ -2,7 +2,8 @@ import Header from "@/components/Header"
 import { motion, AnimatePresence } from "framer-motion"
 import NemoPoint from "./NemoPoint"
 import CustomTable from "./CustomTable"
-import { useRewardList } from "@/queries"
+import { useRewardList, useRewardWithAddress } from "@/queries"
+import { useWallet } from "@aricredemption/wallet-kit"
 
 const variants = {
   hidden: { opacity: 0, y: 20 },
@@ -10,13 +11,14 @@ const variants = {
 }
 
 export default function Rewards() {
+  const { address, } = useWallet()
   const { data: list } = useRewardList()
+  const { data: userPoint } = useRewardWithAddress(address)
+  console.log(address)
+  console.log(userPoint)
   return (
     <div
       className="h-screen xl:max-w-[1200px] xl:mx-auto w-full flex flex-col overflow-hidden"
-      style={{
-        background: "linear-gradient(to bottom, #000000 75%, rgb(25 84 255 / var(--tw-bg-opacity)))",
-      }}
     >
       <Header />
       <div
@@ -32,7 +34,7 @@ export default function Rewards() {
               variants={variants}
               transition={{ duration: 0.3 }}
             >
-              <NemoPoint />
+              <NemoPoint userPoint={userPoint} />
             </motion.div>
             <motion.div
               key="yield-tokenization"

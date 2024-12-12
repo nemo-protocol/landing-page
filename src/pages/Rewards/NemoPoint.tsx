@@ -4,8 +4,13 @@ import YieldTokenization from "@/assets/images/svg/rewards/TopLog.svg?react";
 import RankingIcon from "@/assets/images/svg/ranking.svg?react";
 import DayIcon from "@/assets/images/svg/day.svg?react";
 import PointIcon from "@/assets/images/svg/point.svg?react";
+import { PointItem } from "@/pages/Rewards/type.ts"
 
-export default function NemoPoint() {
+export default function NemoPoint({
+  userPoint
+}: {
+  userPoint?: PointItem[];
+})  {
   return (
     <div className="flex items-center gap-4 justify-between">
       <div className="w-full self-end min-w-0">
@@ -44,7 +49,7 @@ export default function NemoPoint() {
                 My Total Points
               </span>
               <span className="text-white text-2xl">
-                23.6
+                {userPoint?.[0]?.totalPoints || "NAN"}
               </span>
             </div>
             <PointIcon />
@@ -66,7 +71,7 @@ export default function NemoPoint() {
               </span>
               <div className="flex items-center gap-x-2">
                 <span className="text-white text-2xl">
-                  1.6
+                  {userPoint?.[0]?.pointsPerDay || "NAN"}
                 </span>
               </div>
             </div>
@@ -89,7 +94,7 @@ export default function NemoPoint() {
               </span>
               <div className="flex items-center gap-x-2">
                 <span className="text-white text-2xl">
-                  #23652
+                  {userPoint?.[0]?.rank || "NAN"}
                 </span>
               </div>
             </div>

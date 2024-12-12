@@ -3,6 +3,7 @@ import { shortenString } from "./utils";
 import { PointItem } from "./type"
 import CopyIcon from "@/assets/images/svg/rewards/copy.svg?react";
 import ShareIcon from "@/assets/images/svg/rewards/share.svg?react";
+import { useToast } from "@/components/Toast"
 
 export default function Item({
   rank,
@@ -10,25 +11,27 @@ export default function Item({
   pointsPerDay,
   totalPoints,
 }: PointItem) {
+  const toast = useToast()
 
   const onCopy = () => {
     navigator.clipboard.writeText(address);
+    toast.success("Address copied to clipboard")
   }
 
   const onShare = (address: string) => {
-      window.location.href = "https://suiscan.xyz/mainnet/account/" + address;  // 跳转到百度
-  }
+    window.open("https://suiscan.xyz/mainnet/account/" + address, "_blank"); // 跳转到目标页面
+  };
 
   return (
-    <TableRow className="cursor-pointer">
+    <TableRow >
       <TableCell className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         {rank}
       </TableCell>
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-2">
           {shortenString(address)}
-          <CopyIcon onClick={onCopy} />
-          <ShareIcon onClick={() => onShare(address)} />
+          <CopyIcon className="cursor-pointer" onClick={onCopy} />
+          <ShareIcon className="cursor-pointer" onClick={() => onShare(address)} />
         </div>
       </TableCell>
       <TableCell className="text-center">

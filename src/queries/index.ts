@@ -19,7 +19,20 @@ function getFixedReturnInfos() {
 }
 
 function getRewardList() {
-  return nemoApi<PointItem[]>("/api/v1/points/page").get()
+  return nemoApi<PointItem[]>("/api/v1/points/page").get(
+    {
+      pageSize: 100,
+    }
+  )
+}
+
+function getRewardWithAddress(address?: string) {
+  const userAddress = address || "0x0";
+  return nemoApi<PointItem[]>("/api/v1/points/page").get(
+    {
+      userAddress
+    }
+  )
 }
 
 export function useQueryFixedReturnInfos() {
@@ -193,5 +206,13 @@ export function useRewardList() {
     // FIXME： queryKey dose not work
     queryKey: ["RewardConfig"],
     queryFn: () => getRewardList(),
+  })
+}
+
+export function useRewardWithAddress(userAddress?: string) {
+  return useQuery({
+    // FIXME： queryKey dose not work
+    queryKey: ["RewardWithAddress"],
+    queryFn: () => getRewardWithAddress(userAddress),
   })
 }
