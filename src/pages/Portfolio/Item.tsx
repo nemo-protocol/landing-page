@@ -499,14 +499,14 @@ export default function Item({
             {dayjs(parseInt(coinConfig?.maturity)).diff(dayjs(), "day") > 0 ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
-                  to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/liquidity/add`}
+                  to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/add`}
                 >
                   <button className="rounded-3xl bg-[#0F60FF] h-8 w-24 text-white">
                     Add
                   </button>
                 </Link>
                 <Link
-                  to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/liquidity/remove`}
+                  to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/remove`}
                 >
                   <button className="rounded-3xl bg-[#FF7474] h-8 w-24 text-white">
                     Remove

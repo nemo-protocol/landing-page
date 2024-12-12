@@ -100,7 +100,7 @@ export default function Home() {
             <motion.img
               alt=""
               src="/images/home/market.png"
-              className="mx-auto max-w-[750px] w-full md:w-fit"
+              className="mx-auto md:max-w-[750px] lg:max-w-[950px] w-full md:w-fit"
               initial={{ opacity: 0, y: 50 }}
               animate={ref1InView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5 }}

@@ -1,28 +1,15 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
+import { motion } from "framer-motion"
 import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
 import PieChart from "./components/PieChart.tsx"
 import { Link, useNavigate } from "react-router-dom"
-import Star from "@/assets/images/svg/market/star.svg"
-import Crown from "@/assets/images/svg/market/crown.svg"
-import Diamond from "@/assets/images/svg/market/diamond.svg"
-import { motion } from "framer-motion"
-// import Carousel from "./Carousel.tsx"
 
 const textVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 }
-
-// const carouselVariants = {
-//   hidden: { opacity: 0, scale: 0.9 },
-//   visible: {
-//     opacity: 1,
-//     scale: 1,
-//     transition: { duration: 0.6, ease: "easeOut" },
-//   },
-// }
 
 export default function Home() {
   const navigate = useNavigate()
@@ -60,35 +47,7 @@ export default function Home() {
                 About PT & YT Trading
               </Link>
             </p>
-            <div className="flex items-center gap-x-2 mt-9 hidden">
-              <button className="border border-[#0052F2] bg-[#0052F2]/25 text-[#5D94FF] py-1.5 px-3 rounded-full flex items-center gap-x-1">
-                <img src={Diamond} alt="" />
-                <span className="text-xs">All</span>
-              </button>
-              <button className="border border-[#C2B166] bg-[#C2B166]/25 text-[#C2B166] py-1.5 px-3 rounded-full flex items-center gap-x-1">
-                <img src={Star} alt="" /> <span className="text-xs">New</span>
-              </button>
-              <button className="border border-[#2DF4DD] bg-[#2DF4DD]/25 text-[#2DF4DD] py-1.5 px-3 rounded-full flex items-center gap-x-1">
-                <img src={Crown} alt="" className="inline-block" />
-                <span className="text-xs">Popular</span>
-              </button>
-            </div>
           </motion.div>
-          {/* <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={carouselVariants}
-            transition={{ duration: 0.5 }}
-          >
-            <Carousel
-              interval={5000}
-              images={[
-                "/images/carousel/carousel01.png",
-                "/images/carousel/carousel02.png",
-                "/images/carousel/carousel03.png",
-              ]}
-            />
-          </motion.div> */}
         </div>
         <motion.div
           className="mt-[30px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 transition-all duration-200 ease-in-out"
@@ -157,24 +116,6 @@ export default function Home() {
                       />
                     </div>
                   </div>
-                  <div className="mt-6 flex items-center justify-between rounded-xl p-4 bg-[#131520] hidden">
-                    <div className="flex flex-col gap-y-1">
-                      <div className="text-white mt-1 text-center">
-                        ${item.underlyingPrice.toLocaleString()}
-                      </div>
-                      <div className="text-[#576682] text-xs text-center">
-                        Underlying Price
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-y-1">
-                      <div className="text-white mt-1 text-center">
-                        {new Decimal(item.underlyingApy).mul(100).toFixed(2)}%
-                      </div>
-                      <div className="text-[#576682] text-xs text-center">
-                        Underlying Apy
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 <div className="mt-3.5">
                   <h6 className="text-xs text-white">Trade</h6>
@@ -223,7 +164,7 @@ export default function Home() {
                     className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer border border-transparent hover:border-white"
                     onClick={() =>
                       navigate(
-                        `/market/detail/${item.coinAddress}/${item.maturity}/liquidity`,
+                        `/market/detail/${item.coinAddress}/${item.maturity}/add`,
                       )
                     }
                   >

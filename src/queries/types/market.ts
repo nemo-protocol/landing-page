@@ -55,6 +55,7 @@ export interface CoinConfig {
   nativePool: string
   metadataId: string
   lstInfoId: string
+  tradeFee: string
 }
 
 export interface PortfolioItem extends CoinConfig {

@@ -14,38 +14,41 @@ export default function Trade() {
   const navigate = useNavigate()
   const [slippage, setSlippage] = useState("0.5")
   const {
-    action = "add",
+    operation = "add",
     coinType,
     maturity,
   } = useParams<{
-    action?: string
+    operation?: string
     maturity: string
     coinType: string
   }>()
+
+  console.log(coinType, maturity, operation)
+
   return (
     <div className="w-full bg-[#0E0F16] rounded-[40px] px-5 py-7 flex flex-col gap-y-4.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-x-7">
           <span
             onClick={() =>
-              action !== "add" &&
-              navigate(`/market/detail/${coinType}/${maturity}/liquidity/add`)
+              operation !== "add" &&
+              navigate(`/market/detail/${coinType}/${maturity}/add`)
             }
             className={
-              action === "add" ? "text-white" : "text-white/50 cursor-pointer"
+              operation === "add" ? "text-white" : "text-white/50 cursor-pointer"
             }
           >
             Add
           </span>
           <span
             onClick={() =>
-              action !== "remove" &&
+              operation !== "remove" &&
               navigate(
-                `/market/detail/${coinType}/${maturity}/liquidity/remove`,
+                `/market/detail/${coinType}/${maturity}/remove`,
               )
             }
             className={
-              action === "remove"
+              operation === "remove"
                 ? "text-white"
                 : "text-white/50 cursor-pointer"
             }
@@ -105,8 +108,8 @@ export default function Trade() {
           </div>
         </div>
       </div>
-      {action === "add" && <Add slippage={slippage} />}
-      {action === "remove" && <Remove />}
+      {operation === "add" && <Add slippage={slippage} />}
+      {operation === "remove" && <Remove />}
     </div>
   )
 }

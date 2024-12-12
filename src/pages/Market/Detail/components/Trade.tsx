@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
-import { ChevronsDown, RotateCw } from "lucide-react"
+import { ChevronsDown } from "lucide-react"
 // import { useCurrentAccount } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
@@ -28,9 +28,9 @@ import {
 } from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
-import SlippageSetting from "@/components/SlippageSetting"
 import { useWallet } from "@aricredemption/wallet-kit"
 import dayjs from "dayjs"
+import TradeInfo from "@/components/TradeInfo"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -41,7 +41,7 @@ export default function Trade() {
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
   const [openConnect, setOpenConnect] = useState(false)
-  const [tokenType, setTokenType] = useState<number>(1) // 0-native coin, 1-wrapped coin
+  const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
 
   const { address, signAndExecuteTransaction } = useWallet()
@@ -231,17 +231,6 @@ export default function Trade() {
     }
   }
 
-  const [isSpinning, setIsSpinning] = useState(false)
-
-  const handleClick = () => {
-    setIsSpinning(true)
-    const timer = setTimeout(() => {
-      setIsSpinning(false)
-      clearTimeout(timer)
-    }, 1000)
-    refetch()
-  }
-
   return (
     <div className="w-full flex flex-col lg:flex-row gap-5">
       <div className="lg:w-[400px] bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] shrink-0">
@@ -341,29 +330,16 @@ export default function Trade() {
               </span>
             </div>
           </div>
-          <div className="border border-[#2D2D48] bg-[#181827] rounded-xl px-[18px] py-6 w-full text-sm flex flex-col gap-y-4">
-            <div className="flex items-center justify-between text-white/60">
-              <span>Price</span>
-              <div className="flex items-center gap-x-1">
-                <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(2)} YT ${coinConfig?.coinName}`}</span>
-                <RotateCw
-                  className={[
-                    "size-5 cursor-pointer",
-                    isSpinning && "animate-spin",
-                  ].join(" ")}
-                  onClick={() => handleClick()}
-                />
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-white/60">
-              <span>Trading Fees</span>
-              <span>--</span>
-            </div>
-            <div className="flex items-center justify-between text-white/60">
-              <span>Slippage</span>
-              <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
-            </div>
-          </div>
+          <TradeInfo
+            ratio={ratio}
+            coinName={coinName}
+            slippage={slippage}
+            onRefresh={refetch}
+            setSlippage={setSlippage}
+            tradeFee={coinConfig?.tradeFee}
+            tradeFeeSymbol={coinConfig?.coinName}
+            targetCoinName={`PT ${coinConfig?.coinName}`}
+          />
           <ActionButton
             btnText="Buy"
             onClick={swap}

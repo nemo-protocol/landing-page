@@ -10,8 +10,7 @@ import { useWallet } from "@aricredemption/wallet-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
-import SlippageSetting from "@/components/SlippageSetting"
-import { Info, ChevronsDown, RotateCw } from "lucide-react"
+import { Info, ChevronsDown } from "lucide-react"
 import { formatDecimalValue, safeDivide } from "@/lib/utils"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
@@ -36,12 +35,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import TradeInfo from "@/components/TradeInfo"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const { coinType, maturity } = useParams()
-  // const currentAccount = useCurrentAccount()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
@@ -226,17 +225,6 @@ export default function Invest() {
     }
   }
 
-  const [isSpinning, setIsSpinning] = useState(false)
-
-  const handleClick = () => {
-    setIsSpinning(true)
-    const timer = setTimeout(() => {
-      setIsSpinning(false)
-      clearTimeout(timer)
-    }, 1000)
-    refetch()
-  }
-
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
@@ -397,29 +385,16 @@ export default function Invest() {
             </span>
           </div>
         </div>
-        <div className="border border-[#2D2D48] bg-[#181827] rounded-xl px-[18px] py-6 w-full text-sm flex flex-col gap-y-4">
-          <div className="flex items-center justify-between text-white/60">
-            <span>Price</span>
-            <div className="flex items-center gap-x-1">
-              <span>{`1 ${coinName} ≈ ${Number(ratio).toFixed(4)} PT ${coinConfig?.coinName}`}</span>
-              <RotateCw
-                className={[
-                  "size-5 cursor-pointer",
-                  isSpinning && "animate-spin",
-                ].join(" ")}
-                onClick={() => handleClick()}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between text-white/60">
-            <span>Trading Fees</span>
-            <span>--</span>
-          </div>
-          <div className="flex items-center justify-between text-white/60">
-            <span>Slippage</span>
-            <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
-          </div>
-        </div>
+        <TradeInfo
+          ratio={ratio}
+          coinName={coinName}
+          slippage={slippage}
+          onRefresh={refetch}
+          setSlippage={setSlippage}
+          tradeFee={coinConfig?.tradeFee}
+          tradeFeeSymbol={coinConfig?.coinName}
+          targetCoinName={`PT ${coinConfig?.coinName}`}
+        />
         <ActionButton
           onClick={swap}
           btnText="Invest"

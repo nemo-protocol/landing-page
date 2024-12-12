@@ -73,7 +73,7 @@ export default function Home() {
               <div className="w-full md:w-[500px] flex flex-col gap-y-5">
                 {operation === "swap" && tokenType === "pt" && <Invest />}
                 {operation === "sell" && <Sell />}
-                {operation === "liquidity" && <Liquidity />}
+                {["add", "remove"].includes(operation) && <Liquidity />}
               </div>
             )}
             <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
