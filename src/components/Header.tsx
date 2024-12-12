@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import HotIcon from "@/assets/images/svg/hot.svg?react"
 import NemoLogo from "@/assets/images/svg/logo.svg?react"
-import Network from "@/assets/images/svg/network.svg?react"
+// import Network from "@/assets/images/svg/network.svg?react"
 import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
 // import {
 //   ConnectModal,
@@ -60,8 +60,13 @@ export default function Header({ className }: { className?: string }) {
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
         <div className="flex items-center gap-x-6 h-full">
           <Link to="/" className="flex gap-x-2">
-            <NemoLogo />
-            <div className="text-[#44E0C3] py-1 px-2 rounded-full bg-[#ECFBF9]/10 text-xs">
+            <div className="hidden md:block">
+              <NemoLogo />
+            </div>
+            <div className="block md:hidden text-white text-lg font-bold">
+              Nemo
+            </div>
+            <div className="text-[#44E0C3] py-1 px-2 rounded-full bg-[#ECFBF9]/10 text-xs scale-75 origin-left">
               Beta
             </div>
           </Link>
@@ -142,10 +147,6 @@ export default function Header({ className }: { className?: string }) {
           </li>
         </ul>
         <div className="flex items-center gap-x-6 h-full">
-          <Squares2X2Icon
-            className="md:hidden text-white cursor-pointer"
-            onClick={() => setIsOpen((isOpen) => !isOpen)}
-          />
           <span
             className={[
               "relative h-full text-center cursor-pointer flex items-center justify-center",
@@ -178,7 +179,7 @@ export default function Header({ className }: { className?: string }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </span>
-          <Network />
+          {/* <Network /> */}
           {currentAccount?.address ? (
             <div className="relative" ref={subNavRef}>
               <div
@@ -263,30 +264,55 @@ export default function Header({ className }: { className?: string }) {
               </button>
             </ConnectModal>
           )}
+          <Squares2X2Icon
+            className="md:hidden text-white cursor-pointer"
+            onClick={() => setIsOpen((isOpen) => !isOpen)}
+          />
         </div>
       </div>
+      {isOpen && (
+        <div
+          className="fixed inset-0 backdrop-blur-md bg-[#0E0F16]/90 md:hidden"
+          style={{ top: "64px" }}
+        />
+      )}
       <motion.div
         initial={{ height: 0, opacity: 0 }}
         animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
         transition={{ duration: 0.3 }}
         style={{ overflow: "hidden" }}
-        className="flex gap-x-8 text-sm md:hidden"
+        className="absolute left-0 right-0 text-sm md:hidden bg-[#0E0F16]/90 backdrop-blur-md relative z-10"
       >
-        <div className="flex flex-col">
-          <Link to="/market" className="py-2 text-white">
+        <div className="flex flex-col py-3 max-w-[1440px] mx-auto px-4">
+          <Link 
+            to="/market" 
+            className="py-3 text-white/90 hover:text-white text-base"
+          >
             Markets
           </Link>
-          <Link to="/portfolio" className="py-2 cursor-pointer text-white">
+          <Link
+            to="/portfolio"
+            className="py-3 text-white/90 hover:text-white text-base"
+          >
             Portfolio
           </Link>
-          <Link to="/learn" className="py-2 text-white">
+          <Link 
+            to="/learn" 
+            className="py-3 text-white/90 hover:text-white text-base"
+          >
             Learn
           </Link>
-          <Link to="/rewards" className="py-2 text-white">
+          <Link 
+            to="/rewards" 
+            className="py-3 text-white/90 hover:text-white text-base"
+          >
             Rewards
           </Link>
           {IS_DEV && (
-            <Link to="/test" className="py-2 text-white">
+            <Link 
+              to="/test" 
+              className="py-3 text-white/90 hover:text-white text-base"
+            >
               Test
             </Link>
           )}

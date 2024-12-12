@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aricredemption/wallet-kit": "0.0.2",
+    "@aricredemption/wallet-kit": "0.0.3",
     "@mysten/dapp-kit": "0.14.17",
     "@mysten/sui": "1.12.0",
     "@mysten/wallet-standard": "^0.13.4",
