@@ -354,7 +354,7 @@ export default function Invest() {
                         .minus(
                           tokenType === 0
                             ? new Decimal(swapValue)
-                            : new Decimal(swapValue).div(conversionRate || 1),
+                            : new Decimal(swapValue).mul(conversionRate || 1),
                         ),
                       decimal,
                     )}`
