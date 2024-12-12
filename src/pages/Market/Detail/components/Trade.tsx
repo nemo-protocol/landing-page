@@ -336,8 +336,13 @@ export default function Trade() {
             slippage={slippage}
             onRefresh={refetch}
             setSlippage={setSlippage}
-            tradeFee={coinConfig?.tradeFee}
-            tradeFeeSymbol={coinConfig?.coinName}
+            tradeFee={
+              coinConfig?.tradeFee &&
+              coinConfig?.coinPrice &&
+              new Decimal(coinConfig.tradeFee)
+                .mul(coinConfig.coinPrice)
+                .toFixed(4)
+            }
             targetCoinName={`PT ${coinConfig?.coinName}`}
           />
           <ActionButton

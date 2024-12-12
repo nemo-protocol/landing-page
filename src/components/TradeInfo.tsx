@@ -18,7 +18,7 @@ export default function TradeInfo({
   coinName,
   targetCoinName,
   tradeFee,
-  tradeFeeSymbol,
+  tradeFeeSymbol = "USD",
   slippage,
   setSlippage,
   onRefresh,
@@ -40,21 +40,20 @@ export default function TradeInfo({
         <span>Price</span>
         <div className="flex items-center gap-x-1">
           <span title={`1 ${coinName} ≈ ${ratio} ${targetCoinName}`}>
-            {`1 ${coinName} ≈ ${Number(ratio || 0).toFixed(2)} ${targetCoinName}`}
+            {`1 ${coinName} ≈ ${Number(ratio || 0).toFixed(4)} ${targetCoinName}`}
           </span>
           <RotateCw
-            className={["size-5 cursor-pointer", isSpinning && "animate-spin"].join(
-              " ",
-            )}
+            className={[
+              "size-5 cursor-pointer",
+              isSpinning && "animate-spin",
+            ].join(" ")}
             onClick={handleClick}
           />
         </div>
       </div>
       <div className="flex items-center justify-between text-white/60">
         <span>Trading Fees</span>
-        <span>
-          {tradeFee ? `$ ${tradeFee} ${tradeFeeSymbol}` : "--"}
-        </span>
+        <span>{tradeFee ? `$ ${tradeFee} ${tradeFeeSymbol}` : "--"}</span>
       </div>
       <div className="flex items-center justify-between text-white/60">
         <span>Slippage</span>
@@ -62,4 +61,4 @@ export default function TradeInfo({
       </div>
     </div>
   )
-} 
+}
