@@ -234,7 +234,7 @@ export default function Invest() {
             "Transaction failed with the following error. Dry run failed, could not automatically determine a budget: InsufficientGas in command 5",
           )
         ) {
-          setMessage("The pool's PT amount is insufficient.")
+          setMessage("Insufficient PT in the pool.")
         } else {
           setMessage(parseErrorMessage(msg || ""))
         }
