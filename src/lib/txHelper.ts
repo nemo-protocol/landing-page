@@ -204,7 +204,7 @@ export const mergeLppMarketPositions = (
     tx.moveCall({
       target: `${coinConfig.nemoContractId}::market_position::join`,
       arguments: [mergedPosition, tx.object(positionsToMerge[i].id.id)],
-      typeArguments: [coinConfig.syCoinType],
+      typeArguments: [],
     })
   }
 
