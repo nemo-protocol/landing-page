@@ -14,8 +14,7 @@ export default function Rewards() {
   const { address, } = useWallet()
   const { data: list } = useRewardList()
   const { data: userPoint } = useRewardWithAddress(address)
-  console.log(address)
-  console.log(userPoint)
+
   return (
     <div
       className="h-screen xl:max-w-[1200px] xl:mx-auto w-full flex flex-col overflow-hidden"

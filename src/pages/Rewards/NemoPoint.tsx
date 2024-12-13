@@ -49,7 +49,7 @@ export default function NemoPoint({
                 My Total Points
               </span>
               <span className="text-white text-2xl">
-                {userPoint?.[0]?.totalPoints || "NAN"}
+                {userPoint?.[0]?.totalPoints || 0}
               </span>
             </div>
             <PointIcon />
@@ -71,7 +71,7 @@ export default function NemoPoint({
               </span>
               <div className="flex items-center gap-x-2">
                 <span className="text-white text-2xl">
-                  {userPoint?.[0]?.pointsPerDay || "NAN"}
+                  {userPoint?.[0]?.pointsPerDay || 0}
                 </span>
               </div>
             </div>
@@ -94,7 +94,7 @@ export default function NemoPoint({
               </span>
               <div className="flex items-center gap-x-2">
                 <span className="text-white text-2xl">
-                  {userPoint?.[0]?.rank || "NAN"}
+                  {userPoint?.[0]?.rank || 0}
                 </span>
               </div>
             </div>
