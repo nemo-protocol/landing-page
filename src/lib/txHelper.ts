@@ -197,14 +197,11 @@ export const mergeLppMarketPositions = (
     return mergedPosition
   }
 
-  console.log(11111);
-  
-
   for (let i = 1; i < positionsToMerge.length; i++) {
     tx.moveCall({
       target: `${coinConfig.nemoContractId}::market_position::join`,
       arguments: [mergedPosition, tx.object(positionsToMerge[i].id.id)],
-      typeArguments: [coinConfig.syCoinType],
+      typeArguments: [],
     })
   }
 
