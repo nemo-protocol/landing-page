@@ -18,7 +18,7 @@ export default function TradeInfo({
   coinName,
   targetCoinName,
   tradeFee,
-  tradeFeeSymbol = "USD",
+  tradeFeeSymbol = "",
   slippage,
   setSlippage,
   onRefresh,
