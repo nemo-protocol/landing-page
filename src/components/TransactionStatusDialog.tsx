@@ -51,7 +51,7 @@ const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
             {status === "Failed" && (
               <div className="py-2 flex flex-col gap-y-1 items-center">
                 <p className=" text-red-400">Transaction Error</p>
-                <p className="text-red-500 break-all">{message}</p>
+                <p className="text-red-500 text-pretty">{message}</p>
                 {txId && (
                   <a
                     className="text-red-500 underline"

@@ -86,3 +86,17 @@ export const parseErrorMessage = (errorString: string) => {
 
   return errorCode ? getErrorMessage(errorCode, errorString) : errorString
 }
+
+export function parseGasErrorMessage(msg: string) {
+  const match = msg.match(
+    /Balance of gas object (\d+) is lower than the needed amount: (\d+)/,
+  )
+
+  if (match) {
+    const currentBalance = parseInt(match[1], 10) / 1e9
+    const neededAmount = parseInt(match[2], 10) / 1e9
+    const shortfall = neededAmount - currentBalance
+
+    return `Insufficient gas fee. Your current balance is ${currentBalance} SUI, but at least ${neededAmount} SUI is required. You are short by ${shortfall} SUI. Please top up your balance and try again.`
+  }
+}

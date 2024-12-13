@@ -8,7 +8,7 @@ import AmountInput from "@/components/AmountInput"
 import ActionButton from "@/components/ActionButton"
 import { useWallet } from "@aricredemption/wallet-kit"
 import { Transaction } from "@mysten/sui/transactions"
-import { parseErrorMessage } from "@/lib/errorMapping"
+import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { Info, ChevronsDown } from "lucide-react"
 import { formatDecimalValue, safeDivide } from "@/lib/utils"
@@ -202,6 +202,12 @@ export default function Invest() {
           tx.transferObjects([pyPosition], address)
         }
 
+        // if (created) {
+        //   tx.setGasBudget(0.2 * 1e9)
+        // } else {
+        //   tx.setGasBudget(0.05 * 1e9)
+        // }
+
         const res = await signAndExecuteTransaction({
           transaction: tx,
         })
@@ -220,7 +226,18 @@ export default function Invest() {
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
-        setMessage(parseErrorMessage(msg || ""))
+        const gasMsg = parseGasErrorMessage(msg)
+        if (gasMsg) {
+          setMessage(gasMsg)
+        } else if (
+          msg.includes(
+            "Transaction failed with the following error. Dry run failed, could not automatically determine a budget: InsufficientGas in command 5",
+          )
+        ) {
+          setMessage("The pool's PT amount is insufficient.")
+        } else {
+          setMessage(parseErrorMessage(msg || ""))
+        }
       }
     }
   }
