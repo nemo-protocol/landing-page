@@ -1,4 +1,5 @@
 import { CoinData } from "@/hooks/useCoinData"
+import { LppMarketPosition } from "@/hooks/useLpMarketPositionData"
 import { CoinConfig } from "@/queries/types/market"
 import { Transaction } from "@mysten/sui/transactions"
 import Decimal from "decimal.js"
@@ -160,4 +161,52 @@ export function splitCoinHelper(
 
     return tx.splitCoins(mergedCoin, [targetAmount])
   }
+}
+
+export const mergeLppMarketPositions = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  lppMarketPositionData: LppMarketPosition[],
+  lpValue: string,
+  decimal: number,
+) => {
+  const sortedPositions = [...lppMarketPositionData].sort(
+    (a, b) => Number(b.lp_amount) - Number(a.lp_amount),
+  )
+
+  let accumulatedAmount = new Decimal(0)
+  const positionsToMerge: LppMarketPosition[] = []
+  const targetAmount = new Decimal(lpValue).mul(10 ** decimal)
+
+  for (const position of sortedPositions) {
+    accumulatedAmount = accumulatedAmount.add(position.lp_amount)
+    positionsToMerge.push(position)
+
+    if (accumulatedAmount.gte(targetAmount)) {
+      break
+    }
+  }
+
+  if (accumulatedAmount.lt(targetAmount)) {
+    throw new Error("Insufficient LP amount")
+  }
+
+  const mergedPosition = tx.object(positionsToMerge[0].id.id)
+
+  if (positionsToMerge.length === 1) {
+    return mergedPosition
+  }
+
+  console.log(11111);
+  
+
+  for (let i = 1; i < positionsToMerge.length; i++) {
+    tx.moveCall({
+      target: `${coinConfig.nemoContractId}::market_position::join`,
+      arguments: [mergedPosition, tx.object(positionsToMerge[i].id.id)],
+      typeArguments: [coinConfig.syCoinType],
+    })
+  }
+
+  return mergedPosition
 }

@@ -13,7 +13,7 @@ import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { LoaderCircle } from "lucide-react"
-import { initPyPosition } from "@/lib/txHelper"
+import { initPyPosition, mergeLppMarketPositions } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function Remove() {
@@ -62,7 +62,7 @@ export default function Remove() {
         .toFixed(9)
     }
     return 0
-  }, [lppMarketPositionData])
+  }, [coinConfig?.decimal, lppMarketPositionData])
 
   const insufficientBalance = useMemo(
     () => new Decimal(lpCoinBalance).lt(new Decimal(lpValue || 0)),
@@ -89,6 +89,14 @@ export default function Remove() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
+        const mergedPositionId = mergeLppMarketPositions(
+          tx,
+          coinConfig,
+          lppMarketPositionData,
+          lpValue,
+          coinConfig.decimal,
+        )
+
         const [sy] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::market::burn_lp`,
           arguments: [
@@ -96,7 +104,7 @@ export default function Remove() {
             tx.pure.u64(new Decimal(lpValue).mul(1e9).toFixed(0)),
             pyPosition,
             tx.object(coinConfig.marketStateId),
-            tx.object(lppMarketPositionData[0].id.id),
+            mergedPositionId,
           ],
           typeArguments: [coinConfig.syCoinType],
         })
@@ -258,11 +266,11 @@ export default function Remove() {
         <ConnectModal
           open={openConnect}
           onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-        // trigger={
-        //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-        //     Connect Wallet
-        //   </button>
-        // }
+          // trigger={
+          //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
+          //     Connect Wallet
+          //   </button>
+          // }
         >
           <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
             Connect Wallet
