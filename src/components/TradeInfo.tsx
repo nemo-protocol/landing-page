@@ -53,7 +53,11 @@ export default function TradeInfo({
       </div>
       <div className="flex items-center justify-between text-white/60">
         <span>Trading Fees</span>
-        <span>{tradeFee ? `$ ${tradeFee} ${tradeFeeSymbol}` : "--"}</span>
+        <span title={`$${tradeFee} ${tradeFeeSymbol}`}>
+          {tradeFee
+            ? `≈ $${Number(tradeFee).toFixed(4)} ${tradeFeeSymbol}`
+            : "--"}
+        </span>
       </div>
       <div className="flex items-center justify-between text-white/60">
         <span>Slippage</span>

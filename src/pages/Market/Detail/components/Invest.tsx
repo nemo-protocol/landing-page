@@ -409,11 +409,19 @@ export default function Invest() {
           onRefresh={refetch}
           setSlippage={setSlippage}
           tradeFee={
-            coinConfig?.tradeFee &&
-            coinConfig?.coinPrice &&
-            new Decimal(coinConfig.tradeFee)
-              .mul(coinConfig.coinPrice)
-              .toFixed(4)
+            !!swapValue &&
+            !!conversionRate &&
+            !!coinConfig?.feeRate &&
+            !!coinConfig?.coinPrice
+              ? new Decimal(coinConfig.feeRate)
+                  .mul(
+                    tokenType === 0
+                      ? new Decimal(swapValue).mul(conversionRate)
+                      : swapValue,
+                  )
+                  .mul(coinConfig.coinPrice)
+                  .toString()
+              : undefined
           }
           targetCoinName={`PT ${coinConfig?.coinName}`}
         />

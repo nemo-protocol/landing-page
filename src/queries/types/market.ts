@@ -56,6 +56,8 @@ export interface CoinConfig {
   metadataId: string
   lstInfoId: string
   tradeFee: string
+  feeRate: string
+  sevenAvgUnderlyingApy: string
 }
 
 export interface PortfolioItem extends CoinConfig {

@@ -83,6 +83,8 @@ export default function Trade() {
     "buy",
   )
 
+  const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
+
   const ratio = useMemo(() => {
     if (swapRatio) {
       if (tokenType === 0) {
@@ -337,11 +339,19 @@ export default function Trade() {
             onRefresh={refetch}
             setSlippage={setSlippage}
             tradeFee={
-              coinConfig?.tradeFee &&
-              coinConfig?.coinPrice &&
-              new Decimal(coinConfig.tradeFee)
-                .mul(coinConfig.coinPrice)
-                .toFixed(4)
+              !!swapValue &&
+              !!conversionRate &&
+              !!coinConfig?.feeRate &&
+              !!coinConfig?.coinPrice
+                ? new Decimal(coinConfig.feeRate)
+                    .mul(
+                      tokenType === 0
+                        ? new Decimal(swapValue).mul(conversionRate)
+                        : swapValue,
+                    )
+                    .mul(coinConfig.coinPrice)
+                    .toString()
+                : undefined
             }
             targetCoinName={`PT ${coinConfig?.coinName}`}
           />

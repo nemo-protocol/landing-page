@@ -5,12 +5,19 @@ import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { Link, useNavigate } from "react-router-dom"
 import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function HomeHeader() {
   const { toast } = useToast()
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
-  const [subNav, setSubNav] = useState(false)
+  const [mobileSubNav, setMobileSubNav] = useState(false)
+  const [desktopSubNav, setDesktopSubNav] = useState(false)
   const subNavRef = useRef<HTMLLIElement>(null)
   const [router, setRouter] = useState<string>("Home")
 
@@ -19,7 +26,7 @@ export default function HomeHeader() {
       subNavRef.current &&
       !subNavRef.current.contains(event.target as Node)
     ) {
-      setSubNav(false)
+      setMobileSubNav(false)
     }
   }
 
@@ -50,44 +57,37 @@ export default function HomeHeader() {
             Home
           </li>
           <li
-            ref={subNavRef}
-            onClick={() => {
-              setSubNav(true)
-              setRouter("Community")
-            }}
+            onClick={() => setRouter("Community")}
             className={[
-              "w-32 text-center text-white bg-transparent py-2 rounded-full cursor-pointer relative",
+              "w-32 text-center text-white bg-transparent py-2 rounded-full cursor-pointer",
               router === "Community" ? "bg-white/10" : "",
             ].join(" ")}
           >
-            <div tabIndex={0} role="button">
-              Community
-            </div>
-            {subNav && (
-              <ul
-                tabIndex={0}
-                className="bg-white/10 rounded-box z-[1] p-2 shadow mt-4 w-[130px] absolute rounded-lg"
-              >
-                <li>
+            <DropdownMenu open={desktopSubNav} onOpenChange={setDesktopSubNav}>
+              <DropdownMenuTrigger className="w-full outline-none border-none">
+                Community
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-[#0E0F16] border-none mt-2">
+                <DropdownMenuItem>
                   <a
                     target="_blank"
                     href="https://x.com/nemoprotocol"
-                    className="py-3 hover:bg-[#28282a] rounded-lg text-white hover:text-[#1954FF] active:text-[#1954FF] w-full inline-block"
+                    className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
                   >
                     Twitter
                   </a>
-                </li>
-                <li>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
                   <a
                     target="_blank"
                     href="https://t.me/NemoProtocol"
-                    className="py-3 hover:bg-[#28282a] rounded-lg text-white hover:text-[#1954FF] active:text-[#1954FF] w-full inline-block"
+                    className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
                   >
                     Telegram
                   </a>
-                </li>
-              </ul>
-            )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </li>
           <li
             onClick={() => {
@@ -149,8 +149,8 @@ export default function HomeHeader() {
         <div className="flex flex-col p-4">
           <Link
             to="/"
-            className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
-            onClick={() => setSubNav(false)}
+            className="py-3 text-white hover:bg-[#131520] rounded-lg px-4"
+            onClick={() => setMobileSubNav(false)}
           >
             Home
           </Link>
@@ -158,42 +158,42 @@ export default function HomeHeader() {
             href="#"
             onClick={(e) => {
               e.preventDefault()
-              setSubNav((subNav) => !subNav)
+              setMobileSubNav((prev) => !prev)
             }}
-            className="py-3 text-white hover:bg-white/10 rounded-lg px-4 cursor-pointer"
+            className="py-3 text-white hover:bg-[#131520] rounded-lg px-4 cursor-pointer"
           >
             Community
           </a>
           <a
             href="https://docs.nemoprotocol.com/"
             target="_blank"
-            className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
-            onClick={() => setSubNav(false)}
+            className="py-3 text-white hover:bg-[#131520] rounded-lg px-4"
+            onClick={() => setMobileSubNav(false)}
           >
             Docs
           </a>
           <a
             href="https://docs.nemoprotocol.com/"
             target="_blank"
-            className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
-            onClick={() => setSubNav(false)}
+            className="py-3 text-white hover:bg-[#131520]rounded-lg px-4"
+            onClick={() => setMobileSubNav(false)}
           >
             Learn
           </a>
         </div>
-        {subNav && (
+        {mobileSubNav && (
           <div className="flex flex-col p-4 border-t border-white/10">
             <a
               href="https://x.com/nemoprotocol"
               target="_blank"
-              className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
+              className="py-3 text-white hover:bg-[#131520] hover:text-[#5D94FF] rounded-lg px-4"
             >
               Twitter
             </a>
             <a
               href="https://t.me/NemoProtocol"
               target="_blank"
-              className="py-3 text-white hover:bg-white/10 rounded-lg px-4"
+              className="py-3 text-white hover:bg-[#131520] hover:text-[#5D94FF] rounded-lg px-4"
             >
               Telegram
             </a>
