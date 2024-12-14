@@ -283,10 +283,18 @@ export default function Remove() {
       ) : (
         <button
           onClick={remove}
-          disabled={lpValue === "" || lpValue === "0" || insufficientBalance}
+          disabled={
+            lpValue === "" ||
+            lpValue === "0" ||
+            insufficientBalance ||
+            new Decimal(lpValue).toNumber() === 0
+          }
           className={[
             "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
-            lpValue === "" || lpValue === "0" || insufficientBalance
+            lpValue === "" ||
+            lpValue === "0" ||
+            insufficientBalance ||
+            new Decimal(lpValue).toNumber() === 0
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
