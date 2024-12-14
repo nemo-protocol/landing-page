@@ -437,11 +437,11 @@ export default function Trade() {
           </div>
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
             <div className="text-white/60 text-xs">Underlying APY</div>
-            <div className="text-[#2DF4DD] text-xs">{coinConfig?.ytApy}</div>
+            <div className="text-[#2DF4DD] text-xs">{coinConfig?.underlyingApy}</div>
           </div>
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
             <div className="text-white/60 text-xs">7D Avg. Underlying APY</div>
-            <div className="text-[#2DF4DD] text-xs">--</div>
+            <div className="text-[#2DF4DD] text-xs">{coinConfig?.sevenAvgUnderlyingApy}</div>
           </div>
         </div>
       </div>
