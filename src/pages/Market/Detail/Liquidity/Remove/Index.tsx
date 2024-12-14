@@ -283,10 +283,10 @@ export default function Remove() {
       ) : (
         <button
           onClick={remove}
-          disabled={lpValue === "" || insufficientBalance}
+          disabled={lpValue === "" || lpValue === "0" || insufficientBalance}
           className={[
             "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
-            lpValue === "" || insufficientBalance
+            lpValue === "" || lpValue === "0" || insufficientBalance
               ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}

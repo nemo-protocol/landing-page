@@ -243,7 +243,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         openConnect={openConnect}
         setOpenConnect={setOpenConnect}
         insufficientBalance={insufficientBalance}
-        disabled={["", undefined].includes(addValue)}
+        disabled={["", undefined, "0"].includes(addValue)}
       />
     </div>
   )
