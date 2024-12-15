@@ -174,6 +174,7 @@ export default function Mint({ slippage }: { slippage: string }) {
         setAddValue("")
         setStatus("Success")
       } catch (error) {
+        console.log("tx error", error)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))

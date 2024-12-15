@@ -225,6 +225,7 @@ export default function Trade() {
         setOpen(true)
         setSwapValue("")
       } catch (error) {
+        console.log("tx error", error)
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
