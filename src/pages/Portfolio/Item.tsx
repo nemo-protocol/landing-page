@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { network } from "@/config"
+import { network, debugLog, DEBUG } from "@/config"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import usePortfolio from "@/hooks/usePortfolio"
@@ -144,13 +144,19 @@ export default function Item({
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = tx.moveCall({
+          const moveCall = {
             target: `${coinConfig?.nemoContractId}::py::init_py_position`,
             arguments: [
-              tx.object(coinConfig?.version),
-              tx.object(coinConfig?.pyStateId),
+              coinConfig?.version,
+              coinConfig?.pyStateId,
             ],
             typeArguments: [coinConfig?.syCoinType],
+          }
+          debugLog("init_py_position move call:", moveCall)
+          
+          pyPosition = tx.moveCall({
+            ...moveCall,
+            arguments: moveCall.arguments.map(arg => tx.object(arg)),
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -158,8 +164,22 @@ export default function Item({
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        tx.moveCall({
+        const redeemMoveCall = {
           target: `${coinConfig?.nemoContractId}::yield_factory::redeem_due_interest`,
+          arguments: [
+            address,
+            'pyPosition',
+            coinConfig?.pyStateId,
+            'priceVoucher',
+            coinConfig?.yieldFactoryConfigId,
+            "0x6",
+          ],
+          typeArguments: [coinConfig?.syCoinType],
+        }
+        debugLog("redeem_due_interest move call:", redeemMoveCall)
+
+        tx.moveCall({
+          ...redeemMoveCall,
           arguments: [
             tx.pure.address(address),
             pyPosition,
@@ -168,7 +188,6 @@ export default function Item({
             tx.object(coinConfig?.yieldFactoryConfigId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinConfig?.syCoinType],
         })
 
         if (created) {
@@ -183,6 +202,9 @@ export default function Item({
         setOpen(true)
         setStatus("Success")
       } catch (error) {
+        if (DEBUG) {
+          console.log("tx error", error)
+        }
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
@@ -199,13 +221,19 @@ export default function Item({
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = tx.moveCall({
+          const moveCall = {
             target: `${coinConfig?.nemoContractId}::py::init_py_position`,
             arguments: [
-              tx.object(coinConfig?.version),
-              tx.object(coinConfig?.pyStateId),
+              coinConfig?.version,
+              coinConfig?.pyStateId,
             ],
             typeArguments: [coinConfig?.syCoinType],
+          }
+          debugLog("init_py_position move call:", moveCall)
+          
+          pyPosition = tx.moveCall({
+            ...moveCall,
+            arguments: moveCall.arguments.map(arg => tx.object(arg)),
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -225,8 +253,25 @@ export default function Item({
           ],
         })
 
-        const [syCoin] = tx.moveCall({
+        const swapMoveCall = {
           target: `${coinConfig?.nemoContractId}::market::swap_exact_pt_for_sy`,
+          arguments: [
+            coinConfig?.version,
+            new Decimal(ptBalance).mul(1e9).toString(),
+            'pyPosition',
+            coinConfig?.pyStateId,
+            'priceVoucher',
+            coinConfig?.yieldFactoryConfigId,
+            coinConfig?.marketFactoryConfigId,
+            coinConfig?.marketStateId,
+            "0x6",
+          ],
+          typeArguments: [coinConfig?.syCoinType],
+        }
+        debugLog("swap_exact_pt_for_sy move call:", swapMoveCall)
+
+        const [syCoin] = tx.moveCall({
+          ...swapMoveCall,
           arguments: [
             tx.object(coinConfig?.version),
             tx.pure.u64(new Decimal(ptBalance).mul(1e9).toString()),
@@ -238,7 +283,6 @@ export default function Item({
             tx.object(coinConfig?.marketStateId),
             tx.object("0x6"),
           ],
-          typeArguments: [coinConfig?.syCoinType],
         })
 
         tx.transferObjects([syCoin], address)
@@ -255,6 +299,9 @@ export default function Item({
         setOpen(true)
         setStatus("Success")
       } catch (error) {
+        if (DEBUG) {
+          console.log("tx error", error)
+        }
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
@@ -276,20 +323,40 @@ export default function Item({
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = tx.moveCall({
+          const moveCall = {
             target: `${coinConfig?.nemoContractId}::py::init_py_position`,
             arguments: [
-              tx.object(coinConfig?.version),
-              tx.object(coinConfig?.pyStateId),
+              coinConfig?.version,
+              coinConfig?.pyStateId,
             ],
             typeArguments: [coinConfig?.syCoinType],
+          }
+          debugLog("init_py_position move call:", moveCall)
+          
+          pyPosition = tx.moveCall({
+            ...moveCall,
+            arguments: moveCall.arguments.map(arg => tx.object(arg)),
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        tx.moveCall({
+        const burnMoveCall = {
           target: `${coinConfig?.nemoContractId}::market::burn_lp`,
+          arguments: [
+            coinConfig?.version,
+            address,
+            new Decimal(lpCoinBalance).mul(1e9).toFixed(0),
+            'pyPosition',
+            coinConfig?.marketStateId,
+            lpMarketPositionData[0].id.id,
+          ],
+          typeArguments: [coinConfig?.syCoinType],
+        }
+        debugLog("burn_lp move call:", burnMoveCall)
+
+        tx.moveCall({
+          ...burnMoveCall,
           arguments: [
             tx.object(coinConfig?.version),
             tx.pure.address(address),
@@ -298,7 +365,6 @@ export default function Item({
             tx.object(coinConfig?.marketStateId),
             tx.object(lpMarketPositionData[0].id.id),
           ],
-          typeArguments: [coinConfig?.syCoinType],
         })
 
         if (created) {
@@ -313,6 +379,9 @@ export default function Item({
         setOpen(true)
         setStatus("Success")
       } catch (error) {
+        if (DEBUG) {
+          console.log("tx error", error)
+        }
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)

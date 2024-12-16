@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { network } from "@/config"
+import { network, debugLog, DEBUG } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
@@ -152,6 +152,21 @@ export default function Trade() {
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
+        debugLog("sy::deposit move call:", {
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
+          arguments: [
+            coinConfig.version,
+            "splitCoin",
+            new Decimal(swapValue)
+              .mul(10 ** coinConfig.decimal)
+              .div(new Decimal(ratio || 1).add(1))
+              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              .toFixed(0),
+            coinConfig.syStateId,
+          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
+        })
+
         let pyPosition
         let created = false
         if (!pyPositionData?.length) {
@@ -185,6 +200,28 @@ export default function Trade() {
           ],
           typeArguments: [coinConfig.syCoinType],
         })
+
+        debugLog("swap_sy_for_exact_yt move call:", {
+          target: `${coinConfig.nemoContractId}::market::swap_sy_for_exact_yt`,
+          arguments: [
+            coinConfig.version,
+            new Decimal(swapValue)
+              .mul(10 ** coinConfig.decimal)
+              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              .toFixed(0),
+            "syCoin",
+            "priceVoucher",
+            "pyPosition",
+            coinConfig.pyStateId,
+            coinConfig.syStateId,
+            coinConfig.yieldFactoryConfigId,
+            coinConfig.marketFactoryConfigId,
+            coinConfig.marketStateId,
+            "0x6",
+          ],
+          typeArguments: [coinConfig.syCoinType],
+        })
+
         // tx.transferObjects([sy], address)
         const [sCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::redeem`,
@@ -199,6 +236,21 @@ export default function Trade() {
                 .toFixed(0),
             ),
             tx.object(coinConfig.syStateId),
+          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
+        })
+
+        debugLog("sy::redeem move call:", {
+          target: `${coinConfig.nemoContractId}::sy::redeem`,
+          arguments: [
+            coinConfig.version,
+            "sy",
+            new Decimal(swapValue)
+              .div(ratio || 0)
+              .mul(10 ** coinConfig.decimal)
+              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              .toFixed(0),
+            coinConfig.syStateId,
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
         })
@@ -225,7 +277,9 @@ export default function Trade() {
         setOpen(true)
         setSwapValue("")
       } catch (error) {
-        console.log("tx error", error)
+        if (DEBUG) {
+          console.log("tx error", error)
+        }
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
@@ -438,11 +492,15 @@ export default function Trade() {
           </div>
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
             <div className="text-white/60 text-xs">Underlying APY</div>
-            <div className="text-[#2DF4DD] text-xs">{coinConfig?.underlyingApy}</div>
+            <div className="text-[#2DF4DD] text-xs">
+              {coinConfig?.underlyingApy}
+            </div>
           </div>
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
             <div className="text-white/60 text-xs">7D Avg. Underlying APY</div>
-            <div className="text-[#2DF4DD] text-xs">{coinConfig?.sevenAvgUnderlyingApy}</div>
+            <div className="text-[#2DF4DD] text-xs">
+              {coinConfig?.sevenAvgUnderlyingApy}
+            </div>
           </div>
         </div>
       </div>

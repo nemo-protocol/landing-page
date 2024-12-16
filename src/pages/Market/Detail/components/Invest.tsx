@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { network } from "@/config"
+import { DEBUG, network } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
@@ -36,6 +36,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import TradeInfo from "@/components/TradeInfo"
+import { debugLog } from "@/config"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -165,6 +166,21 @@ export default function Invest() {
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
+        debugLog("sy::deposit move call:", {
+          target: `${coinConfig.nemoContractId}::sy::deposit`,
+          arguments: [
+            coinConfig.version,
+            "splitCoin",
+            new Decimal(swapValue)
+              .mul(10 ** coinConfig.decimal)
+              .div(new Decimal(ratio).add(1))
+              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              .toFixed(0),
+            coinConfig.syStateId,
+          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
+        })
+
         let pyPosition
         let created = false
         if (!pyPositionData?.length) {
@@ -198,6 +214,26 @@ export default function Invest() {
           typeArguments: [coinConfig.syCoinType],
         })
 
+        debugLog("swap_exact_sy_for_pt move call:", {
+          target: `${coinConfig.nemoContractId}::market::swap_exact_sy_for_pt`,
+          arguments: [
+            coinConfig.version,
+            new Decimal(swapValue)
+              .mul(10 ** coinConfig.decimal)
+              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              .toFixed(0),
+            "syCoin",
+            "priceVoucher",
+            "pyPosition",
+            coinConfig.pyStateId,
+            coinConfig.yieldFactoryConfigId,
+            coinConfig.marketFactoryConfigId,
+            coinConfig.marketStateId,
+            "0x6",
+          ],
+          typeArguments: [coinConfig.syCoinType],
+        })
+
         if (created) {
           tx.transferObjects([pyPosition], address)
         }
@@ -223,7 +259,9 @@ export default function Invest() {
         setOpen(true)
         setSwapValue("")
       } catch (error) {
-        console.log("tx error", error)
+        if (DEBUG) {
+          console.log("tx error", error)
+        }
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error

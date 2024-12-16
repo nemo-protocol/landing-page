@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { network } from "@/config"
+import { DEBUG, network, debugLog } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
@@ -93,12 +93,35 @@ export default function Mint({ slippage }: { slippage: string }) {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
+        const splitAmount = new Decimal(addValue).mul(10 ** coinConfig.decimal).toFixed(0)
+        debugLog("splitCoins params:", {
+          coinObjectId: coinData[0].coinObjectId,
+          amount: splitAmount
+        })
+        
         const [splitCoinForAdd] = tx.splitCoins(coinData[0].coinObjectId, [
-          new Decimal(addValue).mul(10 ** coinConfig.decimal).toFixed(0),
+          splitAmount,
         ])
 
-        const [syCoin] = tx.moveCall({
+        const depositMoveCall = {
           target: `${coinConfig.nemoContractId}::sy::deposit`,
+          arguments: [
+            coinConfig.version,
+            'splitCoinForAdd',
+            new Decimal(addValue)
+              .mul(10 ** coinConfig.decimal)
+              .mul(ratio || 1)
+              .div(new Decimal(ratio || 1).add(1))
+              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              .toFixed(0),
+            coinConfig.syStateId,
+          ],
+          typeArguments: [coinType, coinConfig.syCoinType],
+        }
+        debugLog("sy::deposit move call:", depositMoveCall)
+
+        const [syCoin] = tx.moveCall({
+          ...depositMoveCall,
           arguments: [
             tx.object(coinConfig.version),
             splitCoinForAdd,
@@ -112,14 +135,29 @@ export default function Mint({ slippage }: { slippage: string }) {
             ),
             tx.object(coinConfig.syStateId),
           ],
-          typeArguments: [coinType, coinConfig.syCoinType],
         })
 
         const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
 
         if (lpSupply === "" || lpSupply === "0") {
-          const [lp] = tx.moveCall({
+          const seedLiquidityMoveCall = {
             target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
+            arguments: [
+              coinConfig.version,
+              'syCoin',
+              'priceVoucherForMintLp',
+              'pyPosition',
+              coinConfig.pyStateId,
+              coinConfig.yieldFactoryConfigId,
+              coinConfig.marketStateId,
+              "0x6",
+            ],
+            typeArguments: [coinConfig.syCoinType],
+          }
+          debugLog("seed_liquidity move call:", seedLiquidityMoveCall)
+
+          const [lp] = tx.moveCall({
+            ...seedLiquidityMoveCall,
             arguments: [
               tx.object(coinConfig.version),
               syCoin,
@@ -130,13 +168,31 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig!.marketStateId),
               tx.object("0x6"),
             ],
-            typeArguments: [coinConfig.syCoinType],
           })
 
           tx.transferObjects([lp], address)
         } else {
-          const [mp] = tx.moveCall({
+          const addLiquidityMoveCall = {
             target: `${coinConfig.nemoContractId}::market::add_liquidity_single_sy`,
+            arguments: [
+              coinConfig.version,
+              'syCoin',
+              //FIXME: we should calculate the min out correctly
+              new Decimal(0).toFixed(0),
+              'priceVoucherForMintLp',
+              'pyPosition',
+              coinConfig.pyStateId,
+              coinConfig.yieldFactoryConfigId,
+              coinConfig.marketFactoryConfigId,
+              coinConfig.marketStateId,
+              "0x6",
+            ],
+            typeArguments: [coinConfig.syCoinType],
+          }
+          debugLog("add_liquidity_single_sy move call:", addLiquidityMoveCall)
+
+          const [mp] = tx.moveCall({
+            ...addLiquidityMoveCall,
             arguments: [
               tx.object(coinConfig.version),
               syCoin,
@@ -150,7 +206,6 @@ export default function Mint({ slippage }: { slippage: string }) {
               tx.object(coinConfig.marketStateId),
               tx.object("0x6"),
             ],
-            typeArguments: [coinConfig.syCoinType],
           })
 
           tx.transferObjects([mp], address)
@@ -174,7 +229,9 @@ export default function Mint({ slippage }: { slippage: string }) {
         setAddValue("")
         setStatus("Success")
       } catch (error) {
-        console.log("tx error", error)
+        if (DEBUG) {
+          console.log("tx error", error)
+        }
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))

@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { network } from "@/config"
+import { network, debugLog, DEBUG } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 // import { ConnectModal, useCurrentAccount } from "@mysten/dapp-kit"
@@ -84,7 +84,7 @@ export default function Remove() {
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          pyPosition = pyPosition = initPyPosition(tx, coinConfig)
+          pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
@@ -97,8 +97,21 @@ export default function Remove() {
           coinConfig.decimal,
         )
 
-        const [sy] = tx.moveCall({
+        const burnLpMoveCall = {
           target: `${coinConfig.nemoContractId}::market::burn_lp`,
+          arguments: [
+            coinConfig.version,
+            new Decimal(lpValue).mul(1e9).toFixed(0),
+            'pyPosition',
+            coinConfig.marketStateId,
+            'mergedPositionId',
+          ],
+          typeArguments: [coinConfig.syCoinType],
+        }
+        debugLog("burn_lp move call:", burnLpMoveCall)
+
+        const [sy] = tx.moveCall({
+          ...burnLpMoveCall,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(new Decimal(lpValue).mul(1e9).toFixed(0)),
@@ -106,18 +119,30 @@ export default function Remove() {
             tx.object(coinConfig.marketStateId),
             mergedPositionId,
           ],
-          typeArguments: [coinConfig.syCoinType],
         })
-        const [yieldToken] = tx.moveCall({
+
+        const redeemMoveCall = {
           target: `${coinConfig.nemoContractId}::sy::redeem`,
+          arguments: [
+            coinConfig.version,
+            'sy',
+            new Decimal(0).toFixed(0),
+            coinConfig.syStateId,
+          ],
+          typeArguments: [coinConfig.coinType, coinConfig.syCoinType],
+        }
+        debugLog("sy::redeem move call:", redeemMoveCall)
+
+        const [yieldToken] = tx.moveCall({
+          ...redeemMoveCall,
           arguments: [
             tx.object(coinConfig.version),
             sy,
             tx.pure.u64(new Decimal(0).toFixed(0)),
             tx.object(coinConfig.syStateId),
           ],
-          typeArguments: [coinConfig.coinType, coinConfig.syCoinType],
         })
+
         tx.transferObjects([yieldToken], address)
 
         if (created) {
@@ -141,7 +166,9 @@ export default function Remove() {
         setLpValue("")
         setStatus("Success")
       } catch (error) {
-        console.log("tx error", error)
+        if (DEBUG) {
+          console.log("tx error", error)
+        }
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
