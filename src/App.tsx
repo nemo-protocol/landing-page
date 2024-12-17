@@ -30,7 +30,7 @@ function App() {
               />
               <Route path="/learn" element={<Learn />} />
               <Route path="/Rewards" element={<Rewards />} />
-              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/portfolio/:type?" element={<Portfolio />} />
               {IS_DEV && <Route path="/test" element={<Test />} />}
             </Routes>
           </div>

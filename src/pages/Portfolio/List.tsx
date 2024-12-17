@@ -1,6 +1,6 @@
 import Item from "./Item"
 import { motion } from "framer-motion"
-import { Link } from "react-router-dom"
+import { Link, useParams, useNavigate } from "react-router-dom"
 import { useMemo, useState } from "react"
 import Empty from "@/assets/images/png/empty.png"
 import { PortfolioItem } from "@/queries/types/market"
@@ -16,9 +16,22 @@ import {
 
 export default function List({ list }: { list?: PortfolioItem[] }) {
   const { address } = useWallet()
+  const navigate = useNavigate()
+  const { type } = useParams()
   const isConnected = useMemo(() => !!address, [address])
   const [openConnect, setOpenConnect] = useState(false)
-  const [selectType, setSelectType] = useState<"pt" | "yt" | "lp">("pt")
+  
+  const selectType = useMemo(() => {
+    if (type && ["pt", "yt", "lp"].includes(type)) {
+      return type as "pt" | "yt" | "lp"
+    }
+    return "pt"
+  }, [type])
+
+  const handleTypeChange = (newType: "pt" | "yt" | "lp") => {
+    navigate(`/portfolio/${newType}`)
+  }
+
   return (
     <motion.div
       className="w-full transition-all duration-200 ease-in-out"
@@ -36,7 +49,7 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
                 : "text-white/80 cursor-pointer border border-[#1A1D20]",
               "rounded-full px-5 py-1.5 text-sm",
             ].join(" ")}
-            onClick={() => setSelectType(type as "pt" | "yt" | "lp")}
+            onClick={() => handleTypeChange(type as "pt" | "yt" | "lp")}
           >
             {type.toUpperCase()}
           </span>
