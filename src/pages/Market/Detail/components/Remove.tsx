@@ -52,14 +52,14 @@ export default function Remove() {
     address,
     coinConfig?.marketStateId,
     coinConfig?.maturity,
-    coinConfig?.marketPositionType,
+    coinConfig?.marketPositionTypeList,
   )
 
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
-    coinConfig?.pyPositionType,
+    coinConfig?.pyPositionTypeList,
   )
 
   const lpCoinBalance = useMemo(() => {
@@ -120,9 +120,9 @@ export default function Remove() {
           arguments: [
             coinConfig.version,
             new Decimal(lpValue).mul(1e9).toFixed(0),
-            'pyPosition',
+            "pyPosition",
             coinConfig.marketStateId,
-            'mergedPositionId',
+            "mergedPositionId",
           ],
           typeArguments: [coinConfig.syCoinType],
         }
@@ -143,7 +143,7 @@ export default function Remove() {
           target: `${coinConfig.nemoContractId}::sy::redeem`,
           arguments: [
             coinConfig.version,
-            'sy',
+            "sy",
             new Decimal(0).toFixed(0),
             coinConfig.syStateId,
           ],
@@ -248,7 +248,7 @@ export default function Remove() {
         </div>
 
         <h2 className="text-center text-xl">Remove Liquidity</h2>
-        
+
         <TransactionStatusDialog
           open={open}
           status={status}
@@ -271,7 +271,9 @@ export default function Remove() {
           isConnected={isConnected}
           coinBalance={lpCoinBalance}
           onChange={setLpValue}
-          coinNameComponent={<span className="text-base">LP {coinConfig?.coinName}</span>}
+          coinNameComponent={
+            <span className="text-base">LP {coinConfig?.coinName}</span>
+          }
         />
 
         <ChevronsDown className="size-6" />
@@ -285,9 +287,7 @@ export default function Remove() {
                   <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
                 ) : lpValue && ratio ? (
                   <>
-                    <span>
-                      {new Decimal(lpValue).div(ratio).toString()}
-                    </span>
+                    <span>{new Decimal(lpValue).div(ratio).toString()}</span>
                     <span>{coinConfig?.coinName}</span>
                     {coinConfig?.coinLogo && (
                       <img
@@ -327,12 +327,20 @@ export default function Remove() {
         ) : (
           <button
             onClick={remove}
-            disabled={lpValue === "" || lpValue === "0" || insufficientBalance || new Decimal(lpValue).toNumber() === 0}
+            disabled={
+              lpValue === "" ||
+              lpValue === "0" ||
+              insufficientBalance ||
+              new Decimal(lpValue).toNumber() === 0
+            }
             className={[
               "mt-4 px-8 py-2.5 rounded-full w-full h-12 transition-colors",
-              lpValue === "" || lpValue === "0" || insufficientBalance || new Decimal(lpValue).toNumber() === 0
+              lpValue === "" ||
+              lpValue === "0" ||
+              insufficientBalance ||
+              new Decimal(lpValue).toNumber() === 0
                 ? "bg-[#0F60FF]/50 text-white/50"
-                : "bg-[#0F60FF] text-white hover:bg-[#0F60FF]/90"
+                : "bg-[#0F60FF] text-white hover:bg-[#0F60FF]/90",
             ].join(" ")}
           >
             Remove Liquidity

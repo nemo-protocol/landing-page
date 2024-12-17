@@ -64,7 +64,7 @@ export default function SingleCoin() {
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
-    coinConfig?.pyPositionType,
+    coinConfig?.pyPositionTypeList,
   )
 
   const { data: lpSupply } = useMarketStateData(coinConfig?.marketStateId)

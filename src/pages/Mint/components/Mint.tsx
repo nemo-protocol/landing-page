@@ -68,7 +68,7 @@ export default function Mint({
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
-    coinConfig?.pyPositionType,
+    coinConfig?.pyPositionTypeList,
   )
 
   const { data: coinData } = useCoinData(address, coinType)

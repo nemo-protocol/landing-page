@@ -51,14 +51,18 @@ export default function Item({
     address,
     coinConfig.marketStateId,
     coinConfig.maturity,
-    coinConfig.marketPositionType,
+    coinConfig?.marketPositionTypeList
+      ? coinConfig?.marketPositionTypeList
+      : [coinConfig.marketPositionType],
   )
 
   const { data: pyPositionData } = usePyPositionData(
     address,
     coinConfig.pyStateId,
     coinConfig.maturity,
-    coinConfig.pyPositionType,
+    coinConfig?.pyPositionTypeList
+      ? coinConfig?.pyPositionTypeList
+      : [coinConfig?.pyPositionType],
   )
 
   const ptBalance = useMemo(() => {
@@ -146,17 +150,14 @@ export default function Item({
           created = true
           const moveCall = {
             target: `${coinConfig?.nemoContractId}::py::init_py_position`,
-            arguments: [
-              coinConfig?.version,
-              coinConfig?.pyStateId,
-            ],
+            arguments: [coinConfig?.version, coinConfig?.pyStateId],
             typeArguments: [coinConfig?.syCoinType],
           }
           debugLog("init_py_position move call:", moveCall)
-          
+
           pyPosition = tx.moveCall({
             ...moveCall,
-            arguments: moveCall.arguments.map(arg => tx.object(arg)),
+            arguments: moveCall.arguments.map((arg) => tx.object(arg)),
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -168,9 +169,9 @@ export default function Item({
           target: `${coinConfig?.nemoContractId}::yield_factory::redeem_due_interest`,
           arguments: [
             address,
-            'pyPosition',
+            "pyPosition",
             coinConfig?.pyStateId,
-            'priceVoucher',
+            "priceVoucher",
             coinConfig?.yieldFactoryConfigId,
             "0x6",
           ],
@@ -223,17 +224,14 @@ export default function Item({
           created = true
           const moveCall = {
             target: `${coinConfig?.nemoContractId}::py::init_py_position`,
-            arguments: [
-              coinConfig?.version,
-              coinConfig?.pyStateId,
-            ],
+            arguments: [coinConfig?.version, coinConfig?.pyStateId],
             typeArguments: [coinConfig?.syCoinType],
           }
           debugLog("init_py_position move call:", moveCall)
-          
+
           pyPosition = tx.moveCall({
             ...moveCall,
-            arguments: moveCall.arguments.map(arg => tx.object(arg)),
+            arguments: moveCall.arguments.map((arg) => tx.object(arg)),
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -258,9 +256,9 @@ export default function Item({
           arguments: [
             coinConfig?.version,
             new Decimal(ptBalance).mul(1e9).toString(),
-            'pyPosition',
+            "pyPosition",
             coinConfig?.pyStateId,
-            'priceVoucher',
+            "priceVoucher",
             coinConfig?.yieldFactoryConfigId,
             coinConfig?.marketFactoryConfigId,
             coinConfig?.marketStateId,
@@ -325,17 +323,14 @@ export default function Item({
           created = true
           const moveCall = {
             target: `${coinConfig?.nemoContractId}::py::init_py_position`,
-            arguments: [
-              coinConfig?.version,
-              coinConfig?.pyStateId,
-            ],
+            arguments: [coinConfig?.version, coinConfig?.pyStateId],
             typeArguments: [coinConfig?.syCoinType],
           }
           debugLog("init_py_position move call:", moveCall)
-          
+
           pyPosition = tx.moveCall({
             ...moveCall,
-            arguments: moveCall.arguments.map(arg => tx.object(arg)),
+            arguments: moveCall.arguments.map((arg) => tx.object(arg)),
           })[0]
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
@@ -347,7 +342,7 @@ export default function Item({
             coinConfig?.version,
             address,
             new Decimal(lpCoinBalance).mul(1e9).toFixed(0),
-            'pyPosition',
+            "pyPosition",
             coinConfig?.marketStateId,
             lpMarketPositionData[0].id.id,
           ],

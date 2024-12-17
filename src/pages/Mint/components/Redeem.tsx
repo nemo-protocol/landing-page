@@ -67,7 +67,7 @@ export default function Redeem({
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
-    coinConfig?.pyPositionType,
+    coinConfig?.pyPositionTypeList,
   )
 
   const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)

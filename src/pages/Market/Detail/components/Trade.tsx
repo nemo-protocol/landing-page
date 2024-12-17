@@ -76,7 +76,7 @@ export default function Trade() {
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
-    coinConfig?.pyPositionType,
+    coinConfig?.pyPositionTypeList,
   )
 
   const { data: swapRatio, refetch } = useQuerySwapRatio(

@@ -60,7 +60,7 @@ export default function Sell() {
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
-    coinConfig?.pyPositionType,
+    coinConfig?.pyPositionTypeList,
   )
 
   const { data: swapRatio } = useQuerySwapRatio(

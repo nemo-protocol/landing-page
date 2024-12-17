@@ -51,7 +51,9 @@ export interface CoinConfig {
   nemoContractId: string
   decimal: number
   pyPositionType: string
+  pyPositionTypeList: string[]
   marketPositionType: string
+  marketPositionTypeList: string[]
   nativePool: string
   metadataId: string
   lstInfoId: string
