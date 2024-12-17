@@ -1,5 +1,5 @@
-import { useSuiClient } from "@mysten/dapp-kit"
-import { UseQueryResult, useQuery } from "@tanstack/react-query"
+import { useSuiClientQuery } from "@mysten/dapp-kit"
+import { UseQueryResult } from "@tanstack/react-query"
 
 export interface PyPosition {
   name: string
@@ -17,39 +17,48 @@ const usePyPositionData = (
   maturity?: string,
   positionTypes?: string[],
 ): UseQueryResult<PyPosition[], Error> => {
-  const suiClient = useSuiClient()
-
-  return useQuery({
-    queryKey: ["getPyPositions", address, pyStateId, maturity, positionTypes],
-    queryFn: () => {
-      if (!positionTypes?.length) return Promise.resolve([])
-
-      return suiClient
-        .getOwnedObjects({
-          owner: address!,
-          filter: {
-            MatchAny: positionTypes.map((type) => ({
-              StructType: type,
-            })),
-          },
-          options: { showContent: true },
-        })
-        .then((response) =>
-          response.data
-            .map((item) => {
-              const content = item.data?.content as unknown as { fields: PyPosition }
-              return content?.fields
-            })
-            .filter(
-              (item): item is PyPosition =>
-                !!item &&
-                (!maturity || item.expiry === maturity.toString()) &&
-                (!pyStateId || item.py_state_id === pyStateId),
-            ),
-        )
+  return useSuiClientQuery(
+    "getOwnedObjects",
+    {
+      owner: address!,
+      filter: {
+        MatchAny: positionTypes!.map((type: string) => ({ StructType: type })),
+      },
+      options: {
+        showContent: true,
+      },
     },
-    enabled: !!address && !!maturity && !!pyStateId && !!positionTypes?.length,
-  })
+    {
+      queryKey: ["queryPyPositionData", address, positionTypes],
+      gcTime: 10000,
+      enabled: !!address && !!maturity && !!pyStateId && !!positionTypes,
+      select: (data) => {
+        return data.data
+          .map(
+            (item) =>
+              (
+                item.data?.content as {
+                  fields?: {
+                    name: string
+                    expiry: string
+                    id: { id: string }
+                    pt_balance: string
+                    yt_balance: string
+                    description: string
+                    py_state_id: string
+                  }
+                }
+              )?.fields,
+          )
+          .filter((item) => !!item)
+          .filter(
+            (item) =>
+              (!maturity || item.expiry === maturity.toString()) &&
+              (!pyStateId || item.py_state_id === pyStateId),
+          )
+      },
+    },
+  )
 }
 
 export default usePyPositionData

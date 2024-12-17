@@ -1,11 +1,9 @@
-import { useSuiClient } from "@mysten/dapp-kit"
-import { UseQueryResult, useQuery } from "@tanstack/react-query"
+import { useSuiClientQuery } from "@mysten/dapp-kit"
+import { UseQueryResult } from "@tanstack/react-query"
 import { Decimal } from "decimal.js"
 
 export interface LppMarketPosition {
-  id: {
-    id: string
-  }
+  id: { id: string }
   description: string
   expiry: string
   expiry_days: string
@@ -23,47 +21,48 @@ const useLpMarketPositionData = (
   maturity?: string,
   positionTypes?: string[],
 ): UseQueryResult<LppMarketPosition[], Error> => {
-  const suiClient = useSuiClient()
-
-  return useQuery({
-    queryKey: [
-      "getLpPositions",
-      address,
-      marketStateId,
-      maturity,
-      positionTypes,
-    ],
-    queryFn: () => {
-      if (!positionTypes?.length) return Promise.resolve([])
-
-      return suiClient
-        .getOwnedObjects({
-          owner: address!,
-          filter: {
-            MatchAny: positionTypes.map((type) => ({
-              StructType: type,
-            })),
-          },
-          options: { showContent: true },
-        })
-        .then((response) =>
-          response.data
-            .map((item) => {
-              const content = item.data?.content as unknown as { fields: LppMarketPosition }
-              return content?.fields
-            })
-            .filter(
-              (item): item is LppMarketPosition =>
-                !!item &&
-                (!maturity || item.expiry === maturity.toString()) &&
-                (!marketStateId || item.market_state_id === marketStateId),
-            )
-            .sort((a, b) => Decimal.sub(b.lp_amount, a.lp_amount).toNumber()),
-        )
+  return useSuiClientQuery(
+    "getOwnedObjects",
+    {
+      owner: address!,
+      filter: {
+        MatchAny: positionTypes!.map((type) => ({ StructType: type })),
+      },
+      options: {
+        showContent: true,
+      },
     },
-    enabled:
-      !!address && !!maturity && !!marketStateId && !!positionTypes?.length,
-  })
+    {
+      queryKey: ["queryPyPositionData", address, positionTypes],
+      gcTime: 10000,
+      enabled: !!address && !!maturity && !!marketStateId && !!positionTypes,
+      select: (data): LppMarketPosition[] => {
+        return data.data
+          .map(
+            (item) =>
+              (
+                item.data?.content as {
+                  fields?: {
+                    name: string
+                    expiry: string
+                    id: { id: string }
+                    lp_amount: string
+                    description: string
+                    market_state_id: string
+                  }
+                }
+              )?.fields,
+          )
+          .filter((item): item is LppMarketPosition => !!item)
+          .filter(
+            (item) =>
+              (!maturity || item.expiry === maturity.toString()) &&
+              (!marketStateId || item.market_state_id === marketStateId),
+          )
+          .sort((a, b) => Decimal.sub(b.lp_amount, a.lp_amount).toNumber())
+      },
+    },
+  )
 }
 
 export default useLpMarketPositionData
