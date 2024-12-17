@@ -58,6 +58,8 @@ export interface CoinConfig {
   tradeFee: string
   feeRate: string
   sevenAvgUnderlyingApy: string
+  poolApy: string
+  tvl: string
 }
 
 export interface PortfolioItem extends CoinConfig {

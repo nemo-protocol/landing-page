@@ -64,7 +64,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
                 >
                   <Wallet className="size-3.5" />
                   {isConnected
-                    ? `${coinBalance?.toLocaleString()} ${coinName}`
+                    ? `${coinBalance?.toLocaleString()} LP ${coinName}`
                     : "--"}
                 </div>
               </div>

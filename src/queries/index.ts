@@ -111,8 +111,11 @@ export function useQueryMintPYRatio(marketStateId?: string) {
 }
 
 interface LPResult {
+  ptLpRate: number
   syLpRate: number
+  syPtRate: number
   splitRate: number
+  cap: string
 }
 
 async function getLPRatio(

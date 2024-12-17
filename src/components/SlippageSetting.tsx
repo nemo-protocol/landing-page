@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { useState } from "react"
 
 interface SlippageSettingProps {
   slippage: string
@@ -14,8 +15,21 @@ const SlippageSetting: React.FC<SlippageSettingProps> = ({
   slippage,
   setSlippage,
 }) => {
+  const [open, setOpen] = useState(false)
+
+  const handleSlippageChange = (value: string) => {
+    setSlippage(value)
+    setOpen(false)
+  }
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setOpen(false)
+    }
+  }
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div className="flex items-center gap-x-2 cursor-pointer">
           <span className="text-white/60">{slippage}%</span>
@@ -32,19 +46,19 @@ const SlippageSetting: React.FC<SlippageSettingProps> = ({
           <div className="grid grid-cols-3 gap-x-2 gap-y-4">
             <button
               className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs text-white"
-              onClick={() => setSlippage("0.1")}
+              onClick={() => handleSlippageChange("0.1")}
             >
               0.1%
             </button>
             <button
               className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs text-white"
-              onClick={() => setSlippage("0.5")}
+              onClick={() => handleSlippageChange("0.5")}
             >
               0.5%
             </button>
             <button
               className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] text-xs text-white"
-              onClick={() => setSlippage("1")}
+              onClick={() => handleSlippageChange("1")}
             >
               1%
             </button>
@@ -54,6 +68,7 @@ const SlippageSetting: React.FC<SlippageSettingProps> = ({
                 className="px-4 py-2.5 bg-[#36394B5C] rounded-[28px] placeholder:text-xs w-full outline-none text-white"
                 placeholder="Custom"
                 onChange={(e) => setSlippage(e.target.value)}
+                onKeyDown={handleInputKeyDown}
               />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-white mt-0.5">
                 %

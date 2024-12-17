@@ -1,16 +1,18 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { RotateCw } from "lucide-react"
 import { useState } from "react"
 import SlippageSetting from "./SlippageSetting"
 
 interface TradeInfoProps {
-  ratio?: string
+  ratio?: string | React.ReactNode
   coinName?: string
   targetCoinName?: string
-  tradeFee?: string
+  tradeFee?: string | React.ReactNode
   tradeFeeSymbol?: string
   slippage: string
   setSlippage: (value: string) => void
   onRefresh?: () => void
+  isLoading?: boolean
 }
 
 export default function TradeInfo({
@@ -22,6 +24,7 @@ export default function TradeInfo({
   slippage,
   setSlippage,
   onRefresh,
+  isLoading,
 }: TradeInfoProps) {
   const [isSpinning, setIsSpinning] = useState(false)
 
@@ -39,9 +42,13 @@ export default function TradeInfo({
       <div className="flex items-center justify-between text-white/60">
         <span>Price</span>
         <div className="flex items-center gap-x-1">
-          <span title={`1 ${coinName} ≈ ${ratio} ${targetCoinName}`}>
-            {`1 ${coinName} ≈ ${Number(ratio || 0).toFixed(4)} ${targetCoinName}`}
-          </span>
+          {isLoading ? (
+            <Skeleton className="h-5 w-[180px] bg-[#2D2D48]" />
+          ) : (
+            <span title={`1 ${coinName} ≈ ${ratio} ${targetCoinName}`}>
+              {`1 ${coinName} ≈ ${Number(ratio || 0).toFixed(4)} ${targetCoinName}`}
+            </span>
+          )}
           <RotateCw
             className={[
               "size-5 cursor-pointer",
@@ -53,11 +60,15 @@ export default function TradeInfo({
       </div>
       <div className="flex items-center justify-between text-white/60">
         <span>Trading Fees</span>
-        <span title={`$${tradeFee} ${tradeFeeSymbol}`}>
-          {tradeFee
-            ? `≈ $${Number(tradeFee).toFixed(4)} ${tradeFeeSymbol}`
-            : "--"}
-        </span>
+        {isLoading ? (
+          <Skeleton className="h-5 w-[120px] bg-[#2D2D48]" />
+        ) : (
+          <span title={`$${tradeFee} ${tradeFeeSymbol}`}>
+            {tradeFee
+              ? `≈ $${Number(tradeFee).toFixed(4)} ${tradeFeeSymbol}`
+              : "--"}
+          </span>
+        )}
       </div>
       <div className="flex items-center justify-between text-white/60">
         <span>Slippage</span>

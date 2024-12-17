@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { network, debugLog, DEBUG } from "@/config"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
 // import { useCurrentAccount } from "@mysten/dapp-kit"
@@ -31,6 +31,7 @@ import AmountInput from "@/components/AmountInput"
 import { useWallet } from "@aricredemption/wallet-kit"
 import dayjs from "dayjs"
 import TradeInfo from "@/components/TradeInfo"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -43,6 +44,7 @@ export default function Trade() {
   const [openConnect, setOpenConnect] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [isInputLoading, setIsInputLoading] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
 
@@ -112,6 +114,16 @@ export default function Trade() {
     () => new Decimal(coinBalance).lt(swapValue || 0),
     [coinBalance, swapValue],
   )
+
+  useEffect(() => {
+    if (swapValue) {
+      setIsInputLoading(true)
+      const timer = setTimeout(() => {
+        setIsInputLoading(false)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [swapValue])
 
   async function swap() {
     if (
@@ -290,7 +302,7 @@ export default function Trade() {
 
   return (
     <div className="w-full flex flex-col lg:flex-row gap-5">
-      <div className="lg:w-[400px] bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] shrink-0">
+      <div className="lg:w-[500px] bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] shrink-0">
         <div className="flex flex-col items-center gap-y-4">
           <h2 className="text-center text-xl">Trade</h2>
           {/* TODO: add into global */}
@@ -353,23 +365,27 @@ export default function Trade() {
               <div className="flex items-center justify-between w-full">
                 <span>Receiving</span>
                 <span>
-                  {decimal && swapValue && ratio ? (
-                    <span className="flex items-center gap-x-1.5">
-                      <span>
-                        {formatDecimalValue(
-                          new Decimal(swapValue).mul(ratio),
-                          decimal,
-                        )}
-                      </span>{" "}
-                      <span>YT {coinConfig?.coinName}</span>
-                      <img
-                        src={coinConfig?.coinLogo}
-                        alt={coinConfig?.coinName}
-                        className="size-[28px]"
-                      />
-                    </span>
+                  {isInputLoading ? (
+                    <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
                   ) : (
-                    "--"
+                    decimal && swapValue && ratio ? (
+                      <span className="flex items-center gap-x-1.5">
+                        <span>
+                          {formatDecimalValue(
+                            new Decimal(swapValue).mul(ratio),
+                            decimal,
+                          )}
+                        </span>{" "}
+                        <span>YT {coinConfig?.coinName}</span>
+                        <img
+                          src={coinConfig?.coinLogo}
+                          alt={coinConfig?.coinName}
+                          className="size-[28px]"
+                        />
+                      </span>
+                    ) : (
+                      "--"
+                    )
                   )}
                 </span>
               </div>
@@ -388,6 +404,7 @@ export default function Trade() {
             </div>
           </div>
           <TradeInfo
+            isLoading={isInputLoading}
             ratio={ratio}
             coinName={coinName}
             slippage={slippage}

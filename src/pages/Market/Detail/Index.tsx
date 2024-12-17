@@ -2,7 +2,7 @@ import { useState } from "react"
 import Sell from "./Trade/Index.tsx"
 import Header from "@/components/Header"
 import { ArrowLeft } from "lucide-react"
-import Liquidity from "./Liquidity/Index.tsx"
+import Remove from "./components/Remove.tsx"
 import sSUI from "@/assets/images/svg/sSUI.svg"
 import { useNavigate, useParams } from "react-router-dom"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
@@ -13,8 +13,9 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
-import Invest from "./components/Invest.tsx"
+import Add from "./components/Add.tsx"
 import Trade from "./components/Trade.tsx"
+import Invest from "./components/Invest.tsx"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -46,6 +47,43 @@ export default function Home() {
   const [tab, setTab] = useState<"Details" | "Calculator">("Details")
   const [timeRange, setTimeRange] = useState<"1h" | "1D" | "1W">("1h")
 
+  const renderMainContent = () => {
+    if (operation === "add") {
+      return <Add />
+    }
+
+    if (operation === "swap") {
+      if (tokenType === "yt") {
+        return <Trade />
+      }
+      if (tokenType === "pt") {
+        return (
+          <div className="w-full md:w-[500px] flex flex-col gap-y-5">
+            <Invest />
+          </div>
+        )
+      }
+    }
+
+    if (operation === "sell") {
+      return (
+        <div className="w-full md:w-[500px] flex flex-col gap-y-5">
+          <Sell />
+        </div>
+      )
+    }
+
+    if (operation === "remove") {
+      return (
+        <div className="w-full md:w-[500px] flex flex-col gap-y-5">
+          <Remove />
+        </div>
+      )
+    }
+
+    return null
+  }
+
   return (
     <div
       className="min-h-screen"
@@ -67,15 +105,7 @@ export default function Home() {
         </h3>
         <div className="mt-5 md:mt-20 relative">
           <div className="flex xl:flex-row flex-col gap-x-8 justify-center items-center">
-            {operation === "swap" && tokenType === "yt" ? (
-              <Trade />
-            ) : (
-              <div className="w-full md:w-[500px] flex flex-col gap-y-5">
-                {operation === "swap" && tokenType === "pt" && <Invest />}
-                {operation === "sell" && <Sell />}
-                {["add", "remove"].includes(operation) && <Liquidity />}
-              </div>
-            )}
+            {renderMainContent()}
             <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
               <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
                 <div className="flex items-center gap-x-4 w-full md:w-auto">

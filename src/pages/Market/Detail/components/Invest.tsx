@@ -1,7 +1,7 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { DEBUG, network } from "@/config"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
 import AmountInput from "@/components/AmountInput"
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/tooltip"
 import TradeInfo from "@/components/TradeInfo"
 import { debugLog } from "@/config"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -48,6 +49,7 @@ export default function Invest() {
   const [openConnect, setOpenConnect] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [isInputLoading, setIsInputLoading] = useState(false)
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -124,6 +126,16 @@ export default function Invest() {
     () => new Decimal(coinBalance).lt(swapValue || 0),
     [coinBalance, swapValue],
   )
+
+  useEffect(() => {
+    if (swapValue) {
+      setIsInputLoading(true)
+      const timer = setTimeout(() => {
+        setIsInputLoading(false)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [swapValue])
 
   async function swap() {
     if (
@@ -339,23 +351,27 @@ export default function Invest() {
             <div className="flex items-center justify-between w-full">
               <span>Receiving</span>
               <span>
-                {decimal && swapValue && ratio ? (
-                  <span className="flex items-center gap-x-1.5">
-                    <span>
-                      {formatDecimalValue(
-                        new Decimal(swapValue).mul(ratio),
-                        decimal,
-                      )}
-                    </span>{" "}
-                    <span>PT {coinConfig?.coinName}</span>
-                    <img
-                      src={coinConfig?.coinLogo}
-                      alt={coinConfig?.coinName}
-                      className="size-[28px]"
-                    />
-                  </span>
+                {isInputLoading ? (
+                  <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
                 ) : (
-                  "--"
+                  decimal && swapValue && ratio ? (
+                    <span className="flex items-center gap-x-1.5">
+                      <span>
+                        {formatDecimalValue(
+                          new Decimal(swapValue).mul(ratio),
+                          decimal,
+                        )}
+                      </span>{" "}
+                      <span>PT {coinConfig?.coinName}</span>
+                      <img
+                        src={coinConfig?.coinLogo}
+                        alt={coinConfig?.coinName}
+                        className="size-[28px]"
+                      />
+                    </span>
+                  ) : (
+                    "--"
+                  )
                 )}
               </span>
             </div>
@@ -390,30 +406,34 @@ export default function Invest() {
               </TooltipProvider>
             </span>
 
-            {ratio && decimal && swapValue && conversionRate ? (
-              <div className="flex items-center gap-x-1.5">
-                <span>
-                  + $
-                  {formatDecimalValue(
-                    new Decimal(swapValue)
-                      .mul(ratio)
-                      .minus(
-                        tokenType === 0
-                          ? new Decimal(swapValue)
-                          : new Decimal(swapValue).mul(conversionRate),
-                      ),
-                    decimal,
-                  )}
-                </span>
-                <span>{coinConfig?.underlyingCoinName}</span>
-                <img
-                  src={coinConfig?.underlyingCoinLogo}
-                  alt={coinConfig?.underlyingCoinName}
-                  className="size-[28px]"
-                />
-              </div>
+            {isInputLoading ? (
+              <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
             ) : (
-              <span>--</span>
+              ratio && decimal && swapValue && conversionRate ? (
+                <div className="flex items-center gap-x-1.5">
+                  <span>
+                    + $
+                    {formatDecimalValue(
+                      new Decimal(swapValue)
+                        .mul(ratio)
+                        .minus(
+                          tokenType === 0
+                            ? new Decimal(swapValue)
+                            : new Decimal(swapValue).mul(conversionRate),
+                        ),
+                      decimal,
+                    )}
+                  </span>
+                  <span>{coinConfig?.underlyingCoinName}</span>
+                  <img
+                    src={coinConfig?.underlyingCoinLogo}
+                    alt={coinConfig?.underlyingCoinName}
+                    className="size-[28px]"
+                  />
+                </div>
+              ) : (
+                <span>--</span>
+              )
             )}
           </div>
           <div className="flex items-center justify-between mt-2 text-white/60 text-xs">
@@ -442,6 +462,7 @@ export default function Invest() {
           </div>
         </div>
         <TradeInfo
+          isLoading={isInputLoading}
           ratio={ratio}
           coinName={coinName}
           slippage={slippage}
