@@ -21,7 +21,6 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select"
-import { formatDecimalValue } from "@/lib/utils"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
