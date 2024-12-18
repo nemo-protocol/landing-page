@@ -8,10 +8,15 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig, useQueryLPRatio, useCoinInfoList } from "@/queries"
 import { ChevronsDown, Info } from "lucide-react"
-import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
+import {
+  getPriceVoucher,
+  initPyPosition,
+  splitCoinHelper,
+  swapScoin,
+} from "@/lib/txHelper"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import AmountInput from "@/components/AmountInput"
-import { formatDecimalValue } from "@/lib/utils"
+import { formatDecimalValue, safeDivide } from "@/lib/utils"
 import ActionButton from "@/components/ActionButton"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { useWallet } from "@aricredemption/wallet-kit"
@@ -39,12 +44,11 @@ export default function SingleCoin() {
   const [open, setOpen] = useState(false)
   const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
-  const [targetValue, setTargetValue] = useState("")
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
-  const [tokenType, setTokenType] = useState<number>(0)
+  const [tokenType, setTokenType] = useState<number>(1)
   const [slippage, setSlippage] = useState("0.5")
   const { data: list } = useCoinInfoList()
   const [selectedPool, setSelectedPool] = useState("")
@@ -67,13 +71,29 @@ export default function SingleCoin() {
     coinConfig?.pyPositionTypeList,
   )
 
+  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
+
   const { data: lpSupply } = useMarketStateData(coinConfig?.marketStateId)
 
-  const { data: dataRatio, isLoading: isRatioLoading } = useQueryLPRatio(
-    address,
-    coinConfig?.marketStateId,
-  )
-  const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio])
+  const {
+    data: dataRatio,
+    isLoading: isRatioLoading,
+    refetch,
+  } = useQueryLPRatio(address, coinConfig?.marketStateId)
+
+  const conversionRate = useMemo(() => dataRatio?.conversionRate, [dataRatio])
+
+  const ratio = useMemo(() => {
+    if (dataRatio) {
+      if (tokenType === 0 && conversionRate && dataRatio.syLpRate) {
+        return new Decimal(dataRatio.syLpRate)
+          .div(safeDivide(conversionRate))
+          .toString()
+      } else {
+        return dataRatio.syLpRate
+      }
+    }
+  }, [dataRatio, tokenType, conversionRate])
 
   const { data: coinData } = useCoinData(
     address,
@@ -124,6 +144,7 @@ export default function SingleCoin() {
 
   async function add() {
     if (
+      ratio &&
       address &&
       coinType &&
       coinConfig &&
@@ -131,7 +152,18 @@ export default function SingleCoin() {
       !insufficientBalance
     ) {
       try {
+        await refetch()
         const tx = new Transaction()
+
+        const splitCoin =
+          tokenType === 0
+            ? swapScoin(tx, coinConfig, coinData, addValue)
+            : splitCoinHelper(
+                tx,
+                coinData,
+                new Decimal(addValue).mul(10 ** coinConfig.decimal).toString(),
+                coinType,
+              )
 
         let pyPosition
         let created = false
@@ -141,18 +173,6 @@ export default function SingleCoin() {
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
-
-        const splitAmount = new Decimal(addValue)
-          .mul(10 ** coinConfig.decimal)
-          .toFixed(0)
-        debugLog("splitCoins params:", {
-          coinObjectId: coinData[0].coinObjectId,
-          amount: splitAmount,
-        })
-
-        const [splitCoinForAdd] = tx.splitCoins(coinData[0].coinObjectId, [
-          splitAmount,
-        ])
 
         const depositMoveCall = {
           target: `${coinConfig.nemoContractId}::sy::deposit`,
@@ -175,12 +195,12 @@ export default function SingleCoin() {
           ...depositMoveCall,
           arguments: [
             tx.object(coinConfig.version),
-            splitCoinForAdd,
+            splitCoin,
             tx.pure.u64(
               new Decimal(addValue)
                 .mul(10 ** coinConfig.decimal)
                 .mul(ratio || 1)
-                .div(new Decimal(ratio || 1).add(1))
+                .div(new Decimal(ratio).add(1))
                 .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
@@ -368,12 +388,6 @@ export default function SingleCoin() {
                 coinBalance={coinBalance}
                 onChange={(value) => {
                   setAddValue(value)
-                  setTargetValue(
-                    formatDecimalValue(
-                      new Decimal(value).mul(ratio || 0),
-                      coinConfig?.decimal,
-                    ),
-                  )
                 }}
                 coinNameComponent={
                   <Select
@@ -415,9 +429,13 @@ export default function SingleCoin() {
                     <span className="flex items-center gap-x-1.5">
                       {isInputLoading || isRatioLoading ? (
                         <Skeleton className="h-7 w-[120px] bg-[#2D2D48]" />
-                      ) : (
+                      ) : decimal && addValue && ratio ? (
                         <>
-                          {targetValue || "--"} LP {coinConfig?.coinName}
+                          {formatDecimalValue(
+                            new Decimal(addValue).mul(ratio),
+                            decimal,
+                          )}{" "}
+                          LP {coinConfig?.coinName}
                           {coinConfig?.coinLogo && (
                             <img
                               src={coinConfig.coinLogo}
@@ -426,6 +444,8 @@ export default function SingleCoin() {
                             />
                           )}
                         </>
+                      ) : (
+                        "--"
                       )}
                     </span>
                   </div>
@@ -473,15 +493,14 @@ export default function SingleCoin() {
               />
 
               <ActionButton
-                btnText={tokenType === 0 ? "Coming Soon" : "Add"}
+                btnText={"Add"}
                 onClick={add}
                 openConnect={openConnect}
                 setOpenConnect={setOpenConnect}
                 insufficientBalance={insufficientBalance}
                 disabled={
                   ["", undefined, "0"].includes(addValue) ||
-                  new Decimal(addValue).toNumber() === 0 ||
-                  tokenType === 0
+                  new Decimal(addValue).toNumber() === 0
                 }
               />
             </div>
@@ -528,11 +547,29 @@ export default function SingleCoin() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
-                        <Progress
-                          value={0}
-                          className="h-2 bg-[#2D2D48]"
-                          indicatorClassName="bg-[#2DF4DD]"
-                        />
+                        {coinConfig?.cap &&
+                        coinConfig?.tvl &&
+                        coinConfig?.decimal &&
+                        price ? (
+                          <Progress
+                            value={new Decimal(coinConfig.tvl)
+                              .div(
+                                new Decimal(coinConfig.cap)
+                                  .div(10 ** Number(coinConfig.decimal))
+                                  .mul(price),
+                              )
+                              .mul(100)
+                              .toNumber()}
+                            className="h-2 bg-[#2D2D48]"
+                            indicatorClassName="bg-[#2DF4DD]"
+                          />
+                        ) : (
+                          <Progress
+                            value={0}
+                            className="h-2 bg-[#2D2D48]"
+                            indicatorClassName="bg-[#2DF4DD]"
+                          />
+                        )}
                       </div>
                     </TooltipTrigger>
                     <TooltipContent
@@ -542,10 +579,31 @@ export default function SingleCoin() {
                     >
                       <div className="text-white/60">
                         <div>
-                          Total Capacity: --
+                          Total Capacity:{" "}
+                          {coinConfig?.cap && coinConfig.decimal
+                            ? new Decimal(coinConfig.cap)
+                                .div(10 ** Number(coinConfig.decimal))
+                                .toFixed(2)
+                            : "--"}{" "}
                           {coinConfig?.coinName}
                         </div>
-                        <div>Filled: {"--"}%</div>
+                        <div>
+                          Filled:{" "}
+                          {coinConfig?.cap &&
+                          coinConfig?.tvl &&
+                          coinConfig?.decimal &&
+                          price
+                            ? new Decimal(coinConfig.tvl)
+                                .div(
+                                  new Decimal(coinConfig.cap)
+                                    .div(10 ** Number(coinConfig.decimal))
+                                    .mul(price),
+                                )
+                                .mul(100)
+                                .toFixed(2)
+                            : "--"}
+                          %
+                        </div>
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -559,13 +617,11 @@ export default function SingleCoin() {
                 </h3>
                 <div className="mb-4">
                   <div className="flex justify-between mb-4">
-                    <span>PT {"--"}%</span>
-                    <span>
-                      {coinConfig?.coinName} {"--"}%
-                    </span>
+                    <span>PT --%</span>
+                    <span>{coinConfig?.coinName} --%</span>
                   </div>
                   <Progress
-                    value={90}
+                    value={0}
                     className="h-2 bg-[#2DF4DD]"
                     indicatorClassName="bg-[#2C62D8]"
                   />

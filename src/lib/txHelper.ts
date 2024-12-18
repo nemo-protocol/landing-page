@@ -20,22 +20,19 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
       debugLog("get_price_voucher_from_volo move call:", moveCall)
       return tx.moveCall({
         ...moveCall,
-        arguments: moveCall.arguments.map(arg => tx.object(arg)),
+        arguments: moveCall.arguments.map((arg) => tx.object(arg)),
       })
     }
     case "0x83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI": {
       const moveCall = {
         target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_spring`,
-        arguments: [
-          coinConfig.lstInfoId,
-          coinConfig.syStateId,
-        ],
+        arguments: [coinConfig.lstInfoId, coinConfig.syStateId],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
       debugLog("get_price_voucher_from_spring move call:", moveCall)
       return tx.moveCall({
         ...moveCall,
-        arguments: moveCall.arguments.map(arg => tx.object(arg)),
+        arguments: moveCall.arguments.map((arg) => tx.object(arg)),
       })
     }
     default: {
@@ -52,7 +49,7 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
       debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
       return tx.moveCall({
         ...moveCall,
-        arguments: moveCall.arguments.map(arg => tx.object(arg)),
+        arguments: moveCall.arguments.map((arg) => tx.object(arg)),
       })
     }
   }
@@ -61,18 +58,14 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
 export const initPyPosition = (tx: Transaction, coinConfig: CoinConfig) => {
   const moveCall = {
     target: `${coinConfig.nemoContractId}::py::init_py_position`,
-    arguments: [
-      coinConfig.version,
-      coinConfig.pyStateId,
-      "0x6",
-    ],
+    arguments: [coinConfig.version, coinConfig.pyStateId, "0x6"],
     typeArguments: [coinConfig.syCoinType],
   }
   debugLog("init_py_position move call:", moveCall)
-  
+
   const [pyPosition] = tx.moveCall({
     ...moveCall,
-    arguments: moveCall.arguments.map(arg => tx.object(arg)),
+    arguments: moveCall.arguments.map((arg) => tx.object(arg)),
   })
   if (pyPosition === undefined) {
     throw new Error("initPyPosition failed")
@@ -99,19 +92,19 @@ export const swapScoin = (
         "0xa757975255146dc9686aa823b7838b507f315d704f428cbadad2f4ea061939d9"
       const SCALLOP_VERSION_OBJECT =
         "0x07871c4b3c847a0f674510d4978d5cf6f960452795e8ff6f189fd2088a3f6ac7"
-      
+
       const mintMoveCall = {
-        target: `0xa45b8ffca59e5b44ec7c04481a04cb620b0e07b2b183527bca4e5f32372c5f1a::mint::mint`,
+        target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
         arguments: [
           SCALLOP_VERSION_OBJECT,
           SCALLOP_MARKET_OBJECT,
-          'splitCoin',
+          "splitCoin",
           "0x6",
         ],
         typeArguments: [coinConfig.underlyingCoinType],
       }
       debugLog("scallop mint move call:", mintMoveCall)
-      
+
       const marketCoin = tx.moveCall({
         ...mintMoveCall,
         arguments: [
@@ -124,14 +117,11 @@ export const swapScoin = (
 
       const mintSCoinMoveCall = {
         target: `80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
-        arguments: [
-          coinConfig.sCoinTreasure,
-          'marketCoin'
-        ],
+        arguments: [coinConfig.sCoinTreasure, "marketCoin"],
         typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
       }
       debugLog("mint_s_coin move call:", mintSCoinMoveCall)
-      
+
       return tx.moveCall({
         ...mintSCoinMoveCall,
         arguments: [tx.object(coinConfig.sCoinTreasure), marketCoin],
@@ -151,7 +141,7 @@ export function splitCoinHelper(
   debugLog("splitCoinHelper params:", {
     coinData,
     targetAmount,
-    coinType
+    coinType,
   })
 
   if (!coinType || coinType === "0x2::sui::SUI") {
@@ -207,7 +197,7 @@ export const mergeLppMarketPositions = (
   debugLog("mergeLppMarketPositions params:", {
     lppMarketPositionData,
     lpValue,
-    decimal
+    decimal,
   })
 
   const sortedPositions = [...lppMarketPositionData].sort(
@@ -240,17 +230,14 @@ export const mergeLppMarketPositions = (
   for (let i = 1; i < positionsToMerge.length; i++) {
     const joinMoveCall = {
       target: `${coinConfig.nemoContractId}::market_position::join`,
-      arguments: [
-        positionsToMerge[0].id.id,
-        positionsToMerge[i].id.id
-      ],
+      arguments: [positionsToMerge[0].id.id, positionsToMerge[i].id.id],
       typeArguments: [],
     }
     debugLog("market_position::join move call:", joinMoveCall)
-    
+
     tx.moveCall({
       ...joinMoveCall,
-      arguments: joinMoveCall.arguments.map(arg => tx.object(arg)),
+      arguments: joinMoveCall.arguments.map((arg) => tx.object(arg)),
     })
   }
 

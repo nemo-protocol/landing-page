@@ -62,6 +62,7 @@ export interface CoinConfig {
   sevenAvgUnderlyingApy: string
   poolApy: string
   tvl: string
+  cap: string
 }
 
 export interface PortfolioItem extends CoinConfig {
