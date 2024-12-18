@@ -136,9 +136,7 @@ export default function Trade() {
           </div>
         </div>
       </div>
-      {action === "mint" && (
-        <Mint slippage={slippage} coinType={coinType} maturity={maturity} />
-      )}
+      {action === "mint" && <Mint coinType={coinType} maturity={maturity} />}
       {action === "redeem" && (
         <Redeem coinType={coinType} maturity={maturity} />
       )}

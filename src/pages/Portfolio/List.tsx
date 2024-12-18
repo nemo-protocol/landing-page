@@ -14,13 +14,18 @@ import {
   TableHeader,
 } from "@/components/ui/table"
 
-export default function List({ list }: { list?: PortfolioItem[] }) {
+interface ListProps {
+  list?: PortfolioItem[]
+  isLoading?: boolean
+}
+
+export default function List({ list, isLoading }: ListProps) {
   const { address } = useWallet()
   const navigate = useNavigate()
   const { type } = useParams()
   const isConnected = useMemo(() => !!address, [address])
   const [openConnect, setOpenConnect] = useState(false)
-  
+
   const selectType = useMemo(() => {
     if (type && ["pt", "yt", "lp"].includes(type)) {
       return type as "pt" | "yt" | "lp"
@@ -79,29 +84,43 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          {isConnected && list?.length && (
+          {isConnected && isLoading ? (
             <TableBody>
-              {list.map((item) => (
-                <Item
-                  {...item}
-                  selectType={selectType}
-                  key={
-                    item.underlyingProtocol +
-                    "_" +
-                    item.name +
-                    "_" +
-                    item.maturity
-                  }
-                  itemKey={
-                    item.underlyingProtocol +
-                    "_" +
-                    item.name +
-                    "_" +
-                    item.maturity
-                  }
-                />
-              ))}
+              <TableRow>
+                <td colSpan={selectType === "yt" ? 6 : 5} className="py-[60px]">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                  </div>
+                </td>
+              </TableRow>
             </TableBody>
+          ) : (
+            <>
+              {isConnected && list?.length ? (
+                <TableBody>
+                  {list.map((item) => (
+                    <Item
+                      {...item}
+                      selectType={selectType}
+                      key={
+                        item.underlyingProtocol +
+                        "_" +
+                        item.name +
+                        "_" +
+                        item.maturity
+                      }
+                      itemKey={
+                        item.underlyingProtocol +
+                        "_" +
+                        item.name +
+                        "_" +
+                        item.maturity
+                      }
+                    />
+                  ))}
+                </TableBody>
+              ) : null}
+            </>
           )}
         </Table>
         {!isConnected && (
@@ -125,7 +144,7 @@ export default function List({ list }: { list?: PortfolioItem[] }) {
             />
           </div>
         )}
-        {!list?.length && isConnected && (
+        {!isLoading && !list?.length && isConnected && (
           <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px] py-[30px]">
             <img src={Empty} alt="No Data" className="size-[120px]" />
             <span className="text-white/60">

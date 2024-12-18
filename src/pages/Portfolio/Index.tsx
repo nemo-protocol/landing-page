@@ -9,7 +9,7 @@ import Decimal from "decimal.js"
 import { motion } from "framer-motion"
 
 export default function Portfolio() {
-  const { data: list } = usePortfolioList()
+  const { data: list, isLoading } = usePortfolioList()
   const { portfolios } = usePortfolio()
   return (
     <>
@@ -101,7 +101,7 @@ export default function Portfolio() {
             />
           </div>
         </div>
-        <List list={list} />
+        <List list={list} isLoading={isLoading} />
       </div>
     </>
   )

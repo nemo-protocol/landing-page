@@ -27,11 +27,9 @@ import { initPyPosition, splitCoinHelper } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 
 export default function Mint({
-  slippage,
   maturity,
   coinType,
 }: {
-  slippage: string
   maturity: string
   coinType: string
 }) {
