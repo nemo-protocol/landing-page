@@ -26,16 +26,21 @@ const useLpMarketPositionData = (
     {
       owner: address!,
       filter: {
-        MatchAny: positionTypes!.map((type) => ({ StructType: type })),
+        MatchAny: (positionTypes || []).map((type) => ({ StructType: type })),
       },
       options: {
         showContent: true,
       },
     },
     {
-      queryKey: ["queryPyPositionData", address, positionTypes],
+      queryKey: ["queryLpMarketPositionData", address, positionTypes],
       gcTime: 10000,
-      enabled: !!address && !!maturity && !!marketStateId && !!positionTypes,
+      enabled:
+        !!address &&
+        !!maturity &&
+        !!marketStateId &&
+        !!positionTypes &&
+        positionTypes.length > 0,
       select: (data): LppMarketPosition[] => {
         return data.data
           .map(

@@ -22,7 +22,9 @@ const usePyPositionData = (
     {
       owner: address!,
       filter: {
-        MatchAny: positionTypes!.map((type: string) => ({ StructType: type })),
+        MatchAny: (positionTypes || []).map((type: string) => ({
+          StructType: type,
+        })),
       },
       options: {
         showContent: true,
@@ -31,7 +33,12 @@ const usePyPositionData = (
     {
       queryKey: ["queryPyPositionData", address, positionTypes],
       gcTime: 10000,
-      enabled: !!address && !!maturity && !!pyStateId && !!positionTypes,
+      enabled:
+        !!address &&
+        !!maturity &&
+        !!pyStateId &&
+        !!positionTypes &&
+        positionTypes.length > 0,
       select: (data) => {
         return data.data
           .map(
