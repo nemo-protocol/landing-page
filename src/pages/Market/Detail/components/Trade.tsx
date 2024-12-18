@@ -158,9 +158,10 @@ export default function Trade() {
             tx.pure.u64(
               new Decimal(swapValue)
                 .mul(10 ** coinConfig.decimal)
-                .div(new Decimal(ratio || 1).add(1))
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
-                .toFixed(0),
+                .toFixed(0)
+                // .div(new Decimal(ratio || 1).add(1))
+                // .mul(1 - new Decimal(slippage).div(100).toNumber())
+                // .toFixed(0),
             ),
             tx.object(coinConfig.syStateId),
           ],
@@ -174,8 +175,8 @@ export default function Trade() {
             "splitCoin",
             new Decimal(swapValue)
               .mul(10 ** coinConfig.decimal)
-              .div(new Decimal(ratio || 1).add(1))
-              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              // .div(new Decimal(ratio || 1).add(1))
+              // .mul(1 - new Decimal(slippage).div(100).toNumber())
               .toFixed(0),
             coinConfig.syStateId,
           ],
@@ -192,13 +193,13 @@ export default function Trade() {
         }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-
         const [sy] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::market::swap_sy_for_exact_yt`,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(
               new Decimal(swapValue)
+                .mul(new Decimal(ratio || 1))
                 .mul(10 ** coinConfig.decimal)
                 .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
@@ -222,6 +223,7 @@ export default function Trade() {
             coinConfig.version,
             new Decimal(swapValue)
               .mul(10 ** coinConfig.decimal)
+              .mul(new Decimal(ratio || 1))
               .mul(1 - new Decimal(slippage).div(100).toNumber())
               .toFixed(0),
             "syCoin",

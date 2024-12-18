@@ -181,9 +181,9 @@ export default function SingleCoin() {
             "splitCoinForAdd",
             new Decimal(addValue)
               .mul(10 ** coinConfig.decimal)
-              .mul(ratio || 1)
-              .div(new Decimal(ratio || 1).add(1))
-              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              // .mul(ratio || 1)
+              // .div(new Decimal(ratio || 1).add(1))
+              // .mul(1 - new Decimal(slippage).div(100).toNumber())
               .toFixed(0),
             coinConfig.syStateId,
           ],
