@@ -169,8 +169,8 @@ export default function Invest() {
             tx.pure.u64(
               new Decimal(swapValue)
                 .mul(10 ** coinConfig.decimal)
-                .div(new Decimal(ratio).add(1))
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
+                // .div(new Decimal(ratio).add(1))
+                // .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
             tx.object(coinConfig.syStateId),
@@ -185,8 +185,8 @@ export default function Invest() {
             "splitCoin",
             new Decimal(swapValue)
               .mul(10 ** coinConfig.decimal)
-              .div(new Decimal(ratio).add(1))
-              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              // .div(new Decimal(ratio).add(1))
+              // .mul(1 - new Decimal(slippage).div(100).toNumber())
               .toFixed(0),
             coinConfig.syStateId,
           ],

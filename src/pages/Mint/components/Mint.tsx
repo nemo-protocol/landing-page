@@ -130,7 +130,7 @@ export default function Mint({
             tx.pure.u64(
               new Decimal(mintValue)
                 .mul(10 ** coinConfig.decimal)
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
+                // .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
             ),
             tx.object(coinConfig.syStateId),
