@@ -216,18 +216,11 @@ export default function Remove() {
                   alt={coinConfig?.coinName}
                   className="size-8 lg:size-10"
                 />
-                <div>
-                  <h2 className="text-lg lg:text-xl font-normal text-left">
-                    {coinConfig?.coinName || "Select a pool"}
-                    {coinConfig?.maturity &&
-                      ` - ${dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")}`}
-                  </h2>
-                  {coinConfig?.tvl && (
-                    <p className="text-sm lg:text-base text-white/60 text-left">
-                      TVL: ${formatDecimalValue(coinConfig.tvl, 2)}
-                    </p>
-                  )}
-                </div>
+                <h2 className="text-lg lg:text-xl font-normal text-left">
+                  {coinConfig?.coinName || "Select a pool"}
+                  {coinConfig?.maturity &&
+                    ` - ${dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")}`}
+                </h2>
               </div>
             </SelectTrigger>
             <SelectContent className="border-none bg-[#131520]">

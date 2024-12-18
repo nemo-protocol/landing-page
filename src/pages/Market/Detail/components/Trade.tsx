@@ -99,7 +99,10 @@ export default function Trade() {
     }
   }, [swapRatio, tokenType])
 
-  const { data: coinData } = useCoinData(address, coinType)
+  const { data: coinData } = useCoinData(
+    address,
+    tokenType === 0 ? coinConfig?.underlyingCoinType : coinType
+  )
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
       return coinData
