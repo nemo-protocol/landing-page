@@ -155,14 +155,7 @@ export default function Trade() {
           arguments: [
             tx.object(coinConfig.version),
             splitCoin,
-            tx.pure.u64(
-              new Decimal(swapValue)
-                .mul(10 ** coinConfig.decimal)
-                .toFixed(0)
-                // .div(new Decimal(ratio || 1).add(1))
-                // .mul(1 - new Decimal(slippage).div(100).toNumber())
-                // .toFixed(0),
-            ),
+            tx.pure.u64(0),
             tx.object(coinConfig.syStateId),
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
@@ -173,11 +166,7 @@ export default function Trade() {
           arguments: [
             coinConfig.version,
             "splitCoin",
-            new Decimal(swapValue)
-              .mul(10 ** coinConfig.decimal)
-              // .div(new Decimal(ratio || 1).add(1))
-              // .mul(1 - new Decimal(slippage).div(100).toNumber())
-              .toFixed(0),
+            0,
             coinConfig.syStateId,
           ],
           typeArguments: [coinType, coinConfig.syCoinType],

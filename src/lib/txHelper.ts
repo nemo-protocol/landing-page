@@ -116,7 +116,7 @@ export const swapScoin = (
       })
 
       const mintSCoinMoveCall = {
-        target: `80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
+        target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
         arguments: [coinConfig.sCoinTreasure, "marketCoin"],
         typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
       }

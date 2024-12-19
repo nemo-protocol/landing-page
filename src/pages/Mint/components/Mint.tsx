@@ -125,12 +125,7 @@ export default function Mint({
           arguments: [
             tx.object(coinConfig.version),
             splitCoin,
-            tx.pure.u64(
-              new Decimal(mintValue)
-                .mul(10 ** coinConfig.decimal)
-                // .mul(1 - new Decimal(slippage).div(100).toNumber())
-                .toFixed(0),
-            ),
+            tx.pure.u64(0),
             tx.object(coinConfig.syStateId),
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
