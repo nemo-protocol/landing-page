@@ -1,9 +1,9 @@
 const errorMapping: { [key: number]: string } = {
-  257: "Whitelist error", // 0x0000101
-  258: "Sy zero deposit", // 0x0000102
-  259: "Sy insufficient sharesOut", // 0x0000103
-  260: "Sy zero redeem", // 0x0000104
-  261: "Sy insufficient amountOut", // 0x0000105
+  257: "Sy zero deposit", // 0x0000101
+  258: "Sy insufficient sharesOut", // 0x0000102
+  259: "Sy zero redeem", // 0x0000103
+  260: "Sy insufficient amountOut", // 0x0000104
+  // 261: "Sy insufficient amountOut", // 0x0000105
   513: "Interest fee rate too high", // 0x0000201
   514: "Reward fee rate too high", // 0x0000202
   515: "Factory zero expiry divisor", // 0x0000203
