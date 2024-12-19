@@ -29,6 +29,7 @@ export interface CoinConfig {
   underlyingProtocolLogo: string
   ptApy: string
   ytApy: string
+  swapFeeApy: string
   pyStateId: string
   syStateId: string
   yieldFactoryConfigId: string
@@ -63,6 +64,8 @@ export interface CoinConfig {
   poolApy: string
   tvl: string
   cap: string
+  ptTvl: string
+  syTvl: string
 }
 
 export interface PortfolioItem extends CoinConfig {

@@ -1,32 +1,36 @@
+import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { DEBUG, network, debugLog } from "@/config"
-import { useMemo, useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useMemo, useState } from "react"
 import useCoinData from "@/hooks/useCoinData"
+import TradeInfo from "@/components/TradeInfo"
+import { ChevronsDown, Info } from "lucide-react"
+import AmountInput from "@/components/AmountInput"
+import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
+import { DEBUG, network, debugLog } from "@/config"
+import ActionButton from "@/components/ActionButton"
 import { Transaction } from "@mysten/sui/transactions"
 import { parseErrorMessage } from "@/lib/errorMapping"
+import { useWallet } from "@aricredemption/wallet-kit"
+import { useLoadingState } from "@/hooks/useLoadingState"
+import { useParams, useNavigate } from "react-router-dom"
 import usePyPositionData from "@/hooks/usePyPositionData"
+import useMarketStateData from "@/hooks/useMarketStateData"
+import { formatDecimalValue, safeDivide } from "@/lib/utils"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { useCoinConfig, useQueryLPRatio, useCoinInfoList } from "@/queries"
-import { ChevronsDown, Info } from "lucide-react"
 import {
   getPriceVoucher,
   initPyPosition,
   splitCoinHelper,
   swapScoin,
 } from "@/lib/txHelper"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import AmountInput from "@/components/AmountInput"
-import { formatDecimalValue, safeDivide } from "@/lib/utils"
-import ActionButton from "@/components/ActionButton"
-import useMarketStateData from "@/hooks/useMarketStateData"
-import { useWallet } from "@aricredemption/wallet-kit"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import TradeInfo from "@/components/TradeInfo"
 import {
   Select,
   SelectContent,
@@ -35,9 +39,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import dayjs from "dayjs"
-import { Progress } from "@/components/ui/progress"
-import { Skeleton } from "@/components/ui/skeleton"
 
 export default function SingleCoin() {
   const [txId, setTxId] = useState("")
@@ -53,65 +54,14 @@ export default function SingleCoin() {
   const { data: list } = useCoinInfoList()
   const [selectedPool, setSelectedPool] = useState("")
   const navigate = useNavigate()
-  const [isInputLoading, setIsInputLoading] = useState(false)
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig, isLoading } = useCoinConfig(
+  const { data: coinConfig, isLoading: isConfigLoading } = useCoinConfig(
     coinType,
     maturity,
     address,
-  )
-
-  const { data: pyPositionData } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
-
-  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
-
-  const { data: lpSupply } = useMarketStateData(coinConfig?.marketStateId)
-
-  const {
-    data: dataRatio,
-    isLoading: isRatioLoading,
-    refetch,
-  } = useQueryLPRatio(address, coinConfig?.marketStateId)
-
-  const conversionRate = useMemo(() => dataRatio?.conversionRate, [dataRatio])
-
-  const ratio = useMemo(() => {
-    if (dataRatio) {
-      if (tokenType === 0 && conversionRate && dataRatio.syLpRate) {
-        return new Decimal(dataRatio.syLpRate)
-          .div(safeDivide(conversionRate))
-          .toString()
-      } else {
-        return dataRatio.syLpRate
-      }
-    }
-  }, [dataRatio, tokenType, conversionRate])
-
-  const { data: coinData } = useCoinData(
-    address,
-    tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
-  )
-  const coinBalance = useMemo(() => {
-    if (coinData?.length) {
-      return coinData
-        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
-        .toFixed(9)
-    }
-    return 0
-  }, [coinData, coinConfig])
-
-  const insufficientBalance = useMemo(
-    () => new Decimal(coinBalance).lt(new Decimal(addValue || 0)),
-    [coinBalance, addValue],
   )
 
   const coinName = useMemo(
@@ -132,15 +82,89 @@ export default function SingleCoin() {
     [tokenType, coinConfig],
   )
 
-  useEffect(() => {
-    if (addValue) {
-      setIsInputLoading(true)
-      const timer = setTimeout(() => {
-        setIsInputLoading(false)
-      }, 500)
-      return () => clearTimeout(timer)
+  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
+
+  const {
+    refetch,
+    data: dataRatio,
+    isFetching: isRatioFetching,
+  } = useQueryLPRatio(address, coinConfig?.marketStateId)
+
+  const conversionRate = useMemo(() => dataRatio?.conversionRate, [dataRatio])
+
+  const ratio = useMemo(() => {
+    if (dataRatio) {
+      if (tokenType === 0 && conversionRate && dataRatio.syLpRate) {
+        return new Decimal(dataRatio.syLpRate)
+          .div(safeDivide(conversionRate))
+          .toString()
+      } else {
+        return dataRatio.syLpRate
+      }
     }
-  }, [addValue])
+  }, [dataRatio, tokenType, conversionRate])
+
+  const { data: lpSupply } = useMarketStateData(coinConfig?.marketStateId)
+
+  const { data: pyPositionData } = usePyPositionData(
+    address,
+    coinConfig?.pyStateId,
+    coinConfig?.maturity,
+    coinConfig?.pyPositionTypeList,
+  )
+
+  const { isLoading } = useLoadingState(
+    addValue,
+    isRatioFetching || isConfigLoading,
+  )
+
+  const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
+    address,
+    tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
+  )
+
+  const coinBalance = useMemo(() => {
+    if (coinData?.length) {
+      return coinData
+        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+        .div(10 ** (coinConfig?.decimal ?? 0))
+        .toFixed(9)
+    }
+    return 0
+  }, [coinData, coinConfig])
+
+  const insufficientBalance = useMemo(
+    () => new Decimal(coinBalance).lt(new Decimal(addValue || 0)),
+    [coinBalance, addValue],
+  )
+
+  const [ptRatio, syRatio] = useMemo(() => {
+    if (coinConfig?.ptTvl && coinConfig?.syTvl) {
+      const totalTvl = new Decimal(coinConfig.ptTvl).add(
+        new Decimal(coinConfig.syTvl),
+      )
+      return [
+        new Decimal(coinConfig.ptTvl).div(totalTvl).mul(100).toFixed(2),
+        new Decimal(coinConfig.syTvl).div(totalTvl).mul(100).toFixed(2),
+      ]
+    }
+    return ["0", "0"]
+  }, [coinConfig])
+
+  const totalApy = useMemo(() => {
+    if (
+      coinConfig?.underlyingApy &&
+      coinConfig?.ptApy &&
+      coinConfig?.swapFeeApy
+    ) {
+      return new Decimal(coinConfig.underlyingApy)
+        .mul(syRatio)
+        .add(new Decimal(coinConfig.ptApy).mul(ptRatio))
+        .add(new Decimal(coinConfig.swapFeeApy).mul(100))
+        .toFixed(2)
+    }
+    return "--"
+  }, [coinConfig, syRatio, ptRatio])
 
   async function add() {
     if (
@@ -179,7 +203,7 @@ export default function SingleCoin() {
           arguments: [
             coinConfig.version,
             "splitCoinForAdd",
-            0,
+            new Decimal(addValue).mul(10 ** coinConfig.decimal).toFixed(0),
             coinConfig.syStateId,
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
@@ -308,7 +332,7 @@ export default function SingleCoin() {
   }
 
   return (
-    <div className="w-full bg-[#0E0F16] rounded-[40px] p-4 lg:p-8 border border-white/[0.07]">
+    <div className="w-full md:w-[500px] lg:w-full bg-[#0E0F16] rounded-[40px] p-4 lg:p-8 border border-white/[0.07]">
       <div className="grid grid-cols-1 lg:grid-cols-[500px_1fr] gap-8">
         {/* 左侧面板 */}
         <div>
@@ -374,13 +398,15 @@ export default function SingleCoin() {
 
               <AmountInput
                 price={price}
-                decimal={coinConfig?.decimal}
+                decimal={decimal}
                 amount={addValue}
                 coinName={coinName}
                 coinLogo={coinLogo}
                 isLoading={isLoading}
-                isConnected={isConnected}
                 coinBalance={coinBalance}
+                isConnected={isConnected}
+                isConfigLoading={isConfigLoading}
+                isBalanceLoading={isBalanceLoading}
                 onChange={(value) => {
                   setAddValue(value)
                 }}
@@ -419,17 +445,22 @@ export default function SingleCoin() {
 
               <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
                 <div className="flex flex-col items-end gap-y-1">
-                  <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center justify-between w-full h-[28px]">
                     <span>LP Position</span>
                     <span className="flex items-center gap-x-1.5">
-                      {isInputLoading || isRatioLoading ? (
-                        <Skeleton className="h-7 w-[120px] bg-[#2D2D48]" />
-                      ) : decimal && addValue && ratio ? (
+                      {!addValue ? (
+                        "--"
+                      ) : isLoading ? (
+                        <Skeleton className="h-7 w-48 bg-[#2D2D48]" />
+                      ) : !decimal || !ratio ? (
+                        "--"
+                      ) : (
                         <>
-                          {formatDecimalValue(
-                            new Decimal(addValue).mul(ratio),
-                            decimal,
-                          )}{" "}
+                          {"≈  " +
+                            formatDecimalValue(
+                              new Decimal(addValue).mul(ratio),
+                              decimal,
+                            )}{" "}
                           LP {coinConfig?.coinName}
                           {coinConfig?.coinLogo && (
                             <img
@@ -439,8 +470,6 @@ export default function SingleCoin() {
                             />
                           )}
                         </>
-                      ) : (
-                        "--"
                       )}
                     </span>
                   </div>
@@ -465,16 +494,17 @@ export default function SingleCoin() {
                     </TooltipProvider>
                   </span>
                   <span className="underline">
-                    {coinConfig?.poolApy ? `${coinConfig.poolApy}%` : "--"}
+                    {totalApy !== "--" ? `${totalApy} %` : "--"}
                   </span>
                 </div>
               </div>
 
               <TradeInfo
-                isLoading={isInputLoading || isRatioLoading}
-                ratio={ratio?.toString()}
+                ratio={ratio}
                 coinName={coinName}
                 slippage={slippage}
+                onRefresh={refetch}
+                isLoading={isLoading}
                 setSlippage={setSlippage}
                 tradeFee={
                   !!addValue && !!coinConfig?.feeRate && !!price
@@ -530,7 +560,6 @@ export default function SingleCoin() {
             </div>
           </div>
 
-          {/* 右侧主要内容 */}
           <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07]">
             <div className="space-y-3 lg:space-y-4">
               {/* Pool Capacity */}
@@ -612,11 +641,15 @@ export default function SingleCoin() {
                 </h3>
                 <div className="mb-4">
                   <div className="flex justify-between mb-4">
-                    <span>PT --%</span>
-                    <span>{coinConfig?.coinName} --%</span>
+                    <span>
+                      PT {coinConfig?.coinName} {ptRatio}%
+                    </span>
+                    <span>
+                      {coinConfig?.coinName} {syRatio}%
+                    </span>
                   </div>
                   <Progress
-                    value={0}
+                    value={Number(ptRatio)}
                     className="h-2 bg-[#2DF4DD]"
                     indicatorClassName="bg-[#2C62D8]"
                   />
@@ -629,28 +662,32 @@ export default function SingleCoin() {
                   <div className="flex justify-between items-center">
                     <span className="text-xl">Total APY</span>
                     <span className="text-xl text-white">
-                      {coinConfig?.poolApy || "--"}%
+                      {totalApy !== "--" ? `${totalApy} %` : "--"}
                     </span>
                   </div>
                   <div className="h-[1px] bg-[#2D2D48]" />
                   <div className="space-y-4">
                     <div className="flex justify-between items-center text-white/60">
                       <span>Underlying APY</span>
-                      <span>{coinConfig?.underlyingApy || "--"}%</span>
+                      <span>
+                        {coinConfig?.underlyingApy
+                          ? `${new Decimal(coinConfig.underlyingApy).mul(syRatio).toFixed(2)} %`
+                          : "--"}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center text-white/60">
                       <span>PT APY</span>
-
-                      <span>{coinConfig?.ptApy || "--"}%</span>
+                      <span>
+                        {coinConfig?.ptApy
+                          ? `${new Decimal(coinConfig.ptApy).mul(ptRatio).toFixed(2)} %`
+                          : "--"}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center text-white/60">
-                      <span>Swap Fee</span>
+                      <span>Swap Fee APY</span>
                       <span>
-                        {!!addValue && !!coinConfig?.feeRate && !!price
-                          ? `${new Decimal(coinConfig.feeRate)
-                              .mul(addValue)
-                              .mul(price)
-                              .toString()}%`
+                        {coinConfig?.swapFeeApy
+                          ? `${new Decimal(coinConfig.swapFeeApy).mul(100).toFixed(2)} %`
                           : "--"}
                       </span>
                     </div>

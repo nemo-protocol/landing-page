@@ -43,7 +43,7 @@ export default function TradeInfo({
         <span>Price</span>
         <div className="flex items-center gap-x-1">
           {isLoading ? (
-            <Skeleton className="h-5 w-[180px] bg-[#2D2D48]" />
+            <Skeleton className="h-5 w-56 bg-[#2D2D48]" />
           ) : (
             <span title={`1 ${coinName} ≈ ${ratio} ${targetCoinName}`}>
               {`1 ${coinName} ≈ ${Number(ratio || 0).toFixed(4)} ${targetCoinName}`}
@@ -60,8 +60,10 @@ export default function TradeInfo({
       </div>
       <div className="flex items-center justify-between text-white/60">
         <span>Trading Fees</span>
-        {isLoading ? (
-          <Skeleton className="h-5 w-[120px] bg-[#2D2D48]" />
+        {!tradeFee ? (
+          "--"
+        ) : isLoading ? (
+          <Skeleton className="h-5 w-24 bg-[#2D2D48]" />
         ) : (
           <span title={`$${tradeFee} ${tradeFeeSymbol}`}>
             {tradeFee

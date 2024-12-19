@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { network, debugLog, DEBUG } from "@/config"
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
 // import { useCurrentAccount } from "@mysten/dapp-kit"
@@ -32,6 +32,7 @@ import { useWallet } from "@aricredemption/wallet-kit"
 import dayjs from "dayjs"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useLoadingState } from "@/hooks/useLoadingState"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -44,13 +45,15 @@ export default function Trade() {
   const [openConnect, setOpenConnect] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const [isInputLoading, setIsInputLoading] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
-
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
+  const { data: coinConfig, isLoading: isConfigLoading } = useCoinConfig(
+    coinType,
+    maturity,
+    address,
+  )
 
   const coinName = useMemo(
     () =>
@@ -72,18 +75,11 @@ export default function Trade() {
 
   const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
 
-  const { data: pyPositionData } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
-
-  const { data: swapRatio, refetch } = useQuerySwapRatio(
-    coinConfig?.marketStateId,
-    "yt",
-    "buy",
-  )
+  const {
+    refetch,
+    data: swapRatio,
+    isFetching: isRatioFetching,
+  } = useQuerySwapRatio(coinConfig?.marketStateId, "yt", "buy")
 
   const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
 
@@ -99,34 +95,37 @@ export default function Trade() {
     }
   }, [swapRatio, tokenType])
 
-  const { data: coinData } = useCoinData(
+  const { data: pyPositionData } = usePyPositionData(
     address,
-    tokenType === 0 ? coinConfig?.underlyingCoinType : coinType
+    coinConfig?.pyStateId,
+    coinConfig?.maturity,
+    coinConfig?.pyPositionTypeList,
   )
+
+  const { isLoading } = useLoadingState(
+    swapValue,
+    isRatioFetching || isConfigLoading,
+  )
+
+  const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
+    address,
+    tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
+  )
+
   const coinBalance = useMemo(() => {
-    if (coinData?.length) {
+    if (coinData && coinData?.length && decimal) {
       return coinData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
-        .toFixed(coinConfig?.decimal ?? 0)
+        .div(10 ** decimal)
+        .toFixed(decimal)
     }
     return 0
-  }, [coinData, coinConfig])
+  }, [coinData, decimal])
 
   const insufficientBalance = useMemo(
     () => new Decimal(coinBalance).lt(swapValue || 0),
     [coinBalance, swapValue],
   )
-
-  useEffect(() => {
-    if (swapValue) {
-      setIsInputLoading(true)
-      const timer = setTimeout(() => {
-        setIsInputLoading(false)
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [swapValue])
 
   async function swap() {
     if (
@@ -155,7 +154,12 @@ export default function Trade() {
           arguments: [
             tx.object(coinConfig.version),
             splitCoin,
-            tx.pure.u64(0),
+            tx.pure.u64(
+              new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0),
+              // .div(new Decimal(ratio || 1).add(1))
+              // .mul(1 - new Decimal(slippage).div(100).toNumber())
+              // .toFixed(0),
+            ),
             tx.object(coinConfig.syStateId),
           ],
           typeArguments: [coinType, coinConfig.syCoinType],
@@ -163,12 +167,7 @@ export default function Trade() {
 
         debugLog("sy::deposit move call:", {
           target: `${coinConfig.nemoContractId}::sy::deposit`,
-          arguments: [
-            coinConfig.version,
-            "splitCoin",
-            0,
-            coinConfig.syStateId,
-          ],
+          arguments: [coinConfig.version, "splitCoin", 0, coinConfig.syStateId],
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
@@ -295,7 +294,7 @@ export default function Trade() {
   }
 
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-5">
+    <div className="w-full md:w-[650px] lg:w-full flex flex-col lg:flex-row gap-5">
       <div className="lg:w-[500px] bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] shrink-0">
         <div className="flex flex-col items-center gap-y-4">
           <h2 className="text-center text-xl">Trade</h2>
@@ -319,7 +318,8 @@ export default function Trade() {
             coinLogo={coinLogo}
             isLoading={isLoading}
             isConnected={isConnected}
-            coinBalance={coinBalance}
+            isConfigLoading={isConfigLoading}
+            isBalanceLoading={isBalanceLoading}
             onChange={(value) => {
               setSwapValue(value)
             }}
@@ -356,30 +356,29 @@ export default function Trade() {
           <ChevronsDown className="size-6" />
           <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
             <div className="flex flex-col items-end gap-y-1">
-              <div className="flex items-center justify-between w-full">
+              <div className="flex items-center justify-between w-full h-[28px]">
                 <span>Receiving</span>
                 <span>
-                  {isInputLoading ? (
-                    <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+                  {!swapValue ? (
+                    "--"
+                  ) : isLoading ? (
+                    <Skeleton className="h-7 w-60 bg-[#2D2D48]" />
+                  ) : !decimal || !ratio ? (
+                    "--"
                   ) : (
-                    decimal && swapValue && ratio ? (
-                      <span className="flex items-center gap-x-1.5">
-                        <span>
-                          {formatDecimalValue(
-                            new Decimal(swapValue).mul(ratio),
-                            decimal,
-                          )}
-                        </span>{" "}
-                        <span>YT {coinConfig?.coinName}</span>
-                        <img
-                          src={coinConfig?.coinLogo}
-                          alt={coinConfig?.coinName}
-                          className="size-[28px]"
-                        />
-                      </span>
-                    ) : (
-                      "--"
-                    )
+                    <span className="flex items-center gap-x-1.5">
+                      {"≈  " +
+                        formatDecimalValue(
+                          new Decimal(swapValue).mul(ratio),
+                          decimal,
+                        )}{" "}
+                      <span>YT {coinConfig?.coinName}</span>
+                      <img
+                        src={coinConfig?.coinLogo}
+                        alt={coinConfig?.coinName}
+                        className="size-[28px]"
+                      />
+                    </span>
                   )}
                 </span>
               </div>
@@ -391,19 +390,21 @@ export default function Trade() {
             </div>
             <hr className="border-t border-[#2D2D48] mt-6" />
             <div className="flex items-center justify-between mt-6">
-              <span>Long YieldY</span>
+              <span>Leveraged Yield APY</span>
               <span className="underline">
-                {coinConfig?.ytApy ? `${coinConfig.ytApy} %` : "--"}
+                {coinConfig?.ytApy
+                  ? `${new Decimal(coinConfig.ytApy).mul(100).toFixed(2)} %`
+                  : "--"}
               </span>
             </div>
           </div>
           <TradeInfo
-            isLoading={isInputLoading}
             ratio={ratio}
             coinName={coinName}
             slippage={slippage}
-            onRefresh={refetch}
+            isLoading={isLoading}
             setSlippage={setSlippage}
+            onRefresh={refetch}
             tradeFee={
               !!swapValue &&
               !!conversionRate &&
@@ -504,13 +505,17 @@ export default function Trade() {
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
             <div className="text-white/60 text-xs">Underlying APY</div>
             <div className="text-[#2DF4DD] text-xs">
-              {coinConfig?.underlyingApy}
+              {coinConfig?.underlyingApy
+                ? `${new Decimal(coinConfig.underlyingApy).mul(100).toFixed(2)} %`
+                : "--"}
             </div>
           </div>
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
             <div className="text-white/60 text-xs">7D Avg. Underlying APY</div>
             <div className="text-[#2DF4DD] text-xs">
-              {coinConfig?.sevenAvgUnderlyingApy}
+              {coinConfig?.sevenAvgUnderlyingApy
+                ? `${new Decimal(coinConfig.sevenAvgUnderlyingApy).mul(100).toFixed(2)} %`
+                : "--"}
             </div>
           </div>
         </div>

@@ -171,7 +171,7 @@ export function useQueryLPRatio(
     queryKey: ["lpRatio", marketStateId, mintType],
     queryFn: () => getLPRatio(marketStateId!, address!, mintType),
     enabled: !!marketStateId,
-    refetchInterval: 1000 * 30,
+    refetchInterval: 1000 * 20,
   })
 }
 

@@ -1,6 +1,5 @@
 import Decimal from "decimal.js"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
-
 import { UseQueryResult } from "@tanstack/react-query"
 
 export interface CoinData {

@@ -21,6 +21,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select"
+import { useLoadingState } from "@/hooks/useLoadingState"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -39,13 +40,33 @@ export default function Remove() {
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
+  const { data: coinConfig, isLoading: isConfigLoading } = useCoinConfig(
+    coinType,
+    maturity,
+    address,
+  )
 
-  const { data: dataRatio } = useQueryLPRatio(
+  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
+
+  const { data: dataRatio, isFetching: isRatioFetching } = useQueryLPRatio(
     address,
     coinConfig?.marketStateId,
   )
-  const ratio = useMemo(() => dataRatio?.syLpRate || 0, [dataRatio])
+
+  const conversionRate = useMemo(() => dataRatio?.conversionRate, [dataRatio])
+
+  const ratio = useMemo(() => {
+    if (dataRatio) {
+      // if (tokenType === 0 && conversionRate && dataRatio.syLpRate) {
+      //   return new Decimal(dataRatio.syLpRate)
+      //     .div(safeDivide(conversionRate))
+      //     .toString()
+      // } else {
+      //   return dataRatio.syLpRate
+      // }
+      return dataRatio.syLpRate
+    }
+  }, [dataRatio, conversionRate])
 
   const { data: lppMarketPositionData } = useLpMarketPositionData(
     address,
@@ -59,6 +80,11 @@ export default function Remove() {
     coinConfig?.pyStateId,
     coinConfig?.maturity,
     coinConfig?.pyPositionTypeList,
+  )
+
+  const { isLoading } = useLoadingState(
+    lpValue,
+    isRatioFetching || isConfigLoading,
   )
 
   const lpCoinBalance = useMemo(() => {
@@ -263,6 +289,8 @@ export default function Remove() {
           isConnected={isConnected}
           coinBalance={lpCoinBalance}
           onChange={setLpValue}
+          isConfigLoading={isConfigLoading}
+          isBalanceLoading={false}
           coinNameComponent={
             <span className="text-base">LP {coinConfig?.coinName}</span>
           }
@@ -274,18 +302,20 @@ export default function Remove() {
           <div className="flex flex-col items-end gap-y-1">
             <div className="flex items-center justify-between w-full">
               <span>Receiving</span>
-              <span className="flex items-center gap-x-1.5">
-                {isInputLoading || isLoading ? (
+              <span className="flex items-center gap-x-1.5 h-7">
+                {isInputLoading ? (
                   <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
                 ) : lpValue && ratio ? (
                   <>
-                    <span>{new Decimal(lpValue).div(ratio).toString()}</span>
+                    <span>
+                      {new Decimal(lpValue).div(ratio).toFixed(decimal)}
+                    </span>
                     <span>{coinConfig?.coinName}</span>
                     {coinConfig?.coinLogo && (
                       <img
                         src={coinConfig.coinLogo}
                         alt={coinConfig.coinName}
-                        className="size-[28px]"
+                        className="size-7"
                       />
                     )}
                   </>
