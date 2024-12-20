@@ -317,6 +317,7 @@ export default function Trade() {
             coinName={coinName}
             coinLogo={coinLogo}
             isLoading={isLoading}
+            coinBalance={coinBalance}
             isConnected={isConnected}
             isConfigLoading={isConfigLoading}
             isBalanceLoading={isBalanceLoading}
@@ -432,9 +433,9 @@ export default function Trade() {
           />
         </div>
       </div>
-      <div className="grow space-y-5 bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
+      <div className="grow space-y-5 bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] @container">
         <h3>HOW YT WORKS</h3>
-        <div className="border border-[#2D2D48] px-[29px] py-[35px] flex items-center gap-x-4 rounded-xl">
+        <div className="border border-[#2D2D48] px-[29px] py-[35px] flex items-center gap-4 rounded-xl flex-col @[630px]:flex-row">
           <div className="flex items-start gap-x-4 shrink-0">
             <div className="flex flex-col items-center space-y-4">
               <div
@@ -466,29 +467,50 @@ export default function Trade() {
                   className="size-12 lg:size-[28px]"
                 />
               </div>
-              <span className="text-xs text-white/80">
+              <span className="text-xs text-white/80 text-center">
                 1 {coinConfig?.underlyingCoinName} in{" "}
                 {coinConfig?.underlyingProtocol}
               </span>
             </div>
           </div>
-          <svg
-            width="2"
-            height="93"
-            viewBox="0 0 2 93"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M1 3.05176e-05L0.999996 93"
-              stroke="#3A3A60"
-              stroke-dasharray="2 2"
-            />
-          </svg>
+
+          <div className="w-full @[630px]:w-auto flex justify-center">
+            <svg
+              width="2"
+              height="93"
+              viewBox="0 0 2 93"
+              className="hidden @[630px]:block"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M1 3.05176e-05L0.999996 93"
+                stroke="#3A3A60"
+                strokeDasharray="2 2"
+              />
+            </svg>
+
+            <svg
+              width="350"
+              height="2"
+              viewBox="0 0 350 2"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="block @[630px]:hidden"
+            >
+              <path
+                d="M0 1L350 0.999996"
+                stroke="#3A3A60"
+                strokeDasharray="2 2"
+              />
+            </svg>
+          </div>
+
           <div className="text-center text-white/80 text-xs">
             Holding YT = Accruing yield from underlying asset.
           </div>
         </div>
+
         <img src="/images/market/yt_desc.png" alt="yt" className="w-full" />
         <div className="border border-[#2D2D48] grid grid-cols-3 rounded-xl">
           <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
