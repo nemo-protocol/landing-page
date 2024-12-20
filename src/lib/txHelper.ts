@@ -243,3 +243,35 @@ export const mergeLppMarketPositions = (
 
   return mergedPosition
 }
+
+export function depositSyCoin(
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  splitCoin: ReturnType<typeof splitCoinHelper>,
+  syCoinAmount: string,
+  coinType: string,
+) {
+  const depositMoveCall = {
+    target: `${coinConfig.nemoContractId}::sy::deposit`,
+    arguments: [
+      coinConfig.version,
+      "splitCoin",
+      syCoinAmount,
+      coinConfig.syStateId,
+    ],
+    typeArguments: [coinType, coinConfig.syCoinType],
+  }
+  debugLog("sy::deposit move call:", depositMoveCall)
+
+  const [syCoin] = tx.moveCall({
+    ...depositMoveCall,
+    arguments: [
+      tx.object(coinConfig.version),
+      splitCoin,
+      tx.pure.u64(syCoinAmount),
+      tx.object(coinConfig.syStateId),
+    ],
+  })
+
+  return syCoin
+}

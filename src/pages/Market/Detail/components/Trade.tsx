@@ -25,6 +25,7 @@ import {
   initPyPosition,
   splitCoinHelper,
   swapScoin,
+  depositSyCoin,
 } from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
@@ -109,7 +110,7 @@ export default function Trade() {
   )
 
   const { isLoading: isRatioLoading } = useRatioLoadingState(
-    isRatioFetching || isConfigLoading
+    isRatioFetching || isConfigLoading,
   )
 
   const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
@@ -144,31 +145,22 @@ export default function Trade() {
       try {
         const tx = new Transaction()
 
+        const syCoinAmount = new Decimal(swapValue)
+          .mul(10 ** coinConfig.decimal)
+          .toString()
+
         const splitCoin =
           tokenType === 0
             ? swapScoin(tx, coinConfig, coinData, swapValue)
-            : splitCoinHelper(
-                tx,
-                coinData,
-                new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
-                coinType,
-              )
+            : splitCoinHelper(tx, coinData, syCoinAmount, coinType)
 
-        const [syCoin] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::sy::deposit`,
-          arguments: [
-            tx.object(coinConfig.version),
-            splitCoin,
-            tx.pure.u64(
-              new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0),
-              // .div(new Decimal(ratio || 1).add(1))
-              // .mul(1 - new Decimal(slippage).div(100).toNumber())
-              // .toFixed(0),
-            ),
-            tx.object(coinConfig.syStateId),
-          ],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
+        const syCoin = depositSyCoin(
+          tx,
+          coinConfig,
+          splitCoin,
+          syCoinAmount,
+          coinType,
+        )
 
         debugLog("sy::deposit move call:", {
           target: `${coinConfig.nemoContractId}::sy::deposit`,
@@ -427,7 +419,7 @@ export default function Trade() {
                     .toString()
                 : undefined
             }
-            targetCoinName={`PT ${coinConfig?.coinName}`}
+            targetCoinName={`YT ${coinConfig?.coinName}`}
           />
           <ActionButton
             btnText="Buy"

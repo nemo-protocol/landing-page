@@ -1,10 +1,10 @@
+import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { network, debugLog, DEBUG } from "@/config"
 import { useMemo, useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Transaction } from "@mysten/sui/transactions"
 import usePyPositionData from "@/hooks/usePyPositionData"
-import { useCoinConfig, useQueryLPRatio, useCoinInfoList } from "@/queries"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
@@ -12,16 +12,10 @@ import { initPyPosition, mergeLppMarketPositions } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
 import { ChevronsDown } from "lucide-react"
 import AmountInput from "@/components/AmountInput"
-import dayjs from "dayjs"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select"
+import PoolSelect from "@/components/PoolSelect"
 import { useLoadingState } from "@/hooks/useLoadingState"
+import { useCoinConfig, useQueryLPRatio } from "@/queries"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -33,9 +27,7 @@ export default function Remove() {
   const [openConnect, setOpenConnect] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isInputLoading, setIsInputLoading] = useState(false)
-  const [selectedPool, setSelectedPool] = useState("")
   const navigate = useNavigate()
-  const { data: list } = useCoinInfoList()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -222,152 +214,123 @@ export default function Remove() {
 
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
+      <TransactionStatusDialog
+        open={open}
+        status={status}
+        network={network}
+        txId={txId}
+        message={message}
+        onClose={() => {
+          setTxId("")
+          setOpen(false)
+        }}
+      />
       <div className="flex flex-col items-center gap-y-4">
         <div className="w-full mb-4">
-          <Select
-            value={selectedPool}
-            onValueChange={(item) => {
-              setSelectedPool(item)
-              const [coinAddress, maturity] = item.split("-")
+          <PoolSelect
+            coinType={coinType}
+            maturity={maturity}
+            onChange={(coinAddress, maturity) => {
               navigate(`/market/detail/${coinAddress}/${maturity}/remove`, {
                 replace: true,
               })
             }}
-          >
-            <SelectTrigger className="w-full text-wrap border-none bg-[#131520] h-auto p-3 rounded-2xl">
-              <div className="flex items-center gap-x-3">
-                <img
-                  src={coinConfig?.coinLogo}
-                  alt={coinConfig?.coinName}
-                  className="size-8 lg:size-10"
-                />
-                <h2 className="text-lg lg:text-xl font-normal text-left">
-                  {coinConfig?.coinName || "Select a pool"}
-                  {coinConfig?.maturity &&
-                    ` - ${dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")}`}
-                </h2>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="border-none bg-[#131520]">
-              <SelectGroup className="flex flex-col gap-y-2">
-                {list?.map((item) => (
-                  <SelectItem
-                    className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-4 rounded-md"
-                    key={item.coinAddress + "-" + item.maturity}
-                    value={item.coinAddress + "-" + item.maturity}
-                  >
-                    {item.coinName}-
-                    {dayjs(parseInt(item.maturity)).diff(dayjs(), "day")}DAYS
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          />
         </div>
 
-        <h2 className="text-center text-xl">Remove Liquidity</h2>
+        <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07] flex flex-col items-center gap-y-4">
+          <h2 className="text-center text-xl">Remove Liquidity</h2>
 
-        <TransactionStatusDialog
-          open={open}
-          status={status}
-          network={network}
-          txId={txId}
-          message={message}
-          onClose={() => {
-            setTxId("")
-            setOpen(false)
-          }}
-        />
-
-        <AmountInput
-          amount={lpValue}
-          price={coinConfig?.lpPrice}
-          decimal={coinConfig?.decimal}
-          coinName={`LP ${coinConfig?.coinName}`}
-          coinLogo={coinConfig?.coinLogo}
-          isLoading={isLoading}
-          isConnected={isConnected}
-          coinBalance={lpCoinBalance}
-          onChange={setLpValue}
-          isConfigLoading={isConfigLoading}
-          isBalanceLoading={false}
-          coinNameComponent={
-            <span className="text-base">LP {coinConfig?.coinName}</span>
-          }
-        />
-
-        <ChevronsDown className="size-6" />
-
-        <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
-          <div className="flex flex-col items-end gap-y-1">
-            <div className="flex items-center justify-between w-full">
-              <span>Receiving</span>
-              <span className="flex items-center gap-x-1.5 h-7">
-                {isInputLoading ? (
-                  <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
-                ) : lpValue && ratio ? (
-                  <>
-                    <span>
-                      {new Decimal(lpValue).div(ratio).toFixed(decimal)}
-                    </span>
-                    <span>{coinConfig?.coinName}</span>
-                    {coinConfig?.coinLogo && (
-                      <img
-                        src={coinConfig.coinLogo}
-                        alt={coinConfig.coinName}
-                        className="size-7"
-                      />
-                    )}
-                  </>
-                ) : (
-                  "--"
-                )}
-              </span>
-            </div>
-            <div className="text-xs text-white/60">
-              {coinConfig?.maturity
-                ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
-                : "--"}
-            </div>
-          </div>
-        </div>
-
-        {/* Action Button */}
-        {!isConnected ? (
-          <ConnectModal
-            open={openConnect}
-            onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          >
-            <button className="mt-4 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-12 hover:bg-[#0F60FF]/90 transition-colors">
-              Connect Wallet
-            </button>
-          </ConnectModal>
-        ) : insufficientBalance ? (
-          <div className="mt-4 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-12 flex items-center justify-center">
-            Insufficient Balance
-          </div>
-        ) : (
-          <button
-            onClick={remove}
-            disabled={
-              lpValue === "" ||
-              lpValue === "0" ||
-              insufficientBalance ||
-              new Decimal(lpValue).toNumber() === 0
+          <AmountInput
+            amount={lpValue}
+            price={coinConfig?.lpPrice}
+            decimal={coinConfig?.decimal}
+            coinName={`LP ${coinConfig?.coinName}`}
+            coinLogo={coinConfig?.coinLogo}
+            isLoading={isLoading}
+            isConnected={isConnected}
+            coinBalance={lpCoinBalance}
+            onChange={setLpValue}
+            isConfigLoading={isConfigLoading}
+            isBalanceLoading={false}
+            coinNameComponent={
+              <span className="text-base">LP {coinConfig?.coinName}</span>
             }
-            className={[
-              "mt-4 px-8 py-2.5 rounded-full w-full h-12 transition-colors",
-              lpValue === "" ||
-              lpValue === "0" ||
-              insufficientBalance ||
-              new Decimal(lpValue).toNumber() === 0
-                ? "bg-[#0F60FF]/50 text-white/50"
-                : "bg-[#0F60FF] text-white hover:bg-[#0F60FF]/90",
-            ].join(" ")}
-          >
-            Remove Liquidity
-          </button>
-        )}
+          />
+
+          <ChevronsDown className="size-6" />
+
+          <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
+            <div className="flex flex-col items-end gap-y-1">
+              <div className="flex items-center justify-between w-full">
+                <span>Receiving</span>
+                <span className="flex items-center gap-x-1.5 h-7">
+                  {isInputLoading ? (
+                    <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+                  ) : lpValue && ratio ? (
+                    <>
+                      <span>
+                        {new Decimal(lpValue).div(ratio).toFixed(decimal)}
+                      </span>
+                      <span>{coinConfig?.coinName}</span>
+                      {coinConfig?.coinLogo && (
+                        <img
+                          src={coinConfig.coinLogo}
+                          alt={coinConfig.coinName}
+                          className="size-7"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    "--"
+                  )}
+                </span>
+              </div>
+              <div className="text-xs text-white/60">
+                {coinConfig?.maturity
+                  ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
+                  : "--"}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          {!isConnected ? (
+            <ConnectModal
+              open={openConnect}
+              onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+            >
+              <button className="mt-4 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-12 hover:bg-[#0F60FF]/90 transition-colors">
+                Connect Wallet
+              </button>
+            </ConnectModal>
+          ) : insufficientBalance ? (
+            <div className="mt-4 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-12 flex items-center justify-center">
+              Insufficient Balance
+            </div>
+          ) : (
+            <button
+              onClick={remove}
+              disabled={
+                lpValue === "" ||
+                lpValue === "0" ||
+                insufficientBalance ||
+                new Decimal(lpValue).toNumber() === 0
+              }
+              className={[
+                "mt-4 px-8 py-2.5 rounded-full w-full h-12 transition-colors",
+                lpValue === "" ||
+                lpValue === "0" ||
+                insufficientBalance ||
+                new Decimal(lpValue).toNumber() === 0
+                  ? "bg-[#0F60FF]/50 text-white/50"
+                  : "bg-[#0F60FF] text-white hover:bg-[#0F60FF]/90",
+              ].join(" ")}
+            >
+              Remove Liquidity
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

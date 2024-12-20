@@ -10,11 +10,19 @@ const useMarketStateData = (marketStateId?: string) => {
       },
     },
     {
-      gcTime: 10000,
+      queryKey: ["marketStateData", marketStateId],
       enabled: !!marketStateId,
       select: (data) => {
-        return (data.data?.content as { fields?: { lp_supply: string } })
-          ?.fields?.lp_supply
+        const fields = (
+          data.data?.content as {
+            fields?: { lp_supply: string; total_sy: string }
+          }
+        )?.fields
+
+        return {
+          totalSy: fields?.total_sy || "",
+          lpSupply: fields?.lp_supply || "",
+        }
       },
     },
   )
