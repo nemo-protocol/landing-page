@@ -13,6 +13,7 @@ interface TradeInfoProps {
   setSlippage: (value: string) => void
   onRefresh?: () => void
   isLoading?: boolean
+  isRatioLoading?: boolean
 }
 
 export default function TradeInfo({
@@ -25,6 +26,7 @@ export default function TradeInfo({
   setSlippage,
   onRefresh,
   isLoading,
+  isRatioLoading,
 }: TradeInfoProps) {
   const [isSpinning, setIsSpinning] = useState(false)
 
@@ -42,7 +44,7 @@ export default function TradeInfo({
       <div className="flex items-center justify-between text-white/60">
         <span>Price</span>
         <div className="flex items-center gap-x-1">
-          {isLoading ? (
+          {isRatioLoading ? (
             <Skeleton className="h-5 w-56 bg-[#2D2D48]" />
           ) : (
             <span title={`1 ${coinName} ≈ ${ratio} ${targetCoinName}`}>

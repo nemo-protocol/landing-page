@@ -283,7 +283,7 @@ export default function Remove() {
           amount={lpValue}
           price={coinConfig?.lpPrice}
           decimal={coinConfig?.decimal}
-          coinName={coinConfig?.coinName}
+          coinName={`LP ${coinConfig?.coinName}`}
           coinLogo={coinConfig?.coinLogo}
           isLoading={isLoading}
           isConnected={isConnected}

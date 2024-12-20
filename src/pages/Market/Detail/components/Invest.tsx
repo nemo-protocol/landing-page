@@ -39,6 +39,7 @@ import TradeInfo from "@/components/TradeInfo"
 import { debugLog } from "@/config"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLoadingState } from "@/hooks/useLoadingState"
+import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -115,6 +116,10 @@ export default function Invest() {
     isRatioFetching || isConfigLoading,
   )
 
+  const { isLoading: isRatioLoading } = useRatioLoadingState(
+    isRatioFetching || isConfigLoading,
+  )
+
   const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
@@ -172,12 +177,7 @@ export default function Invest() {
 
         debugLog("sy::deposit move call:", {
           target: `${coinConfig.nemoContractId}::sy::deposit`,
-          arguments: [
-            coinConfig.version,
-            "splitCoin",
-            0,
-            coinConfig.syStateId,
-          ],
+          arguments: [coinConfig.version, "splitCoin", 0, coinConfig.syStateId],
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
@@ -462,6 +462,7 @@ export default function Invest() {
           onRefresh={refetch}
           isLoading={isLoading}
           setSlippage={setSlippage}
+          isRatioLoading={isRatioLoading}
           targetCoinName={`PT ${coinConfig?.coinName}`}
           tradeFee={
             !!swapValue &&

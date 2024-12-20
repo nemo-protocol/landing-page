@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 
 export default function SingleCoin() {
   const [txId, setTxId] = useState("")
@@ -165,6 +166,10 @@ export default function SingleCoin() {
     }
     return "--"
   }, [coinConfig, syRatio, ptRatio])
+
+  const { isLoading: isRatioLoading } = useRatioLoadingState(
+    isRatioFetching || isConfigLoading
+  )
 
   async function add() {
     if (
@@ -506,6 +511,8 @@ export default function SingleCoin() {
                 onRefresh={refetch}
                 isLoading={isLoading}
                 setSlippage={setSlippage}
+                isRatioLoading={isRatioLoading}
+                targetCoinName={`LP ${coinConfig?.coinName}`}
                 tradeFee={
                   !!addValue && !!coinConfig?.feeRate && !!price
                     ? new Decimal(coinConfig.feeRate)
@@ -514,7 +521,6 @@ export default function SingleCoin() {
                         .toString()
                     : undefined
                 }
-                targetCoinName={`LP ${coinConfig?.coinName}`}
               />
 
               <ActionButton
@@ -668,7 +674,7 @@ export default function SingleCoin() {
                   <div className="h-[1px] bg-[#2D2D48]" />
                   <div className="space-y-4">
                     <div className="flex justify-between items-center text-white/60">
-                      <span>Underlying APY</span>
+                      <span>Scaled Underlying APY</span>
                       <span>
                         {coinConfig?.underlyingApy
                           ? `${new Decimal(coinConfig.underlyingApy).mul(syRatio).toFixed(2)} %`
@@ -676,7 +682,7 @@ export default function SingleCoin() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-white/60">
-                      <span>PT APY</span>
+                      <span>Scaled PT APY</span>
                       <span>
                         {coinConfig?.ptApy
                           ? `${new Decimal(coinConfig.ptApy).mul(ptRatio).toFixed(2)} %`

@@ -33,6 +33,7 @@ import dayjs from "dayjs"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLoadingState } from "@/hooks/useLoadingState"
+import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -105,6 +106,10 @@ export default function Trade() {
   const { isLoading } = useLoadingState(
     swapValue,
     isRatioFetching || isConfigLoading,
+  )
+
+  const { isLoading: isRatioLoading } = useRatioLoadingState(
+    isRatioFetching || isConfigLoading
   )
 
   const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
@@ -406,6 +411,7 @@ export default function Trade() {
             isLoading={isLoading}
             setSlippage={setSlippage}
             onRefresh={refetch}
+            isRatioLoading={isRatioLoading}
             tradeFee={
               !!swapValue &&
               !!conversionRate &&
