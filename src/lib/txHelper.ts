@@ -268,7 +268,7 @@ export function depositSyCoin(
     arguments: [
       tx.object(coinConfig.version),
       splitCoin,
-      tx.pure.u64(syCoinAmount),
+      tx.pure.u64(0),
       tx.object(coinConfig.syStateId),
     ],
   })
