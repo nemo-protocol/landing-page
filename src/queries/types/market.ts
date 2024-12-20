@@ -18,6 +18,7 @@ export interface CoinInfo {
   ytPrice: number
   poolApy: number
   bgGradient: string
+  marketStateId: string
 }
 
 export interface CoinConfig {

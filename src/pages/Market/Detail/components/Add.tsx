@@ -106,9 +106,8 @@ export default function SingleCoin() {
     }
   }, [dataRatio, tokenType, conversionRate])
 
-  const { data: marketStateData } = useMarketStateData(
-    coinConfig?.marketStateId,
-  )
+  const { data: marketStateData, isLoading: isMarketStateDataLoading } =
+    useMarketStateData(coinConfig?.marketStateId)
 
   const { data: pyPositionData } = usePyPositionData(
     address,
@@ -583,63 +582,46 @@ export default function SingleCoin() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div>
-                        {coinConfig?.cap &&
-                        coinConfig?.tvl &&
-                        coinConfig?.decimal &&
-                        price ? (
+                      {isMarketStateDataLoading ? (
+                        <Skeleton className="h-2 w-full bg-[#2D2D48]" />
+                      ) : marketStateData ? (
                           <Progress
-                            value={new Decimal(coinConfig.tvl)
-                              .div(
-                                new Decimal(coinConfig.cap)
-                                  .div(10 ** Number(coinConfig.decimal))
-                                  .mul(price),
-                              )
+                          className="h-2 bg-[#2D2D48] cursor-pointer"
+                          indicatorClassName="bg-[#2DF4DD]"
+                          value={new Decimal(marketStateData.totalSy)
+                            .div(marketStateData.marketCap)
                               .mul(100)
                               .toNumber()}
-                            className="h-2 bg-[#2D2D48]"
-                            indicatorClassName="bg-[#2DF4DD]"
                           />
                         ) : (
-                          <Progress
-                            value={0}
-                            className="h-2 bg-[#2D2D48]"
-                            indicatorClassName="bg-[#2DF4DD]"
-                          />
+                        <span>No data</span>
                         )}
-                      </div>
                     </TooltipTrigger>
+
+                    {/* Tooltip with bottom alignment and arrow */}
                     <TooltipContent
-                      className="bg-[#1B2341] border-none rounded-lg p-2 text-sm"
+                      className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-3 text-sm relative mb-2"
                       side="top"
                       align="end"
+                      sideOffset={5}
                     >
-                      <div className="text-white/60">
+                      <div className="text-white space-y-1">
                         <div>
                           Total Capacity:{" "}
-                          {coinConfig?.cap && coinConfig.decimal
-                            ? new Decimal(coinConfig.cap)
-                                .div(10 ** Number(coinConfig.decimal))
-                                .toFixed(2)
-                            : "--"}{" "}
-                          {coinConfig?.coinName}
+                          {marketStateData?.marketCap && decimal
+                            ? `${new Decimal(marketStateData.marketCap)
+                                .div(10 ** decimal)
+                                .toFixed(2)} ${coinConfig?.coinName}`
+                            : "--"}
                         </div>
                         <div>
                           Filled:{" "}
-                          {coinConfig?.cap &&
-                          coinConfig?.tvl &&
-                          coinConfig?.decimal &&
-                          price
-                            ? new Decimal(coinConfig.tvl)
-                                .div(
-                                  new Decimal(coinConfig.cap)
-                                    .div(10 ** Number(coinConfig.decimal))
-                                    .mul(price),
-                                )
+                          {marketStateData
+                            ? `${new Decimal(marketStateData.totalSy)
+                                .div(new Decimal(marketStateData.marketCap))
                                 .mul(100)
-                                .toFixed(2)
+                                .toFixed(2)}%`
                             : "--"}
-                          %
                         </div>
                       </div>
                     </TooltipContent>

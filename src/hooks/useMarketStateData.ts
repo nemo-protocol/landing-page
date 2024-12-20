@@ -15,11 +15,12 @@ const useMarketStateData = (marketStateId?: string) => {
       select: (data) => {
         const fields = (
           data.data?.content as {
-            fields?: { lp_supply: string; total_sy: string }
+            fields?: { lp_supply: string; total_sy: string; market_cap: string }
           }
         )?.fields
 
         return {
+          marketCap: fields?.market_cap || "",
           totalSy: fields?.total_sy || "",
           lpSupply: fields?.lp_supply || "",
         }

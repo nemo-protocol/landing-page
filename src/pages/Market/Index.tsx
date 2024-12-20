@@ -108,12 +108,7 @@ export default function Home() {
                       <span className="text-white text-xs font-bold">
                         ${item.tvl.toLocaleString()}
                       </span>
-                      <PieChart
-                        tvl={item.tvl}
-                        cap={item.cap}
-                        decimal={item.decimal}
-                        price={item.underlyingPrice}
-                      />
+                      <PieChart marketStateId={item.marketStateId} />
                     </div>
                   </div>
                 </div>
