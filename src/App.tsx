@@ -12,6 +12,7 @@ const Mint = lazy(() => import("./pages/Mint/Index"))
 const Portfolio = lazy(() => import("./pages/Portfolio/Index"))
 const Detail = lazy(() => import("./pages/Market/Detail/Index"))
 const FixedReturn = lazy(() => import("./pages/FixedReturn/Index"))
+const WalletKit = lazy(() => import("./pages/WalletKit"))
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
               <Route path="/learn" element={<Learn />} />
               <Route path="/Rewards" element={<Rewards />} />
               <Route path="/portfolio/:type?" element={<Portfolio />} />
+              <Route path="/wallet-kit" element={<WalletKit />} />
               {IS_DEV && <Route path="/test" element={<Test />} />}
             </Routes>
           </div>
