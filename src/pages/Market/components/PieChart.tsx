@@ -59,12 +59,6 @@ const PChart = ({ marketStateId }: PChartProps) => {
           <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
-      <span className="break-all">{marketStateId}</span>
-      <span>{marketStateData?.marketCap}</span>
-      <span>{marketStateData?.totalSy}</span>
-      <span className="text-xs text-white/60">
-        {new Decimal(ratio).mul(100).toFixed(2)}%
-      </span>
     </>
   )
 }
