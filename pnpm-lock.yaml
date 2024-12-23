@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@aricredemption/wallet-kit':
-        specifier: 0.0.3
-        version: 0.0.3(@mysten/sui@1.12.0(typescript@5.5.4))(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
       '@mysten/dapp-kit':
         specifier: 0.14.17
         version: 0.14.17(@tanstack/react-query@5.52.1(react@18.3.1))(@types/react-dom@18.3.0)(@types/react@18.3.3)(immer@9.0.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
@@ -20,6 +17,9 @@ importers:
       '@mysten/wallet-standard':
         specifier: ^0.13.4
         version: 0.13.4(typescript@5.5.4)
+      '@nemoprotocol/wallet-kit':
+        specifier: 0.1.0
+        version: 0.1.0(@mysten/sui@1.12.0(typescript@5.5.4))(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -183,18 +183,6 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
-
-  '@aricredemption/wallet-kit@0.0.3':
-    resolution: {integrity: sha512-FIK+EprSDVqeJPPCh+s4O5LCnJd9ZXjYQ115gwl1A/UD4dpJYvaC6jptBHduwGWK+x6LXeWzAlDVgLRgvxblxQ==}
-    peerDependencies:
-      '@mysten/sui': 1.12.0
-      react: '*'
-      react-dom: '*'
-
-  '@aricredemption/wallet-sdk@0.0.1':
-    resolution: {integrity: sha512-67azf7m38UdvBt7K087tuayigvTJIlZ+UD8NlXXSrkJx5qGxQHKHVNcKUYhw9XbOLJ0slxlPBDO4/5sBPgI5sA==}
-    peerDependencies:
-      '@mysten/sui': 1.12.0
 
   '@babel/code-frame@7.24.7':
     resolution: {integrity: sha512-BcYH1CVJBO9tvyIZ2jVeXgSIMvGZ2FDRvDdOIVQyuklNKSsx+eppDEBq/g47Ayw+RqNFE+URvOShmf+f/qwAlA==}
@@ -1055,6 +1043,18 @@ packages:
 
   '@mysten/zksend@0.11.12':
     resolution: {integrity: sha512-YtLgV4LpYehitlJ4U03LaAK+m7ejmHqC7AarzG/4K0HnqMjc1i2CSztUJ/QOj/QBnedUd9RQ7sxM/6nwGsudAA==}
+
+  '@nemoprotocol/wallet-kit@0.1.0':
+    resolution: {integrity: sha512-aLbA47ySsQRKeH0hflTMCTSXB+lElKQ2WrVmne+/5sy2F+EFBuuHjGEi5lPp9Mt50hQ+So90959AhJ5wEpizkw==}
+    peerDependencies:
+      '@mysten/sui': 1.12.0
+      react: '*'
+      react-dom: '*'
+
+  '@nemoprotocol/wallet-sdk@0.1.0':
+    resolution: {integrity: sha512-iVSKIbRNQp8vDe/jxL/RbWtB3TSsWUhZiy95qcAl0zBHNLJvLIbzkBMrZzuHL2hhbXPcQBYvQR+pwA2FdzsQFQ==}
+    peerDependencies:
+      '@mysten/sui': 1.12.0
 
   '@noble/curves@1.4.2':
     resolution: {integrity: sha512-TavHr8qycMChk8UwMld0ZDRvatedkzWfH8IiaeGCfymOP5i0hSCozz9vHOL0nkwk7HRMlFnAiKpS2jrUmSybcw==}
@@ -3488,45 +3488,6 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
 
-  '@aricredemption/wallet-kit@0.0.3(@mysten/sui@1.12.0(typescript@5.5.4))(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)':
-    dependencies:
-      '@aricredemption/wallet-sdk': 0.0.1(@mysten/sui@1.12.0(typescript@5.5.4))(typescript@5.5.4)
-      '@mysten/sui': 1.12.0(typescript@5.5.4)
-      '@mysten/wallet-standard': 0.13.7(typescript@5.5.4)
-      '@mysten/zksend': 0.11.12(typescript@5.5.4)
-      '@radix-ui/react-dialog': 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@svgr/rollup': 6.5.1
-      '@wallet-standard/core': 1.0.3
-      buffer: 6.0.3
-      classnames: 2.5.1
-      lodash-es: 4.17.21
-      mitt: 3.0.1
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      react-query: 3.39.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-    transitivePeerDependencies:
-      - '@gql.tada/svelte-support'
-      - '@gql.tada/vue-support'
-      - '@types/react'
-      - '@types/react-dom'
-      - react-native
-      - supports-color
-      - typescript
-
-  '@aricredemption/wallet-sdk@0.0.1(@mysten/sui@1.12.0(typescript@5.5.4))(typescript@5.5.4)':
-    dependencies:
-      '@mysten/sui': 1.12.0(typescript@5.5.4)
-      '@mysten/wallet-standard': 0.13.7(typescript@5.5.4)
-      '@mysten/zksend': 0.11.12(typescript@5.5.4)
-      '@noble/hashes': 1.4.0
-      buffer: 6.0.3
-      superstruct: 1.0.4
-      tweetnacl: 1.0.3
-    transitivePeerDependencies:
-      - '@gql.tada/svelte-support'
-      - '@gql.tada/vue-support'
-      - typescript
-
   '@babel/code-frame@7.24.7':
     dependencies:
       '@babel/highlight': 7.24.7
@@ -4612,6 +4573,45 @@ snapshots:
       mitt: 3.0.1
       nanostores: 0.10.3
       valibot: 0.36.0
+    transitivePeerDependencies:
+      - '@gql.tada/svelte-support'
+      - '@gql.tada/vue-support'
+      - typescript
+
+  '@nemoprotocol/wallet-kit@0.1.0(@mysten/sui@1.12.0(typescript@5.5.4))(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)':
+    dependencies:
+      '@mysten/sui': 1.12.0(typescript@5.5.4)
+      '@mysten/wallet-standard': 0.13.7(typescript@5.5.4)
+      '@mysten/zksend': 0.11.12(typescript@5.5.4)
+      '@nemoprotocol/wallet-sdk': 0.1.0(@mysten/sui@1.12.0(typescript@5.5.4))(typescript@5.5.4)
+      '@radix-ui/react-dialog': 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@svgr/rollup': 6.5.1
+      '@wallet-standard/core': 1.0.3
+      buffer: 6.0.3
+      classnames: 2.5.1
+      lodash-es: 4.17.21
+      mitt: 3.0.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      react-query: 3.39.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+    transitivePeerDependencies:
+      - '@gql.tada/svelte-support'
+      - '@gql.tada/vue-support'
+      - '@types/react'
+      - '@types/react-dom'
+      - react-native
+      - supports-color
+      - typescript
+
+  '@nemoprotocol/wallet-sdk@0.1.0(@mysten/sui@1.12.0(typescript@5.5.4))(typescript@5.5.4)':
+    dependencies:
+      '@mysten/sui': 1.12.0(typescript@5.5.4)
+      '@mysten/wallet-standard': 0.13.7(typescript@5.5.4)
+      '@mysten/zksend': 0.11.12(typescript@5.5.4)
+      '@noble/hashes': 1.4.0
+      buffer: 6.0.3
+      superstruct: 1.0.4
+      tweetnacl: 1.0.3
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'

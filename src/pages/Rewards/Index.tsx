@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import NemoPoint from "./NemoPoint"
 import CustomTable from "./CustomTable"
 import { useRewardList, useRewardWithAddress } from "@/queries"
-import { useWallet } from "@aricredemption/wallet-kit"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 
 const variants = {
   hidden: { opacity: 0, y: 20 },

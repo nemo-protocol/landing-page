@@ -24,7 +24,7 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
 import { LoaderCircle } from "lucide-react"
 import { initPyPosition, splitCoinHelper } from "@/lib/txHelper"
-import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
+import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 
 export default function Mint({
   maturity,

@@ -24,7 +24,7 @@ import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue } from "@/lib/utils"
 import SlippageSetting from "@/components/SlippageSetting"
-import { useWallet } from "@aricredemption/wallet-kit"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 
 export default function Sell() {
   const [slippage, setSlippage] = useState("0.5")

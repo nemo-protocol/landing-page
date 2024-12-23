@@ -29,7 +29,7 @@ import {
 } from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
-import { useWallet } from "@aricredemption/wallet-kit"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import dayjs from "dayjs"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"

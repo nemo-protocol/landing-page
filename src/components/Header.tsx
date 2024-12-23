@@ -17,7 +17,7 @@ import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
 //   useSwitchAccount,
 // } from "@mysten/dapp-kit"
 
-import { ConnectModal, useWallet } from "@aricredemption/wallet-kit"
+import { ConnectModal, useWallet } from "@nemoprotocol/wallet-kit"
 import { motion } from "framer-motion"
 import {
   DropdownMenu,

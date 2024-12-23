@@ -21,7 +21,7 @@ import { network, debugLog, DEBUG } from "@/config"
 import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import usePortfolio from "@/hooks/usePortfolio"
-import { useWallet } from "@aricredemption/wallet-kit"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import { getPriceVoucher } from "@/lib/txHelper"
 
 export default function Item({

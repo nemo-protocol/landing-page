@@ -4,7 +4,7 @@ import { Link, useParams, useNavigate } from "react-router-dom"
 import { useMemo, useState } from "react"
 import Empty from "@/assets/images/png/empty.png"
 import { PortfolioItem } from "@/queries/types/market"
-import { useWallet, ConnectModal } from "@aricredemption/wallet-kit"
+import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 import WalletNotConnect from "@/assets/images/svg/wallet-no-connect.svg"
 import {
   Table,

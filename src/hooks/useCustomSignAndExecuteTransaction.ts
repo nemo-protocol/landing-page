@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@aricredemption/wallet-kit"
+import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { SuiSignAndExecuteTransactionOutput } from "@mysten/wallet-standard"
 
 interface SignAndExecuteParams {

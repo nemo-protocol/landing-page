@@ -4,8 +4,8 @@ import {
   SuiChainId,
   ErrorCode,
   useSuiClient,
-} from "@aricredemption/wallet-kit"
-import "@aricredemption/wallet-kit/style.css"
+} from "@nemoprotocol/wallet-kit"
+import "@nemoprotocol/wallet-kit/style.css"
 import { Transaction } from "@mysten/sui/transactions"
 import { useMemo } from "react"
 import { Ed25519PublicKey } from "@mysten/sui/keypairs/ed25519"

@@ -10,8 +10,8 @@ import { SuiClientProvider, createNetworkConfig } from "@mysten/dapp-kit"
 import "@mysten/dapp-kit/dist/index.css"
 import "./index.css"
 import { AnimatePresence } from "framer-motion"
-import { WalletProvider } from "@aricredemption/wallet-kit"
-import "@aricredemption/wallet-kit/style.css"
+import { WalletProvider } from "@nemoprotocol/wallet-kit"
+import "@nemoprotocol/wallet-kit/style.css"
 const queryClient = new QueryClient()
 const { networkConfig } = createNetworkConfig({
   // TODO: support muilt rpc

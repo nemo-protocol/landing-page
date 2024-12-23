@@ -1,5 +1,5 @@
 import React, { useMemo } from "react"
-import { ConnectModal, useWallet } from "@aricredemption/wallet-kit"
+import { ConnectModal, useWallet } from "@nemoprotocol/wallet-kit"
 
 interface ActionButtonProps {
   btnText: string
