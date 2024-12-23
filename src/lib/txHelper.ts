@@ -95,7 +95,7 @@ export const mintSycoin = (
 
       const results = []
 
-      for (let i = 0; i < splitCoins.length; i++) {
+      for (let i = 0; i < amounts.length; i++) {
         const mintMoveCall = {
           target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
           arguments: [
@@ -132,8 +132,6 @@ export const mintSycoin = (
 
         results.push(result)
       }
-
-      console.log("results:", results)
 
       return results
     }

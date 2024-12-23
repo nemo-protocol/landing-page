@@ -285,10 +285,6 @@ export default function SingleCoin() {
       coinType,
     )
 
-    // tx.transferObjects([syCoin, pyCoin], address)
-
-    // return
-
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
     mintPy(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
 
