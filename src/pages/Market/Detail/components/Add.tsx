@@ -288,7 +288,7 @@ export default function SingleCoin() {
             }
             debugLog("mint_lp move call:", mintLpMoveCall)
 
-            const [mp] = tx.moveCall({
+            const [sy, mp] = tx.moveCall({
               ...mintLpMoveCall,
               arguments: [
                 tx.object(coinConfig.version),
