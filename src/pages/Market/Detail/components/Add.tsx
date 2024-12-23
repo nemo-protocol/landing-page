@@ -285,9 +285,9 @@ export default function SingleCoin() {
       coinType,
     )
 
-    tx.transferObjects([syCoin, pyCoin], address)
+    // tx.transferObjects([syCoin, pyCoin], address)
 
-    return
+    // return
 
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
     mintPy(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
@@ -321,7 +321,7 @@ export default function SingleCoin() {
         tx.object(coinConfig.version),
         syCoin,
         tx.pure.u64(amounts.pt),
-        tx.pure.u64(minLpAmount),
+        // tx.pure.u64(minLpAmount),
         priceVoucherForMintLp,
         pyPosition,
         tx.object(coinConfig.pyStateId),
