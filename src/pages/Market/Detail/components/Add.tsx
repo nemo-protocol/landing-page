@@ -29,6 +29,7 @@ import {
   splitCoinHelper,
   depositSyCoin,
   mintPy,
+  redeemSyCoin,
 } from "@/lib/txHelper"
 import {
   Tooltip,
@@ -258,12 +259,6 @@ export default function SingleCoin() {
         .toFixed(0),
     }
 
-    const minLpAmount = new Decimal(amounts.pt)
-      .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
-      .toFixed(0)
-
-    console.log("Amounts:", amounts)
-
     const [splitCoinForSy, splitCoinForPt] =
       tokenType === 0
         ? mintSycoin(tx, coinConfig, coinData, [amounts.sy, amounts.pt])
@@ -290,16 +285,12 @@ export default function SingleCoin() {
 
     const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
 
-    console.log("syCoinAmount", amounts.sy)
-    console.log("ptAmount", amounts.pt)
-
     const mintLpMoveCall = {
       target: `${coinConfig.nemoContractId}::market::mint_lp`,
       arguments: [
         coinConfig.version,
         "syCoin",
         amounts.pt,
-        minLpAmount,
         "priceVoucherForMintLp",
         "pyPosition",
         coinConfig.pyStateId,
@@ -317,7 +308,6 @@ export default function SingleCoin() {
         tx.object(coinConfig.version),
         syCoin,
         tx.pure.u64(amounts.pt),
-        // tx.pure.u64(minLpAmount),
         priceVoucherForMintLp,
         pyPosition,
         tx.object(coinConfig.pyStateId),
@@ -327,7 +317,14 @@ export default function SingleCoin() {
       ],
     })
 
-    tx.transferObjects([remainingSyCoin, marketPosition], address)
+    const yieldToken = redeemSyCoin(
+      tx,
+      coinConfig,
+      remainingSyCoin,
+      amounts.sy,
+      slippage,
+    )
+    tx.transferObjects([yieldToken, marketPosition], address)
   }
 
   function handleAddLiquiditySingleSy(
@@ -395,7 +392,6 @@ export default function SingleCoin() {
       address &&
       syPtRate &&
       coinType &&
-      slippage &&
       coinConfig &&
       marketStateData &&
       coinData?.length &&
@@ -404,9 +400,6 @@ export default function SingleCoin() {
       try {
         await refetch()
         const tx = new Transaction()
-
-        console.log("pyPositionData", pyPositionData)
-        console.log("marketStateData", marketStateData)
 
         let pyPosition
         let created = false

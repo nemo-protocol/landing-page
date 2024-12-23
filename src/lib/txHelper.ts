@@ -328,3 +328,39 @@ export const mintPy = (
     ],
   })
 }
+
+export const redeemSyCoin = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  syCoin: TransactionArgument,
+  amount: string,
+  slippage: string,
+) => {
+  const minAmount = new Decimal(amount)
+    .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
+    .toFixed(0)
+
+  const redeemMoveCall = {
+    target: `${coinConfig.nemoContractId}::sy::redeem`,
+    arguments: [
+      coinConfig.version,
+      "syCoin",
+      minAmount,
+      coinConfig.syStateId,
+    ],
+    typeArguments: [coinConfig.coinType, coinConfig.syCoinType],
+  }
+  debugLog("sy::redeem move call:", redeemMoveCall)
+
+  const [yieldToken] = tx.moveCall({
+    ...redeemMoveCall,
+    arguments: [
+      tx.object(coinConfig.version),
+      syCoin,
+      tx.pure.u64(minAmount),
+      tx.object(coinConfig.syStateId),
+    ],
+  })
+
+  return yieldToken
+}
