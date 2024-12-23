@@ -1,9 +1,9 @@
-import { CoinData } from "@/hooks/useCoinData"
-import { LppMarketPosition } from "@/hooks/useLpMarketPositionData"
-import { CoinConfig } from "@/queries/types/market"
-import { Transaction } from "@mysten/sui/transactions"
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
+import { CoinData } from "@/hooks/useCoinData"
+import { CoinConfig } from "@/queries/types/market"
+import { LppMarketPosition } from "@/hooks/useLpMarketPositionData"
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 
 export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
   switch (coinConfig.coinType) {
@@ -73,16 +73,16 @@ export const initPyPosition = (tx: Transaction, coinConfig: CoinConfig) => {
   return pyPosition
 }
 
-export const swapScoin = (
+export const mintSycoin = (
   tx: Transaction,
   coinConfig: CoinConfig,
   coinData: CoinData[],
-  swapValue: string,
+  amounts: string[],
 ) => {
-  const splitCoin = splitCoinHelper(
+  const splitCoins = splitCoinHelper(
     tx,
     coinData,
-    new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
+    amounts,
     coinConfig.underlyingCoinType,
   )
 
@@ -93,56 +93,73 @@ export const swapScoin = (
       const SCALLOP_VERSION_OBJECT =
         "0x07871c4b3c847a0f674510d4978d5cf6f960452795e8ff6f189fd2088a3f6ac7"
 
-      const mintMoveCall = {
-        target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
-        arguments: [
-          SCALLOP_VERSION_OBJECT,
-          SCALLOP_MARKET_OBJECT,
-          "splitCoin",
-          "0x6",
-        ],
-        typeArguments: [coinConfig.underlyingCoinType],
+      const results = []
+
+      for (let i = 0; i < splitCoins.length; i++) {
+        const mintMoveCall = {
+          target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
+          arguments: [
+            SCALLOP_VERSION_OBJECT,
+            SCALLOP_MARKET_OBJECT,
+            amounts[i],
+            "0x6",
+          ],
+          typeArguments: [coinConfig.underlyingCoinType],
+        }
+        debugLog(`scallop mint move call ${i}:`, mintMoveCall)
+
+        const marketCoin = tx.moveCall({
+          ...mintMoveCall,
+          arguments: [
+            tx.object(SCALLOP_VERSION_OBJECT),
+            tx.object(SCALLOP_MARKET_OBJECT),
+            splitCoins[i],
+            tx.object("0x6"),
+          ],
+        })
+
+        const mintSCoinMoveCall = {
+          target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
+          arguments: [coinConfig.sCoinTreasure, "marketCoin"],
+          typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
+        }
+        debugLog(`mint_s_coin move call ${i}:`, mintSCoinMoveCall)
+
+        const result = tx.moveCall({
+          ...mintSCoinMoveCall,
+          arguments: [tx.object(coinConfig.sCoinTreasure), marketCoin],
+        })
+
+        results.push(result)
       }
-      debugLog("scallop mint move call:", mintMoveCall)
 
-      const marketCoin = tx.moveCall({
-        ...mintMoveCall,
-        arguments: [
-          tx.object(SCALLOP_VERSION_OBJECT),
-          tx.object(SCALLOP_MARKET_OBJECT),
-          splitCoin,
-          tx.object("0x6"),
-        ],
-      })
+      console.log("results:", results)
 
-      const mintSCoinMoveCall = {
-        target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
-        arguments: [coinConfig.sCoinTreasure, "marketCoin"],
-        typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
-      }
-      debugLog("mint_s_coin move call:", mintSCoinMoveCall)
-
-      return tx.moveCall({
-        ...mintSCoinMoveCall,
-        arguments: [tx.object(coinConfig.sCoinTreasure), marketCoin],
-      })
+      return results
     }
     default:
-      throw new Error("swapScoin failed")
+      throw new Error(
+        "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+      )
   }
 }
 
 export function splitCoinHelper(
   tx: Transaction,
   coinData: CoinData[],
-  targetAmount: string,
+  amounts: string[],
   coinType?: string,
 ) {
   debugLog("splitCoinHelper params:", {
     coinData,
-    targetAmount,
+    amounts,
     coinType,
   })
+
+  const totalTargetAmount = amounts.reduce(
+    (sum, amount) => sum.add(new Decimal(amount)),
+    new Decimal(0),
+  )
 
   if (!coinType || coinType === "0x2::sui::SUI") {
     const totalBalance = coinData.reduce(
@@ -150,40 +167,42 @@ export function splitCoinHelper(
       new Decimal(0),
     )
 
-    if (totalBalance.lt(targetAmount)) {
+    if (totalBalance.lt(totalTargetAmount)) {
       throw new Error(coinType + " " + "Insufficient balance")
     }
 
-    return tx.splitCoins(tx.gas, [targetAmount])
+    return tx.splitCoins(tx.gas, amounts)
   } else {
     const firstCoinBalance = new Decimal(coinData[0].balance)
 
-    if (firstCoinBalance.gt(targetAmount)) {
-      return tx.splitCoins(tx.object(coinData[0].coinObjectId), [targetAmount])
-    } else if (firstCoinBalance.eq(targetAmount)) {
-      return tx.object(coinData[0].coinObjectId)
+    if (firstCoinBalance.gte(totalTargetAmount)) {
+      if (firstCoinBalance.eq(totalTargetAmount) && amounts.length === 1) {
+        return [tx.object(coinData[0].coinObjectId)]
+      }
+      return tx.splitCoins(tx.object(coinData[0].coinObjectId), amounts)
     }
 
-    let accumulatedBalance = new Decimal(0)
+    const accumulatedBalance = new Decimal(0)
     const coinsToUse: string[] = []
 
-    // 选择需要合并的币
     for (const coin of coinData) {
-      accumulatedBalance = accumulatedBalance.add(coin.balance)
+      accumulatedBalance.add(coin.balance)
       coinsToUse.push(coin.coinObjectId)
 
-      if (accumulatedBalance.gte(targetAmount)) {
+      if (accumulatedBalance.gte(totalTargetAmount)) {
         break
       }
     }
 
-    if (accumulatedBalance.lt(targetAmount)) {
+    if (accumulatedBalance.lt(totalTargetAmount)) {
       throw new Error(coinType + " " + "insufficient balance")
     }
 
-    const mergedCoin = tx.mergeCoins(coinsToUse[0], coinsToUse.slice(1))
-
-    return tx.splitCoins(mergedCoin, [targetAmount])
+    const mergedCoin = tx.mergeCoins(
+      tx.object(coinsToUse[0]),
+      coinsToUse.slice(1).map((id) => tx.object(id)),
+    )
+    return tx.splitCoins(mergedCoin, amounts)
   }
 }
 
@@ -247,7 +266,7 @@ export const mergeLppMarketPositions = (
 export function depositSyCoin(
   tx: Transaction,
   coinConfig: CoinConfig,
-  splitCoin: ReturnType<typeof splitCoinHelper>,
+  splitCoin: TransactionArgument,
   syCoinAmount: string,
   coinType: string,
 ) {
@@ -274,4 +293,40 @@ export function depositSyCoin(
   })
 
   return syCoin
+}
+
+export const mintPy = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  pyCoin: TransactionArgument,
+  priceVoucher: TransactionArgument,
+  pyPosition: TransactionArgument,
+) => {
+  const mintPyMoveCall = {
+    target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
+    arguments: [
+      coinConfig.version,
+      "pyCoin",
+      "priceVoucher",
+      "pyPosition",
+      coinConfig.pyStateId,
+      coinConfig.yieldFactoryConfigId,
+      "0x6",
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  }
+  debugLog("mint_py move call:", mintPyMoveCall)
+
+  return tx.moveCall({
+    ...mintPyMoveCall,
+    arguments: [
+      tx.object(coinConfig.version),
+      pyCoin,
+      priceVoucher,
+      pyPosition,
+      tx.object(coinConfig.pyStateId),
+      tx.object(coinConfig.yieldFactoryConfigId),
+      tx.object("0x6"),
+    ],
+  })
 }

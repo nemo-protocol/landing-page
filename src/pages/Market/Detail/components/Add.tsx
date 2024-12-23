@@ -1,7 +1,7 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { useMemo, useState } from "react"
-import useCoinData from "@/hooks/useCoinData"
+import useCoinData, { CoinData } from "@/hooks/useCoinData"
 import TradeInfo from "@/components/TradeInfo"
 import PoolSelect from "@/components/PoolSelect"
 import { ChevronsDown, Info } from "lucide-react"
@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DEBUG, network, debugLog } from "@/config"
 import ActionButton from "@/components/ActionButton"
-import { Transaction } from "@mysten/sui/transactions"
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { useParams, useNavigate } from "react-router-dom"
@@ -21,12 +21,14 @@ import useMarketStateData from "@/hooks/useMarketStateData"
 import { formatDecimalValue, safeDivide } from "@/lib/utils"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { CoinConfig } from "@/queries/types/market"
 import {
-  swapScoin,
+  mintSycoin,
   initPyPosition,
   getPriceVoucher,
   splitCoinHelper,
   depositSyCoin,
+  mintPy,
 } from "@/lib/txHelper"
 import {
   Tooltip,
@@ -184,6 +186,212 @@ export default function SingleCoin() {
     isRatioFetching || isConfigLoading,
   )
 
+  function handleSeedLiquidity(
+    tx: Transaction,
+    addAmount: string,
+    tokenType: number,
+    coinConfig: CoinConfig,
+    coinData: CoinData[],
+    coinType: string,
+    pyPosition: TransactionArgument,
+    address: string,
+  ): void {
+    const [splitCoin] =
+      tokenType === 0
+        ? mintSycoin(tx, coinConfig, coinData, [addAmount])
+        : splitCoinHelper(tx, coinData, [addAmount], coinType)
+
+    const syCoin = depositSyCoin(tx, coinConfig, splitCoin, addAmount, coinType)
+
+    const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+
+    const seedLiquidityMoveCall = {
+      target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
+      arguments: [
+        coinConfig.version,
+        "syCoin",
+        "priceVoucher",
+        "pyPosition",
+        coinConfig.pyStateId,
+        coinConfig.yieldFactoryConfigId,
+        coinConfig.marketStateId,
+        "0x6",
+      ],
+      typeArguments: [coinConfig.syCoinType],
+    }
+    debugLog("seed_liquidity move call:", seedLiquidityMoveCall)
+
+    const [lp] = tx.moveCall({
+      ...seedLiquidityMoveCall,
+      arguments: [
+        tx.object(coinConfig.version),
+        syCoin,
+        priceVoucher,
+        pyPosition,
+        tx.object(coinConfig.pyStateId),
+        tx.object(coinConfig.yieldFactoryConfigId),
+        tx.object(coinConfig!.marketStateId),
+        tx.object("0x6"),
+      ],
+    })
+
+    tx.transferObjects([lp], address)
+  }
+
+  function handleMintLp(
+    tx: Transaction,
+    addAmount: string,
+    tokenType: number,
+    coinConfig: CoinConfig,
+    coinData: CoinData[],
+    coinType: string,
+    pyPosition: TransactionArgument,
+    syPtRate: string,
+    address: string,
+    slippage: string,
+  ): void {
+    const amounts = {
+      pt: new Decimal(addAmount).div(new Decimal(syPtRate).add(1)).toFixed(0),
+      sy: new Decimal(addAmount)
+        .div(new Decimal(syPtRate).add(1))
+        .mul(new Decimal(syPtRate))
+        .toFixed(0),
+    }
+
+    const minLpAmount = new Decimal(amounts.pt)
+      .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
+      .toFixed(0)
+
+    console.log("Amounts:", amounts)
+
+    const [splitCoinForSy, splitCoinForPt] =
+      tokenType === 0
+        ? mintSycoin(tx, coinConfig, coinData, [amounts.sy, amounts.pt])
+        : splitCoinHelper(tx, coinData, [amounts.sy, amounts.pt], coinType)
+
+    const syCoin = depositSyCoin(
+      tx,
+      coinConfig,
+      splitCoinForSy,
+      amounts.sy,
+      coinType,
+    )
+
+    const pyCoin = depositSyCoin(
+      tx,
+      coinConfig,
+      splitCoinForPt,
+      amounts.pt,
+      coinType,
+    )
+
+    tx.transferObjects([syCoin, pyCoin], address)
+
+    return
+
+    const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+    mintPy(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
+
+    const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
+
+    console.log("syCoinAmount", amounts.sy)
+    console.log("ptAmount", amounts.pt)
+
+    const mintLpMoveCall = {
+      target: `${coinConfig.nemoContractId}::market::mint_lp`,
+      arguments: [
+        coinConfig.version,
+        "syCoin",
+        amounts.pt,
+        minLpAmount,
+        "priceVoucherForMintLp",
+        "pyPosition",
+        coinConfig.pyStateId,
+        coinConfig.yieldFactoryConfigId,
+        coinConfig.marketStateId,
+        "0x6",
+      ],
+      typeArguments: [coinConfig.syCoinType],
+    }
+    debugLog("mint_lp move call:", mintLpMoveCall)
+
+    const [remainingSyCoin, marketPosition] = tx.moveCall({
+      ...mintLpMoveCall,
+      arguments: [
+        tx.object(coinConfig.version),
+        syCoin,
+        tx.pure.u64(amounts.pt),
+        tx.pure.u64(minLpAmount),
+        priceVoucherForMintLp,
+        pyPosition,
+        tx.object(coinConfig.pyStateId),
+        tx.object(coinConfig.yieldFactoryConfigId),
+        tx.object(coinConfig.marketStateId),
+        tx.object("0x6"),
+      ],
+    })
+
+    tx.transferObjects([remainingSyCoin, marketPosition], address)
+  }
+
+  function handleAddLiquiditySingleSy(
+    tx: Transaction,
+    addAmount: string,
+    tokenType: number,
+    coinConfig: CoinConfig,
+    coinData: CoinData[],
+    coinType: string,
+    pyPosition: TransactionArgument,
+    address: string,
+  ): void {
+    const [splitCoin] =
+      tokenType === 0
+        ? mintSycoin(tx, coinConfig, coinData, [addAmount])
+        : splitCoinHelper(tx, coinData, [addAmount], coinType)
+
+    const syCoin = depositSyCoin(tx, coinConfig, splitCoin, addAmount, coinType)
+
+    const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+
+    const addLiquidityMoveCall = {
+      target: `${coinConfig.nemoContractId}::market::add_liquidity_single_sy`,
+      arguments: [
+        coinConfig.version,
+        "syCoin",
+        //FIXME: we should calculate the min out correctly
+        new Decimal(0).toFixed(0),
+        "priceVoucher",
+        "pyPosition",
+        coinConfig.pyStateId,
+        coinConfig.yieldFactoryConfigId,
+        coinConfig.marketFactoryConfigId,
+        coinConfig.marketStateId,
+        "0x6",
+      ],
+      typeArguments: [coinConfig.syCoinType],
+    }
+    debugLog("add_liquidity_single_sy move call:", addLiquidityMoveCall)
+
+    const [mp] = tx.moveCall({
+      ...addLiquidityMoveCall,
+      arguments: [
+        tx.object(coinConfig.version),
+        syCoin,
+        //FIXME: we should calculate the min out correctly
+        tx.pure.u64(new Decimal(0).toFixed(0)),
+        priceVoucher,
+        pyPosition,
+        tx.object(coinConfig.pyStateId),
+        tx.object(coinConfig.yieldFactoryConfigId),
+        tx.object(coinConfig.marketFactoryConfigId),
+        tx.object(coinConfig.marketStateId),
+        tx.object("0x6"),
+      ],
+    })
+
+    tx.transferObjects([mp], address)
+  }
+
   async function add() {
     if (
       ratio &&
@@ -191,6 +399,7 @@ export default function SingleCoin() {
       address &&
       syPtRate &&
       coinType &&
+      slippage &&
       coinConfig &&
       marketStateData &&
       coinData?.length &&
@@ -200,12 +409,8 @@ export default function SingleCoin() {
         await refetch()
         const tx = new Transaction()
 
-        const syCoinAmount = new Decimal(addValue).mul(10 ** decimal).toString()
-
-        const splitCoin =
-          tokenType === 0
-            ? swapScoin(tx, coinConfig, coinData, addValue)
-            : splitCoinHelper(tx, coinData, syCoinAmount, coinType)
+        console.log("pyPositionData", pyPositionData)
+        console.log("marketStateData", marketStateData)
 
         let pyPosition
         let created = false
@@ -216,152 +421,58 @@ export default function SingleCoin() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const syCoin = depositSyCoin(
-          tx,
-          coinConfig,
-          splitCoin,
-          syCoinAmount,
-          coinType,
-        )
-
-        const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
+        // TODO: less than 1/(10 ** decimal) disable add button
+        const addAmount = new Decimal(addValue).mul(10 ** decimal).toString()
 
         if (marketStateData?.lpSupply === "0") {
-          const seedLiquidityMoveCall = {
-            target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
-            arguments: [
-              coinConfig.version,
-              "syCoin",
-              "priceVoucherForMintLp",
-              "pyPosition",
-              coinConfig.pyStateId,
-              coinConfig.yieldFactoryConfigId,
-              coinConfig.marketStateId,
-              "0x6",
-            ],
-            typeArguments: [coinConfig.syCoinType],
-          }
-          debugLog("seed_liquidity move call:", seedLiquidityMoveCall)
-
-          const [lp] = tx.moveCall({
-            ...seedLiquidityMoveCall,
-            arguments: [
-              tx.object(coinConfig.version),
-              syCoin,
-              priceVoucherForMintLp,
-              pyPosition,
-              tx.object(coinConfig.pyStateId),
-              tx.object(coinConfig.yieldFactoryConfigId),
-              tx.object(coinConfig!.marketStateId),
-              tx.object("0x6"),
-            ],
-          })
-
-          tx.transferObjects([lp], address)
+          handleSeedLiquidity(
+            tx,
+            addAmount,
+            tokenType,
+            coinConfig,
+            coinData,
+            coinType,
+            pyPosition,
+            address,
+          )
+        } else if (
+          new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
+        ) {
+          handleMintLp(
+            tx,
+            addAmount,
+            tokenType,
+            coinConfig,
+            coinData,
+            coinType,
+            pyPosition,
+            syPtRate,
+            address,
+            slippage,
+          )
         } else {
-          if (
-            new Decimal(marketStateData.totalSy)
-              .mul(0.4)
-              .lt(new Decimal(addValue).mul(10 ** decimal))
-          ) {
-            const ptAmount = new Decimal(syCoinAmount)
-              .div(new Decimal(syPtRate).add(1))
-              .toFixed(0)
-
-            console.log("syCoinAmount", syCoinAmount)
-            console.log("ptAmount", ptAmount)
-
-            const mintLpMoveCall = {
-              target: `${coinConfig.nemoContractId}::market::mint_lp`,
-              arguments: [
-                coinConfig.version,
-                "syCoin",
-                ptAmount,
-                "priceVoucherForMintLp",
-                "pyPosition",
-                coinConfig.pyStateId,
-                coinConfig.yieldFactoryConfigId,
-                coinConfig.marketStateId,
-                "0x6",
-              ],
-              typeArguments: [coinConfig.syCoinType],
-            }
-            debugLog("mint_lp move call:", mintLpMoveCall)
-
-            const [sy, mp] = tx.moveCall({
-              ...mintLpMoveCall,
-              arguments: [
-                tx.object(coinConfig.version),
-                syCoin,
-                tx.pure.u64(ptAmount),
-                priceVoucherForMintLp,
-                pyPosition,
-                tx.object(coinConfig.pyStateId),
-                tx.object(coinConfig.yieldFactoryConfigId),
-                tx.object(coinConfig.marketStateId),
-                tx.object("0x6"),
-              ],
-            })
-
-            tx.transferObjects([mp, sy], address)
-          } else {
-            const addLiquidityMoveCall = {
-              target: `${coinConfig.nemoContractId}::market::add_liquidity_single_sy`,
-              arguments: [
-                coinConfig.version,
-                "syCoin",
-                //FIXME: we should calculate the min out correctly
-                new Decimal(0).toFixed(0),
-                "priceVoucherForMintLp",
-                "pyPosition",
-                coinConfig.pyStateId,
-                coinConfig.yieldFactoryConfigId,
-                coinConfig.marketFactoryConfigId,
-                coinConfig.marketStateId,
-                "0x6",
-              ],
-              typeArguments: [coinConfig.syCoinType],
-            }
-            debugLog("add_liquidity_single_sy move call:", addLiquidityMoveCall)
-
-            const [mp] = tx.moveCall({
-              ...addLiquidityMoveCall,
-              arguments: [
-                tx.object(coinConfig.version),
-                syCoin,
-                //FIXME: we should calculate the min out correctly
-                tx.pure.u64(new Decimal(0).toFixed(0)),
-                priceVoucherForMintLp,
-                pyPosition,
-                tx.object(coinConfig.pyStateId),
-                tx.object(coinConfig.yieldFactoryConfigId),
-                tx.object(coinConfig.marketFactoryConfigId),
-                tx.object(coinConfig.marketStateId),
-                tx.object("0x6"),
-              ],
-            })
-
-            tx.transferObjects([mp], address)
-          }
-
-          if (created) {
-            tx.transferObjects([pyPosition], address)
-          }
-
-          const res = await signAndExecuteTransaction({
-            transaction: tx,
-            // chain: `sui:${network}`,
-          })
-          setTxId(res.digest)
-          //TODO : handle error
-          // if (res.effects?.status.status === "failure") {
-          //   setStatus("Failed")
-          //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
-          //   return
-          // }
-          setAddValue("")
-          setStatus("Success")
+          handleAddLiquiditySingleSy(
+            tx,
+            addAmount,
+            tokenType,
+            coinConfig,
+            coinData,
+            coinType,
+            pyPosition,
+            address,
+          )
         }
+
+        if (created) {
+          tx.transferObjects([pyPosition], address)
+        }
+
+        const res = await signAndExecuteTransaction({
+          transaction: tx,
+        })
+        setTxId(res.digest)
+        setAddValue("")
+        setStatus("Success")
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -585,17 +696,17 @@ export default function SingleCoin() {
                       {isMarketStateDataLoading ? (
                         <Skeleton className="h-2 w-full bg-[#2D2D48]" />
                       ) : marketStateData ? (
-                          <Progress
+                        <Progress
                           className="h-2 bg-[#2D2D48] cursor-pointer"
                           indicatorClassName="bg-[#2DF4DD]"
                           value={new Decimal(marketStateData.totalSy)
                             .div(marketStateData.marketCap)
-                              .mul(100)
-                              .toNumber()}
-                          />
-                        ) : (
+                            .mul(100)
+                            .toNumber()}
+                        />
+                      ) : (
                         <span>No data</span>
-                        )}
+                      )}
                     </TooltipTrigger>
 
                     {/* Tooltip with bottom alignment and arrow */}

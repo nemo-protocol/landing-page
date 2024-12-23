@@ -23,7 +23,13 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
 import { LoaderCircle } from "lucide-react"
-import { getPriceVoucher, initPyPosition, splitCoinHelper } from "@/lib/txHelper"
+import {
+  getPriceVoucher,
+  initPyPosition,
+  mintPy,
+  splitCoinHelper,
+  depositSyCoin,
+} from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 
 export default function Mint({
@@ -109,44 +115,22 @@ export default function Mint({
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const splitCoin = splitCoinHelper(
+        const amount = new Decimal(mintValue)
+          .mul(10 ** coinConfig.decimal)
+          .toString()
+        const [splitCoin] = splitCoinHelper(tx, coinData, [amount], coinType)
+
+        const syCoin = depositSyCoin(
           tx,
-          coinData,
-          new Decimal(mintValue).mul(10 ** coinConfig.decimal).toString(),
+          coinConfig,
+          splitCoin,
+          amount,
           coinType,
         )
 
-        // const [splitCoin] = tx.splitCoins(coinData![0].coinObjectId, [
-        //   new Decimal(mintValue).mul(10 ** coinConfig.decimal).toFixed(0),
-        // ])
-
-        const [syCoin] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::sy::deposit`,
-          arguments: [
-            tx.object(coinConfig.version),
-            splitCoin,
-            tx.pure.u64(0),
-            tx.object(coinConfig.syStateId),
-          ],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
-
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-
-        tx.moveCall({
-          target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
-          arguments: [
-            tx.object(coinConfig.version),
-            syCoin,
-            priceVoucher,
-            pyPosition,
-            tx.object(coinConfig.pyStateId),
-            tx.object(coinConfig.yieldFactoryConfigId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        })
+        mintPy(tx, coinConfig, syCoin, priceVoucher, pyPosition)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -154,15 +138,7 @@ export default function Mint({
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          // chain: `sui:${network}`,
         })
-        //TODO: Add error handling
-        // if (res.effects?.status.status === "failure") {
-        //   setOpen(true)
-        //   setStatus("Failed")
-        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
-        //   return
-        // }
         setTxId(res.digest)
         setOpen(true)
         setMintValue("")

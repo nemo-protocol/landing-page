@@ -18,7 +18,7 @@ import {
   getPriceVoucher,
   initPyPosition,
   splitCoinHelper,
-  swapScoin,
+  mintSycoin,
 } from "@/lib/txHelper"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
@@ -153,16 +153,14 @@ export default function Invest() {
       try {
         await refetch()
         const tx = new Transaction()
+        const swapAmount = new Decimal(swapValue)
+          .mul(10 ** coinConfig.decimal)
+          .toString()
 
-        const splitCoin =
+        const [splitCoin] =
           tokenType === 0
-            ? swapScoin(tx, coinConfig, coinData, swapValue)
-            : splitCoinHelper(
-                tx,
-                coinData,
-                new Decimal(swapValue).mul(10 ** coinConfig.decimal).toString(),
-                coinType,
-              )
+            ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
+            : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
         const [syCoin] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::sy::deposit`,
