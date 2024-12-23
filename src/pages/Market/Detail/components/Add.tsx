@@ -303,7 +303,7 @@ export default function SingleCoin() {
               ],
             })
 
-            tx.transferObjects([mp], address)
+            tx.transferObjects([mp, sy], address)
           } else {
             const addLiquidityMoveCall = {
               target: `${coinConfig.nemoContractId}::market::add_liquidity_single_sy`,
