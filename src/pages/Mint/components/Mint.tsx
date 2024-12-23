@@ -23,7 +23,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import logo from "@/assets/images/png/logo.png"
 import { LoaderCircle } from "lucide-react"
-import { initPyPosition, splitCoinHelper } from "@/lib/txHelper"
+import { getPriceVoucher, initPyPosition, splitCoinHelper } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 
 export default function Mint({
@@ -131,16 +131,8 @@ export default function Mint({
           typeArguments: [coinType, coinConfig.syCoinType],
         })
 
-        const [priceVoucher] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
-          arguments: [
-            tx.object(coinConfig.providerVersion),
-            tx.object(coinConfig.providerMarket),
-            tx.object(coinConfig.syStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
-        })
+        const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+
 
         tx.moveCall({
           target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
