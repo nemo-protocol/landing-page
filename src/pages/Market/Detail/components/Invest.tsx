@@ -19,6 +19,7 @@ import {
   initPyPosition,
   splitCoinHelper,
   mintSycoin,
+  depositSyCoin,
 } from "@/lib/txHelper"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
@@ -162,22 +163,7 @@ export default function Invest() {
             ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
             : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
-        const [syCoin] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::sy::deposit`,
-          arguments: [
-            tx.object(coinConfig.version),
-            splitCoin,
-            tx.pure.u64(0),
-            tx.object(coinConfig.syStateId),
-          ],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
-
-        debugLog("sy::deposit move call:", {
-          target: `${coinConfig.nemoContractId}::sy::deposit`,
-          arguments: [coinConfig.version, "splitCoin", 0, coinConfig.syStateId],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
+        const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
         let pyPosition
         let created = false
@@ -204,7 +190,6 @@ export default function Invest() {
             priceVoucher,
             pyPosition,
             tx.object(coinConfig.pyStateId),
-            tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig.marketFactoryConfigId),
             tx.object(coinConfig.marketStateId),
             tx.object("0x6"),
@@ -224,7 +209,6 @@ export default function Invest() {
             "priceVoucher",
             "pyPosition",
             coinConfig.pyStateId,
-            coinConfig.yieldFactoryConfigId,
             coinConfig.marketFactoryConfigId,
             coinConfig.marketStateId,
             "0x6",

@@ -106,13 +106,7 @@ export default function Mint({
           .toString()
         const [splitCoin] = splitCoinHelper(tx, coinData, [amount], coinType)
 
-        const syCoin = depositSyCoin(
-          tx,
-          coinConfig,
-          splitCoin,
-          amount,
-          coinType,
-        )
+        const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 

@@ -202,7 +202,7 @@ export default function SingleCoin() {
         ? mintSycoin(tx, coinConfig, coinData, [addAmount])
         : splitCoinHelper(tx, coinData, [addAmount], coinType)
 
-    const syCoin = depositSyCoin(tx, coinConfig, splitCoin, addAmount, coinType)
+    const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
@@ -264,21 +264,9 @@ export default function SingleCoin() {
         ? mintSycoin(tx, coinConfig, coinData, [amounts.sy, amounts.pt])
         : splitCoinHelper(tx, coinData, [amounts.sy, amounts.pt], coinType)
 
-    const syCoin = depositSyCoin(
-      tx,
-      coinConfig,
-      splitCoinForSy,
-      amounts.sy,
-      coinType,
-    )
+    const syCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
 
-    const pyCoin = depositSyCoin(
-      tx,
-      coinConfig,
-      splitCoinForPt,
-      amounts.pt,
-      coinType,
-    )
+    const pyCoin = depositSyCoin(tx, coinConfig, splitCoinForPt, coinType)
 
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
     mintPy(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
@@ -291,10 +279,12 @@ export default function SingleCoin() {
         coinConfig.version,
         "syCoin",
         amounts.pt,
+        new Decimal(amounts.pt)
+          .mul(1 - new Decimal(slippage).div(100).toNumber())
+          .toFixed(0),
         "priceVoucherForMintLp",
         "pyPosition",
         coinConfig.pyStateId,
-        coinConfig.yieldFactoryConfigId,
         coinConfig.marketStateId,
         "0x6",
       ],
@@ -308,10 +298,14 @@ export default function SingleCoin() {
         tx.object(coinConfig.version),
         syCoin,
         tx.pure.u64(amounts.pt),
+        tx.pure.u64(
+          new Decimal(amounts.pt)
+            .mul(1 - new Decimal(slippage).div(100).toNumber())
+            .toFixed(0),
+        ),
         priceVoucherForMintLp,
         pyPosition,
         tx.object(coinConfig.pyStateId),
-        // tx.object(coinConfig.yieldFactoryConfigId),
         tx.object(coinConfig.marketStateId),
         tx.object("0x6"),
       ],
@@ -342,7 +336,7 @@ export default function SingleCoin() {
         ? mintSycoin(tx, coinConfig, coinData, [addAmount])
         : splitCoinHelper(tx, coinData, [addAmount], coinType)
 
-    const syCoin = depositSyCoin(tx, coinConfig, splitCoin, addAmount, coinType)
+    const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 

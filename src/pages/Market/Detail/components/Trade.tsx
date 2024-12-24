@@ -154,13 +154,7 @@ export default function Trade() {
             ? mintSycoin(tx, coinConfig, coinData, [syCoinAmount])
             : splitCoinHelper(tx, coinData, [syCoinAmount], coinType)
 
-        const syCoin = depositSyCoin(
-          tx,
-          coinConfig,
-          splitCoin,
-          syCoinAmount,
-          coinType,
-        )
+        const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
         debugLog("sy::deposit move call:", {
           target: `${coinConfig.nemoContractId}::sy::deposit`,

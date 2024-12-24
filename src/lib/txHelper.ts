@@ -266,7 +266,6 @@ export function depositSyCoin(
   tx: Transaction,
   coinConfig: CoinConfig,
   splitCoin: TransactionArgument,
-  syCoinAmount: string,
   coinType: string,
 ) {
   const depositMoveCall = {
@@ -274,7 +273,6 @@ export function depositSyCoin(
     arguments: [
       coinConfig.version,
       "splitCoin",
-      syCoinAmount,
       coinConfig.syStateId,
     ],
     typeArguments: [coinType, coinConfig.syCoinType],
@@ -286,7 +284,6 @@ export function depositSyCoin(
     arguments: [
       tx.object(coinConfig.version),
       splitCoin,
-      tx.pure.u64(0),
       tx.object(coinConfig.syStateId),
     ],
   })
