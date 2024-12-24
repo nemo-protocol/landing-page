@@ -22,7 +22,7 @@ import FailIcon from "@/assets/images/svg/fail.svg?react"
 import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import usePortfolio from "@/hooks/usePortfolio"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import { getPriceVoucher } from "@/lib/txHelper"
+import { getPriceVoucher, redeemSyCoin } from "@/lib/txHelper"
 
 export default function Item({
   itemKey,
@@ -31,10 +31,12 @@ export default function Item({
   ytReward,
   lpReward,
   selectType,
+  slippage,
   ...coinConfig
 }: PortfolioItem & {
   selectType: "pt" | "yt" | "lp" | "all"
   itemKey: string
+  slippage: string
 }) {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
@@ -179,7 +181,7 @@ export default function Item({
         }
         debugLog("redeem_due_interest move call:", redeemMoveCall)
 
-        tx.moveCall({
+        const [syCoin] = tx.moveCall({
           ...redeemMoveCall,
           arguments: [
             tx.pure.address(address),
@@ -190,6 +192,16 @@ export default function Item({
             tx.object("0x6"),
           ],
         })
+
+        const yieldToken = redeemSyCoin(
+          tx,
+          coinConfig,
+          syCoin,
+          ytBalance,
+          slippage,
+        )
+
+        tx.transferObjects([yieldToken], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -259,7 +271,7 @@ export default function Item({
             "pyPosition",
             coinConfig?.pyStateId,
             "priceVoucher",
-            coinConfig?.yieldFactoryConfigId,
+            // coinConfig?.yieldFactoryConfigId,
             coinConfig?.marketFactoryConfigId,
             coinConfig?.marketStateId,
             "0x6",

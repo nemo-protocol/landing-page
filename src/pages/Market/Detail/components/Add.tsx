@@ -311,7 +311,7 @@ export default function SingleCoin() {
         priceVoucherForMintLp,
         pyPosition,
         tx.object(coinConfig.pyStateId),
-        tx.object(coinConfig.yieldFactoryConfigId),
+        // tx.object(coinConfig.yieldFactoryConfigId),
         tx.object(coinConfig.marketStateId),
         tx.object("0x6"),
       ],

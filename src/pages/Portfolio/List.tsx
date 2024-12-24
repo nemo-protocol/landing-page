@@ -13,6 +13,7 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table"
+import SlippageSetting from "@/components/SlippageSetting"
 
 interface ListProps {
   list?: PortfolioItem[]
@@ -23,6 +24,7 @@ export default function List({ list, isLoading }: ListProps) {
   const { address } = useWallet()
   const navigate = useNavigate()
   const { type } = useParams()
+  const [slippage, setSlippage] = useState("0.5")
   const isConnected = useMemo(() => !!address, [address])
   const [openConnect, setOpenConnect] = useState(false)
 
@@ -44,21 +46,24 @@ export default function List({ list, isLoading }: ListProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="flex items-center gap-x-4 mb-6">
-        {["pt", "yt", "lp"].map((type) => (
-          <span
-            key={type}
-            className={[
-              selectType === type
-                ? "text-white font-bold bg-[#0052F2]"
-                : "text-white/80 cursor-pointer border border-[#1A1D20]",
-              "rounded-full px-5 py-1.5 text-sm",
-            ].join(" ")}
-            onClick={() => handleTypeChange(type as "pt" | "yt" | "lp")}
-          >
-            {type.toUpperCase()}
-          </span>
-        ))}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-x-4 mb-6">
+          {["pt", "yt", "lp"].map((type) => (
+            <span
+              key={type}
+              className={[
+                selectType === type
+                  ? "text-white font-bold bg-[#0052F2]"
+                  : "text-white/80 cursor-pointer border border-[#1A1D20]",
+                "rounded-full px-5 py-1.5 text-sm",
+              ].join(" ")}
+              onClick={() => handleTypeChange(type as "pt" | "yt" | "lp")}
+            >
+              {type.toUpperCase()}
+            </span>
+          ))}
+        </div>
+        <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
       </div>
       <div
         className="rounded-3xl border border-white/5 overflow-hidden"
@@ -101,6 +106,7 @@ export default function List({ list, isLoading }: ListProps) {
                   {list.map((item) => (
                     <Item
                       {...item}
+                      slippage={slippage}
                       selectType={selectType}
                       key={
                         item.underlyingProtocol +
