@@ -1,9 +1,8 @@
 import { useState } from "react"
-import Sell from "./Trade/Index.tsx"
+import Sell from "./components/Sell.tsx"
 import Header from "@/components/Header"
 import { ArrowLeft } from "lucide-react"
 import Remove from "./components/Remove.tsx"
-import sSUI from "@/assets/images/svg/sSUI.svg"
 import { useNavigate, useParams } from "react-router-dom"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import {
@@ -109,7 +108,7 @@ export default function Home() {
             <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
               <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
                 <div className="flex items-center gap-x-4 w-full md:w-auto">
-                  <img src={sSUI} alt="" className="size-[60px]" />
+                  <img src="/images/svg/sSUI.svg" alt="" className="size-[60px]" />
                   <div className="flex flex-col">
                     <span className="text-white text-lg">PT sSUI</span>
                     <span className="text-white text-xs">

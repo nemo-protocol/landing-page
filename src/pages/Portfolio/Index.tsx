@@ -2,8 +2,6 @@ import List from "./List"
 import Header from "@/components/Header"
 import { Eye } from "lucide-react"
 import { usePortfolioList } from "@/queries"
-import BalanceIcon from "@/assets/images/svg/balance.svg?react"
-import RewardsIcon from "@/assets/images/svg/reward.svg?react"
 import usePortfolio from "@/hooks/usePortfolio"
 import Decimal from "decimal.js"
 import { motion } from "framer-motion"
@@ -14,12 +12,12 @@ export default function Portfolio() {
   return (
     <>
       <div className="bg-[#08080C]">
-        <div className="xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0 bg-[#08080C]">
+        <div className="xl:max-w-[1200px] xl:mx-auto px-4 xl:px-0 bg-[#08080C]">
           <Header />
         </div>
       </div>
 
-      <div className="py-10 px-6 xl:px-0 space-y-4 xl:max-w-[1200px] xl:mx-auto">
+      <div className="py-4 sm:py-10 px-4 xl:px-0 space-y-4 xl:max-w-[1200px] xl:mx-auto">
         <div className="w-full">
           <motion.h6
             className="flex items-center gap-x-2"
@@ -55,7 +53,7 @@ export default function Portfolio() {
                       .toLocaleString()}
                   </span>
                 </div>
-                <BalanceIcon />
+                <img src="/images/svg/balance.svg" alt="balance" className="size-3" />
               </motion.div>
 
               <motion.div
@@ -88,7 +86,7 @@ export default function Portfolio() {
                     </button>
                   </div>
                 </div>
-                <RewardsIcon />
+                <img src="/images/svg/reward.svg" alt="reward" className="size-3" />
               </motion.div>
             </div>
             <motion.img

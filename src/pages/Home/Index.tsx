@@ -1,11 +1,5 @@
+import { ChevronRight } from "lucide-react"
 import Header from "./Header"
-import bg1 from "@/assets/images/svg/bg-1.svg"
-import PT from "@/assets/images/png/PT.png"
-import YT from "@/assets/images/png/YT.png"
-import Nemo from "@/assets/images/png/nemo.png"
-import RightArrow from "@/assets/images/svg/right-arrow.svg?react"
-import Telegram from "@/assets/images/svg/telegram.svg?react"
-import X from "@/assets/images/svg/x.svg?react"
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Link } from "react-router-dom"
@@ -38,7 +32,7 @@ export default function Home() {
   return (
     <div className="px-4 md:px-8">
       <div
-        style={{ backgroundImage: `url(${bg1})` }}
+        style={{ backgroundImage: `url(/images/svg/bg-1.svg)` }}
         className="w-full h-screen bg-no-repeat bg-top bg-cover absolute top-0 left-0"
       ></div>
       <div className="overflow-hidden">
@@ -84,7 +78,7 @@ export default function Home() {
                   <span className="text-xs md:text-base text-white">
                     Enter Now
                   </span>
-                  <RightArrow />
+                  <ChevronRight className="size-4" />
                 </Link>
                 <a
                   target="_blank"
@@ -130,7 +124,7 @@ export default function Home() {
               <motion.img
                 alt=""
                 ref={ref5}
-                src={Nemo}
+                src="/images/png/nemo.png"
                 className="w-full lg:hidden max-w-[300px] mx-auto"
                 initial={{ opacity: 0, y: 50 }}
                 animate={ref5InView ? { opacity: 1, y: 0 } : {}}
@@ -143,7 +137,7 @@ export default function Home() {
                 className="flex flex-col w-full lg:w-[280px]"
               >
                 <span
-                  style={{ backgroundImage: `url(${PT})` }}
+                  style={{ backgroundImage: `url(/images/png/PT.png)` }}
                   className="text-center w-12 h-[38px] lg:w-16 lg:h-[50px] flex items-center justify-center text-white bg-cover bg-no-repeat bg-center"
                 >
                   PT
@@ -157,7 +151,7 @@ export default function Home() {
               </motion.div>
               <motion.img
                 alt=""
-                src={Nemo}
+                src="/images/png/nemo.png"
                 className="hidden lg:inline-block mx-auto max-w-[400px]"
                 initial={{ opacity: 0, y: 50 }}
                 animate={ref3InView ? { opacity: 1, y: 0 } : {}}
@@ -171,7 +165,7 @@ export default function Home() {
                 className="flex flex-col w-full lg:w-[280px]"
               >
                 <span
-                  style={{ backgroundImage: `url(${YT})` }}
+                  style={{ backgroundImage: `url(/images/png/YT.png)` }}
                   className="text-center w-12 h-[38px] lg:w-16 lg:h-[50px] flex items-center justify-center text-white bg-cover bg-no-repeat bg-center"
                 >
                   YT
@@ -194,10 +188,14 @@ export default function Home() {
           >
             <div className="flex items-center gap-x-4">
               <a target="_blank" href="https://t.me/NemoProtocol">
-                <Telegram className="size-10" />
+                <img
+                  src="/images/svg/telegram.svg"
+                  alt="telegram"
+                  className="size-10"
+                />
               </a>
               <a target="_blank" href="https://x.com/nemoprotocol">
-                <X className="size-10" />
+                <img src="/images/svg/x.svg" alt="x" className="size-10" />
               </a>
             </div>
             <span className="text-sm xs:text-base text-white">

@@ -18,8 +18,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { network, debugLog, DEBUG } from "@/config"
-import FailIcon from "@/assets/images/svg/fail.svg?react"
-import SuccessIcon from "@/assets/images/svg/success.svg?react"
 import usePortfolio from "@/hooks/usePortfolio"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { getPriceVoucher, redeemSyCoin } from "@/lib/txHelper"
@@ -405,7 +403,7 @@ export default function Item({
               {status}
             </AlertDialogTitle>
             <AlertDialogDescription className="flex flex-col items-center">
-              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
+              {status === "Success" ? <img src="/images/svg/success.svg" alt="success" className="size-10" /> : <img src="/images/svg/fail.svg" alt="fail" className="size-10" />}
               {status === "Success" && (
                 <div className="py-2 flex flex-col items-center">
                   <p className=" text-white/50">Transaction submitted!</p>

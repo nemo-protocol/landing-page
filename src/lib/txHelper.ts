@@ -39,6 +39,7 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
       const moveCall = {
         target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
         arguments: [
+          coinConfig.priceOracleConfigId,
           coinConfig.providerVersion,
           coinConfig.providerMarket,
           coinConfig.syStateId,
@@ -342,12 +343,7 @@ export const redeemSyCoin = (
 
   const redeemMoveCall = {
     target: `${coinConfig.nemoContractId}::sy::redeem`,
-    arguments: [
-      coinConfig.version,
-      "syCoin",
-      minAmount,
-      coinConfig.syStateId,
-    ],
+    arguments: [coinConfig.version, "syCoin", minAmount, coinConfig.syStateId],
     typeArguments: [coinConfig.coinType, coinConfig.syCoinType],
   }
   debugLog("sy::redeem move call:", redeemMoveCall)

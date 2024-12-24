@@ -1,30 +1,14 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-// import { debounce } from "@/lib/utils"
 import { useMemo, useState } from "react"
-// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
-import AddIcon from "@/assets/images/svg/add.svg?react"
-import SwapIcon from "@/assets/images/svg/swap.svg?react"
-// import SSUIIcon from "@/assets/images/svg/sSUI.svg?react"
-import FailIcon from "@/assets/images/svg/fail.svg?react"
 import usePyPositionData from "@/hooks/usePyPositionData"
-import { Wallet as WalletIcon } from "lucide-react"
+import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
-import SuccessIcon from "@/assets/images/svg/success.svg?react"
-// import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
-import {
-  AlertDialog,
-  AlertDialogTitle,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog"
 import { parseErrorMessage } from "@/lib/errorMapping"
-import logo from "@/assets/images/png/logo.png"
 import { initPyPosition } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 
 export default function Redeem({
   maturity,
@@ -200,45 +184,17 @@ export default function Redeem({
 
   return (
     <div className="flex flex-col items-center">
-      <AlertDialog open={open}>
-        <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-white">
-              {status}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="flex flex-col items-center">
-              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
-              {status === "Success" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-white/50">Transaction submitted!</p>
-                  <a
-                    className="text-[#8FB5FF] underline"
-                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                    target="_blank"
-                  >
-                    View details
-                  </a>
-                </div>
-              )}
-              {status === "Failed" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-red-400">Transaction Error</p>
-                  <p className="text-red-500 break-all">{message}</p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center justify-center">
-            <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
-              onClick={() => setOpen(false)}
-            >
-              OK
-            </button>
-          </div>
-          <AlertDialogFooter></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TransactionStatusDialog
+        open={open}
+        status={status}
+        network={network}
+        txId={txId}
+        message={message}
+        onClose={() => {
+          setTxId("")
+          setOpen(false)
+        }}
+      />
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
           <div className="text-white">Input</div>
@@ -250,7 +206,7 @@ export default function Redeem({
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <img
-              src={coinConfig?.coinLogo ?? logo}
+              src={coinConfig?.coinLogo}
               alt={coinConfig?.coinName}
               className={
                 coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
@@ -307,7 +263,7 @@ export default function Redeem({
           </button>
         </div>
       </div>
-      <AddIcon className="mx-auto" />
+      <Plus className="mx-auto" />
       <div className="flex flex-col w-full mt-[18px]">
         <div className="flex items-center justify-end w-full">
           <div className="flex items-center gap-x-1">
@@ -318,7 +274,7 @@ export default function Redeem({
         <div className="bg-black flex items-center justify-between p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <img
-              src={coinConfig?.coinLogo ?? logo}
+              src={coinConfig?.coinLogo}
               alt={coinConfig?.coinName}
               className={
                 coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
@@ -375,13 +331,13 @@ export default function Redeem({
           </button>
         </div>
       </div>
-      <SwapIcon className="mx-auto mt-5" />
+      <ChevronsDown className="mx-auto mt-5" />
       <div className="flex flex-col gap-y-4.5 w-full">
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
           <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <img
-              src={coinConfig?.coinLogo ?? logo}
+              src={coinConfig?.coinLogo}
               alt={coinConfig?.coinName}
               className={
                 coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"

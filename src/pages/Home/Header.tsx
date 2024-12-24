@@ -1,16 +1,15 @@
 import { motion } from "framer-motion"
 import { containerStyles } from "./Index"
-import logo from "@/assets/images/svg/logo.svg"
 import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { Link, useNavigate } from "react-router-dom"
-import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { LayoutGrid } from "lucide-react"
 
 export default function HomeHeader() {
   const { toast } = useToast()
@@ -41,7 +40,7 @@ export default function HomeHeader() {
     <header className={containerStyles} style={{ zIndex: 10 }}>
       <div className="flex items-center justify-between py-6 text-xs">
         <div className="flex gap-x-2">
-          <img src={logo} alt="" />
+          <img src="/images/svg/logo.svg" alt="logo" className="w-30 h-auto" />
           <div className="text-[#44E0C3] py-1 px-2 rounded-full bg-[#ECFBF9]/10 text-xs">
             Beta
           </div>
@@ -133,7 +132,7 @@ export default function HomeHeader() {
           >
             Launch App
           </button>
-          <Squares2X2Icon
+          <LayoutGrid
             className="text-white cursor-pointer"
             onClick={() => setIsOpen((isOpen) => !isOpen)}
           />

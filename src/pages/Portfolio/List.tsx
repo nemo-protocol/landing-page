@@ -1,11 +1,10 @@
 import Item from "./Item"
 import { motion } from "framer-motion"
-import { Link, useParams, useNavigate } from "react-router-dom"
 import { useMemo, useState } from "react"
-import Empty from "@/assets/images/png/empty.png"
 import { PortfolioItem } from "@/queries/types/market"
+import SlippageSetting from "@/components/SlippageSetting"
+import { Link, useParams, useNavigate } from "react-router-dom"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
-import WalletNotConnect from "@/assets/images/svg/wallet-no-connect.svg"
 import {
   Table,
   TableRow,
@@ -13,7 +12,6 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table"
-import SlippageSetting from "@/components/SlippageSetting"
 
 interface ListProps {
   list?: PortfolioItem[]
@@ -132,7 +130,7 @@ export default function List({ list, isLoading }: ListProps) {
         {!isConnected && (
           <div className="flex flex-col items-center w-full justify-center gap-y-4 py-[30px]">
             <img
-              src={WalletNotConnect}
+              src="/images/svg/wallet-no-connect.svg"
               alt="Wallet no connect"
               className="size-[120px]"
             />
@@ -152,7 +150,7 @@ export default function List({ list, isLoading }: ListProps) {
         )}
         {!isLoading && !list?.length && isConnected && (
           <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px] py-[30px]">
-            <img src={Empty} alt="No Data" className="size-[120px]" />
+            <img src="/images/png/empty.png" alt="No Data" className="size-[120px]" />
             <span className="text-white/60">
               You don't have any position yet
             </span>

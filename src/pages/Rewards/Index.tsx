@@ -21,7 +21,7 @@ export default function Rewards() {
     >
       <Header />
       <div
-        className="py-10 px-6 xl:px-0 space-y-4 xl:max-w-[1200px] xl:mx-auto h-[calc(100vh-4rem)]"
+        className="py-4 sm:py-10 px-4 xl:px-0 space-y-4 xl:max-w-[1200px] xl:mx-auto h-[calc(100vh-4rem)]"
       >
         <div className="grow">
           <AnimatePresence mode="wait">

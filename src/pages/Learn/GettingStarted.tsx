@@ -1,8 +1,3 @@
-import YieldTrading from "@/assets/images/svg/learn/YieldTrading.png";
-import FixingYourYield from "@/assets/images/svg/learn/FixingYourYield.png";
-import LongingTheYield from "@/assets/images/svg/learn/LongingTheYield.png";
-import YieldTokenization from "@/assets/images/svg/learn/YieldTokenization.svg?react";
-
 export default function GettingStarted() {
   return (
     <div className="flex flex-col items-center">
@@ -27,7 +22,11 @@ export default function GettingStarted() {
               <h6 className="text-white">Yield Tokenization</h6>
             </div>
           </div>
-          <YieldTokenization className="mt-10" />
+          <img
+            src="/images/svg/YieldTokenization.svg"
+            alt="YieldTokenization"
+            className="mt-10"
+          />
         </div>
         <div className="border border-white py-6 px-7 rounded-2xl flex flex-col items-center">
           <div className="flex items-center gap-x-4 w-full">
@@ -41,7 +40,7 @@ export default function GettingStarted() {
             You lock in a quarantined fixed yield, This is particularly useful
             if you think yield will godown.
           </p>
-          <img src={FixingYourYield} alt="" className="mt-6" />
+          <img src="/images/svg/FixingYourYield.png" alt="" className="mt-6" />
         </div>
         <div className="border border-white py-6 px-7 rounded-2xl flex flex-col items-center">
           <div className="flex items-center gap-x-4 w-full">
@@ -55,7 +54,7 @@ export default function GettingStarted() {
             You speculate that the yield of a particular asset will go up. You
             long yield and profit if yield goes up.
           </p>
-          <img src={LongingTheYield} alt="" className="mt-6" />
+          <img src="/images/svg/LongingTheYield.png" alt="" className="mt-6" />
         </div>
         <div className="border border-white py-6 px-7 rounded-2xl flex flex-col items-center">
           <div className="flex items-center gap-x-4 w-full">
@@ -69,9 +68,9 @@ export default function GettingStarted() {
             You switch between PT and YT top refit from yield volatility and get
             a better effective APY on the underlying asset.
           </p>
-          <img src={YieldTrading} alt="" className="mt-6" />
+          <img src="/images/svg/YieldTrading.png" alt="" className="mt-6" />
         </div>
       </div>
     </div>
-  );
+  )
 }

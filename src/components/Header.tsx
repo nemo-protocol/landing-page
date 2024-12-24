@@ -1,21 +1,11 @@
 import { IS_DEV } from "@/config"
 import { cn } from "@/lib/utils"
 import { truncateStr } from "@/lib/utils"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, LayoutGrid } from "lucide-react"
 import { useToast } from "@/components/Toast"
 import { useEffect, useRef, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import HotIcon from "@/assets/images/svg/hot.svg?react"
-import NemoLogo from "@/assets/images/svg/logo.svg?react"
-// import Network from "@/assets/images/svg/network.svg?react"
-import Squares2X2Icon from "@/assets/images/svg/squares-2x2.svg?react"
-// import {
-//   ConnectModal,
-//   useAccounts,
-//   useCurrentAccount,
-//   useDisconnectWallet,
-//   useSwitchAccount,
-// } from "@mysten/dapp-kit"
+
 
 import { ConnectModal, useWallet } from "@nemoprotocol/wallet-kit"
 import { motion } from "framer-motion"
@@ -58,11 +48,10 @@ export default function Header({ className }: { className?: string }) {
   return (
     <header className={cn("h-16 shrink-0", className)}>
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
-        <div className="flex items-center gap-x-6 h-full">
-          <Link to="/" className="flex gap-x-2">
-            <NemoLogo />
-          </Link>
-        </div>
+        <Link to="/" className="flex gap-x-2">
+          <img src="/images/svg/logo.svg" alt="logo" className="w-30 h-auto" />
+        </Link>
+
         <ul className="md:flex items-center text-sm hidden h-full">
           <li
             className={[
@@ -82,7 +71,7 @@ export default function Header({ className }: { className?: string }) {
               ].join(" ")}
             >
               <span>Fixed Return</span>
-              <HotIcon />
+              <img src="/images/svg/hot.svg" alt="hot" className="size-3" />
             </Link>
           </li>
           <li className={["w-24 h-full text-center"].join(" ")}>
@@ -256,7 +245,7 @@ export default function Header({ className }: { className?: string }) {
               </button>
             </ConnectModal>
           )}
-          <Squares2X2Icon
+          <LayoutGrid
             className="md:hidden text-white cursor-pointer"
             onClick={() => setIsOpen((isOpen) => !isOpen)}
           />

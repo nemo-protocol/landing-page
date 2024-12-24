@@ -1,5 +1,3 @@
-import StrategicYieldTradingPNG from "@/assets/images/png/learn/StrategicYieldTrading.png"
-
 export default function StrategicYieldTrading() {
   return (
     <div className="flex flex-col items-center">
@@ -8,7 +6,11 @@ export default function StrategicYieldTrading() {
         As we are aware, the yield market constantly fluctuates, and so does the
         Fixing Yield and Long Yield
       </p>
-      <img src={StrategicYieldTradingPNG} alt="" className="mt-7.5 pr-4" />
+      <img
+        src="/images/png/StrategicYieldTradingPNG.png"
+        alt=""
+        className="mt-7.5 pr-4"
+      />
     </div>
   )
 }

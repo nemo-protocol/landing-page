@@ -1,8 +1,6 @@
 import { TableRow, TableCell } from "@/components/ui/table"
 import { shortenString } from "./utils";
 import { PointItem } from "./type"
-import CopyIcon from "@/assets/images/svg/rewards/copy.svg?react";
-import ShareIcon from "@/assets/images/svg/rewards/share.svg?react";
 import { useToast } from "@/components/Toast"
 
 export default function Item({
@@ -30,8 +28,8 @@ export default function Item({
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-2">
           {shortenString(address)}
-          <CopyIcon className="cursor-pointer" onClick={onCopy} />
-          <ShareIcon className="cursor-pointer" onClick={() => onShare(address)} />
+          <img src="/images/svg/rewards/copy.svg" className="cursor-pointer" onClick={onCopy} />
+          <img src="/images/svg/rewards/share.svg" className="cursor-pointer" onClick={() => onShare(address)} />
         </div>
       </TableCell>
       <TableCell className="text-center">

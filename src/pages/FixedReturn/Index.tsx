@@ -1,7 +1,6 @@
 import List from "./List"
 import Header from "@/components/Header"
 import { ChevronRight } from "lucide-react"
-import Logo from "@/assets/images/svg/market/logo.svg?react"
 
 export default function FixedReturn() {
   return (
@@ -23,7 +22,7 @@ export default function FixedReturn() {
             <ChevronRight className="size-4" />
           </a>
         </div>
-        <Logo />
+        <img src="/images/svg/logo.svg" alt="logo" className="w-30 h-auto" />
       </div>
       <List />
     </>

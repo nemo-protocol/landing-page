@@ -1,10 +1,9 @@
 import Mint from "./Mint"
 import Redeem from "./Redeem"
 import { useState } from "react"
+import { SlidersHorizontal, RotateCw } from "lucide-react"
 import PoolSelect from "@/components/PoolSelect"
 import { useNavigate, useParams } from "react-router-dom"
-import SwitchIcon from "@/assets/images/svg/switch.svg?react"
-import LoadingIcon from "@/assets/images/svg/loading.svg?react"
 import {
   Popover,
   PopoverContent,
@@ -57,9 +56,9 @@ export default function Trade() {
             </div>
           </div>
           <div className="flex items-center gap-x-2 w-auto">
-            <LoadingIcon />
+            <SlidersHorizontal className="animate-spin" />
             <div className="flex items-center gap-x-2 bg-[#242632]/30 rounded-md py-1.5 px-2.5">
-              <SwitchIcon />
+              <RotateCw className="size-4" />
               <Popover>
                 <PopoverTrigger asChild>
                   <span className="text-white cursor-pointer">{slippage}%</span>

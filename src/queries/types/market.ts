@@ -67,6 +67,7 @@ export interface CoinConfig {
   cap: string
   ptTvl: string
   syTvl: string
+  priceOracleConfigId: string
 }
 
 export interface PortfolioItem extends CoinConfig {

@@ -2,26 +2,11 @@ import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState } from "react"
 import useCoinData from "@/hooks/useCoinData"
-// import { ConnectModal, useCurrentWallet } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
-import AddIcon from "@/assets/images/svg/add.svg?react"
-import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import FailIcon from "@/assets/images/svg/fail.svg?react"
-import { Wallet as WalletIcon } from "lucide-react"
+import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
-import SuccessIcon from "@/assets/images/svg/success.svg?react"
-// // import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
-import {
-  AlertDialog,
-  AlertDialogTitle,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
-import logo from "@/assets/images/png/logo.png"
 import { LoaderCircle } from "lucide-react"
 import {
   getPriceVoucher,
@@ -31,6 +16,7 @@ import {
   depositSyCoin,
 } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 
 export default function Mint({
   maturity,
@@ -159,46 +145,17 @@ export default function Mint({
 
   return (
     <div className="flex flex-col items-center">
-      {/* TODO: Add AlertDialog component */}
-      <AlertDialog open={open}>
-        <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-white">
-              {status}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="flex flex-col items-center">
-              {status === "Success" ? <SuccessIcon /> : <FailIcon />}
-              {status === "Success" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-white/50">Transaction submitted!</p>
-                  <a
-                    className="text-[#8FB5FF] underline"
-                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                    target="_blank"
-                  >
-                    View details
-                  </a>
-                </div>
-              )}
-              {status === "Failed" && (
-                <div className="py-2 flex flex-col items-center">
-                  <p className=" text-red-400">Transaction Error</p>
-                  <p className="text-red-500 break-all">{message}</p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center justify-center">
-            <button
-              className="text-white w-36 rounded-3xl bg-[#0F60FF] py-1.5"
-              onClick={() => setOpen(false)}
-            >
-              OK
-            </button>
-          </div>
-          <AlertDialogFooter></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TransactionStatusDialog
+        open={open}
+        status={status}
+        network={network}
+        txId={txId}
+        message={message}
+        onClose={() => {
+          setTxId("")
+          setOpen(false)
+        }}
+      />
 
       {/* TODO: Add animation */}
       <div className="flex flex-col w-full">
@@ -216,7 +173,7 @@ export default function Mint({
             ) : (
               <>
                 <img
-                  src={coinConfig?.coinLogo ?? logo}
+                  src={coinConfig?.coinLogo}
                   alt={coinConfig?.coinName}
                   className={
                     coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
@@ -270,7 +227,7 @@ export default function Mint({
           </button>
         </div>
       </div>
-      <SwapIcon className="mx-auto" />
+      <ChevronsDown className="mx-auto" />
       <div className="flex flex-col w-full gap-y-4.5">
         <div>Output</div>
         <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl w-full pr-5">
@@ -280,7 +237,7 @@ export default function Mint({
             ) : (
               <>
                 <img
-                  src={coinConfig?.coinLogo ?? logo}
+                  src={coinConfig?.coinLogo}
                   alt={coinConfig?.coinName}
                   className={
                     coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
@@ -301,7 +258,7 @@ export default function Mint({
           />
         </div>
       </div>
-      <AddIcon className="mx-auto mt-5" />
+      <Plus className="mx-auto mt-5" />
       <div className="bg-black flex items-center p-1 gap-x-4 rounded-xl mt-[18px] w-full pr-5">
         <div className="flex items-center py-3 px-3 rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
           {isLoading ? (
@@ -309,7 +266,7 @@ export default function Mint({
           ) : (
             <>
               <img
-                src={coinConfig?.coinLogo ?? logo}
+                src={coinConfig?.coinLogo}
                 alt={coinConfig?.coinName}
                 className={
                   coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"

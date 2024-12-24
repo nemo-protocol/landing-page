@@ -1,8 +1,7 @@
 import { useState } from "react"
 import Header from "@/components/Header"
-import sSUI from "@/assets/images/svg/sSUI.svg"
 import { useNavigate } from "react-router-dom"
-import LeftArrow from "@/assets/images/svg/left-arrow.svg?react"
+import { ArrowLeft } from "lucide-react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import {
   ChartConfig,
@@ -42,7 +41,7 @@ export default function Home() {
   return (
     <>
       <div className="bg-[#08080C]">
-        <div className="xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0 bg-[#08080C]">
+        <div className="xl:max-w-[1200px] xl:mx-auto px-4 xl:px-0 bg-[#08080C]">
           <Header />
         </div>
       </div>
@@ -51,7 +50,7 @@ export default function Home() {
           onClick={() => navigate("/market")}
           className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
         >
-          <LeftArrow />
+          <ArrowLeft />
           <span>Back</span>
         </h3>
         <div className="mt-9 flex xl:flex-row flex-col gap-x-8 justify-center">
@@ -59,7 +58,7 @@ export default function Home() {
           <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
             <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
               <div className="flex items-center gap-x-4 w-full md:w-auto">
-                <img src={sSUI} alt="" className="size-[60px]" />
+                <img src="/images/svg/sSUI.svg" alt="" className="size-[60px]" />
                 <div className="flex flex-col">
                   <span className="text-white text-lg">PT sSUI</span>
                   <span className="text-white text-xs">

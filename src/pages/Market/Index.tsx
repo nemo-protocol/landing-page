@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <>
       <div className="bg-[#08080C]">
-        <div className="xl:max-w-[1200px] xl:mx-auto px-7.5 xl:px-0 bg-[#08080C]">
+        <div className="xl:max-w-[1200px] xl:mx-auto px-4 xl:px-0 bg-[#08080C]">
           <Header />
         </div>
       </div>

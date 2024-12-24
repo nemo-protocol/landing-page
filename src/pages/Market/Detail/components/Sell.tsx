@@ -3,8 +3,7 @@ import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
 // import { useCurrentAccount } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
-import SwapIcon from "@/assets/images/svg/swap.svg?react"
-import { Wallet as WalletIcon } from "lucide-react"
+import { ChevronsDown, Wallet as WalletIcon } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -260,7 +259,7 @@ export default function Sell() {
           </Select>
         }
       />
-      <SwapIcon className="mx-auto" />
+      <ChevronsDown className="mx-auto" />
       <BalanceInput
         showPrice={false}
         isLoading={isLoading}
