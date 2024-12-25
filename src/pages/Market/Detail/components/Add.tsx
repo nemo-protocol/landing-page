@@ -196,6 +196,8 @@ export default function SingleCoin() {
     coinType: string,
     pyPosition: TransactionArgument,
     address: string,
+    ratio: string,
+    slippage: string,
   ): void {
     const [splitCoin] =
       tokenType === 0
@@ -211,6 +213,10 @@ export default function SingleCoin() {
       arguments: [
         coinConfig.version,
         "syCoin",
+        new Decimal(addAmount)
+          .mul(ratio)
+          .mul(1 - new Decimal(slippage).div(100).toNumber())
+          .toFixed(0),
         "priceVoucher",
         "pyPosition",
         coinConfig.pyStateId,
@@ -227,6 +233,12 @@ export default function SingleCoin() {
       arguments: [
         tx.object(coinConfig.version),
         syCoin,
+        tx.pure.u64(
+          new Decimal(addAmount)
+            .mul(ratio)
+            .mul(1 - new Decimal(slippage).div(100).toNumber())
+            .toFixed(0),
+        ),
         priceVoucher,
         pyPosition,
         tx.object(coinConfig.pyStateId),
@@ -249,6 +261,7 @@ export default function SingleCoin() {
     pyPosition: TransactionArgument,
     syPtRate: string,
     address: string,
+    ratio: string,
     slippage: string,
   ): void {
     const amounts = {
@@ -280,6 +293,7 @@ export default function SingleCoin() {
         "syCoin",
         amounts.pt,
         new Decimal(amounts.pt)
+          .mul(ratio)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0),
         "priceVoucherForMintLp",
@@ -300,6 +314,7 @@ export default function SingleCoin() {
         tx.pure.u64(amounts.pt),
         tx.pure.u64(
           new Decimal(amounts.pt)
+            .mul(ratio)
             .mul(1 - new Decimal(slippage).div(100).toNumber())
             .toFixed(0),
         ),
@@ -330,6 +345,8 @@ export default function SingleCoin() {
     coinType: string,
     pyPosition: TransactionArgument,
     address: string,
+    ratio: string,
+    slippage: string,
   ): void {
     const [splitCoin] =
       tokenType === 0
@@ -345,8 +362,10 @@ export default function SingleCoin() {
       arguments: [
         coinConfig.version,
         "syCoin",
-        //FIXME: we should calculate the min out correctly
-        new Decimal(0).toFixed(0),
+        new Decimal(addAmount)
+          .mul(ratio)
+          .mul(1 - new Decimal(slippage).div(100).toNumber())
+          .toFixed(0),
         "priceVoucher",
         "pyPosition",
         coinConfig.pyStateId,
@@ -364,8 +383,11 @@ export default function SingleCoin() {
       arguments: [
         tx.object(coinConfig.version),
         syCoin,
-        //FIXME: we should calculate the min out correctly
-        tx.pure.u64(new Decimal(0).toFixed(0)),
+        tx.pure.u64(
+          new Decimal(addAmount)
+            .mul(1 - new Decimal(slippage).div(100).toNumber())
+            .toFixed(0),
+        ),
         priceVoucher,
         pyPosition,
         tx.object(coinConfig.pyStateId),
@@ -386,6 +408,7 @@ export default function SingleCoin() {
       address &&
       syPtRate &&
       coinType &&
+      slippage &&
       coinConfig &&
       marketStateData &&
       coinData?.length &&
@@ -417,6 +440,8 @@ export default function SingleCoin() {
             coinType,
             pyPosition,
             address,
+            ratio,
+            slippage,
           )
         } else if (
           new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
@@ -431,6 +456,7 @@ export default function SingleCoin() {
             pyPosition,
             syPtRate,
             address,
+            ratio,
             slippage,
           )
         } else {
@@ -443,6 +469,8 @@ export default function SingleCoin() {
             coinType,
             pyPosition,
             address,
+            ratio,
+            slippage,
           )
         }
 
