@@ -234,10 +234,10 @@ export default function SingleCoin() {
         tx.object(coinConfig.version),
         syCoin,
         tx.pure.u64(
-          new Decimal(addAmount)
-            .mul(ratio)
-            .mul(1 - new Decimal(slippage).div(100).toNumber())
-            .toFixed(0),
+          new Decimal(0).toNumber()
+            // .mul(ratio)
+            // .mul(1 - new Decimal(slippage).div(100).toNumber())
+            // .toFixed(0),
         ),
         priceVoucher,
         pyPosition,
