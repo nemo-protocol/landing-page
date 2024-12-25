@@ -11,6 +11,7 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
       const moveCall = {
         target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_volo`,
         arguments: [
+          coinConfig.priceOracleConfigId,
           coinConfig.nativePool,
           coinConfig.metadataId,
           coinConfig.syStateId,
@@ -26,7 +27,44 @@ export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
     case "0x83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI": {
       const moveCall = {
         target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_spring`,
-        arguments: [coinConfig.lstInfoId, coinConfig.syStateId],
+        arguments: [
+          coinConfig.priceOracleConfigId,
+          coinConfig.lstInfoId,
+          coinConfig.syStateId,
+        ],
+        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+      }
+      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      return tx.moveCall({
+        ...moveCall,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg)),
+      })
+    }
+    case "0xf325ce1300e8dac124071d3152c5c5ee6174914f8bc2161e88329cf579246efc::afsui::AFSUI": {
+      const moveCall = {
+        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_aftermath`,
+        arguments: [
+          coinConfig.priceOracleConfigId,
+          coinConfig.aftermathSafeId,
+          coinConfig.aftermathStakedSuiVaultId,
+          coinConfig.syStateId,
+        ],
+        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+      }
+      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      return tx.moveCall({
+        ...moveCall,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg)),
+      })
+    }
+    case "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI": {
+      const moveCall = {
+        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_haSui`,
+        arguments: [
+          coinConfig.priceOracleConfigId,
+          coinConfig.haedalStakeingId,
+          coinConfig.syStateId,
+        ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
       debugLog("get_price_voucher_from_spring move call:", moveCall)
@@ -270,11 +308,7 @@ export function depositSyCoin(
 ) {
   const depositMoveCall = {
     target: `${coinConfig.nemoContractId}::sy::deposit`,
-    arguments: [
-      coinConfig.version,
-      "splitCoin",
-      coinConfig.syStateId,
-    ],
+    arguments: [coinConfig.version, "splitCoin", coinConfig.syStateId],
     typeArguments: [coinType, coinConfig.syCoinType],
   }
   debugLog("sy::deposit move call:", depositMoveCall)

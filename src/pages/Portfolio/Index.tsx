@@ -53,7 +53,7 @@ export default function Portfolio() {
                       .toLocaleString()}
                   </span>
                 </div>
-                <img src="/images/svg/balance.svg" alt="balance" className="size-3" />
+                <img src="/images/svg/balance.svg" alt="balance" className="size-[58px]" />
               </motion.div>
 
               <motion.div
@@ -86,7 +86,7 @@ export default function Portfolio() {
                     </button>
                   </div>
                 </div>
-                <img src="/images/svg/reward.svg" alt="reward" className="size-3" />
+                <img src="/images/svg/reward.svg" alt="reward" className="size-[58px]" />
               </motion.div>
             </div>
             <motion.img

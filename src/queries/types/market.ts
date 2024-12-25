@@ -68,6 +68,9 @@ export interface CoinConfig {
   ptTvl: string
   syTvl: string
   priceOracleConfigId: string
+  aftermathSafeId: string
+  haedalStakeingId: string
+  aftermathStakedSuiVaultId: string
 }
 
 export interface PortfolioItem extends CoinConfig {
