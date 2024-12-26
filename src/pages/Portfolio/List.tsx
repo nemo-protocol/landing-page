@@ -104,7 +104,6 @@ export default function List({ list, isLoading }: ListProps) {
                   {list.map((item) => (
                     <Item
                       {...item}
-                      slippage={slippage}
                       selectType={selectType}
                       key={
                         item.underlyingProtocol +

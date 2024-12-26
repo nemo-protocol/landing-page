@@ -243,7 +243,7 @@ export function splitCoinHelper(
   }
 }
 
-export const mergeLppMarketPositions = (
+export const mergeLPMarketPositions = (
   tx: Transaction,
   coinConfig: CoinConfig,
   lppMarketPositionData: LppMarketPosition[],
@@ -365,16 +365,10 @@ export const redeemSyCoin = (
   tx: Transaction,
   coinConfig: CoinConfig,
   syCoin: TransactionArgument,
-  amount: string,
-  slippage: string,
 ) => {
-  const minAmount = new Decimal(amount)
-    .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
-    .toFixed(0)
-
   const redeemMoveCall = {
     target: `${coinConfig.nemoContractId}::sy::redeem`,
-    arguments: [coinConfig.version, "syCoin", minAmount, coinConfig.syStateId],
+    arguments: [coinConfig.version, "syCoin", coinConfig.syStateId],
     typeArguments: [coinConfig.coinType, coinConfig.syCoinType],
   }
   debugLog("sy::redeem move call:", redeemMoveCall)
@@ -384,10 +378,45 @@ export const redeemSyCoin = (
     arguments: [
       tx.object(coinConfig.version),
       syCoin,
-      tx.pure.u64(minAmount),
       tx.object(coinConfig.syStateId),
     ],
   })
 
   return yieldToken
+}
+
+export const burnLp = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  lpValue: string,
+  pyPosition: TransactionArgument,
+  mergedPositionId: TransactionArgument,
+) => {
+  const burnLpMoveCall = {
+    target: `${coinConfig.nemoContractId}::market::burn_lp`,
+    arguments: [
+      coinConfig.version,
+      new Decimal(lpValue).mul(1e9).toFixed(0),
+      "pyPosition",
+      coinConfig.marketStateId,
+      "mergedPositionId",
+      "0x6",
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  }
+  debugLog("burn_lp move call:", burnLpMoveCall)
+
+  const [syCoin] = tx.moveCall({
+    ...burnLpMoveCall,
+    arguments: [
+      tx.object(coinConfig.version),
+      tx.pure.u64(new Decimal(lpValue).mul(1e9).toFixed(0)),
+      pyPosition,
+      tx.object(coinConfig.marketStateId),
+      mergedPositionId,
+      tx.object("0x6"),
+    ],
+  })
+
+  return syCoin
 }

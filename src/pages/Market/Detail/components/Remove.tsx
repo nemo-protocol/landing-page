@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { network, debugLog, DEBUG } from "@/config"
+import { network, DEBUG } from "@/config"
 import { useMemo, useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Transaction } from "@mysten/sui/transactions"
@@ -8,7 +8,12 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import { initPyPosition, mergeLppMarketPositions } from "@/lib/txHelper"
+import {
+  initPyPosition,
+  mergeLPMarketPositions,
+  redeemSyCoin,
+  burnLp,
+} from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 import { ChevronsDown } from "lucide-react"
 import AmountInput from "@/components/AmountInput"
@@ -124,7 +129,7 @@ export default function Remove() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const mergedPositionId = mergeLppMarketPositions(
+        const mergedPositionId = mergeLPMarketPositions(
           tx,
           coinConfig,
           lppMarketPositionData,
@@ -132,51 +137,9 @@ export default function Remove() {
           coinConfig.decimal,
         )
 
-        const burnLpMoveCall = {
-          target: `${coinConfig.nemoContractId}::market::burn_lp`,
-          arguments: [
-            coinConfig.version,
-            new Decimal(lpValue).mul(1e9).toFixed(0),
-            "pyPosition",
-            coinConfig.marketStateId,
-            "mergedPositionId",
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        }
-        debugLog("burn_lp move call:", burnLpMoveCall)
+        const syCoin = burnLp(tx, coinConfig, lpValue, pyPosition, mergedPositionId)
 
-        const [sy] = tx.moveCall({
-          ...burnLpMoveCall,
-          arguments: [
-            tx.object(coinConfig.version),
-            tx.pure.u64(new Decimal(lpValue).mul(1e9).toFixed(0)),
-            pyPosition,
-            tx.object(coinConfig.marketStateId),
-            mergedPositionId,
-          ],
-        })
-
-        const redeemMoveCall = {
-          target: `${coinConfig.nemoContractId}::sy::redeem`,
-          arguments: [
-            coinConfig.version,
-            "sy",
-            new Decimal(0).toFixed(0),
-            coinConfig.syStateId,
-          ],
-          typeArguments: [coinConfig.coinType, coinConfig.syCoinType],
-        }
-        debugLog("sy::redeem move call:", redeemMoveCall)
-
-        const [yieldToken] = tx.moveCall({
-          ...redeemMoveCall,
-          arguments: [
-            tx.object(coinConfig.version),
-            sy,
-            tx.pure.u64(new Decimal(0).toFixed(0)),
-            tx.object(coinConfig.syStateId),
-          ],
-        })
+        const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
         tx.transferObjects([yieldToken], address)
 

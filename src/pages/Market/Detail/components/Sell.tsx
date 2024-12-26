@@ -17,7 +17,7 @@ import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 // import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
-import { initPyPosition } from "@/lib/txHelper"
+import { initPyPosition, redeemSyCoin } from "@/lib/txHelper"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
@@ -141,24 +141,7 @@ export default function Sell() {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        const [sCoin] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::sy::redeem`,
-          arguments: [
-            tx.object(coinConfig.version),
-            syCoin,
-            // FIXME: This is a temporary fix for the slippage issue
-            // tx.pure.u64(new Decimal(redeemValue)
-            tx.pure.u64(
-              new Decimal(0)
-                .div(ratio || 0)
-                .mul(10 ** coinConfig.decimal)
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
-                .toFixed(0),
-            ),
-            tx.object(coinConfig.syStateId),
-          ],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
+        const sCoin = redeemSyCoin(tx, coinConfig, syCoin)
 
         tx.transferObjects([sCoin], address)
 

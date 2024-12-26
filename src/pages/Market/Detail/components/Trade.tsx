@@ -26,6 +26,7 @@ import {
   splitCoinHelper,
   mintSycoin,
   depositSyCoin,
+  redeemSyCoin,
 } from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
@@ -218,38 +219,7 @@ export default function Trade() {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        // tx.transferObjects([sy], address)
-        const [sCoin] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::sy::redeem`,
-          arguments: [
-            tx.object(coinConfig.version),
-            sy,
-            tx.pure.u64(
-              new Decimal(swapValue)
-                .div(ratio || 0)
-                .mul(10 ** coinConfig.decimal)
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
-                .toFixed(0),
-            ),
-            tx.object(coinConfig.syStateId),
-          ],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
-
-        debugLog("sy::redeem move call:", {
-          target: `${coinConfig.nemoContractId}::sy::redeem`,
-          arguments: [
-            coinConfig.version,
-            "sy",
-            new Decimal(swapValue)
-              .div(ratio || 0)
-              .mul(10 ** coinConfig.decimal)
-              .mul(1 - new Decimal(slippage).div(100).toNumber())
-              .toFixed(0),
-            coinConfig.syStateId,
-          ],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
+        const sCoin = redeemSyCoin(tx, coinConfig, sy)
 
         tx.transferObjects([sCoin], address)
 

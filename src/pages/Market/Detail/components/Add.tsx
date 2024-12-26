@@ -234,10 +234,10 @@ export default function SingleCoin() {
         tx.object(coinConfig.version),
         syCoin,
         tx.pure.u64(
-          new Decimal(0).toNumber()
-            // .mul(ratio)
-            // .mul(1 - new Decimal(slippage).div(100).toNumber())
-            // .toFixed(0),
+          new Decimal(0).toNumber(),
+          // .mul(ratio)
+          // .mul(1 - new Decimal(slippage).div(100).toNumber())
+          // .toFixed(0),
         ),
         priceVoucher,
         pyPosition,
@@ -326,13 +326,7 @@ export default function SingleCoin() {
       ],
     })
 
-    const yieldToken = redeemSyCoin(
-      tx,
-      coinConfig,
-      remainingSyCoin,
-      amounts.sy,
-      slippage,
-    )
+    const yieldToken = redeemSyCoin(tx, coinConfig, remainingSyCoin)
     tx.transferObjects([yieldToken, marketPosition], address)
   }
 
@@ -369,7 +363,6 @@ export default function SingleCoin() {
         "priceVoucher",
         "pyPosition",
         coinConfig.pyStateId,
-        coinConfig.yieldFactoryConfigId,
         coinConfig.marketFactoryConfigId,
         coinConfig.marketStateId,
         "0x6",
@@ -383,15 +376,15 @@ export default function SingleCoin() {
       arguments: [
         tx.object(coinConfig.version),
         syCoin,
-        tx.pure.u64(
-          new Decimal(addAmount)
-            .mul(1 - new Decimal(slippage).div(100).toNumber())
-            .toFixed(0),
-        ),
+        // tx.pure.u64(
+        //   new Decimal(addAmount)
+        //     .mul(1 - new Decimal(slippage).div(100).toNumber())
+        //     .toFixed(0),
+        // ),
+        tx.pure.u64(0),
         priceVoucher,
         pyPosition,
         tx.object(coinConfig.pyStateId),
-        tx.object(coinConfig.yieldFactoryConfigId),
         tx.object(coinConfig.marketFactoryConfigId),
         tx.object(coinConfig.marketStateId),
         tx.object("0x6"),

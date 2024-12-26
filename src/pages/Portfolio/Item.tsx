@@ -20,7 +20,13 @@ import {
 import { network, debugLog, DEBUG } from "@/config"
 import usePortfolio from "@/hooks/usePortfolio"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import { getPriceVoucher, redeemSyCoin } from "@/lib/txHelper"
+import {
+  getPriceVoucher,
+  redeemSyCoin,
+  initPyPosition,
+  mergeLPMarketPositions,
+  burnLp,
+} from "@/lib/txHelper"
 
 export default function Item({
   itemKey,
@@ -29,12 +35,10 @@ export default function Item({
   ytReward,
   lpReward,
   selectType,
-  slippage,
   ...coinConfig
 }: PortfolioItem & {
   selectType: "pt" | "yt" | "lp" | "all"
   itemKey: string
-  slippage: string
 }) {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
@@ -191,13 +195,7 @@ export default function Item({
           ],
         })
 
-        const yieldToken = redeemSyCoin(
-          tx,
-          coinConfig,
-          syCoin,
-          ytBalance,
-          slippage,
-        )
+        const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
         tx.transferObjects([yieldToken], address)
 
@@ -331,46 +329,24 @@ export default function Item({
         let created = false
         if (!pyPositionData?.length) {
           created = true
-          const moveCall = {
-            target: `${coinConfig?.nemoContractId}::py::init_py_position`,
-            arguments: [coinConfig?.version, coinConfig?.pyStateId],
-            typeArguments: [coinConfig?.syCoinType],
-          }
-          debugLog("init_py_position move call:", moveCall)
-
-          pyPosition = tx.moveCall({
-            ...moveCall,
-            arguments: moveCall.arguments.map((arg) => tx.object(arg)),
-          })[0]
+          pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const burnMoveCall = {
-          target: `${coinConfig?.nemoContractId}::market::burn_lp`,
-          arguments: [
-            coinConfig?.version,
-            address,
-            new Decimal(lpCoinBalance).mul(1e9).toFixed(0),
-            "pyPosition",
-            coinConfig?.marketStateId,
-            lpMarketPositionData[0].id.id,
-          ],
-          typeArguments: [coinConfig?.syCoinType],
-        }
-        debugLog("burn_lp move call:", burnMoveCall)
+        const mergedPositionId = mergeLPMarketPositions(
+          tx,
+          coinConfig,
+          lpMarketPositionData,
+          lpCoinBalance,
+          coinConfig.decimal,
+        )
 
-        tx.moveCall({
-          ...burnMoveCall,
-          arguments: [
-            tx.object(coinConfig?.version),
-            tx.pure.address(address),
-            tx.pure.u64(new Decimal(lpCoinBalance).mul(1e9).toFixed(0)),
-            pyPosition,
-            tx.object(coinConfig?.marketStateId),
-            tx.object(lpMarketPositionData[0].id.id),
-          ],
-        })
+        const syCoin = burnLp(tx, coinConfig, lpCoinBalance, pyPosition, mergedPositionId)
+
+        const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
+
+        tx.transferObjects([yieldToken], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -378,7 +354,6 @@ export default function Item({
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
-          // chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
@@ -403,7 +378,19 @@ export default function Item({
               {status}
             </AlertDialogTitle>
             <AlertDialogDescription className="flex flex-col items-center">
-              {status === "Success" ? <img src="/images/svg/success.svg" alt="success" className="size-10" /> : <img src="/images/svg/fail.svg" alt="fail" className="size-10" />}
+              {status === "Success" ? (
+                <img
+                  src="/images/svg/success.svg"
+                  alt="success"
+                  className="size-10"
+                />
+              ) : (
+                <img
+                  src="/images/svg/fail.svg"
+                  alt="fail"
+                  className="size-10"
+                />
+              )}
               {status === "Success" && (
                 <div className="py-2 flex flex-col items-center">
                   <p className=" text-white/50">Transaction submitted!</p>
