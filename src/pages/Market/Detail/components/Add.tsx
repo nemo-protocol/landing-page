@@ -312,12 +312,13 @@ export default function SingleCoin() {
         tx.object(coinConfig.version),
         syCoin,
         tx.pure.u64(amounts.pt),
-        tx.pure.u64(
-          new Decimal(amounts.pt)
-            .mul(ratio)
-            .mul(1 - new Decimal(slippage).div(100).toNumber())
-            .toFixed(0),
-        ),
+        // tx.pure.u64(
+        //   new Decimal(amounts.pt)
+        //     .mul(ratio)
+        //     .mul(1 - new Decimal(slippage).div(100).toNumber())
+        //     .toFixed(0),
+        // ),
+        tx.pure.u64(0),
         priceVoucherForMintLp,
         pyPosition,
         tx.object(coinConfig.pyStateId),
