@@ -286,7 +286,11 @@ export const mergeLPMarketPositions = (
   for (let i = 1; i < positionsToMerge.length; i++) {
     const joinMoveCall = {
       target: `${coinConfig.nemoContractId}::market_position::join`,
-      arguments: [positionsToMerge[0].id.id, positionsToMerge[i].id.id],
+      arguments: [
+        positionsToMerge[0].id.id,
+        positionsToMerge[i].id.id,
+        "0x6",
+      ],
       typeArguments: [],
     }
     debugLog("market_position::join move call:", joinMoveCall)
