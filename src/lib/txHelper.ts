@@ -219,11 +219,11 @@ export function splitCoinHelper(
       return tx.splitCoins(tx.object(coinData[0].coinObjectId), amounts)
     }
 
-    const accumulatedBalance = new Decimal(0)
     const coinsToUse: string[] = []
+    let accumulatedBalance = new Decimal(0)
 
     for (const coin of coinData) {
-      accumulatedBalance.add(coin.balance)
+      accumulatedBalance = accumulatedBalance.add(coin.balance)
       coinsToUse.push(coin.coinObjectId)
 
       if (accumulatedBalance.gte(totalTargetAmount)) {
@@ -286,11 +286,7 @@ export const mergeLPMarketPositions = (
   for (let i = 1; i < positionsToMerge.length; i++) {
     const joinMoveCall = {
       target: `${coinConfig.nemoContractId}::market_position::join`,
-      arguments: [
-        positionsToMerge[0].id.id,
-        positionsToMerge[i].id.id,
-        "0x6",
-      ],
+      arguments: [positionsToMerge[0].id.id, positionsToMerge[i].id.id, "0x6"],
       typeArguments: [],
     }
     debugLog("market_position::join move call:", joinMoveCall)

@@ -355,7 +355,7 @@ export default function Invest() {
           <div className="flex items-center justify-between mt-6">
             <span>Fixed APY</span>
             <span className="underline">
-              {coinConfig?.ptApy ? `${coinConfig.ptApy} %` : "--"}
+              {coinConfig?.ptApy ? `${new Decimal(coinConfig.ptApy).mul(100).toFixed(2)} %` : "--"}
             </span>
           </div>
           <div className="flex items-center justify-between mt-6 h-[28px]">
