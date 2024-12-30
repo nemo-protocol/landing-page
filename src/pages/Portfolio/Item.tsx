@@ -186,7 +186,7 @@ export default function Item({
         const [syCoin] = tx.moveCall({
           ...redeemMoveCall,
           arguments: [
-            tx.pure.address(address),
+            tx.object(coinConfig.version),
             pyPosition,
             tx.object(coinConfig?.pyStateId),
             priceVoucher,
