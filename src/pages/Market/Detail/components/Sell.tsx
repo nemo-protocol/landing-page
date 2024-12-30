@@ -17,7 +17,13 @@ import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 // import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
-import { initPyPosition, redeemSyCoin } from "@/lib/txHelper"
+import {
+  initPyPosition,
+  redeemSyCoin,
+  getPriceVoucher,
+  swapExactPtForSy,
+  swapExactYtForSy,
+} from "@/lib/txHelper"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import BalanceInput from "@/components/BalanceInput"
 import ActionButton from "@/components/ActionButton"
@@ -112,37 +118,17 @@ export default function Sell() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const [priceVoucher] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
-          arguments: [
-            tx.object(coinConfig.providerVersion),
-            tx.object(coinConfig.providerMarket),
-            tx.object(coinConfig.syStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
-        })
+        const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        const [syCoin] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::market::swap_exact_${tokenType}_for_sy`,
-          arguments: [
-            tx.object(coinConfig.version),
-            tx.pure.u64(
-              new Decimal(redeemValue).mul(10 ** coinConfig.decimal).toFixed(0),
-            ),
-            pyPosition,
-            tx.object(coinConfig.pyStateId),
-            priceVoucher,
-            tx.object(coinConfig.yieldFactoryConfigId),
-            tx.object(coinConfig.marketFactoryConfigId),
-            tx.object(coinConfig!.marketStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        })
-
+        const swapFn = tokenType === "pt" ? swapExactPtForSy : swapExactYtForSy
+        const syCoin = swapFn(
+          tx,
+          coinConfig,
+          redeemValue,
+          pyPosition,
+          priceVoucher,
+        )
         const sCoin = redeemSyCoin(tx, coinConfig, syCoin)
-
         tx.transferObjects([sCoin], address)
 
         if (created) {

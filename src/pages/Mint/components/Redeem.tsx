@@ -6,7 +6,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 import { parseErrorMessage } from "@/lib/errorMapping"
-import { initPyPosition } from "@/lib/txHelper"
+import { initPyPosition, getPriceVoucher } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 
@@ -106,16 +106,7 @@ export default function Redeem({
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const [priceVoucher] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
-          arguments: [
-            tx.object(coinConfig.providerVersion),
-            tx.object(coinConfig.providerMarket),
-            tx.object(coinConfig.syStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
-        })
+        const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
         const [sy] = tx.moveCall({
           target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,

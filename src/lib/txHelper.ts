@@ -420,3 +420,56 @@ export const burnLp = (
 
   return syCoin
 }
+
+export const swapExactPtForSy = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  redeemValue: string,
+  pyPosition: TransactionArgument,
+  priceVoucher: TransactionArgument,
+) => {
+  const [syCoin] = tx.moveCall({
+    target: `${coinConfig.nemoContractId}::market::swap_exact_pt_for_sy`,
+    arguments: [
+      tx.object(coinConfig.version),
+      tx.pure.u64(
+        new Decimal(redeemValue).mul(10 ** coinConfig.decimal).toFixed(0),
+      ),
+      pyPosition,
+      tx.object(coinConfig.pyStateId),
+      priceVoucher,
+      tx.object(coinConfig.marketFactoryConfigId),
+      tx.object(coinConfig.marketStateId),
+      tx.object("0x6"),
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  })
+  return syCoin
+}
+
+export const swapExactYtForSy = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  redeemValue: string,
+  pyPosition: TransactionArgument,
+  priceVoucher: TransactionArgument,
+) => {
+  const [syCoin] = tx.moveCall({
+    target: `${coinConfig.nemoContractId}::market::swap_exact_yt_for_sy`,
+    arguments: [
+      tx.object(coinConfig.version),
+      tx.pure.u64(
+        new Decimal(redeemValue).mul(10 ** coinConfig.decimal).toFixed(0),
+      ),
+      pyPosition,
+      tx.object(coinConfig.pyStateId),
+      priceVoucher,
+      tx.object(coinConfig.yieldFactoryConfigId),
+      tx.object(coinConfig.marketFactoryConfigId),
+      tx.object(coinConfig.marketStateId),
+      tx.object("0x6"),
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  })
+  return syCoin
+}

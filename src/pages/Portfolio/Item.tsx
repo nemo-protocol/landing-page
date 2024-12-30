@@ -245,19 +245,7 @@ export default function Item({
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const [priceVoucher] = tx.moveCall({
-          target: `${coinConfig?.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
-          arguments: [
-            tx.object(coinConfig?.providerVersion),
-            tx.object(coinConfig?.providerMarket),
-            tx.object(coinConfig?.syStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [
-            coinConfig?.syCoinType,
-            coinConfig?.underlyingCoinType,
-          ],
-        })
+        const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
         const swapMoveCall = {
           target: `${coinConfig?.nemoContractId}::market::swap_exact_pt_for_sy`,
