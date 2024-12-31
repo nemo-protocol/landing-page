@@ -1,9 +1,8 @@
 import Decimal from "decimal.js"
-import { network, debugLog, DEBUG } from "@/config"
+import { DEBUG, debugLog, network } from "@/config"
 import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
-// import { useCurrentAccount } from "@mysten/dapp-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import { useCoinConfig, useQuerySwapRatio } from "@/queries"
 import {
@@ -14,19 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-// import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import useCoinData from "@/hooks/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { formatDecimalValue } from "@/lib/utils"
 import {
+  depositSyCoin,
   getPriceVoucher,
   initPyPosition,
-  splitCoinHelper,
   mintSycoin,
-  depositSyCoin,
   redeemSyCoin,
+  splitCoinHelper,
 } from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
