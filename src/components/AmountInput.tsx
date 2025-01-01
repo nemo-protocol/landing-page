@@ -6,18 +6,19 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 interface AmountInputProps {
   price?: string
+  error?: string
   amount: string
   decimal?: number
   coinName?: string
   coinLogo?: string
-  isLoading: boolean
   className?: string
-  isConnected: boolean
-  isConfigLoading: boolean
-  isBalanceLoading: boolean
-  coinBalance?: number | string
+  isLoading?: boolean
+  coinBalance?: string
+  isConnected?: boolean
+  isConfigLoading?: boolean
+  isBalanceLoading?: boolean
+  coinNameComponent?: React.ReactNode
   onChange: (value: string) => void
-  coinNameComponent: React.ReactNode
 }
 
 const formatDecimalValue = (value: Decimal, decimalPlaces: number): string => {
@@ -26,102 +27,101 @@ const formatDecimalValue = (value: Decimal, decimalPlaces: number): string => {
     : value.toString()
 }
 
-const AmountInput: React.FC<AmountInputProps> = ({
+export default function AmountInput({
   price,
+  error,
   amount,
-  onChange,
-  coinLogo,
-  coinName,
-  isLoading,
-  className,
   decimal = 0,
+  coinName,
+  coinLogo,
+  isLoading,
   coinBalance,
   isConnected,
+  coinNameComponent,
   isConfigLoading,
   isBalanceLoading,
-  coinNameComponent,
-}) => {
+  className,
+  onChange,
+}: AmountInputProps) {
   return (
-    <div
-      className={cn(
-        "space-y-3.5 w-full rounded-lg border border-[#2D2D48] px-3 py-4",
+    <div className="w-full">
+      <div className={cn(
+        "rounded-lg border border-[#2D2D48] px-3 py-4",
         className
-      )}
-    >
-      <div className="flex items-center justify-between h-12">
-        <div className="flex items-center rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-          <div className="flex items-center gap-x-4">
-            {isConfigLoading ? (
-              <Skeleton className="size-12 rounded-full bg-[#2D2D48]" />
-            ) : (
-              <img src={coinLogo} alt={coinName} className="size-12" />
-            )}
+      )}>
+        <div className="flex items-center justify-between h-12">
+          <div className="flex items-center rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
+            <div className="flex items-center gap-x-4">
+              {isConfigLoading ? (
+                <Skeleton className="size-12 rounded-full bg-[#2D2D48]" />
+              ) : (
+                <img src={coinLogo} alt={coinName} className="size-12" />
+              )}
 
-            <div className="space-y-1">
-              <div className="h-6">
-                {isConfigLoading ? (
-                  <Skeleton className="h-full w-12 bg-[#2D2D48]" />
-                ) : (
-                  coinNameComponent
-                )}
-              </div>
-              <div>
-                {isBalanceLoading || isConfigLoading ? (
-                  <Skeleton className="h-4 w-40 bg-[#2D2D48]" />
-                ) : (
-                  <div
-                    className="flex items-center gap-x-1 hover:cursor-pointer hover:underline"
-                    onClick={() => {
-                      if (isConnected && coinBalance) {
-                        let adjustedBalance = new Decimal(coinBalance)
-                        if (coinName === "SUI") {
-                          adjustedBalance = adjustedBalance.minus(0.1)
+              <div className="space-y-1">
+                <div className="h-6">
+                  {isConfigLoading ? (
+                    <Skeleton className="h-full w-12 bg-[#2D2D48]" />
+                  ) : (
+                    coinNameComponent
+                  )}
+                </div>
+                <div>
+                  {isBalanceLoading || isConfigLoading ? (
+                    <Skeleton className="h-4 w-40 bg-[#2D2D48]" />
+                  ) : (
+                    <div
+                      className="flex items-center gap-x-1 hover:cursor-pointer hover:underline"
+                      onClick={() => {
+                          if (isConnected && coinBalance ) {
+                          let adjustedBalance = new Decimal(coinBalance)
+                          if (coinName === "SUI") {
+                            adjustedBalance = adjustedBalance.minus(0.1)
+                          }
+                            onChange(formatDecimalValue(adjustedBalance, decimal))
                         }
-                        if (adjustedBalance.greaterThanOrEqualTo(0)) {
-                          onChange(formatDecimalValue(adjustedBalance, decimal))
-                        } else {
-                          console.warn("Gas Insufficient")
-                        }
-                      }
-                    }}
-                  >
-                    <Wallet className="size-3.5" />
-                    {isConnected
-                      ? `${Number(coinBalance).toFixed(decimal)} ${coinName}`
-                      : "--"}
-                  </div>
-                )}
+                      }}
+                    >
+                      <Wallet className="size-3.5" />
+                      {isConnected
+                        ? `${Number(coinBalance).toFixed(decimal)} ${coinName}`
+                        : "--"}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="grow space-y-1">
-          <input
-            min={0}
-            type="number"
-            value={amount}
-            placeholder={"0"}
-            onChange={(e) => onChange && onChange(e.target.value)}
-            className="bg-transparent outline-none grow text-right min-w-0 placeholder:text-3xl p-0 text-3xl font-bold w-full"
-          />
-          <div className="flex items-end">
-            {amount ? (
-              isLoading ? (
-                <Skeleton className="h-4 w-20 ml-auto bg-[#2D2D48]" />
+          <div className="grow space-y-1">
+            <input
+              min={0}
+              type="number"
+              value={amount}
+              placeholder={"0"}
+              onChange={(e) => onChange && onChange(e.target.value)}
+              className="bg-transparent outline-none grow text-right min-w-0 placeholder:text-3xl p-0 text-3xl font-bold w-full"
+            />
+            <div className="flex items-end">
+              {amount ? (
+                isLoading ? (
+                  <Skeleton className="h-4 w-20 ml-auto bg-[#2D2D48]" />
+                ) : (
+                  <span className="text-xs text-white/80 ml-auto">
+                      $
+                      {formatDecimalValue(new Decimal(price || 0).mul(amount), 2)}
+                  </span>
+                )
               ) : (
-                <span className="text-xs text-white/80 ml-auto">
-                  ${formatDecimalValue(new Decimal(price || 0).mul(amount), 2)}
-                </span>
-              )
-            ) : (
-              <span className="text-xs text-white/80 ml-auto">$0</span>
-            )}
+                <span className="text-xs text-white/80 ml-auto">$0</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
+      {error && (
+        <div className="mt-2 text-sm text-red-500 break-words">{error}</div>
+      )}
     </div>
   )
 }
-
-export default AmountInput

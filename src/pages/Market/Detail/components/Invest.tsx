@@ -11,8 +11,8 @@ import { Transaction } from "@mysten/sui/transactions"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { Info, ChevronsDown } from "lucide-react"
-import { formatDecimalValue, safeDivide } from "@/lib/utils"
-import { useCoinConfig, useQuerySwapRatio } from "@/queries"
+import { formatDecimalValue } from "@/lib/utils"
+import { useCoinConfig } from "@/queries"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import {
   getPriceVoucher,
@@ -41,6 +41,7 @@ import { debugLog } from "@/config"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
+import { useInvestRatios } from "@/hooks/useInvestRatios"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -89,21 +90,10 @@ export default function Invest() {
     refetch,
     data: swapRatio,
     isFetching: isRatioFetching,
-  } = useQuerySwapRatio(coinConfig?.marketStateId, "pt", "buy")
+  } = useInvestRatios(coinConfig)
 
+  const ratio = useMemo(() => swapRatio?.ratio, [swapRatio])
   const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
-
-  const ratio = useMemo(() => {
-    if (swapRatio) {
-      if (tokenType === 0 && conversionRate && swapRatio.exchangeRate) {
-        return new Decimal(swapRatio.exchangeRate)
-          .div(safeDivide(conversionRate))
-          .toString()
-      } else {
-        return swapRatio.exchangeRate
-      }
-    }
-  }, [swapRatio, tokenType, conversionRate])
 
   const { data: pyPositionData } = usePyPositionData(
     address,
@@ -133,7 +123,7 @@ export default function Invest() {
         .div(10 ** decimal)
         .toFixed(decimal)
     }
-    return 0
+    return "0"
   }, [coinData, decimal])
 
   const insufficientBalance = useMemo(

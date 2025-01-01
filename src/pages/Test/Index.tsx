@@ -5,14 +5,13 @@ import PoolSelect from "@/components/PoolSelect"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQueryButton, { QUERY_CONFIGS } from "@/hooks/useQueryButton"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "@/hooks/types"
+import type { DebugInfo, QueryInput } from "@/hooks/types"
 import { ContractError } from "@/hooks/types"
 
 interface ContractCall {
   name: string
   timestamp: number
   result?: {
-    input: string
     output: string | null
     rawOutput: string | null
     coinName: string | undefined
@@ -69,7 +68,12 @@ function QueryButton({
     if (!coinConfig) return
     const timestamp = Date.now()
 
-    const inputAmount = formatAmount(amount, "mul")
+    let input: QueryInput
+    if (config.target === "get_lp_out_from_mint_lp") {
+      input = [amount, amount]
+    } else {
+      input = formatAmount(amount, "mul")
+    }
 
     const callInfo: ContractCall = {
       name: config.target,
@@ -77,7 +81,7 @@ function QueryButton({
     }
     onQuery(callInfo)
 
-    await query(inputAmount)
+    await query(input)
   }
 
   useEffect(() => {
@@ -93,14 +97,11 @@ function QueryButton({
           updatedCall = {
             ...matchingCall,
             result: {
-              input: customAmount + " Input",
               output: null,
               rawOutput: null,
               coinName: coinConfig.coinName,
-              error:
-                error instanceof ContractError ? error.message : String(error),
-              debugInfo:
-                error instanceof ContractError ? error.debugInfo : undefined,
+              error: error instanceof ContractError ? error.message : String(error),
+              debugInfo: error instanceof ContractError ? error.debugInfo : undefined,
             },
           }
         } else if (data) {
@@ -110,8 +111,7 @@ function QueryButton({
             updatedCall = {
               ...matchingCall,
               result: {
-                input: customAmount + " Input",
-                output: formatAmount(output) + " Output",
+                output: formatAmount(output),
                 rawOutput: output,
                 coinName: coinConfig.coinName,
                 debugInfo: debugInfo as DebugInfo,
@@ -168,7 +168,7 @@ function QueryButton({
               onClick={() => handleQuery("1000000")}
               disabled={!coinConfig || !address || isLoading}
             >
-              0.001 Input
+              {config.target === "get_lp_out_from_mint_lp" ? "1:1 Input" : "0.001 Input"}
             </button>
 
             <div className="flex h-10 bg-black/20 rounded-xl overflow-hidden">
@@ -177,7 +177,7 @@ function QueryButton({
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 className="w-20 px-3 bg-transparent text-white/90 text-sm focus:outline-none disabled:opacity-50"
-                placeholder="Amount"
+                placeholder={config.target === "get_lp_out_from_mint_lp" ? "1:1" : "Amount"}
                 disabled={!coinConfig || !address}
               />
               <button
@@ -557,12 +557,6 @@ export default function Test() {
 
                     {call.result ? (
                       <div className="text-white/80 space-y-2 animate-fade-in">
-                        <div className="flex justify-between">
-                          <span className="text-white/60">Input:</span>
-                          <span className="text-right">
-                            {call.result.input} ({call.result.coinName})
-                          </span>
-                        </div>
                         {call.result.error ? (
                           <div className="text-red-500 break-all whitespace-pre-wrap animate-fade-in">
                             Error: {String(call.result.error)}
@@ -572,7 +566,7 @@ export default function Test() {
                             <div className="flex justify-between">
                               <span className="text-white/60">Output:</span>
                               <span className="text-right">
-                                {call.result.output} ({call.result.coinName})
+                                {call.result.output}
                               </span>
                             </div>
                           </div>

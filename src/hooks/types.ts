@@ -21,4 +21,6 @@ export class ContractError extends Error {
     super(message)
     this.debugInfo = debugInfo
   }
-} 
+}
+
+export type QueryInput = string | string[]

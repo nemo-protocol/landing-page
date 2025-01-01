@@ -6,6 +6,7 @@ import type { CoinConfig } from "@/queries/types/market"
 import { getPriceVoucher } from "@/lib/txHelper"
 import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
+import type { QueryInput } from "./types"
 
 export default function useQueryPtOutBySyInWithVoucher(
   coinConfig?: CoinConfig,
@@ -13,8 +14,10 @@ export default function useQueryPtOutBySyInWithVoucher(
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
-  const mutation = useMutation({
-    mutationFn: async (inputAmount: string) => {
+
+  return useMutation({
+    mutationFn: async (input: QueryInput): Promise<[string] | [string, DebugInfo]> => {
+      const inputAmount = Array.isArray(input) ? input[0] : input
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -90,11 +93,8 @@ export default function useQueryPtOutBySyInWithVoucher(
       debugInfo.parsedOutput = outputAmount.toString()
 
       const returnValue = outputAmount.toString()
-      console.log("Returning:", returnValue)
 
       return debug ? [returnValue, debugInfo] : [returnValue]
     },
   })
-
-  return mutation
 }

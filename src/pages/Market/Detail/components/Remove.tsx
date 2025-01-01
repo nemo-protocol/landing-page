@@ -91,7 +91,7 @@ export default function Remove() {
         .div(10 ** (coinConfig?.decimal ?? 0))
         .toFixed(9)
     }
-    return 0
+    return "0"
   }, [coinConfig?.decimal, lppMarketPositionData])
 
   const insufficientBalance = useMemo(

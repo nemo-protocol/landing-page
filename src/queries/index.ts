@@ -4,13 +4,16 @@ import {
   CoinInfo,
   CoinConfig,
   FixedReturnItem,
-  PortfolioItem, PointItem
+  PortfolioItem,
+  PointItem,
 } from "./types/market"
 
 function getCoinInfoList(name = "", address = "") {
   return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo")
     .get({ name, address })
-    .then(response => response.filter(coin => parseInt(coin.maturity) > Date.now()));
+    .then((response) =>
+      response.filter((coin) => parseInt(coin.maturity) > Date.now()),
+    )
 }
 
 function getFixedReturnInfos() {
@@ -18,20 +21,16 @@ function getFixedReturnInfos() {
 }
 
 function getRewardList() {
-  return nemoApi<PointItem[]>("/api/v1/points/page").get(
-    {
-      pageSize: 100,
-    }
-  )
+  return nemoApi<PointItem[]>("/api/v1/points/page").get({
+    pageSize: 100,
+  })
 }
 
 function getRewardWithAddress(address?: string) {
-  const userAddress = address || "0x0";
-  return nemoApi<PointItem[]>("/api/v1/points/page").get(
-    {
-      userAddress
-    }
-  )
+  const userAddress = address || "0x0"
+  return nemoApi<PointItem[]>("/api/v1/points/page").get({
+    userAddress,
+  })
 }
 
 export function useQueryFixedReturnInfos() {
@@ -74,7 +73,7 @@ async function getMintLpAmount(
   return amount
 }
 
-async function getSwapRatio(
+export async function getSwapRatio(
   marketStateId: string,
   tokenType: string,
   swapType = "buy",

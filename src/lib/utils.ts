@@ -13,17 +13,29 @@ export const truncateStr = (str: string, charsPerSide = 4) => {
   return `${str.slice(0, charsPerSide)}...${str.slice(-charsPerSide)}`
 }
 
-export const debounce = <T extends (...args: string[]) => void>(
+export const debounce = <T extends (...args: Parameters<T>) => ReturnType<T>>(
   func: T,
   delay: number,
-): ((...args: Parameters<T>) => void) => {
-  let timeout: ReturnType<typeof setTimeout>
-  return (...args: Parameters<T>) => {
-    if (timeout) clearTimeout(timeout)
+): T & { cancel: () => void } => {
+  let timeout: NodeJS.Timeout | null = null
+
+  const debounced = (...args: Parameters<T>) => {
+    if (timeout) {
+      clearTimeout(timeout)
+    }
     timeout = setTimeout(() => {
       func(...args)
     }, delay)
   }
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout)
+      timeout = null
+    }
+  }
+
+  return debounced as T & { cancel: () => void }
 }
 
 export const formatDecimalValue = (

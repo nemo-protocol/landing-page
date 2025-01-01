@@ -3,18 +3,20 @@ import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
-import { ContractError } from "./types"
-import type { DebugInfo } from "./types"
 import { getPriceVoucher } from "@/lib/txHelper"
+import type { DebugInfo, QueryInput } from "./types"
+import { ContractError } from "./types"
 
-export default function useQuerySyInByYtOutWithPrice(
+export default function useQueryYtOutBySyInWithVoucher(
   coinConfig?: CoinConfig,
   debug: boolean = false,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
-  const mutation = useMutation({
-    mutationFn: async (inputAmount: string) => {
+
+  return useMutation({
+    mutationFn: async (input: QueryInput): Promise<[string] | [string, DebugInfo]> => {
+      const inputAmount = Array.isArray(input) ? input[0] : input
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -24,13 +26,16 @@ export default function useQuerySyInByYtOutWithPrice(
 
       const debugInfo: DebugInfo = {
         moveCall: {
-          target: `${coinConfig.nemoContractId}::market::get_sy_in_for_exact_yt_out_with_price_voucher`,
+          target: `${coinConfig.nemoContractId}::market::get_yt_out_for_exact_sy_in_with_price_voucher`,
           arguments: [
-            { name: "net_yt_out", value: inputAmount },
-            { name: "max_sy_in", value: "0" },
+            { name: "net_sy_in", value: inputAmount },
+            { name: "min_yt_out", value: "0" },
             { name: "price_voucher", value: "priceVoucher" },
             { name: "py_state_id", value: coinConfig.pyStateId },
-            { name: "market_factory_config_id", value: coinConfig.marketFactoryConfigId },
+            {
+              name: "market_factory_config_id",
+              value: coinConfig.marketFactoryConfigId,
+            },
             { name: "market_state_id", value: coinConfig.marketStateId },
             { name: "clock", value: "0x6" },
           ],
@@ -64,9 +69,10 @@ export default function useQuerySyInByYtOutWithPrice(
         }),
       })
 
+      // Record raw result
       debugInfo.rawResult = {
         error: result?.error,
-        results: result?.results
+        results: result?.results,
       }
 
       if (result?.error) {
@@ -74,7 +80,7 @@ export default function useQuerySyInByYtOutWithPrice(
       }
 
       if (!result?.results?.[1]?.returnValues?.[0]) {
-        const message = "Failed to get SY amount"
+        const message = "Failed to get YT amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
@@ -85,11 +91,9 @@ export default function useQuerySyInByYtOutWithPrice(
 
       debugInfo.parsedOutput = outputAmount.toString()
 
-      return debug
-        ? [outputAmount.toString(), debugInfo]
-        : [outputAmount.toString()]
-    }
-  })
+      const returnValue = outputAmount.toString()
 
-  return mutation
-}
+      return debug ? [returnValue, debugInfo] : [returnValue]
+    },
+  })
+} 

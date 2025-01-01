@@ -3,18 +3,24 @@ import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
-import { getPriceVoucher } from "@/lib/txHelper"
-import type { DebugInfo } from "./types"
+import type { DebugInfo, QueryInput } from "./types"
 import { ContractError } from "./types"
 
-export default function useQuerySyOutByPtInWithVoucher(
+export default function useQueryLpOutFromMintLp(
   coinConfig?: CoinConfig,
   debug: boolean = false,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
-  const mutation = useMutation({
-    mutationFn: async (inputAmount: string) => {
+
+  return useMutation({
+    mutationFn: async (
+      input: QueryInput,
+    ): Promise<[string] | [string, DebugInfo]> => {
+      if (!Array.isArray(input)) {
+        throw new Error("LP mint requires both PT and SY values")
+      }
+      const [ptValue, syValue] = input
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -24,37 +30,25 @@ export default function useQuerySyOutByPtInWithVoucher(
 
       const debugInfo: DebugInfo = {
         moveCall: {
-          target: `${coinConfig.nemoContractId}::market::get_sy_out_for_exact_pt_in_with_price_voucher`,
+          target: `${coinConfig.nemoContractId}::market::get_lp_out_from_mint_lp`,
           arguments: [
-            { name: "net_pt_in", value: inputAmount },
-            { name: "min_sy_out", value: "0" },
-            { name: "price_voucher", value: "priceVoucher" },
-            { name: "py_state_id", value: coinConfig.pyStateId },
-            {
-              name: "market_factory_config_id",
-              value: coinConfig.marketFactoryConfigId,
-            },
+            { name: "pt_value", value: ptValue },
+            { name: "sy_value", value: syValue },
             { name: "market_state_id", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
           ],
           typeArguments: [coinConfig.syCoinType],
         },
       }
 
       const tx = new Transaction()
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
       tx.setSender(address)
 
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
-          tx.pure.u64(inputAmount),
-          tx.pure.u64("0"),
-          priceVoucher,
-          tx.object(coinConfig.pyStateId),
-          tx.object(coinConfig.marketFactoryConfigId),
+          tx.pure.u64(ptValue),
+          tx.pure.u64(syValue),
           tx.object(coinConfig.marketStateId),
-          tx.object("0x6"),
         ],
         typeArguments: debugInfo.moveCall.typeArguments,
       })
@@ -77,23 +71,21 @@ export default function useQuerySyOutByPtInWithVoucher(
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.results?.[1]?.returnValues?.[0]) {
-        const message = "Failed to get SY amount"
+      if (!result?.results?.[0]?.returnValues?.[0]) {
+        const message = "Failed to get LP amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
       const outputAmount = bcs.U64.parse(
-        new Uint8Array(result.results[1].returnValues[0][0]),
+        new Uint8Array(result.results[0].returnValues[0][0]),
       )
 
       debugInfo.parsedOutput = outputAmount.toString()
 
-      return debug
-        ? [outputAmount.toString(), debugInfo]
-        : [outputAmount.toString()]
+      const returnValue = outputAmount.toString()
+
+      return debug ? [returnValue, debugInfo] : [returnValue]
     },
   })
-
-  return mutation
 }

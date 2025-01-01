@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
 import { Transaction } from "@mysten/sui/transactions"
-import { useCoinConfig, useQuerySwapRatio } from "@/queries"
+import { useCoinConfig } from "@/queries"
 import {
   Select,
   SelectContent,
@@ -34,6 +34,7 @@ import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
+import { useTradeRatios } from "@/hooks/useTradeRatios"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -80,21 +81,10 @@ export default function Trade() {
     refetch,
     data: swapRatio,
     isFetching: isRatioFetching,
-  } = useQuerySwapRatio(coinConfig?.marketStateId, "yt", "buy")
+  } = useTradeRatios(coinConfig)
 
   const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
-
-  const ratio = useMemo(() => {
-    if (swapRatio) {
-      if (tokenType === 0) {
-        return new Decimal(swapRatio.exchangeRate)
-          .div(swapRatio.conversionRate)
-          .toString()
-      } else {
-        return swapRatio.exchangeRate
-      }
-    }
-  }, [swapRatio, tokenType])
+  const ratio = useMemo(() => swapRatio?.ratio, [swapRatio])
 
   const { data: pyPositionData } = usePyPositionData(
     address,
@@ -124,7 +114,7 @@ export default function Trade() {
         .div(10 ** decimal)
         .toFixed(decimal)
     }
-    return 0
+    return "0"
   }, [coinData, decimal])
 
   const insufficientBalance = useMemo(

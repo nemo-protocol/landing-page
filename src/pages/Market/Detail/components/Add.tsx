@@ -136,7 +136,7 @@ export default function SingleCoin() {
         .div(10 ** (coinConfig?.decimal ?? 0))
         .toFixed(9)
     }
-    return 0
+    return "0"
   }, [coinData, coinConfig])
 
   const insufficientBalance = useMemo(
