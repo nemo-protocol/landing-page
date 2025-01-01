@@ -45,7 +45,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
     <div
       className={cn(
         "space-y-3.5 w-full rounded-lg border border-[#2D2D48] px-3 py-4",
-        className,
+        className
       )}
     >
       <div className="flex items-center justify-between h-12">
@@ -71,13 +71,19 @@ const AmountInput: React.FC<AmountInputProps> = ({
                 ) : (
                   <div
                     className="flex items-center gap-x-1 hover:cursor-pointer hover:underline"
-                    onClick={() =>
-                      isConnected &&
-                      coinBalance &&
-                      onChange(
-                        formatDecimalValue(new Decimal(coinBalance), decimal),
-                      )
-                    }
+                    onClick={() => {
+                      if (isConnected && coinBalance) {
+                        let adjustedBalance = new Decimal(coinBalance)
+                        if (coinName === "SUI") {
+                          adjustedBalance = adjustedBalance.minus(0.1)
+                        }
+                        if (adjustedBalance.greaterThanOrEqualTo(0)) {
+                          onChange(formatDecimalValue(adjustedBalance, decimal))
+                        } else {
+                          console.warn("Gas Insufficient")
+                        }
+                      }
+                    }}
                   >
                     <Wallet className="size-3.5" />
                     {isConnected

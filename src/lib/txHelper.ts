@@ -235,11 +235,11 @@ export function splitCoinHelper(
       throw new Error(coinType + " " + "insufficient balance")
     }
 
-    const mergedCoin = tx.mergeCoins(
+    tx.mergeCoins(
       tx.object(coinsToUse[0]),
       coinsToUse.slice(1).map((id) => tx.object(id)),
     )
-    return tx.splitCoins(mergedCoin, amounts)
+    return tx.splitCoins(coinsToUse[0], amounts)
   }
 }
 
