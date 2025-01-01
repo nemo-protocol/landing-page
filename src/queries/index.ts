@@ -8,10 +8,9 @@ import {
 } from "./types/market"
 
 function getCoinInfoList(name = "", address = "") {
-  return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo").get({
-    name,
-    address,
-  })
+  return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo")
+    .get({ name, address })
+    .then(response => response.filter(coin => parseInt(coin.maturity) > Date.now()));
 }
 
 function getFixedReturnInfos() {

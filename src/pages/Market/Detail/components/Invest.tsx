@@ -267,7 +267,6 @@ export default function Invest() {
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
         <h2 className="text-center text-xl">Invest</h2>
-        <div className="h-6">{isBalanceLoading}</div>
         {/* TODO: add global */}
         <TransactionStatusDialog
           open={open}

@@ -1,4 +1,3 @@
-import { IS_DEV } from "./config"
 import { Suspense, lazy } from "react"
 import { HashRouter, Route, Routes } from "react-router-dom"
 import "./App.css"
@@ -33,7 +32,7 @@ function App() {
               <Route path="/Rewards" element={<Rewards />} />
               <Route path="/portfolio/:type?" element={<Portfolio />} />
               <Route path="/wallet-kit" element={<WalletKit />} />
-              {IS_DEV && <Route path="/test" element={<Test />} />}
+              <Route path="/test" element={<Test />} />
             </Routes>
           </div>
         </div>
