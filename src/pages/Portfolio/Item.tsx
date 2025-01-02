@@ -450,7 +450,7 @@ export default function Item({
                 </Link>
               </div>
             ) : (
-              <button className="rounded-3xl bg-[#0F60FF] w-24">Redeem</button>
+              <button className="rounded-3xl bg-[#0F60FF] w-24 h-8">Redeem</button>
             )}
           </TableCell>
         </TableRow>

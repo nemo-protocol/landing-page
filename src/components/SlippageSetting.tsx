@@ -39,7 +39,7 @@ const SlippageSetting: React.FC<SlippageSettingProps> = ({
       <PopoverContent className="w-80 bg-[#161720] border-none rounded-3xl">
         <div className="grid gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none text-xs py-4 px-6 text-white">
+            <h4 className="font-medium leading-none text-sm text-center py-2 text-white">
               Slippage Setting
             </h4>
           </div>

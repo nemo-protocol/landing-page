@@ -69,9 +69,12 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
     const timestamp = Date.now()
 
     const formattedAmount = formatAmount(amount, "mul")
-    const input = (config.target === "get_lp_out_from_mint_lp"
-      ? { ptValue: formattedAmount, syValue: formattedAmount }
-      : formattedAmount) as unknown as Parameters<typeof query>[0]
+    let input: any
+    if (config.target === "get_lp_out_from_mint_lp") {
+      input = { ptValue: formattedAmount, syValue: formattedAmount }
+    } else {
+      input = formattedAmount
+    }
 
     const callInfo: ContractCall = {
       name: config.target,
