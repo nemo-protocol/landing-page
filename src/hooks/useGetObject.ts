@@ -7,7 +7,7 @@ import type { GetObjectParams } from "./useQueryButton"
 const useGetObject = (_coinConfig: unknown, debug = false) => {
   const client = useSuiClient()
   return useMutation({
-    mutationFn: async ({ objectId, options }: GetObjectParams): Promise<[string] | [string, DebugInfo]> => {
+    mutationFn: async ({ objectId, options }: GetObjectParams): Promise<string | [string, DebugInfo]> => {
       const debugInfo: DebugInfo = {
         moveCall: {
           target: "get_object",
@@ -29,7 +29,7 @@ const useGetObject = (_coinConfig: unknown, debug = false) => {
 
         // Record raw result
         debugInfo.rawResult = {
-          results: [response],
+          results: response,
         }
 
         if ('error' in response && response.error) {
@@ -48,7 +48,7 @@ const useGetObject = (_coinConfig: unknown, debug = false) => {
         const returnValue = JSON.stringify(data)
         debugInfo.parsedOutput = returnValue
 
-        return debug ? [returnValue, debugInfo] : [returnValue]
+        return debug ? [returnValue, debugInfo] : returnValue
       } catch (error) {
         debugInfo.rawResult = {
           error: error instanceof Error ? error.message : String(error),

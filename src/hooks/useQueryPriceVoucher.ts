@@ -62,10 +62,9 @@ export default function useQueryPriceVoucher(
         throw new ContractError(message, debugInfo)
       }
 
-      const outputVoucher = bcs.U64.parse(
+      const outputVoucher = bcs.U128.parse(
         new Uint8Array(result.results[0].returnValues[0][0]),
       ).toString()
-
       debugInfo.parsedOutput = outputVoucher
 
       return debug ? [outputVoucher, debugInfo] : outputVoucher

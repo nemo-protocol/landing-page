@@ -7,12 +7,16 @@ import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 import { useRef } from "react"
 import { splitSyAmount } from "@/lib/utils"
 import useMarketStateData from "@/hooks/useMarketStateData.ts"
+import useGetObject from "@/hooks/useGetObject.ts"
+import { useQueryPriceVoucher } from "@/hooks/index.tsx"
 
 export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
   const lastPowerRef = useRef(0)
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
- const {data: marketState } =   useMarketStateData(coinConfig?.marketStateId)
+  const {data: marketState } =   useMarketStateData(coinConfig?.marketStateId)
+  const {mutateAsync: exchangeRateFun} = useGetObject(coinConfig?.pyStateId, false)
+  const {mutateAsync: priceVoucherFun} = useQueryPriceVoucher(coinConfig, false)
 
   return useQuery({
     queryKey: ["addLiquidityRatio", coinConfig?.marketStateId],
@@ -23,10 +27,11 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
-      if (!marketState) {
+      if (marketState === undefined) {
         throw new Error("not found market")
       }
-
+      const exchangeRate = await exchangeRateFun({objectId: coinConfig.pyStateId})
+      const priceVoucher = await priceVoucherFun()
       const decimal = coinConfig.decimal
       const calculateRatio = async (
         power = lastPowerRef.current,
@@ -36,7 +41,8 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
         const safeDecimal = Math.max(decimal - power, 0)
         try {
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
-          const { ptValue, syValue } = splitSyAmount(baseAmount)
+          const parsedData = JSON.parse(exchangeRate.toString())
+          const { ptValue, syValue } = splitSyAmount(baseAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
           const [lpAmount] = await queryLpOut({
             ptValue,
             syValue,

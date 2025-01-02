@@ -56,60 +56,60 @@ export const safeDivide = (str?: string | number): number => {
   return num
 }
 
-// export const splitSyAmount = (syAmount: string, lpSupply: string, totalSy: string, totalPt: string, exchange_rate: string, py_index_stored: string) => {
-//   getMintLpParameter(syAmount, lpSupply, totalSy, totalPt, exchange_rate, py_index_stored)
-//   const ptValue = new Decimal(syAmount).div(2).toFixed(0)
-//   const syValue = ptValue
-//   return { ptValue, syValue }
-// }
-
-export const splitSyAmount = (syAmount: string) => {
+export const splitSyAmount = (syAmount: string, lpSupply: string, totalSy: string, totalPt: string, exchange_rate: string, py_index_stored: string) => {
+  getMintLpParameter(syAmount, lpSupply, totalSy, totalPt, exchange_rate, py_index_stored)
   const ptValue = new Decimal(syAmount).div(2).toFixed(0)
   const syValue = ptValue
   return { ptValue, syValue }
 }
 
-
-// function getMintLpParameter(
-//   syAmount: string,
-//   lpSupply: string,
-//   totalSy: string,
-//   totalPt: string,
-//   exchange_rate: string,
-//   py_index_stored: string
-// ): { syForPt: number; syDesired: number } | null {
-//   const total_sy = Number(syAmount);
-//   const lp_supply = Number(lpSupply);
-//   const total_sy_reserve = Number(totalSy);
-//   const total_pt_reserve = Number(totalPt);
-//   const exchange_rate_num = Number(exchange_rate);
-//   const py_index_stored_num = Number(py_index_stored);
-//   let left = 0;
-//   let right = total_sy;
-//   let sy_for_pt = -1; // 初始化为无效值，表示未找到
-
-//   while (left <= right) {
-//     const mid = Math.floor((left + right) / 2);
-
-//     const net_lp_by_pt = (get_pt_out(mid,exchange_rate_num, py_index_stored_num) * lp_supply) / total_pt_reserve;
-//     const sy_desired =
-//       (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply;
-
-//     if (total_sy - (mid + sy_desired) <= 100 ) {
-//       sy_for_pt = mid;
-//       return { syForPt: sy_for_pt, syDesired: sy_desired };
-//     } else if (mid + sy_desired < total_sy) {
-//       left = mid + 1;
-//     } else {
-//       right = mid - 1;
-//     }
-//   }
-
-//   return null; // 未找到结果时返回 null
+// export const splitSyAmount = (syAmount: string) => {
+//   const ptValue = new Decimal(syAmount).div(2).toFixed(0)
+//   const syValue = ptValue
+//   return { ptValue, syValue }
 // }
 
-// function get_pt_out(syAmount: number, exchange_rate: number, py_index_stored: number): number {
-//   const max_rate = Math.max(exchange_rate, py_index_stored);
-//   return syAmount * max_rate;
-// }
+
+function getMintLpParameter(
+  syAmount: string,
+  lpSupply: string,
+  totalSy: string,
+  totalPt: string,
+  exchange_rate: string,
+  py_index_stored: string
+): { syForPt: number; syDesired: number } | null {
+  const total_sy = Number(syAmount);
+  const lp_supply = Number(lpSupply);
+  const total_sy_reserve = Number(totalSy);
+  const total_pt_reserve = Number(totalPt);
+  const exchange_rate_num = Number(exchange_rate);
+  const py_index_stored_num = Number(py_index_stored);
+  let left = 0;
+  let right = total_sy;
+  let sy_for_pt = -1; // 初始化为无效值，表示未找到
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+
+    const net_lp_by_pt = (get_pt_out(mid,exchange_rate_num, py_index_stored_num) * lp_supply) / total_pt_reserve;
+    const sy_desired =
+      (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply;
+
+    if (total_sy - (mid + sy_desired) <= 100 ) {
+      sy_for_pt = mid;
+      return { syForPt: sy_for_pt, syDesired: sy_desired };
+    } else if (mid + sy_desired < total_sy) {
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  return null; // 未找到结果时返回 null
+}
+
+function get_pt_out(syAmount: number, exchange_rate: number, py_index_stored: number): number {
+  const max_rate = Math.max(exchange_rate, py_index_stored);
+  return syAmount * max_rate;
+}
 
