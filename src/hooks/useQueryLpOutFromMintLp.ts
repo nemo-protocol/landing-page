@@ -3,7 +3,7 @@ import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo, QueryInput } from "./types"
+import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 
 export default function useQueryLpOutFromMintLp(
@@ -14,13 +14,13 @@ export default function useQueryLpOutFromMintLp(
   const { address } = useWallet()
 
   return useMutation({
-    mutationFn: async (
-      input: QueryInput,
-    ): Promise<[string] | [string, DebugInfo]> => {
-      if (!Array.isArray(input)) {
-        throw new Error("LP mint requires both PT and SY values")
-      }
-      const [ptValue, syValue] = input
+    mutationFn: async ({
+      ptValue,
+      syValue,
+    }: {
+      ptValue: string
+      syValue: string
+    }): Promise<[string] | [string, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }

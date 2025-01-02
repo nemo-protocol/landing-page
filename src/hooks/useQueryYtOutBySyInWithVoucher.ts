@@ -4,7 +4,7 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
 import { getPriceVoucher } from "@/lib/txHelper"
-import type { DebugInfo, QueryInput } from "./types"
+import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 
 export default function useQueryYtOutBySyInWithVoucher(
@@ -15,8 +15,9 @@ export default function useQueryYtOutBySyInWithVoucher(
   const { address } = useWallet()
 
   return useMutation({
-    mutationFn: async (input: QueryInput): Promise<[string] | [string, DebugInfo]> => {
-      const inputAmount = Array.isArray(input) ? input[0] : input
+    mutationFn: async (
+      syValue: string,
+    ): Promise<[string] | [string, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -28,7 +29,7 @@ export default function useQueryYtOutBySyInWithVoucher(
         moveCall: {
           target: `${coinConfig.nemoContractId}::market::get_yt_out_for_exact_sy_in_with_price_voucher`,
           arguments: [
-            { name: "net_sy_in", value: inputAmount },
+            { name: "net_sy_in", value: syValue },
             { name: "min_yt_out", value: "0" },
             { name: "price_voucher", value: "priceVoucher" },
             { name: "py_state_id", value: coinConfig.pyStateId },
@@ -50,7 +51,7 @@ export default function useQueryYtOutBySyInWithVoucher(
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
-          tx.pure.u64(inputAmount),
+          tx.pure.u64(syValue),
           tx.pure.u64("0"),
           priceVoucher,
           tx.object(coinConfig.pyStateId),
@@ -96,4 +97,4 @@ export default function useQueryYtOutBySyInWithVoucher(
       return debug ? [returnValue, debugInfo] : [returnValue]
     },
   })
-} 
+}

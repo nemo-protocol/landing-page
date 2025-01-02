@@ -5,7 +5,7 @@ import PoolSelect from "@/components/PoolSelect"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQueryButton, { QUERY_CONFIGS } from "@/hooks/useQueryButton"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo, QueryInput } from "@/hooks/types"
+import type { DebugInfo } from "@/hooks/types"
 import { ContractError } from "@/hooks/types"
 
 interface ContractCall {
@@ -20,7 +20,7 @@ interface ContractCall {
   }
 }
 
-function QueryButton({
+function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
   config,
   coinConfig,
   address,
@@ -32,7 +32,7 @@ function QueryButton({
   calls,
   queryType,
 }: {
-  config: (typeof QUERY_CONFIGS)[keyof typeof QUERY_CONFIGS]
+  config: (typeof QUERY_CONFIGS)[T]
   coinConfig?: CoinConfig
   address?: string
   customAmount: string
@@ -41,7 +41,7 @@ function QueryButton({
   toggleExpanded: () => void
   onQuery: (callInfo: ContractCall) => void
   calls: ContractCall[]
-  queryType: keyof typeof QUERY_CONFIGS
+  queryType: T
 }) {
   const {
     data,
@@ -68,12 +68,10 @@ function QueryButton({
     if (!coinConfig) return
     const timestamp = Date.now()
 
-    let input: QueryInput
-    if (config.target === "get_lp_out_from_mint_lp") {
-      input = [amount, amount]
-    } else {
-      input = formatAmount(amount, "mul")
-    }
+    const formattedAmount = formatAmount(amount, "mul")
+    const input = (config.target === "get_lp_out_from_mint_lp"
+      ? { ptValue: formattedAmount, syValue: formattedAmount }
+      : formattedAmount) as unknown as Parameters<typeof query>[0]
 
     const callInfo: ContractCall = {
       name: config.target,
@@ -100,8 +98,10 @@ function QueryButton({
               output: null,
               rawOutput: null,
               coinName: coinConfig.coinName,
-              error: error instanceof ContractError ? error.message : String(error),
-              debugInfo: error instanceof ContractError ? error.debugInfo : undefined,
+              error:
+                error instanceof ContractError ? error.message : String(error),
+              debugInfo:
+                error instanceof ContractError ? error.debugInfo : undefined,
             },
           }
         } else if (data) {
@@ -168,7 +168,9 @@ function QueryButton({
               onClick={() => handleQuery("1000000")}
               disabled={!coinConfig || !address || isLoading}
             >
-              {config.target === "get_lp_out_from_mint_lp" ? "1:1 Input" : "0.001 Input"}
+              {config.target === "get_lp_out_from_mint_lp"
+                ? "1:1 Input"
+                : "0.001 Input"}
             </button>
 
             <div className="flex h-10 bg-black/20 rounded-xl overflow-hidden">
@@ -177,7 +179,9 @@ function QueryButton({
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 className="w-20 px-3 bg-transparent text-white/90 text-sm focus:outline-none disabled:opacity-50"
-                placeholder={config.target === "get_lp_out_from_mint_lp" ? "1:1" : "Amount"}
+                placeholder={
+                  config.target === "get_lp_out_from_mint_lp" ? "1:1" : "Amount"
+                }
                 disabled={!coinConfig || !address}
               />
               <button

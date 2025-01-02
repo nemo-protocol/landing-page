@@ -1,39 +1,40 @@
 import { UseMutationResult } from "@tanstack/react-query"
 import type { CoinConfig } from "@/queries/types/market"
+import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 import useQueryPtOutBySyInWithVoucher from "./useQueryPtOutBySyInWithVoucher"
 import useQueryYtOutBySyInWithVoucher from "./useQueryYtOutBySyInWithVoucher"
-import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 import type { DebugInfo } from "./types"
-import type { QueryInput } from "./types"
 
-interface QueryConfig<> {
-  target: string
-  hook: (
-    coinConfig?: CoinConfig,
-    debug?: boolean
-  ) => UseMutationResult<[string] | [string, DebugInfo], Error, QueryInput>
+export type QueryInputMap = {
+  PT_OUT_BY_SY_IN: string
+  YT_OUT_BY_SY_IN: string
+  LP_OUT_FROM_MINT: { ptValue: string; syValue: string }
 }
 
-export const QUERY_CONFIGS: Record<string, QueryConfig> = {
+export const QUERY_CONFIGS = {
   PT_OUT_BY_SY_IN: {
     target: "get_pt_out_for_exact_sy_in_with_price_voucher",
     hook: useQueryPtOutBySyInWithVoucher,
   },
   YT_OUT_BY_SY_IN: {
-    target: "get_yt_out_for_exact_sy_in_with_price_voucher", 
+    target: "get_yt_out_for_exact_sy_in_with_price_voucher",
     hook: useQueryYtOutBySyInWithVoucher,
   },
   LP_OUT_FROM_MINT: {
     target: "get_lp_out_from_mint_lp",
     hook: useQueryLpOutFromMintLp,
   },
-}
+} as const
 
-export default function useQueryButton(
-  queryType: keyof typeof QUERY_CONFIGS,
+export default function useQueryButton<T extends keyof QueryInputMap>(
+  queryType: T,
   coinConfig?: CoinConfig,
-  debug: boolean = false,
+  debug = false,
 ) {
   const config = QUERY_CONFIGS[queryType]
-  return config.hook(coinConfig, debug)
+  return config.hook(coinConfig, debug) as unknown as UseMutationResult<
+    [string] | [string, DebugInfo],
+    Error,
+    QueryInputMap[T]
+  >
 }
