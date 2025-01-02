@@ -15,7 +15,7 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
   const {data: marketState } =   useMarketStateData(coinConfig?.marketStateId)
-  const {mutateAsync: exchangeRateFun} = useGetObject(coinConfig?.pyStateId, false)
+  const {mutateAsync: exchangeRateFun} = useGetObject(coinConfig?.pyStateId, false, )
   const {mutateAsync: priceVoucherFun} = useQueryPriceVoucher(coinConfig, false)
 
   return useQuery({
@@ -30,7 +30,7 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
       if (marketState === undefined) {
         throw new Error("not found market")
       }
-      const exchangeRate = await exchangeRateFun({objectId: coinConfig.pyStateId})
+      const exchangeRate = await exchangeRateFun({objectId: coinConfig.pyStateId, options: { showContent: true }})
       const priceVoucher = await priceVoucherFun()
       const decimal = coinConfig.decimal
       const calculateRatio = async (

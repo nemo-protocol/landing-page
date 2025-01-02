@@ -57,9 +57,9 @@ export const safeDivide = (str?: string | number): number => {
 }
 
 export const splitSyAmount = (syAmount: string, lpSupply: string, totalSy: string, totalPt: string, exchange_rate: string, py_index_stored: string) => {
-  getMintLpParameter(syAmount, lpSupply, totalSy, totalPt, exchange_rate, py_index_stored)
-  const ptValue = new Decimal(syAmount).div(2).toFixed(0)
-  const syValue = ptValue
+  const result = getMintLpParameter(syAmount, lpSupply, totalSy, totalPt, exchange_rate, py_index_stored)
+  const ptValue = result?.syForPt.toFixed(0) || "1"
+  const syValue = result?.syDesired.toFixed(0)|| "1"
   return { ptValue, syValue }
 }
 
@@ -94,8 +94,7 @@ function getMintLpParameter(
     const net_lp_by_pt = (get_pt_out(mid,exchange_rate_num, py_index_stored_num) * lp_supply) / total_pt_reserve;
     const sy_desired =
       (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply;
-
-    if (total_sy - (mid + sy_desired) <= 100 ) {
+    if (total_sy >= (mid + sy_desired) && total_sy  <= (mid + sy_desired) + 100 ) {
       sy_for_pt = mid;
       return { syForPt: sy_for_pt, syDesired: sy_desired };
     } else if (mid + sy_desired < total_sy) {
@@ -109,7 +108,7 @@ function getMintLpParameter(
 }
 
 function get_pt_out(syAmount: number, exchange_rate: number, py_index_stored: number): number {
-  const max_rate = Math.max(exchange_rate, py_index_stored);
+  const max_rate = Math.max(exchange_rate / (2 ** 64), py_index_stored)/ (2 ** 64);
   return syAmount * max_rate;
 }
 

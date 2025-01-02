@@ -244,23 +244,15 @@ export default function SingleCoin() {
     coinData: CoinData[],
     coinType: string,
     pyPosition: TransactionArgument,
-    syPtRate: string,
+    // _syPtRate: string,
     address: string,
     minLpAmount: string,
-    convertedRate: string,
+    // convertedRate: string,
   ): Promise<void> {
-    const convertedAmount =
-      tokenType === 0
-        ? new Decimal(addAmount).mul(convertedRate).toFixed(0)
-        : addAmount
+    const lpOut =await calculateLpOut(addAmount)
     const amounts = {
-      pt: new Decimal(convertedAmount)
-        .div(new Decimal(syPtRate).add(1))
-        .toFixed(0),
-      sy: new Decimal(convertedAmount)
-        .div(new Decimal(syPtRate).add(1))
-        .mul(new Decimal(syPtRate))
-        .toFixed(0),
+      pt: new Decimal(lpOut.ptValue).toFixed(0),
+      sy: new Decimal(lpOut.syValue).toFixed(0),
     }
 
     const [splitCoinForSy, splitCoinForPt] =
@@ -268,9 +260,9 @@ export default function SingleCoin() {
         ? mintSycoin(tx, coinConfig, coinData, [amounts.sy, amounts.pt])
         : splitCoinHelper(tx, coinData, [amounts.sy, amounts.pt], coinType)
 
-    const syCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
+    const syCoin = depositSyCoin(tx, coinConfig, splitCoinForPt, coinType)
 
-    const pyCoin = depositSyCoin(tx, coinConfig, splitCoinForPt, coinType)
+    const pyCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
 
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
     mintPy(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
@@ -399,7 +391,7 @@ export default function SingleCoin() {
 
         const calculatedLpOut = await calculateLpOut(convertedAmount)
 
-        const minLpAmount = new Decimal(calculatedLpOut)
+        const minLpAmount = new Decimal(calculatedLpOut.lpAmount)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
@@ -426,10 +418,10 @@ export default function SingleCoin() {
             coinData,
             coinType,
             pyPosition,
-            "1",
+            // ratio || "1",
             address,
             minLpAmount,
-            convertedRate,
+            // convertedRate,
           )
         } else {
           await handleAddLiquiditySingleSy(
@@ -482,8 +474,8 @@ export default function SingleCoin() {
               tokenType === 0
                 ? new Decimal(amount).div(conversionRate).toFixed(0)
                 : amount
-            const lpAmount = await calculateLpOut(convertedAmount)
-            setLpPosition(lpAmount)
+            const lpOut = await calculateLpOut(convertedAmount)
+            setLpPosition(lpOut.lpAmount)
           } catch (error) {
             console.error("Failed to get LP position:", error)
           }
@@ -507,8 +499,8 @@ export default function SingleCoin() {
     refetchRatio()
     if (addValue && decimal) {
       const amount = new Decimal(addValue).mul(10 ** decimal).toString()
-      const lpAmount = await calculateLpOut(amount)
-      setLpPosition(lpAmount)
+      const lpOut = await calculateLpOut(amount)
+      setLpPosition(lpOut.lpAmount)
     }
   }, [refetchRatio, addValue, decimal, calculateLpOut])
 

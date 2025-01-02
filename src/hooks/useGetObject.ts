@@ -29,7 +29,7 @@ const useGetObject = (_coinConfig: unknown, debug = false) => {
 
         // Record raw result
         debugInfo.rawResult = {
-          results: response,
+          results: [response],
         }
 
         if ('error' in response && response.error) {
@@ -47,7 +47,6 @@ const useGetObject = (_coinConfig: unknown, debug = false) => {
 
         const returnValue = JSON.stringify(data)
         debugInfo.parsedOutput = returnValue
-
         return debug ? [returnValue, debugInfo] : returnValue
       } catch (error) {
         debugInfo.rawResult = {

@@ -26,7 +26,7 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
         console.log(marketState)
         throw new Error("not found market")
       }
-        const exchangeRate = await exchangeRateFun({objectId: coinConfig.pyStateId})
+      const exchangeRate = await exchangeRateFun({objectId: coinConfig.pyStateId, options: {showContent: true}})
       const priceVoucher = await priceVoucherFun()
       const parsedData = JSON.parse(exchangeRate.toString())
       const { ptValue, syValue } = splitSyAmount(syAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
@@ -38,7 +38,7 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
       })
       console.log("lpAmount", lpAmount)
 
-      return new Decimal(lpAmount).div(10 ** coinConfig.decimal).toString()
+      return {lpAmount: new Decimal(lpAmount).div(10 ** coinConfig.decimal).toString(), ptValue, syValue}
     },
   })
 }
