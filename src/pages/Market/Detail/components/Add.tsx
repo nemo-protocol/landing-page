@@ -383,7 +383,7 @@ export default function SingleCoin() {
         const addAmount = new Decimal(addValue).mul(10 ** decimal).toString()
         const convertedRate = (conversionRate || "1").toString()
         const convertedAmount = tokenType === 0
-          ? new Decimal(addAmount).mul(convertedRate).toFixed(0)
+          ? new Decimal(addAmount).div(convertedRate).toFixed(0)
           : addAmount
 
         const tx = new Transaction()
@@ -480,7 +480,7 @@ export default function SingleCoin() {
             const amount = new Decimal(value).mul(10 ** decimal).toString()
             const convertedAmount =
               tokenType === 0
-                ? new Decimal(amount).mul(conversionRate).toFixed(0)
+                ? new Decimal(amount).div(conversionRate).toFixed(0)
                 : amount
             const lpAmount = await calculateLpOut(convertedAmount)
             setLpPosition(lpAmount)
