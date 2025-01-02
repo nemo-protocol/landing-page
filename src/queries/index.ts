@@ -116,7 +116,7 @@ interface LPResult {
   conversionRate: string
 }
 
-async function getLPRatio(
+export async function getLPRatio(
   marketStateId: string,
   address: string,
   mintType?: string,

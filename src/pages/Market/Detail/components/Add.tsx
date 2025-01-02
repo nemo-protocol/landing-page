@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 import useCoinData, { CoinData } from "@/hooks/useCoinData"
 import TradeInfo from "@/components/TradeInfo"
 import PoolSelect from "@/components/PoolSelect"
@@ -16,12 +16,14 @@ import { useWallet } from "@nemoprotocol/wallet-kit"
 import { useParams, useNavigate } from "react-router-dom"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import usePyPositionData from "@/hooks/usePyPositionData"
-import { useCoinConfig, useQueryLPRatio } from "@/queries"
+import { useCoinConfig } from "@/queries"
 import useMarketStateData from "@/hooks/useMarketStateData"
-import { formatDecimalValue, safeDivide } from "@/lib/utils"
+import { formatDecimalValue, debounce, splitSyAmount } from "@/lib/utils"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { CoinConfig } from "@/queries/types/market"
+import { useCalculateLpOut } from "@/hooks/useCalculateLpOut"
+import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import {
   mintSycoin,
   initPyPosition,
@@ -30,6 +32,7 @@ import {
   depositSyCoin,
   mintPy,
   redeemSyCoin,
+  getLpOutFromMintLp,
 } from "@/lib/txHelper"
 import {
   Tooltip,
@@ -45,6 +48,7 @@ import {
   SelectTrigger,
   SelectContent,
 } from "@/components/ui/select"
+import { useAddLiquidityRatio } from "@/hooks/useAddLiquidityRatio"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -58,6 +62,8 @@ export default function SingleCoin() {
   const [openConnect, setOpenConnect] = useState(false)
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
+  const [lpPosition, setLpPosition] = useState<string>()
+  const client = useSuiClient()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -88,26 +94,8 @@ export default function SingleCoin() {
 
   const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
 
-  const {
-    refetch,
-    data: dataRatio,
-    isFetching: isRatioFetching,
-  } = useQueryLPRatio(address, coinConfig?.marketStateId)
-
-  const syPtRate = useMemo(() => dataRatio?.syPtRate, [dataRatio])
-  const conversionRate = useMemo(() => dataRatio?.conversionRate, [dataRatio])
-
-  const ratio = useMemo(() => {
-    if (dataRatio) {
-      if (tokenType === 0 && conversionRate && dataRatio.syLpRate) {
-        return new Decimal(dataRatio.syLpRate)
-          .div(safeDivide(conversionRate))
-          .toString()
-      } else {
-        return dataRatio.syLpRate
-      }
-    }
-  }, [dataRatio, tokenType, conversionRate])
+  const { mutateAsync: calculateLpOut, isPending: isLpAmountOutLoading } =
+    useCalculateLpOut(coinConfig)
 
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
@@ -121,7 +109,7 @@ export default function SingleCoin() {
 
   const { isLoading } = useLoadingState(
     addValue,
-    isRatioFetching || isConfigLoading,
+    isConfigLoading || isLpAmountOutLoading,
   )
 
   const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
@@ -183,11 +171,20 @@ export default function SingleCoin() {
     return "--"
   }, [coinConfig, syRatio, ptRatio])
 
+  const {
+    data: ratioData,
+    refetch: refetchRatio,
+    isFetching: isRatioFetching,
+  } = useAddLiquidityRatio(coinConfig)
+
+  const ratio = useMemo(() => ratioData?.ratio, [ratioData])
+  const conversionRate = useMemo(() => ratioData?.conversionRate, [ratioData])
+
   const { isLoading: isRatioLoading } = useRatioLoadingState(
-    isRatioFetching || isConfigLoading,
+    isConfigLoading || isRatioFetching,
   )
 
-  function handleSeedLiquidity(
+  async function handleSeedLiquidity(
     tx: Transaction,
     addAmount: string,
     tokenType: number,
@@ -196,9 +193,8 @@ export default function SingleCoin() {
     coinType: string,
     pyPosition: TransactionArgument,
     address: string,
-    ratio: string,
-    slippage: string,
-  ): void {
+    minLpAmount: string,
+  ): Promise<void> {
     const [splitCoin] =
       tokenType === 0
         ? mintSycoin(tx, coinConfig, coinData, [addAmount])
@@ -212,13 +208,10 @@ export default function SingleCoin() {
       target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
       arguments: [
         coinConfig.version,
-        "syCoin",
-        new Decimal(addAmount)
-          .mul(ratio)
-          .mul(1 - new Decimal(slippage).div(100).toNumber())
-          .toFixed(0),
-        "priceVoucher",
-        "pyPosition",
+        syCoin,
+        tx.pure.u64(minLpAmount),
+        priceVoucher,
+        pyPosition,
         coinConfig.pyStateId,
         coinConfig.yieldFactoryConfigId,
         coinConfig.marketStateId,
@@ -233,17 +226,12 @@ export default function SingleCoin() {
       arguments: [
         tx.object(coinConfig.version),
         syCoin,
-        tx.pure.u64(
-          new Decimal(0).toNumber(),
-          // .mul(ratio)
-          // .mul(1 - new Decimal(slippage).div(100).toNumber())
-          // .toFixed(0),
-        ),
+        tx.pure.u64(minLpAmount),
         priceVoucher,
         pyPosition,
         tx.object(coinConfig.pyStateId),
         tx.object(coinConfig.yieldFactoryConfigId),
-        tx.object(coinConfig!.marketStateId),
+        tx.object(coinConfig.marketStateId),
         tx.object("0x6"),
       ],
     })
@@ -251,7 +239,7 @@ export default function SingleCoin() {
     tx.transferObjects([lp], address)
   }
 
-  function handleMintLp(
+  async function handleMintLp(
     tx: Transaction,
     addAmount: string,
     tokenType: number,
@@ -261,12 +249,18 @@ export default function SingleCoin() {
     pyPosition: TransactionArgument,
     syPtRate: string,
     address: string,
-    ratio: string,
-    slippage: string,
-  ): void {
+    minLpAmount: string,
+    convertedRate: string,
+  ): Promise<void> {
+    const convertedAmount =
+      tokenType === 0
+        ? new Decimal(addAmount).mul(convertedRate).toFixed(0)
+        : addAmount
     const amounts = {
-      pt: new Decimal(addAmount).div(new Decimal(syPtRate).add(1)).toFixed(0),
-      sy: new Decimal(addAmount)
+      pt: new Decimal(convertedAmount)
+        .div(new Decimal(syPtRate).add(1))
+        .toFixed(0),
+      sy: new Decimal(convertedAmount)
         .div(new Decimal(syPtRate).add(1))
         .mul(new Decimal(syPtRate))
         .toFixed(0),
@@ -290,14 +284,11 @@ export default function SingleCoin() {
       target: `${coinConfig.nemoContractId}::market::mint_lp`,
       arguments: [
         coinConfig.version,
-        "syCoin",
+        syCoin,
         amounts.pt,
-        new Decimal(amounts.pt)
-          .mul(ratio)
-          .mul(1 - new Decimal(slippage).div(100).toNumber())
-          .toFixed(0),
-        "priceVoucherForMintLp",
-        "pyPosition",
+        tx.pure.u64(minLpAmount),
+        priceVoucherForMintLp,
+        pyPosition,
         coinConfig.pyStateId,
         coinConfig.marketStateId,
         "0x6",
@@ -312,13 +303,7 @@ export default function SingleCoin() {
         tx.object(coinConfig.version),
         syCoin,
         tx.pure.u64(amounts.pt),
-        // tx.pure.u64(
-        //   new Decimal(amounts.pt)
-        //     .mul(ratio)
-        //     .mul(1 - new Decimal(slippage).div(100).toNumber())
-        //     .toFixed(0),
-        // ),
-        tx.pure.u64(0),
+        tx.pure.u64(minLpAmount),
         priceVoucherForMintLp,
         pyPosition,
         tx.object(coinConfig.pyStateId),
@@ -331,7 +316,7 @@ export default function SingleCoin() {
     tx.transferObjects([yieldToken, marketPosition], address)
   }
 
-  function handleAddLiquiditySingleSy(
+  async function handleAddLiquiditySingleSy(
     tx: Transaction,
     addAmount: string,
     tokenType: number,
@@ -340,9 +325,8 @@ export default function SingleCoin() {
     coinType: string,
     pyPosition: TransactionArgument,
     address: string,
-    ratio: string,
-    slippage: string,
-  ): void {
+    minLpAmount: string,
+  ): Promise<void> {
     const [splitCoin] =
       tokenType === 0
         ? mintSycoin(tx, coinConfig, coinData, [addAmount])
@@ -356,13 +340,10 @@ export default function SingleCoin() {
       target: `${coinConfig.nemoContractId}::market::add_liquidity_single_sy`,
       arguments: [
         coinConfig.version,
-        "syCoin",
-        new Decimal(addAmount)
-          .mul(ratio)
-          .mul(1 - new Decimal(slippage).div(100).toNumber())
-          .toFixed(0),
-        "priceVoucher",
-        "pyPosition",
+        syCoin,
+        tx.pure.u64(minLpAmount),
+        priceVoucher,
+        pyPosition,
         coinConfig.pyStateId,
         coinConfig.marketFactoryConfigId,
         coinConfig.marketStateId,
@@ -377,12 +358,7 @@ export default function SingleCoin() {
       arguments: [
         tx.object(coinConfig.version),
         syCoin,
-        // tx.pure.u64(
-        //   new Decimal(addAmount)
-        //     .mul(1 - new Decimal(slippage).div(100).toNumber())
-        //     .toFixed(0),
-        // ),
-        tx.pure.u64(0),
+        tx.pure.u64(minLpAmount),
         priceVoucher,
         pyPosition,
         tx.object(coinConfig.pyStateId),
@@ -397,10 +373,8 @@ export default function SingleCoin() {
 
   async function add() {
     if (
-      ratio &&
       decimal &&
       address &&
-      syPtRate &&
       coinType &&
       slippage &&
       coinConfig &&
@@ -409,7 +383,12 @@ export default function SingleCoin() {
       !insufficientBalance
     ) {
       try {
-        await refetch()
+        const addAmount = new Decimal(addValue).mul(10 ** decimal).toString()
+        const convertedRate = (conversionRate || "1").toString()
+        const convertedAmount = tokenType === 0
+          ? new Decimal(addAmount).mul(convertedRate).toFixed(0)
+          : addAmount
+
         const tx = new Transaction()
 
         let pyPosition
@@ -421,11 +400,35 @@ export default function SingleCoin() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        // TODO: less than 1/(10 ** decimal) disable add button
-        const addAmount = new Decimal(addValue).mul(10 ** decimal).toString()
+        let lpOutStr: string
+        if (marketStateData?.lpSupply === "0" || new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)) {
+          const { ptValue, syValue } = splitSyAmount(convertedAmount)
+          lpOutStr = await getLpOutFromMintLp(
+            tx,
+            coinConfig,
+            ptValue,
+            syValue,
+            client,
+            address,
+          )
+        } else {
+          const amounts = splitSyAmount(convertedAmount)
+          lpOutStr = await getLpOutFromMintLp(
+            tx,
+            coinConfig,
+            amounts.ptValue,
+            amounts.syValue,
+            client,
+            address,
+          )
+        }
+
+        const minLpAmount = new Decimal(lpOutStr)
+          .mul(1 - new Decimal(slippage).div(100).toNumber())
+          .toFixed(0)
 
         if (marketStateData?.lpSupply === "0") {
-          handleSeedLiquidity(
+          await handleSeedLiquidity(
             tx,
             addAmount,
             tokenType,
@@ -434,13 +437,12 @@ export default function SingleCoin() {
             coinType,
             pyPosition,
             address,
-            ratio,
-            slippage,
+            minLpAmount,
           )
         } else if (
           new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
         ) {
-          handleMintLp(
+          await handleMintLp(
             tx,
             addAmount,
             tokenType,
@@ -448,13 +450,13 @@ export default function SingleCoin() {
             coinData,
             coinType,
             pyPosition,
-            syPtRate,
+            "1",
             address,
-            ratio,
-            slippage,
+            minLpAmount,
+            convertedRate,
           )
         } else {
-          handleAddLiquiditySingleSy(
+          await handleAddLiquiditySingleSy(
             tx,
             addAmount,
             tokenType,
@@ -463,8 +465,7 @@ export default function SingleCoin() {
             coinType,
             pyPosition,
             address,
-            ratio,
-            slippage,
+            minLpAmount,
           )
         }
 
@@ -490,6 +491,50 @@ export default function SingleCoin() {
       }
     }
   }
+
+  const debouncedGetLpPosition = useCallback(
+    debounce(
+      async (
+        value: string,
+        decimal: number,
+        config: CoinConfig | undefined,
+      ) => {
+        if (value && value !== "0" && decimal && config && conversionRate) {
+          try {
+            const amount = new Decimal(value).mul(10 ** decimal).toString()
+            const convertedAmount =
+              tokenType === 0
+                ? new Decimal(amount).mul(conversionRate).toFixed(0)
+                : amount
+            const lpAmount = await calculateLpOut(convertedAmount)
+            setLpPosition(lpAmount)
+          } catch (error) {
+            console.error("Failed to get LP position:", error)
+          }
+        } else {
+          setLpPosition(undefined)
+        }
+      },
+      500,
+    ),
+    [calculateLpOut, tokenType, conversionRate],
+  )
+
+  useEffect(() => {
+    debouncedGetLpPosition(addValue, decimal ?? 0, coinConfig)
+    return () => {
+      debouncedGetLpPosition.cancel()
+    }
+  }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
+
+  const handleRefresh = useCallback(async () => {
+    refetchRatio()
+    if (addValue && decimal) {
+      const amount = new Decimal(addValue).mul(10 ** decimal).toString()
+      const lpAmount = await calculateLpOut(amount)
+      setLpPosition(lpAmount)
+    }
+  }, [refetchRatio, addValue, decimal, calculateLpOut])
 
   return (
     <div className="w-full md:w-[500px] lg:w-full bg-[#0E0F16] rounded-[40px] p-4 lg:p-8 border border-white/[0.07]">
@@ -579,15 +624,12 @@ export default function SingleCoin() {
                         "--"
                       ) : isLoading ? (
                         <Skeleton className="h-7 w-48 bg-[#2D2D48]" />
-                      ) : !decimal || !ratio ? (
+                      ) : !decimal ? (
                         "--"
                       ) : (
                         <>
                           {"≈  " +
-                            formatDecimalValue(
-                              new Decimal(addValue).mul(ratio),
-                              decimal,
-                            )}{" "}
+                            formatDecimalValue(lpPosition || "0", decimal)}{" "}
                           LP {coinConfig?.coinName}
                           {coinConfig?.coinLogo && (
                             <img
@@ -628,18 +670,25 @@ export default function SingleCoin() {
 
               <TradeInfo
                 ratio={ratio}
-                coinName={coinName}
                 slippage={slippage}
-                onRefresh={refetch}
+                onRefresh={handleRefresh}
                 isLoading={isLoading}
                 setSlippage={setSlippage}
                 isRatioLoading={isRatioLoading}
+                coinName={coinConfig?.coinName}
                 targetCoinName={`LP ${coinConfig?.coinName}`}
                 tradeFee={
-                  !!addValue && !!coinConfig?.feeRate && !!price
+                  !!addValue &&
+                  !!conversionRate &&
+                  !!coinConfig?.feeRate &&
+                  !!coinConfig?.coinPrice
                     ? new Decimal(coinConfig.feeRate)
-                        .mul(addValue)
-                        .mul(price)
+                        .mul(
+                          tokenType === 0
+                            ? new Decimal(addValue).mul(conversionRate)
+                            : addValue,
+                        )
+                        .mul(coinConfig.coinPrice)
                         .toString()
                     : undefined
                 }

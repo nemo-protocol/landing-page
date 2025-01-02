@@ -55,3 +55,9 @@ export const safeDivide = (str?: string | number): number => {
   }
   return num
 }
+
+export const splitSyAmount = (syAmount: string) => {
+  const ptValue = new Decimal(syAmount).div(2).toFixed(0)
+  const syValue = ptValue
+  return { ptValue, syValue }
+}

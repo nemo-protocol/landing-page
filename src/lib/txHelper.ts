@@ -4,6 +4,8 @@ import { CoinData } from "@/hooks/useCoinData"
 import { CoinConfig } from "@/queries/types/market"
 import { LppMarketPosition } from "@/hooks/useLpMarketPositionData"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
+import { bcs } from "@mysten/sui/bcs"
+import { SuiClient } from "@mysten/sui/client"
 
 export const getPriceVoucher = (tx: Transaction, coinConfig: CoinConfig) => {
   switch (coinConfig.coinType) {
@@ -472,4 +474,52 @@ export const swapExactYtForSy = (
     typeArguments: [coinConfig.syCoinType],
   })
   return syCoin
+}
+
+export const getLpOutFromMintLp = async (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  ptValue: string,
+  syValue: string,
+  client: SuiClient,
+  address: string,
+): Promise<string> => {
+  const moveCall = {
+    target: `${coinConfig.nemoContractId}::market::get_lp_out_from_mint_lp`,
+    arguments: [ptValue, syValue, coinConfig.marketStateId],
+    typeArguments: [coinConfig.syCoinType],
+  }
+  debugLog("get_lp_out_from_mint_lp move call:", moveCall)
+
+  tx.moveCall({
+    target: moveCall.target,
+    arguments: [
+      tx.pure.u64(ptValue),
+      tx.pure.u64(syValue),
+      tx.object(coinConfig.marketStateId),
+    ],
+    typeArguments: moveCall.typeArguments,
+  })
+
+  const result = await client.devInspectTransactionBlock({
+    sender: address,
+    transactionBlock: await tx.build({
+      client: client,
+      onlyTransactionKind: true,
+    }),
+  })
+
+  if (result?.error) {
+    throw new Error(result.error)
+  }
+
+  if (!result?.results?.[0]?.returnValues?.[0]) {
+    throw new Error("Failed to get LP amount")
+  }
+
+  const outputAmount = bcs.U64.parse(
+    new Uint8Array(result.results[0].returnValues[0][0]),
+  )
+
+  return outputAmount.toString()
 }
