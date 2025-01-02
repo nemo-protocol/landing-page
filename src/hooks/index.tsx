@@ -1,0 +1,1 @@
+export { default as useQueryPriceVoucher } from "./useQueryPriceVoucher" 

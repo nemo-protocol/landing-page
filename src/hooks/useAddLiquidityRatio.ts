@@ -36,7 +36,7 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
         const safeDecimal = Math.max(decimal - power, 0)
         try {
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
-          const { ptValue, syValue } = splitSyAmount(baseAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt)
+          const { ptValue, syValue } = splitSyAmount(baseAmount)
           const [lpAmount] = await queryLpOut({
             ptValue,
             syValue,

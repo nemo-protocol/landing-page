@@ -3,7 +3,7 @@ import { useCoinConfig } from "@/queries"
 import { useState, useEffect, useRef, useCallback } from "react"
 import PoolSelect from "@/components/PoolSelect"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import useQueryButton, { QUERY_CONFIGS } from "@/hooks/useQueryButton"
+import useQueryButton, { QUERY_CONFIGS, QueryInputMap } from "@/hooks/useQueryButton"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "@/hooks/types"
 import { ContractError } from "@/hooks/types"
@@ -65,15 +65,30 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
   )
 
   const handleQuery = async (amount: string) => {
-    if (!coinConfig) return
+    if (!coinConfig && config.target !== "get_object") return
     const timestamp = Date.now()
 
-    const formattedAmount = formatAmount(amount, "mul")
-    let input: any
+    let input: QueryInputMap[T]
     if (config.target === "get_lp_out_from_mint_lp") {
-      input = { ptValue: formattedAmount, syValue: formattedAmount }
+      const formattedAmount = formatAmount(amount, "mul")
+      input = { ptValue: formattedAmount, syValue: formattedAmount } as QueryInputMap[T]
+    } else if (config.target === "get_price_voucher") {
+      input = undefined as QueryInputMap[T]
+    } else if (config.target === "get_object") {
+      input = {
+        objectId: "0xee465d6ebb7459e81555e6e09917f9821d23c836030a7be0282cd90cf1bf854c",
+        options: {
+          showContent: true,
+          showDisplay: true,
+          showType: true,
+          showOwner: true,
+          showPreviousTransaction: true,
+          showBcs: true,
+          showStorageRebate: true,
+        },
+      } as QueryInputMap[T]
     } else {
-      input = formattedAmount
+      input = formatAmount(amount, "mul") as QueryInputMap[T]
     }
 
     const callInfo: ContractCall = {
@@ -86,7 +101,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
   }
 
   useEffect(() => {
-    if (coinConfig && calls.length > 0) {
+    if ((coinConfig || config.target === "get_object") && calls.length > 0) {
       const matchingCall = calls.find(
         (call) => call.name === config.target && !call.result,
       )
@@ -100,7 +115,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
             result: {
               output: null,
               rawOutput: null,
-              coinName: coinConfig.coinName,
+              coinName: config.target === "get_object" ? undefined : coinConfig?.coinName,
               error:
                 error instanceof ContractError ? error.message : String(error),
               debugInfo:
@@ -111,12 +126,24 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
           const [output, debugInfo] = data
 
           if (typeof output === "string") {
+            let formattedOutput = output
+            if (config.target === "get_object") {
+              try {
+                const parsed = JSON.parse(output)
+                formattedOutput = JSON.stringify(parsed, null, 2)
+              } catch (e) {
+                console.error("Failed to parse object data:", e)
+              }
+            } else {
+              formattedOutput = formatAmount(output)
+            }
+
             updatedCall = {
               ...matchingCall,
               result: {
-                output: formatAmount(output),
+                output: formattedOutput,
                 rawOutput: output,
-                coinName: coinConfig.coinName,
+                coinName: config.target === "get_object" ? undefined : coinConfig?.coinName,
                 debugInfo: debugInfo as DebugInfo,
               },
             }
@@ -136,7 +163,6 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
     config.target,
     formatAmount,
     onQuery,
-    customAmount,
   ])
 
   return (
@@ -166,35 +192,55 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
 
         {isExpanded && (
           <div className="grid grid-cols-2 gap-3">
-            <button
-              className="flex items-center justify-center h-10 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] rounded-xl disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm"
-              onClick={() => handleQuery("1000000")}
-              disabled={!coinConfig || !address || isLoading}
-            >
-              {config.target === "get_lp_out_from_mint_lp"
-                ? "1:1 Input"
-                : "0.001 Input"}
-            </button>
-
-            <div className="flex h-10 bg-black/20 rounded-xl overflow-hidden">
-              <input
-                type="number"
-                value={customAmount}
-                onChange={(e) => setCustomAmount(e.target.value)}
-                className="w-20 px-3 bg-transparent text-white/90 text-sm focus:outline-none disabled:opacity-50"
-                placeholder={
-                  config.target === "get_lp_out_from_mint_lp" ? "1:1" : "Amount"
-                }
-                disabled={!coinConfig || !address}
-              />
+            {config.target === "get_price_voucher" ? (
               <button
-                className="flex-1 flex items-center justify-center px-3 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm whitespace-nowrap border-l border-white/[0.07]"
-                onClick={() => handleQuery(customAmount)}
+                className="flex items-center justify-center h-10 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] rounded-xl disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm col-span-2"
+                onClick={() => handleQuery("0")}
                 disabled={!coinConfig || !address || isLoading}
               >
-                Input
+                Get Price Voucher
               </button>
-            </div>
+            ) : config.target === "get_object" ? (
+              <button
+                className="flex items-center justify-center h-10 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] rounded-xl disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm col-span-2"
+                onClick={() => handleQuery("")}
+                disabled={!address || isLoading}
+              >
+                Get Object Info
+              </button>
+            ) : (
+              <>
+                <button
+                  className="flex items-center justify-center h-10 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] rounded-xl disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm"
+                  onClick={() => handleQuery("1000000")}
+                  disabled={!coinConfig || !address || isLoading}
+                >
+                  {config.target === "get_lp_out_from_mint_lp"
+                    ? "1:1 Input"
+                    : "0.001 Input"}
+                </button>
+
+                <div className="flex h-10 bg-black/20 rounded-xl overflow-hidden">
+                  <input
+                    type="number"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    className="w-20 px-3 bg-transparent text-white/90 text-sm focus:outline-none disabled:opacity-50"
+                    placeholder={
+                      config.target === "get_lp_out_from_mint_lp" ? "1:1" : "Amount"
+                    }
+                    disabled={!coinConfig || !address}
+                  />
+                  <button
+                    className="flex-1 flex items-center justify-center px-3 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm whitespace-nowrap border-l border-white/[0.07]"
+                    onClick={() => handleQuery(customAmount)}
+                    disabled={!coinConfig || !address || isLoading}
+                  >
+                    Input
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -242,7 +288,11 @@ export default function Test() {
     config,
     queryType: key as keyof typeof QUERY_CONFIGS,
     customAmount:
-      customAmounts[key] === undefined ? "0.002" : customAmounts[key],
+      key === "GET_OBJECT"
+        ? "0xee465d6ebb7459e81555e6e09917f9821d23c836030a7be0282cd90cf1bf854c"
+        : customAmounts[key] === undefined
+        ? "0.002"
+        : customAmounts[key],
     setCustomAmount: (value: string) =>
       setCustomAmounts((prev) => ({ ...prev, [key]: value })),
     isExpanded: expandedSections[key] || false,
@@ -305,7 +355,7 @@ export default function Test() {
         </div>
 
         {/* Right Panel - Results */}
-        <div className="flex-1 flex flex-col max-h-full bg-[#12121B] rounded-2xl md:rounded-3xl border border-white/[0.07]">
+        <div className="flex-1 min-w-0 flex flex-col max-h-full bg-[#12121B] rounded-2xl md:rounded-3xl border border-white/[0.07]">
           <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/[0.07]">
             <div className="text-base font-medium text-white/90">
               Test Results
@@ -403,8 +453,7 @@ export default function Test() {
                 )}
               </div>
             ) : (
-              <>
-                {/* Contract Calls with Results */}
+              <div className="w-full">
                 {calls.map((call, index) => (
                   <div
                     key={call.timestamp}
@@ -560,51 +609,42 @@ export default function Test() {
                     </div>
 
                     {/* Result */}
-                    <div className="text-white/90 font-medium mb-2">Result</div>
-
-                    {call.result ? (
-                      <div className="text-white/80 space-y-2 animate-fade-in">
-                        {call.result.error ? (
-                          <div className="text-red-500 break-all whitespace-pre-wrap animate-fade-in">
-                            Error: {String(call.result.error)}
-                          </div>
-                        ) : (
-                          <div className="animate-fade-in space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-white/60">Output:</span>
-                              <span className="text-right">
-                                {call.result.output}
-                              </span>
+                    <div>
+                      <div className="text-white/90 font-medium mb-2">Result</div>
+                      {call.result ? (
+                        <div className="text-white/80 space-y-2 animate-fade-in">
+                          {call.result.error ? (
+                            <div className="text-red-500 break-all whitespace-pre-wrap animate-fade-in">
+                              Error: {String(call.result.error)}
                             </div>
+                          ) : (
+                            <div className="animate-fade-in space-y-2">
+                              <div className="flex flex-col">
+                                <span className="text-white/60 mb-2">Output:</span>
+                                <pre className="font-mono text-xs bg-black/30 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all max-h-[400px] overflow-y-auto">
+                                  {call.result.output}
+                                </pre>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-3 animate-pulse">
+                          {/* Input Row */}
+                          <div className="flex justify-between">
+                            <div className="h-4 w-12 bg-white/5 rounded"></div>
+                            <div className="h-4 w-32 bg-white/5 rounded"></div>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-3 animate-pulse">
-                        {/* Input Row */}
-                        <div className="flex justify-between">
-                          <div className="h-4 w-12 bg-white/5 rounded"></div>
-                          <div className="h-4 w-32 bg-white/5 rounded"></div>
+                          {/* Error/Output Row */}
+                          <div className="h-4 w-full bg-white/5 rounded"></div>
+                          {/* Raw Output Row */}
+                          <div className="h-4 w-3/4 bg-white/5 rounded mr-auto"></div>
                         </div>
-                        {/* Error/Output Row */}
-                        <div className="h-4 w-full bg-white/5 rounded"></div>
-                        {/* Raw Output Row */}
-                        <div className="h-4 w-3/4 bg-white/5 rounded mr-auto"></div>
-                      </div>
-                    )}
-
-                    {/* Loading States */}
-                    {status === "pending" && (
-                      <div className="animate-fade-in">
-                        <div className="text-white/90 font-medium mb-2">
-                          Result
-                        </div>
-                        <div className="text-white/60">Loading...</div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 ))}
-              </>
+              </div>
             )}
           </div>
         </div>
