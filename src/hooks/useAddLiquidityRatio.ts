@@ -6,11 +6,13 @@ import { getLPRatio } from "@/queries"
 import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 import { useRef } from "react"
 import { splitSyAmount } from "@/lib/utils"
+import useMarketStateData from "@/hooks/useMarketStateData.ts"
 
 export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
   const lastPowerRef = useRef(0)
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
+ const {data: marketState } =   useMarketStateData(coinConfig?.marketStateId)
 
   return useQuery({
     queryKey: ["addLiquidityRatio", coinConfig?.marketStateId],
@@ -21,9 +23,11 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
+      if (!marketState) {
+        throw new Error("not found market")
+      }
 
       const decimal = coinConfig.decimal
-
       const calculateRatio = async (
         power = lastPowerRef.current,
       ): Promise<{ ratio: string; conversionRate: string }> => {
@@ -32,7 +36,7 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
         const safeDecimal = Math.max(decimal - power, 0)
         try {
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
-          const { ptValue, syValue } = splitSyAmount(baseAmount)
+          const { ptValue, syValue } = splitSyAmount(baseAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt)
           const [lpAmount] = await queryLpOut({
             ptValue,
             syValue,
