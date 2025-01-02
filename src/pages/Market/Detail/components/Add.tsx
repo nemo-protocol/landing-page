@@ -18,12 +18,11 @@ import { useLoadingState } from "@/hooks/useLoadingState"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig } from "@/queries"
 import useMarketStateData from "@/hooks/useMarketStateData"
-import { formatDecimalValue, debounce, splitSyAmount } from "@/lib/utils"
+import { formatDecimalValue, debounce } from "@/lib/utils"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { CoinConfig } from "@/queries/types/market"
 import { useCalculateLpOut } from "@/hooks/useCalculateLpOut"
-import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import {
   mintSycoin,
   initPyPosition,
@@ -32,7 +31,6 @@ import {
   depositSyCoin,
   mintPy,
   redeemSyCoin,
-  getLpOutFromMintLp,
 } from "@/lib/txHelper"
 import {
   Tooltip,
@@ -63,7 +61,6 @@ export default function SingleCoin() {
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [lpPosition, setLpPosition] = useState<string>()
-  const client = useSuiClient()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -400,30 +397,9 @@ export default function SingleCoin() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        let lpOutStr: string
-        if (marketStateData?.lpSupply === "0" || new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)) {
-          const { ptValue, syValue } = splitSyAmount(convertedAmount)
-          lpOutStr = await getLpOutFromMintLp(
-            tx,
-            coinConfig,
-            ptValue,
-            syValue,
-            client,
-            address,
-          )
-        } else {
-          const amounts = splitSyAmount(convertedAmount)
-          lpOutStr = await getLpOutFromMintLp(
-            tx,
-            coinConfig,
-            amounts.ptValue,
-            amounts.syValue,
-            client,
-            address,
-          )
-        }
+        const calculatedLpOut = await calculateLpOut(convertedAmount)
 
-        const minLpAmount = new Decimal(lpOutStr)
+        const minLpAmount = new Decimal(calculatedLpOut)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
@@ -751,7 +727,7 @@ export default function SingleCoin() {
                         <Skeleton className="h-2 w-full bg-[#2D2D48]" />
                       ) : marketStateData ? (
                         <Progress
-                          className="h-2 bg-[#2D2D48] cursor-pointer"
+                          className="h-2 bg-[#2DF4DD]"
                           indicatorClassName="bg-[#2DF4DD]"
                           value={new Decimal(marketStateData.totalSy)
                             .div(marketStateData.marketCap)
