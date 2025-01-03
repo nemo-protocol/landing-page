@@ -58,7 +58,7 @@ export default function Remove() {
     coinConfig?.marketPositionTypeList,
   )
 
-  const { data: pyPositionData } = usePyPositionData(
+  const { data: pyPositionData,refetch } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
@@ -171,6 +171,7 @@ export default function Remove() {
         setOpen(true)
         setLpValue("")
         setStatus("Success")
+        refetch()
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -209,10 +210,11 @@ export default function Remove() {
           />
         </div>
 
-        <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07] flex flex-col items-center gap-y-4">
+        <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07] flex flex-col items-center gap-y-4 w-full">
           <h2 className="text-center text-xl">Remove Liquidity</h2>
 
           <AmountInput
+            error={error}
             amount={lpValue}
             price={coinConfig?.lpPrice}
             decimal={coinConfig?.decimal}
@@ -240,8 +242,6 @@ export default function Remove() {
                     <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
                   ) : !lpValue ? (
                     "--"
-                  ) : error ? (
-                    <span className="text-red-500">{error}</span>
                   ) : (
                     <>
                       <span>{targetValue}</span>

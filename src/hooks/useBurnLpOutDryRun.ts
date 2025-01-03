@@ -8,7 +8,8 @@ import useFetchLpPosition, {
   type LppMarketPosition,
 } from "./useFetchLpPosition"
 import useFetchPyPosition, { type PyPosition } from "./useFetchPyPosition"
-import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
+import { initPyPosition } from "@/lib/txHelper"
+// import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
 
 export default function useBurnLpMutation(
   coinConfig?: CoinConfig,
@@ -54,15 +55,15 @@ export default function useBurnLpMutation(
       }
 
       // Merge LP positions
-      const mergedPosition = mergeLpPositions(
-        tx,
-        coinConfig,
-        marketPositions,
-        lpValue,
-        coinConfig.decimal,
-      )
+      // const mergedPosition = mergeLpPositions(
+      //   tx,
+      //   coinConfig,
+      //   marketPositions,
+      //   lpValue,
+      //   coinConfig.decimal,
+      // )
 
-      console.log("mergedPosition", mergedPosition)
+      // console.log("mergedPosition", mergedPosition)
 
       const debugInfo: DebugInfo = {
         moveCall: {
@@ -113,18 +114,20 @@ export default function useBurnLpMutation(
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.events?.[0]?.parsedJson?.sy_amount) {
-        const message = "Failed to get SY amount"
+      console.log("result", result?.events?.[0]?.parsedJson)
+
+      if (!result?.events?.[0]?.parsedJson) {
+        const message = "Failed to get burn data"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
       const syAmount = result.events[0].parsedJson.sy_amount as string
-      const pyAmount = result.events[0].parsedJson.py_amount as string
+      const ptAmount = result.events[0].parsedJson.pt_amount as string
 
-      debugInfo.parsedOutput = JSON.stringify([syAmount, pyAmount])
+      debugInfo.parsedOutput = JSON.stringify([syAmount, ptAmount])
 
-      const returnValue = [syAmount, pyAmount]
+      const returnValue = [syAmount, ptAmount]
 
       return debug ? [returnValue, debugInfo] : [returnValue]
     },
