@@ -172,6 +172,7 @@ export default function Invest() {
             tx.object(coinConfig.version),
             tx.pure.u64(
               new Decimal(swapValue)
+                .mul(ratio)
                 .mul(10 ** coinConfig.decimal)
                 .mul(1 - new Decimal(slippage).div(100).toNumber())
                 .toFixed(0),
