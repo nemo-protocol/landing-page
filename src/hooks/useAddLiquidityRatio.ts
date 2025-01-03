@@ -43,10 +43,16 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
           const parsedData = JSON.parse(exchangeRate.toString())
           const { ptValue, syValue } = splitSyAmount(baseAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
-          const [lpAmount] = await queryLpOut({
-            ptValue,
-            syValue,
-          })
+          let lpAmount: string
+          if (marketState.lpSupply == "0") {
+            lpAmount = (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000 ).toString();
+          }else{
+            [lpAmount] = await queryLpOut({
+              ptValue,
+              syValue,
+            })
+          }
+
           const ratio = new Decimal(lpAmount).div(baseAmount).toString()
           const { conversionRate } = await getLPRatio(
             coinConfig.marketStateId,

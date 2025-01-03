@@ -32,10 +32,15 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
       const { ptValue, syValue } = splitSyAmount(syAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
       console.log("syAmount", syAmount, "ptValue", ptValue, "syValue", syValue)
 
-      const [lpAmount] = await queryLpOut({
-        ptValue,
-        syValue,
-      })
+      let lpAmount: string
+      if (marketState.lpSupply == "0") {
+        lpAmount = (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000 ).toString();
+      }else{
+        [lpAmount] = await queryLpOut({
+          ptValue,
+          syValue,
+        })
+      }
       console.log("lpAmount", lpAmount)
 
       return {lpAmount: new Decimal(lpAmount).div(10 ** coinConfig.decimal).toString(), ptValue, syValue}

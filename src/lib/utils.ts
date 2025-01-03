@@ -84,6 +84,14 @@ function getMintLpParameter(
   const total_pt_reserve = Number(totalPt);
   const exchange_rate_num = Number(exchange_rate);
   const py_index_stored_num = Number(py_index_stored);
+  if (lpSupply == "0" ) {
+      const syIn = new Decimal(syAmount).div(2).toString()
+      const max_rate = get_max_rate(exchange_rate_num, py_index_stored_num)
+      const ptIn = new Decimal(syAmount).div(2).mul(max_rate).toString()
+      const syInNumber = Number(syIn);
+      const ptInNumber = Number(ptIn);
+      return { syForPt: ptInNumber, syDesired: syInNumber };
+  }
   let left = 0;
   let right = total_sy;
   let sy_for_pt = -1; // 初始化为无效值，表示未找到
@@ -107,8 +115,12 @@ function getMintLpParameter(
   return null; // 未找到结果时返回 null
 }
 
+function get_max_rate(exchange_rate: number, py_index_stored: number): number {
+  return Math.max(exchange_rate / (2 ** 64), py_index_stored/ (2 ** 64))
+}
+
 function get_pt_out(syAmount: number, exchange_rate: number, py_index_stored: number): number {
-  const max_rate = Math.max(exchange_rate / (2 ** 64), py_index_stored)/ (2 ** 64);
+  const max_rate = Math.max(exchange_rate / (2 ** 64), py_index_stored/ (2 ** 64));
   return syAmount * max_rate;
 }
 
