@@ -35,6 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import { useTradeRatios } from "@/hooks/useTradeRatios"
+import useQueryYtOutBySyInWithVoucher from "@/hooks/useQueryYtOutBySyInWithVoucher"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -122,6 +123,8 @@ export default function Trade() {
     [coinBalance, swapValue],
   )
 
+  const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
+
   async function swap() {
     if (
       coinType &&
@@ -137,6 +140,11 @@ export default function Trade() {
         const syCoinAmount = new Decimal(swapValue)
           .mul(10 ** coinConfig.decimal)
           .toString()
+
+        const [ytOut] = await queryYtOut(syCoinAmount)
+        const minYtOut = new Decimal(ytOut)
+          .mul(1 - new Decimal(slippage).div(100).toNumber())
+          .toFixed(0)
 
         const [splitCoin] =
           tokenType === 0
@@ -165,13 +173,7 @@ export default function Trade() {
           target: `${coinConfig.nemoContractId}::market::swap_sy_for_exact_yt`,
           arguments: [
             tx.object(coinConfig.version),
-            tx.pure.u64(
-              new Decimal(swapValue)
-                .mul(new Decimal(ratio || 1))
-                .mul(10 ** coinConfig.decimal)
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
-                .toFixed(0),
-            ),
+            tx.pure.u64(minYtOut),
             syCoin,
             priceVoucher,
             pyPosition,

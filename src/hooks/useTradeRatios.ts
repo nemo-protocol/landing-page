@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { getSwapRatio } from "@/queries"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery} from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
 import useQueryYtOutBySyInWithVoucher from "./useQueryYtOutBySyInWithVoucher"
 import { useRef } from "react"
@@ -31,6 +31,9 @@ export function useTradeRatios(coinConfig?: CoinConfig) {
           )
 
           lastPowerRef.current = power
+          if (ytRatio === "0" && power < decimal) {
+            return calculateRatio(power + 1)
+          }
           return {
             ratio: ytRatio,
             conversionRate: swapRatioData.conversionRate,
@@ -48,4 +51,4 @@ export function useTradeRatios(coinConfig?: CoinConfig) {
     enabled: !!coinConfig?.decimal && !!coinConfig?.marketStateId,
     refetchInterval: 20000,
   })
-} 
+}
