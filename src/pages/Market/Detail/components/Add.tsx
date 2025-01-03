@@ -710,9 +710,10 @@ export default function SingleCoin() {
                       {isMarketStateDataLoading ? (
                         <Skeleton className="h-2 w-full bg-[#2D2D48]" />
                       ) : marketStateData ? (
+
                         <Progress
                           className="h-2 bg-[#2DF4DD] cursor-pointer"
-                          indicatorClassName="bg-[#2DF4DD]"
+                          indicatorClassName="bg-[#2C62D8]"
                           value={new Decimal(marketStateData.totalSy)
                             .div(marketStateData.marketCap)
                             .mul(100)
@@ -721,6 +722,7 @@ export default function SingleCoin() {
                       ) : (
                         <span>No data</span>
                       )}
+
                     </TooltipTrigger>
 
                     {/* Tooltip with bottom alignment and arrow */}
