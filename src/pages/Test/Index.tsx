@@ -70,8 +70,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
 
     let input: QueryInputMap[T]
     if (config.target === "get_lp_out_from_mint_lp") {
-      const formattedAmount = formatAmount(amount, "mul")
-      input = { ptValue: formattedAmount, syValue: formattedAmount } as QueryInputMap[T]
+      input = { ptValue: amount, syValue: amount } as QueryInputMap[T]
     } else if (config.target === "get_price_voucher" || 
                config.target === "get_lp_market_position" ||
                config.target === "get_py_position") {
@@ -90,7 +89,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
         },
       } as QueryInputMap[T]
     } else {
-      input = formatAmount(amount, "mul") as QueryInputMap[T]
+      input = amount as QueryInputMap[T]
     }
 
     const callInfo: ContractCall = {
@@ -209,7 +208,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
               <>
                 <button
                   className="flex items-center justify-center h-10 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] rounded-xl disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm"
-                  onClick={() => handleQuery("1000000")}
+                  onClick={() => handleQuery("0.001")}
                   disabled={!coinConfig || !address || isLoading}
                 >
                   {config.target === "get_lp_out_from_mint_lp"

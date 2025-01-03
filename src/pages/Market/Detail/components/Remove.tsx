@@ -1,7 +1,7 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { network, DEBUG } from "@/config"
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Transaction } from "@mysten/sui/transactions"
 import usePyPositionData from "@/hooks/usePyPositionData"
@@ -21,8 +21,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import PoolSelect from "@/components/PoolSelect"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import { useCoinConfig } from "@/queries"
-import useBurnLpOutDryRun from "@/hooks/useBurnLpOutDryRun"
+import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
 import { ContractError } from "@/hooks/types"
+import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
+import { getPriceVoucher, swapExactPtForSy } from "@/lib/txHelper"
+import { debounce } from "@/lib/utils"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -49,7 +52,7 @@ export default function Remove() {
 
   const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
 
-  const { mutateAsync: burnLpDryRun } = useBurnLpOutDryRun(coinConfig)
+  const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
 
   const { data: lppMarketPositionData } = useLpMarketPositionData(
     address,
@@ -58,7 +61,7 @@ export default function Remove() {
     coinConfig?.marketPositionTypeList,
   )
 
-  const { data: pyPositionData,refetch } = usePyPositionData(
+  const { data: pyPositionData, refetch } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
@@ -82,37 +85,50 @@ export default function Remove() {
     [lpCoinBalance, lpValue],
   )
 
-  useEffect(() => {
-    const getSyOut = async () => {
-      if (lpValue && lpValue !== "0" && decimal) {
-        setIsInputLoading(true)
-        try {
-          const amount = new Decimal(lpValue).mul(10 ** decimal).toString()
-          const [[syOut]] = await burnLpDryRun(amount)
-          const syAmount = new Decimal(syOut).div(10 ** decimal).toString()
-          setTargetValue(syAmount)
-          setError(undefined)
-        } catch (error) {
-          setError((error as ContractError)?.message)
-          console.error("Failed to get SY out:", error)
+  const { mutateAsync: querySyOutFromPtIn } =
+    useQuerySyOutFromPtInWithVoucher(coinConfig)
+
+  const debouncedGetSyOut = useCallback(
+    (value: string, decimal: number) => {
+      const getSyOut = debounce(async () => {
+        if (value && value !== "0" && decimal) {
+          setIsInputLoading(true)
+          try {
+            const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
+            let totalSyOut = new Decimal(syAmount)
+            const [ptToSy] = await querySyOutFromPtIn(ptAmount)
+            totalSyOut = totalSyOut.add(ptToSy)
+            const syOut = totalSyOut.div(10 ** decimal).toString()
+            setTargetValue(syOut)
+            setError(undefined)
+          } catch (error) {
+            setError((error as ContractError)?.message)
+            console.error("Failed to get SY out:", error)
+            setTargetValue("")
+          } finally {
+            setIsInputLoading(false)
+          }
+        } else {
           setTargetValue("")
-        } finally {
-          setIsInputLoading(false)
         }
-      } else {
-        setTargetValue("")
-      }
-    }
+      }, 500)
 
-    const timer = setTimeout(() => {
       getSyOut()
-    }, 500)
+      return getSyOut.cancel
+    },
+    [burnLpDryRun, querySyOutFromPtIn],
+  )
 
-    return () => clearTimeout(timer)
-  }, [lpValue, decimal, burnLpDryRun])
+  useEffect(() => {
+    const cancelFn = debouncedGetSyOut(lpValue, decimal ?? 0)
+    return () => {
+      cancelFn()
+    }
+  }, [lpValue, decimal, debouncedGetSyOut])
 
   async function remove() {
     if (
+      decimal &&
       address &&
       coinType &&
       coinConfig &&
@@ -120,6 +136,19 @@ export default function Remove() {
       lppMarketPositionData?.length
     ) {
       try {
+        const [{ ptAmount }] = await burnLpDryRun(lpValue)
+
+        let canSwapPt = false
+        if (ptAmount && new Decimal(ptAmount).gt(0)) {
+          try {
+            await querySyOutFromPtIn(ptAmount)
+            canSwapPt = true
+          } catch (error) {
+            console.log("PT swap simulation failed:", error)
+            canSwapPt = false
+          }
+        }
+
         const tx = new Transaction()
 
         let pyPosition
@@ -145,11 +174,25 @@ export default function Remove() {
           lpValue,
           pyPosition,
           mergedPositionId,
+          decimal,
         )
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-
         tx.transferObjects([yieldToken], address)
+
+        if (canSwapPt) {
+          const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+          const swappedSyCoin = swapExactPtForSy(
+            tx,
+            coinConfig,
+            new Decimal(ptAmount).div(10 ** coinConfig.decimal).toString(),
+            pyPosition,
+            priceVoucher,
+          )
+
+          const yieldToken = redeemSyCoin(tx, coinConfig, swappedSyCoin)
+          tx.transferObjects([yieldToken], address)
+        }
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -157,16 +200,8 @@ export default function Remove() {
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          // chain: `sui:${network}`,
         })
-        //TODO : handle error
-        // if (res.effects?.status.status === "failure") {
-        //   setOpen(true)
-        //   setStatus("Failed")
-        //   setTxId(res.digest)
-        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
-        //   return
-        // }
+
         setTxId(res.digest)
         setOpen(true)
         setLpValue("")

@@ -27,7 +27,10 @@ import {
   mergeLpPositions,
   burnLp,
   redeemPy,
+  swapExactPtForSy,
 } from "@/lib/txHelper"
+import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
+import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
 
 export default function Item({
   itemKey,
@@ -99,6 +102,10 @@ export default function Item({
     }
     return 0
   }, [lpMarketPositionData])
+
+  const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
+  const { mutateAsync: querySyOutFromPtIn } =
+    useQuerySyOutFromPtInWithVoucher(coinConfig)
 
   useEffect(() => {
     if (isConnected) {
@@ -290,6 +297,20 @@ export default function Item({
       lpMarketPositionData?.length
     ) {
       try {
+        // First check if we can swap PT
+        const [{ ptAmount }] = await burnLpDryRun(lpCoinBalance)
+
+        let canSwapPt = false
+        if (ptAmount && new Decimal(ptAmount).gt(0)) {
+          try {
+            await querySyOutFromPtIn(ptAmount)
+            canSwapPt = true
+          } catch (error) {
+            console.log("PT swap simulation failed:", error)
+            canSwapPt = false
+          }
+        }
+
         const tx = new Transaction()
 
         let pyPosition
@@ -315,11 +336,26 @@ export default function Item({
           lpCoinBalance,
           pyPosition,
           mergedPositionId,
+          coinConfig.decimal,
         )
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-
         tx.transferObjects([yieldToken], address)
+
+        // Add PT swap if possible
+        if (canSwapPt) {
+          const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+          const swappedSyCoin = swapExactPtForSy(
+            tx,
+            coinConfig,
+            new Decimal(ptAmount).div(10 ** coinConfig.decimal).toString(),
+            pyPosition,
+            priceVoucher,
+          )
+
+          const swappedYieldToken = redeemSyCoin(tx, coinConfig, swappedSyCoin)
+          tx.transferObjects([swappedYieldToken], address)
+        }
 
         if (created) {
           tx.transferObjects([pyPosition], address)

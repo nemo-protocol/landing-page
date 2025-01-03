@@ -290,23 +290,23 @@ export function splitCoinHelper(
 export const mergeLpPositions = (
   tx: Transaction,
   coinConfig: CoinConfig,
-  lppMarketPositionData: LppMarketPosition[],
+  lpPositions: LppMarketPosition[],
   lpValue: string,
   decimal: number,
 ) => {
   debugLog("mergeLppMarketPositions params:", {
-    lppMarketPositionData,
+    lpPositions,
     lpValue,
     decimal,
   })
 
-  const sortedPositions = [...lppMarketPositionData].sort(
+  const sortedPositions = [...lpPositions].sort(
     (a, b) => Number(b.lp_amount) - Number(a.lp_amount),
   )
 
   let accumulatedAmount = new Decimal(0)
   const positionsToMerge: LppMarketPosition[] = []
-  const targetAmount = new Decimal(lpValue)
+  const targetAmount = new Decimal(lpValue).mul(10 ** decimal)
   for (const position of sortedPositions) {
     accumulatedAmount = accumulatedAmount.add(position.lp_amount)
     positionsToMerge.push(position)
@@ -315,6 +315,9 @@ export const mergeLpPositions = (
       break
     }
   }
+
+  console.log("accumulatedAmount", accumulatedAmount.toNumber())
+  console.log("targetAmount", targetAmount.toNumber())
 
   if (accumulatedAmount.lt(targetAmount)) {
     throw new Error("Insufficient LP amount")
@@ -434,12 +437,13 @@ export const burnLp = (
   lpValue: string,
   pyPosition: TransactionArgument,
   mergedPositionId: TransactionArgument,
+  decimal: number,
 ) => {
   const burnLpMoveCall = {
     target: `${coinConfig.nemoContractId}::market::burn_lp`,
     arguments: [
       coinConfig.version,
-      new Decimal(lpValue).mul(1e9).toFixed(0),
+      new Decimal(lpValue).mul(10 ** decimal).toFixed(0),
       "pyPosition",
       coinConfig.marketStateId,
       "mergedPositionId",
@@ -453,7 +457,7 @@ export const burnLp = (
     ...burnLpMoveCall,
     arguments: [
       tx.object(coinConfig.version),
-      tx.pure.u64(new Decimal(lpValue).mul(1e9).toFixed(0)),
+      tx.pure.u64(new Decimal(lpValue).mul(10 ** decimal).toFixed(0)),
       pyPosition,
       tx.object(coinConfig.marketStateId),
       mergedPositionId,
@@ -487,7 +491,7 @@ export const swapExactPtForSy = (
     ],
     typeArguments: [coinConfig.syCoinType],
   })
-  console.log("redeemValue", redeemValue, )
+  console.log("redeemValue", redeemValue)
   return syCoin
 }
 
@@ -531,14 +535,10 @@ export const redeemPy = (
     arguments: [
       tx.object(coinConfig.version),
       tx.pure.u64(
-        new Decimal(ytRedeemValue)
-          .mul(10 ** coinConfig.decimal)
-          .toString(),
+        new Decimal(ytRedeemValue).mul(10 ** coinConfig.decimal).toString(),
       ),
       tx.pure.u64(
-        new Decimal(ptRedeemValue)
-          .mul(10 ** coinConfig.decimal)
-          .toString(),
+        new Decimal(ptRedeemValue).mul(10 ** coinConfig.decimal).toString(),
       ),
       priceVoucher,
       pyPosition,

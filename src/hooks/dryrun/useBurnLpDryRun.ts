@@ -2,15 +2,21 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "./types"
-import { ContractError } from "./types"
+import type { DebugInfo } from "../types"
+import { ContractError } from "../types"
 import useFetchLpPosition, {
   type LppMarketPosition,
-} from "./useFetchLpPosition"
-import useFetchPyPosition, { type PyPosition } from "./useFetchPyPosition"
+} from "../useFetchLpPosition"
+import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
 import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
+import Decimal from "decimal.js"
 
-export default function useBurnLpMutation(
+type BurnLpResult = {
+  syAmount: string
+  ptAmount: string
+}
+
+export default function useBurnLpDryRun(
   coinConfig?: CoinConfig,
   debug: boolean = false,
 ) {
@@ -22,7 +28,7 @@ export default function useBurnLpMutation(
   return useMutation({
     mutationFn: async (
       lpValue: string,
-    ): Promise<[string[]] | [string[], DebugInfo]> => {
+    ): Promise<[BurnLpResult] | [BurnLpResult, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -30,7 +36,6 @@ export default function useBurnLpMutation(
         throw new Error("Please select a pool")
       }
 
-      // Fetch position data
       const [marketPositions] = (await fetchLpPositionAsync()) as [
         LppMarketPosition[],
       ]
@@ -62,13 +67,17 @@ export default function useBurnLpMutation(
         coinConfig.decimal,
       )
 
+      const lpAmount = new Decimal(lpValue)
+        .mul(10 ** coinConfig.decimal)
+        .toFixed()
+
       console.log("mergedPosition", mergedPosition)
 
       const debugInfo: DebugInfo = {
         moveCall: {
           target: `${coinConfig.nemoContractId}::market::burn_lp`,
           arguments: [
-            { name: "lp_amount", value: lpValue },
+            { name: "lp_amount", value: lpAmount },
             {
               name: "py_position",
               value: created ? "pyPosition" : pyPositions[0].id.id,
@@ -85,11 +94,10 @@ export default function useBurnLpMutation(
         target: debugInfo.moveCall.target,
         arguments: [
           tx.object(coinConfig.version),
-          tx.pure.u64(lpValue),
+          tx.pure.u64(lpAmount),
           pyPosition,
           tx.object(coinConfig.marketStateId),
-          // mergedPosition,
-          tx.object(marketPositions[0].id.id),
+          mergedPosition,
           tx.object("0x6"),
         ],
         typeArguments: debugInfo.moveCall.typeArguments,
@@ -124,9 +132,9 @@ export default function useBurnLpMutation(
       const syAmount = result.events[0].parsedJson.sy_amount as string
       const ptAmount = result.events[0].parsedJson.pt_amount as string
 
-      debugInfo.parsedOutput = JSON.stringify([syAmount, ptAmount])
+      debugInfo.parsedOutput = JSON.stringify({ syAmount, ptAmount })
 
-      const returnValue = [syAmount, ptAmount]
+      const returnValue = { syAmount, ptAmount }
 
       return debug ? [returnValue, debugInfo] : [returnValue]
     },
