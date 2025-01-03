@@ -306,8 +306,7 @@ export const mergeLpPositions = (
 
   let accumulatedAmount = new Decimal(0)
   const positionsToMerge: LppMarketPosition[] = []
-  const targetAmount = new Decimal(lpValue).mul(10 ** decimal)
-
+  const targetAmount = new Decimal(lpValue)
   for (const position of sortedPositions) {
     accumulatedAmount = accumulatedAmount.add(position.lp_amount)
     positionsToMerge.push(position)

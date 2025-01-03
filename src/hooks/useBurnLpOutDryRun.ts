@@ -8,8 +8,7 @@ import useFetchLpPosition, {
   type LppMarketPosition,
 } from "./useFetchLpPosition"
 import useFetchPyPosition, { type PyPosition } from "./useFetchPyPosition"
-import { initPyPosition } from "@/lib/txHelper"
-// import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
+import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
 
 export default function useBurnLpMutation(
   coinConfig?: CoinConfig,
@@ -55,15 +54,15 @@ export default function useBurnLpMutation(
       }
 
       // Merge LP positions
-      // const mergedPosition = mergeLpPositions(
-      //   tx,
-      //   coinConfig,
-      //   marketPositions,
-      //   lpValue,
-      //   coinConfig.decimal,
-      // )
+      const mergedPosition = mergeLpPositions(
+        tx,
+        coinConfig,
+        marketPositions,
+        lpValue,
+        coinConfig.decimal,
+      )
 
-      // console.log("mergedPosition", mergedPosition)
+      console.log("mergedPosition", mergedPosition)
 
       const debugInfo: DebugInfo = {
         moveCall: {
