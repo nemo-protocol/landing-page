@@ -6,7 +6,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 import { parseErrorMessage } from "@/lib/errorMapping"
-import { initPyPosition, getPriceVoucher } from "@/lib/txHelper"
+import { initPyPosition, getPriceVoucher, redeemPy } from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 
@@ -47,7 +47,7 @@ export default function Redeem({
   // )
 
   const { data: coinConfig } = useCoinConfig(coinType, maturity)
-  const { data: pyPositionData } = usePyPositionData(
+  const { data: pyPositionData, refetch: refetchPyPosition } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
@@ -108,28 +108,14 @@ export default function Redeem({
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        const [sy] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
-          arguments: [
-            tx.object(coinConfig.version),
-            tx.pure.u64(
-              new Decimal(ytRedeemValue)
-                .mul(10 ** coinConfig.decimal)
-                .toString(),
-            ),
-            tx.pure.u64(
-              new Decimal(ptRedeemValue)
-                .mul(10 ** coinConfig.decimal)
-                .toString(),
-            ),
-            priceVoucher,
-            pyPosition,
-            tx.object(coinConfig.pyStateId),
-            tx.object(coinConfig.yieldFactoryConfigId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        })
+        const sy = redeemPy(
+          tx,
+          coinConfig,
+          ytRedeemValue,
+          ptRedeemValue,
+          priceVoucher,
+          pyPosition,
+        )
 
         tx.transferObjects([sy], address)
 
@@ -153,6 +139,7 @@ export default function Redeem({
         setPTRedeemValue("")
         setYTRedeemValue("")
         setStatus("Success")
+        refetchPyPosition()
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)

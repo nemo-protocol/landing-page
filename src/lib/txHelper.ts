@@ -517,3 +517,36 @@ export const swapExactYtForSy = (
   })
   return syCoin
 }
+
+export const redeemPy = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  ytRedeemValue: string,
+  ptRedeemValue: string,
+  priceVoucher: TransactionArgument,
+  pyPosition: TransactionArgument,
+) => {
+  const [sy] = tx.moveCall({
+    target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
+    arguments: [
+      tx.object(coinConfig.version),
+      tx.pure.u64(
+        new Decimal(ytRedeemValue)
+          .mul(10 ** coinConfig.decimal)
+          .toString(),
+      ),
+      tx.pure.u64(
+        new Decimal(ptRedeemValue)
+          .mul(10 ** coinConfig.decimal)
+          .toString(),
+      ),
+      priceVoucher,
+      pyPosition,
+      tx.object(coinConfig.pyStateId),
+      tx.object(coinConfig.yieldFactoryConfigId),
+      tx.object("0x6"),
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  })
+  return sy
+}

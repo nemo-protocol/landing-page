@@ -418,10 +418,8 @@ export default function SingleCoin() {
             coinData,
             coinType,
             pyPosition,
-            // ratio || "1",
             address,
             minLpAmount,
-            // convertedRate,
           )
         } else {
           await handleAddLiquiditySingleSy(
@@ -460,38 +458,31 @@ export default function SingleCoin() {
     }
   }
 
-  const debouncedGetLpPosition = useCallback(
-    debounce(
-      async (
-        value: string,
-        decimal: number,
-        config: CoinConfig | undefined,
-      ) => {
-        if (value && value !== "0" && decimal && config && conversionRate) {
-          try {
-            const amount = new Decimal(value).mul(10 ** decimal).toString()
-            const convertedAmount =
-              tokenType === 0
-                ? new Decimal(amount).div(conversionRate).toFixed(0)
-                : amount
-            const lpOut = await calculateLpOut(convertedAmount)
-            setLpPosition(lpOut.lpAmount)
-          } catch (error) {
-            console.error("Failed to get LP position:", error)
-          }
-        } else {
-          setLpPosition(undefined)
+  const debouncedGetLpPosition = useCallback((value: string, decimal: number, config: CoinConfig | undefined) => {
+    const getLpPosition = debounce(async () => {
+      if (value && value !== "0" && decimal && config && conversionRate) {
+        try {
+          const amount = new Decimal(value).mul(10 ** decimal).toString()
+          const convertedAmount = tokenType === 0
+            ? new Decimal(amount).div(conversionRate).toFixed(0)
+            : amount
+          const lpOut = await calculateLpOut(convertedAmount)
+          setLpPosition(lpOut.lpAmount)
+        } catch (error) {
+          console.error("Failed to get LP position:", error)
         }
-      },
-      500,
-    ),
-    [calculateLpOut, tokenType, conversionRate],
-  )
+      } else {
+        setLpPosition(undefined)
+      }
+    }, 500)
+    getLpPosition()
+    return getLpPosition.cancel
+  }, [calculateLpOut, tokenType, conversionRate])
 
   useEffect(() => {
-    debouncedGetLpPosition(addValue, decimal ?? 0, coinConfig)
+    const cancelFn = debouncedGetLpPosition(addValue, decimal ?? 0, coinConfig)
     return () => {
-      debouncedGetLpPosition.cancel()
+      cancelFn()
     }
   }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
 
@@ -719,7 +710,7 @@ export default function SingleCoin() {
                         <Skeleton className="h-2 w-full bg-[#2D2D48]" />
                       ) : marketStateData ? (
                         <Progress
-                          className="h-2 bg-[#2DF4DD]"
+                          className="h-2 bg-[#2DF4DD] cursor-pointer"
                           indicatorClassName="bg-[#2DF4DD]"
                           value={new Decimal(marketStateData.totalSy)
                             .div(marketStateData.marketCap)
@@ -767,20 +758,40 @@ export default function SingleCoin() {
                 <h3 className="text-lg lg:text-xl font-normal mb-6 lg:mb-8">
                   Pool Ratio
                 </h3>
-                <div className="mb-4">
-                  <div className="flex justify-between mb-4">
-                    <span>
-                      PT {coinConfig?.coinName} {ptRatio}%
-                    </span>
-                    <span>
-                      {coinConfig?.coinName} {syRatio}%
-                    </span>
-                  </div>
-                  <Progress
-                    value={Number(ptRatio)}
-                    className="h-2 bg-[#2DF4DD]"
-                    indicatorClassName="bg-[#2C62D8]"
-                  />
+                <div className="mb-4 cursor-pointer">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <div className="flex justify-between mb-4">
+                            <span>
+                              PT {coinConfig?.coinName} {ptRatio}%
+                            </span>
+                            <span>
+                              {coinConfig?.coinName} {syRatio}%
+                            </span>
+                          </div>
+                          <Progress
+                            value={Number(ptRatio)}
+                            className="h-2 bg-[#2DF4DD]"
+                            indicatorClassName="bg-[#2C62D8]"
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-3 text-sm relative mb-2" side="top" align="end" sideOffset={5}>
+                        <div className="text-white space-y-1">
+                          <div className="flex justify-between items-center gap-x-4">
+                            <span>PT {coinConfig?.coinName}:</span>
+                            <span>{coinConfig?.ptTvl ? `$${formatDecimalValue(coinConfig.ptTvl, 2)}` : "--"}</span>
+                          </div>
+                          <div className="flex justify-between items-center gap-x-4">
+                            <span>{coinConfig?.coinName}:</span>
+                            <span>{coinConfig?.syTvl ? `$${formatDecimalValue(coinConfig.syTvl, 2)}` : "--"}</span>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
 

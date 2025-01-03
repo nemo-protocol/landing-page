@@ -74,7 +74,7 @@ export default function PoolSelect({
       </SelectTrigger>
       <SelectContent className="border-none bg-[#131520]">
         <SelectGroup className="flex flex-col gap-y-2">
-          {list?.map((item) => (
+          {list?.filter((coin) => parseInt(coin.maturity) > Date.now()).map((item) => (
             <SelectItem
               className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-4 rounded-md"
               key={item.coinAddress + "-" + item.maturity}

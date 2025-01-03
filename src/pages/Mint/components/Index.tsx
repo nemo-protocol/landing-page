@@ -1,7 +1,7 @@
 import Mint from "./Mint"
 import Redeem from "./Redeem"
 import { useState } from "react"
-import { SlidersHorizontal, RotateCw } from "lucide-react"
+import { SlidersHorizontal } from "lucide-react"
 import PoolSelect from "@/components/PoolSelect"
 import { useNavigate, useParams } from "react-router-dom"
 import {
@@ -56,9 +56,9 @@ export default function Trade() {
             </div>
           </div>
           <div className="flex items-center gap-x-2 w-auto">
-            <SlidersHorizontal className="animate-spin" />
-            <div className="flex items-center gap-x-2 bg-[#242632]/30 rounded-md py-1.5 px-2.5">
-              <RotateCw className="size-4" />
+            {/* <RotateCw /> */}
+            <div className="flex items-center gap-x-2 bg-[#242632]/30 rounded-md py-1.5">
+              <SlidersHorizontal className="size-4" />
               <Popover>
                 <PopoverTrigger asChild>
                   <span className="text-white cursor-pointer">{slippage}%</span>

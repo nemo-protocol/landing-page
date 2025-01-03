@@ -55,7 +55,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {list?.map((item) => (
+          {list?.filter((coin) => parseInt(coin.maturity) > Date.now()).map((item) => (
             <div
               key={item.coinAddress + "_" + item.maturity}
               className="border border-white/10 rounded-3xl"

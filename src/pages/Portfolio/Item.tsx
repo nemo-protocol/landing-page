@@ -26,6 +26,7 @@ import {
   initPyPosition,
   mergeLPMarketPositions,
   burnLp,
+  redeemPy,
 } from "@/lib/txHelper"
 
 export default function Item({
@@ -222,7 +223,7 @@ export default function Item({
   }
 
   async function redeemPT() {
-    if (!ptBalance && coinConfig?.coinType && address) {
+    if (ptBalance && coinConfig?.coinType && address) {
       try {
         const tx = new Transaction()
 
@@ -247,39 +248,18 @@ export default function Item({
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        const swapMoveCall = {
-          target: `${coinConfig?.nemoContractId}::market::swap_exact_pt_for_sy`,
-          arguments: [
-            coinConfig?.version,
-            new Decimal(ptBalance).mul(1e9).toString(),
-            "pyPosition",
-            coinConfig?.pyStateId,
-            "priceVoucher",
-            // coinConfig?.yieldFactoryConfigId,
-            coinConfig?.marketFactoryConfigId,
-            coinConfig?.marketStateId,
-            "0x6",
-          ],
-          typeArguments: [coinConfig?.syCoinType],
-        }
-        debugLog("swap_exact_pt_for_sy move call:", swapMoveCall)
+        const syCoin = redeemPy(
+          tx,
+          coinConfig,
+          "0",
+          ptBalance.toString(),
+          priceVoucher,
+          pyPosition,
+        )
 
-        const [syCoin] = tx.moveCall({
-          ...swapMoveCall,
-          arguments: [
-            tx.object(coinConfig?.version),
-            tx.pure.u64(new Decimal(ptBalance).mul(1e9).toString()),
-            pyPosition,
-            tx.object(coinConfig?.pyStateId),
-            priceVoucher,
-            tx.object(coinConfig?.yieldFactoryConfigId),
-            tx.object(coinConfig?.marketFactoryConfigId),
-            tx.object(coinConfig?.marketStateId),
-            tx.object("0x6"),
-          ],
-        })
+        const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
-        tx.transferObjects([syCoin], address)
+        tx.transferObjects([yieldToken], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -330,7 +310,13 @@ export default function Item({
           coinConfig.decimal,
         )
 
-        const syCoin = burnLp(tx, coinConfig, lpCoinBalance, pyPosition, mergedPositionId)
+        const syCoin = burnLp(
+          tx,
+          coinConfig,
+          lpCoinBalance,
+          pyPosition,
+          mergedPositionId,
+        )
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
@@ -450,7 +436,12 @@ export default function Item({
                 </Link>
               </div>
             ) : (
-              <button className="rounded-3xl bg-[#0F60FF] w-24 h-8">Redeem</button>
+              <button
+                className="rounded-3xl bg-[#0F60FF] h-8 w-24"
+                onClick={redeemPT}
+              >
+                Redeem
+              </button>
             )}
           </TableCell>
         </TableRow>
@@ -504,22 +495,24 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">
-            <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
-              <Link
-                to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/yt`}
-              >
-                <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
-                  Buy
-                </button>
-              </Link>
-              <Link
-                to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/sell/yt`}
-              >
-                <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
-                  Sell
-                </button>
-              </Link>
-            </div>
+            {dayjs(parseInt(coinConfig?.maturity)).diff(dayjs(), "day") > 0 ? (
+              <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
+                <Link
+                  to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/yt`}
+                >
+                  <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
+                    Buy
+                  </button>
+                </Link>
+                <Link
+                  to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/sell/yt`}
+                >
+                  <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
+                    Sell
+                  </button>
+                </Link>
+              </div>
+            ) : null}
           </TableCell>
         </TableRow>
       )}
@@ -565,13 +558,7 @@ export default function Item({
             ) : (
               <button
                 className="rounded-3xl bg-[#0F60FF] h-8 w-24"
-                onClick={() => {
-                  if (selectType === "lp") {
-                    redeemLP()
-                  } else if (selectType === "pt") {
-                    redeemPT()
-                  }
-                }}
+                onClick={redeemLP}
               >
                 Redeem
               </button>

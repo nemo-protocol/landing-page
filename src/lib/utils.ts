@@ -56,10 +56,24 @@ export const safeDivide = (str?: string | number): number => {
   return num
 }
 
-export const splitSyAmount = (syAmount: string, lpSupply: string, totalSy: string, totalPt: string, exchange_rate: string, py_index_stored: string) => {
-  const result = getMintLpParameter(syAmount, lpSupply, totalSy, totalPt, exchange_rate, py_index_stored)
+export const splitSyAmount = (
+  syAmount: string,
+  lpSupply: string,
+  totalSy: string,
+  totalPt: string,
+  exchange_rate: string,
+  py_index_stored: string,
+) => {
+  const result = getMintLpParameter(
+    syAmount,
+    lpSupply,
+    totalSy,
+    totalPt,
+    exchange_rate,
+    py_index_stored,
+  )
   const ptValue = result?.syForPt.toFixed(0) || "1"
-  const syValue = result?.syDesired.toFixed(0)|| "1"
+  const syValue = result?.syDesired.toFixed(0) || "1"
   return { ptValue, syValue }
 }
 
@@ -69,14 +83,13 @@ export const splitSyAmount = (syAmount: string, lpSupply: string, totalSy: strin
 //   return { ptValue, syValue }
 // }
 
-
 function getMintLpParameter(
   syAmount: string,
   lpSupply: string,
   totalSy: string,
   totalPt: string,
   exchange_rate: string,
-  py_index_stored: string
+  py_index_stored: string,
 ): { syForPt: number; syDesired: number } | null {
   const total_sy = Number(syAmount);
   const lp_supply = Number(lpSupply);
@@ -97,22 +110,24 @@ function getMintLpParameter(
   let sy_for_pt = -1; // 初始化为无效值，表示未找到
 
   while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
+    const mid = Math.floor((left + right) / 2)
 
-    const net_lp_by_pt = (get_pt_out(mid,exchange_rate_num, py_index_stored_num) * lp_supply) / total_pt_reserve;
+    const net_lp_by_pt =
+      (get_pt_out(mid, exchange_rate_num, py_index_stored_num) * lp_supply) /
+      total_pt_reserve
     const sy_desired =
-      (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply;
-    if (total_sy >= (mid + sy_desired) && total_sy  <= (mid + sy_desired) + 100 ) {
-      sy_for_pt = mid;
-      return { syForPt: sy_for_pt, syDesired: sy_desired };
+      (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply
+    if (total_sy >= mid + sy_desired && total_sy <= mid + sy_desired) {
+      sy_for_pt = mid
+      return { syForPt: sy_for_pt, syDesired: sy_desired }
     } else if (mid + sy_desired < total_sy) {
-      left = mid + 1;
+      left = mid + 1
     } else {
-      right = mid - 1;
+      right = mid - 1
     }
   }
 
-  return null; // 未找到结果时返回 null
+  return null // 未找到结果时返回 null
 }
 
 function get_max_rate(exchange_rate: number, py_index_stored: number): number {
@@ -123,4 +138,3 @@ function get_pt_out(syAmount: number, exchange_rate: number, py_index_stored: nu
   const max_rate = Math.max(exchange_rate / (2 ** 64), py_index_stored/ (2 ** 64));
   return syAmount * max_rate;
 }
-

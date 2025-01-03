@@ -1,7 +1,7 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { DEBUG, network } from "@/config"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
 import AmountInput from "@/components/AmountInput"
@@ -42,6 +42,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import { useInvestRatios } from "@/hooks/useInvestRatios"
+import useQueryPtOutBySyInWithVoucher from "@/hooks/useQueryPtOutBySyInWithVoucher"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -53,6 +54,7 @@ export default function Invest() {
   const [openConnect, setOpenConnect] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [ptOutAmount, setPtOutAmount] = useState<string>()
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -131,6 +133,28 @@ export default function Invest() {
     [coinBalance, swapValue],
   )
 
+  const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
+
+  useEffect(() => {
+    async function fetchPtOut() {
+      if (swapValue && decimal && coinConfig) {
+        try {
+          const swapAmount = new Decimal(swapValue)
+            .mul(10 ** coinConfig.decimal)
+            .toString()
+          const [ptOut] = await queryPtOut(swapAmount)
+          setPtOutAmount(ptOut)
+        } catch (error) {
+          console.error("Failed to fetch PT out amount:", error)
+          setPtOutAmount(undefined)
+        }
+      } else {
+        setPtOutAmount(undefined)
+      }
+    }
+    fetchPtOut()
+  }, [swapValue, decimal, coinConfig, queryPtOut])
+
   async function swap() {
     if (
       ratio &&
@@ -147,6 +171,11 @@ export default function Invest() {
         const swapAmount = new Decimal(swapValue)
           .mul(10 ** coinConfig.decimal)
           .toString()
+
+        const [ptOut] = await queryPtOut(swapAmount)
+        const minPtOut = new Decimal(ptOut)
+          .mul(1 - new Decimal(slippage).div(100).toNumber())
+          .toFixed(0)
 
         const [splitCoin] =
           tokenType === 0
@@ -170,13 +199,7 @@ export default function Invest() {
           target: `${coinConfig.nemoContractId}::market::swap_exact_sy_for_pt`,
           arguments: [
             tx.object(coinConfig.version),
-            tx.pure.u64(
-              new Decimal(swapValue)
-                .mul(ratio)
-                .mul(10 ** coinConfig.decimal)
-                .mul(1 - new Decimal(slippage).div(100).toNumber())
-                .toFixed(0),
-            ),
+            tx.pure.u64(minPtOut),
             syCoin,
             priceVoucher,
             pyPosition,
@@ -316,13 +339,13 @@ export default function Invest() {
                   "--"
                 ) : isLoading ? (
                   <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
-                ) : !decimal || !ratio ? (
+                ) : !decimal || !ptOutAmount ? (
                   "--"
                 ) : (
                   <span className="flex items-center gap-x-1.5">
                     {"≈  " +
                       formatDecimalValue(
-                        new Decimal(swapValue).mul(ratio),
+                        new Decimal(ptOutAmount).div(10 ** decimal),
                         decimal,
                       )}{" "}
                     <span>PT {coinConfig?.coinName}</span>

@@ -6,6 +6,7 @@ import useQueryYtOutBySyInWithVoucher from "./useQueryYtOutBySyInWithVoucher"
 import useQuerySyOutFromYtInWithVoucher from "./useQuerySyOutFromYtInWithVoucher"
 import useQuerySyOutFromPtInWithVoucher from "./useQuerySyOutFromPtInWithVoucher"
 import useQueryPriceVoucher from "./useQueryPriceVoucher"
+import useQuerySyOutFromBurnLp from "./useQuerySyOutFromBurnLp"
 import type { DebugInfo } from "./types"
 import useGetObject from "./useGetObject"
 
@@ -30,6 +31,7 @@ export type QueryInputMap = {
   SY_OUT_BY_PT_IN: string
   PRICE_VOUCHER: void
   GET_OBJECT: GetObjectParams
+  SY_OUT_FROM_BURN_LP: string
 }
 
 export const QUERY_CONFIGS = {
@@ -60,6 +62,10 @@ export const QUERY_CONFIGS = {
   PRICE_VOUCHER: {
     target: "get_price_voucher",
     hook: useQueryPriceVoucher,
+  },
+  SY_OUT_FROM_BURN_LP: {
+    target: "burn_lp",
+    hook: useQuerySyOutFromBurnLp,
   },
 } as const
 
