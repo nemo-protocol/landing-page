@@ -10,7 +10,7 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import {
   initPyPosition,
-  mergeLPMarketPositions,
+  mergeLpPositions,
   redeemSyCoin,
   burnLp,
 } from "@/lib/txHelper"
@@ -52,18 +52,7 @@ export default function Remove() {
 
   const conversionRate = useMemo(() => dataRatio?.conversionRate, [dataRatio])
 
-  const ratio = useMemo(() => {
-    if (dataRatio) {
-      // if (tokenType === 0 && conversionRate && dataRatio.syLpRate) {
-      //   return new Decimal(dataRatio.syLpRate)
-      //     .div(safeDivide(conversionRate))
-      //     .toString()
-      // } else {
-      //   return dataRatio.syLpRate
-      // }
-      return dataRatio.syLpRate
-    }
-  }, [dataRatio, conversionRate])
+  const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio, conversionRate])
 
   const { data: lppMarketPositionData } = useLpMarketPositionData(
     address,
@@ -129,7 +118,7 @@ export default function Remove() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const mergedPositionId = mergeLPMarketPositions(
+        const mergedPositionId = mergeLpPositions(
           tx,
           coinConfig,
           lppMarketPositionData,

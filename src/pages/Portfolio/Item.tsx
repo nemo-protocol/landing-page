@@ -24,7 +24,7 @@ import {
   getPriceVoucher,
   redeemSyCoin,
   initPyPosition,
-  mergeLPMarketPositions,
+  mergeLpPositions,
   burnLp,
   redeemPy,
 } from "@/lib/txHelper"
@@ -301,7 +301,7 @@ export default function Item({
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const mergedPositionId = mergeLPMarketPositions(
+        const mergedPositionId = mergeLpPositions(
           tx,
           coinConfig,
           lpMarketPositionData,

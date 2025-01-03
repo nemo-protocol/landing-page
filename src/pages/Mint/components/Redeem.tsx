@@ -6,7 +6,12 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
 import { parseErrorMessage } from "@/lib/errorMapping"
-import { initPyPosition, getPriceVoucher, redeemPy } from "@/lib/txHelper"
+import {
+  initPyPosition,
+  getPriceVoucher,
+  redeemPy,
+  redeemSyCoin,
+} from "@/lib/txHelper"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 
@@ -47,12 +52,13 @@ export default function Redeem({
   // )
 
   const { data: coinConfig } = useCoinConfig(coinType, maturity)
-  const { data: pyPositionData, refetch: refetchPyPosition } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig?.pyStateId,
+      coinConfig?.maturity,
+      coinConfig?.pyPositionTypeList,
+    )
 
   const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
   const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
@@ -108,7 +114,7 @@ export default function Redeem({
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        const sy = redeemPy(
+        const syCoin = redeemPy(
           tx,
           coinConfig,
           ytRedeemValue,
@@ -117,7 +123,9 @@ export default function Redeem({
           pyPosition,
         )
 
-        tx.transferObjects([sy], address)
+        const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
+
+        tx.transferObjects([yieldToken], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)

@@ -287,7 +287,7 @@ export function splitCoinHelper(
   }
 }
 
-export const mergeLPMarketPositions = (
+export const mergeLpPositions = (
   tx: Transaction,
   coinConfig: CoinConfig,
   lppMarketPositionData: LppMarketPosition[],

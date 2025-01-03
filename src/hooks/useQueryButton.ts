@@ -6,9 +6,11 @@ import useQueryYtOutBySyInWithVoucher from "./useQueryYtOutBySyInWithVoucher"
 import useQuerySyOutFromYtInWithVoucher from "./useQuerySyOutFromYtInWithVoucher"
 import useQuerySyOutFromPtInWithVoucher from "./useQuerySyOutFromPtInWithVoucher"
 import useQueryPriceVoucher from "./useQueryPriceVoucher"
-import useQuerySyOutFromBurnLp from "./useQuerySyOutFromBurnLp"
+import useBurnLpMutation from "./useBurnLpOutDryRun"
+import useFetchLpPosition from "./useFetchLpPosition"
+import useFetchPyPosition from "./useFetchPyPosition"
 import type { DebugInfo } from "./types"
-import useGetObject from "./useGetObject"
+import useFetchObject from "./useFetchObject"
 
 export interface GetObjectParams {
   objectId: string
@@ -32,12 +34,15 @@ export type QueryInputMap = {
   PRICE_VOUCHER: void
   GET_OBJECT: GetObjectParams
   SY_OUT_FROM_BURN_LP: string
+  LP_MARKET_POSITION: void
+  PY_POSITION: void
+  BURN_LP_DRY_RUN: string
 }
 
 export const QUERY_CONFIGS = {
   GET_OBJECT: {
     target: "get_object",
-    hook: useGetObject,
+    hook: useFetchObject,
   },
   PT_OUT_BY_SY_IN: {
     target: "get_pt_out_for_exact_sy_in_with_price_voucher",
@@ -65,7 +70,19 @@ export const QUERY_CONFIGS = {
   },
   SY_OUT_FROM_BURN_LP: {
     target: "burn_lp",
-    hook: useQuerySyOutFromBurnLp,
+    hook: useBurnLpMutation,
+  },
+  LP_MARKET_POSITION: {
+    target: "get_lp_market_position",
+    hook: useFetchLpPosition,
+  },
+  PY_POSITION: {
+    target: "get_py_position",
+    hook: useFetchPyPosition,
+  },
+  BURN_LP_DRY_RUN: {
+    target: "burn_lp_dry_run",
+    hook: useBurnLpMutation,
   },
 } as const
 
@@ -76,7 +93,7 @@ export default function useQueryButton<T extends keyof QueryInputMap>(
 ) {
   const config = QUERY_CONFIGS[queryType]
   return config.hook(coinConfig, debug) as unknown as UseMutationResult<
-    [string] | [string, DebugInfo],
+    [unknown] | [unknown, DebugInfo],
     Error,
     QueryInputMap[T]
   >

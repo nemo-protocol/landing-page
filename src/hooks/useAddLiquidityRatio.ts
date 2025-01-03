@@ -7,7 +7,7 @@ import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 import { useRef } from "react"
 import { splitSyAmount } from "@/lib/utils"
 import useMarketStateData from "@/hooks/useMarketStateData.ts"
-import useGetObject from "@/hooks/useGetObject.ts"
+import useFetchObject from "@/hooks/useFetchObject.ts"
 import { useQueryPriceVoucher } from "@/hooks/index.tsx"
 
 export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
@@ -15,7 +15,7 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
   const {data: marketState } =   useMarketStateData(coinConfig?.marketStateId)
-  const {mutateAsync: exchangeRateFun} = useGetObject(coinConfig?.pyStateId, false, )
+  const {mutateAsync: exchangeRateFun} = useFetchObject(coinConfig?.pyStateId, false, )
   const {mutateAsync: priceVoucherFun} = useQueryPriceVoucher(coinConfig, false)
 
   return useQuery({

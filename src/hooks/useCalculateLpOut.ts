@@ -5,14 +5,14 @@ import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { splitSyAmount } from "@/lib/utils"
 import useMarketStateData from "@/hooks/useMarketStateData.ts"
-import useGetObject from "@/hooks/useGetObject.ts"
+import useFetchObject from "@/hooks/useFetchObject.ts"
 import { useQueryPriceVoucher } from "@/hooks/index.tsx"
 
 export function useCalculateLpOut(coinConfig?: CoinConfig) {
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
   const {data: marketState } =   useMarketStateData(coinConfig?.marketStateId)
-  const {mutateAsync: exchangeRateFun} = useGetObject(coinConfig?.pyStateId, false)
+  const {mutateAsync: exchangeRateFun} = useFetchObject(coinConfig?.pyStateId, false)
   const {mutateAsync: priceVoucherFun} = useQueryPriceVoucher(coinConfig, false)
   return useMutation({
     mutationFn: async (syAmount: string) => {

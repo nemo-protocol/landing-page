@@ -5,13 +5,20 @@ import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
+import useFetchLpPosition, {
+  type LppMarketPosition,
+} from "./useFetchLpPosition"
+import useFetchPyPosition, { type PyPosition } from "./useFetchPyPosition"
+import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
 
-export default function useQuerySyOutFromBurnLp(
+export default function useBurnLpMutation(
   coinConfig?: CoinConfig,
   debug: boolean = false,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
+  const { mutateAsync: fetchLpPositionAsync } = useFetchLpPosition(coinConfig)
+  const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
 
   return useMutation({
     mutationFn: async (
@@ -24,39 +31,64 @@ export default function useQuerySyOutFromBurnLp(
         throw new Error("Please select a pool")
       }
 
+      // Fetch position data
+      const [marketPositions] = (await fetchLpPositionAsync()) as [
+        LppMarketPosition[],
+      ]
+      const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
+
+      if (!marketPositions?.length) {
+        throw new Error("No LP market position found")
+      }
+
+      const tx = new Transaction()
+      tx.setSender(address)
+
+      // Handle py position creation
+      let pyPosition
+      let created = false
+      if (!pyPositions?.length) {
+        created = true
+        pyPosition = initPyPosition(tx, coinConfig)
+      } else {
+        pyPosition = tx.object(pyPositions[0].id.id)
+      }
+
+      // Merge LP positions
+      // const mergedPosition = mergeLpPositions(
+      //   tx,
+      //   coinConfig,
+      //   marketPositions,
+      //   lpValue,
+      //   coinConfig.decimal,
+      // )
+
       const debugInfo: DebugInfo = {
         moveCall: {
           target: `${coinConfig.nemoContractId}::market::burn_lp`,
           arguments: [
             { name: "lp_amount", value: lpValue },
-            { name: "py_position", value: "pyPosition" },
+            {
+              name: "py_position",
+              value: created ? "pyPosition" : pyPositions[0].id.id,
+            },
             { name: "market", value: "market" },
-            { name: "market_position", value: "marketPosition" },
+            { name: "market_position", value: marketPositions[0].id.id },
             { name: "clock", value: "0x6" },
           ],
           typeArguments: [coinConfig.syCoinType],
         },
       }
 
-    //   let pyPosition
-    //   let created = false
-    //   if (!pyPositionData?.length) {
-    //     created = true
-    //     pyPosition = initPyPosition(tx, coinConfig)
-    //   } else {
-    //     pyPosition = tx.object(pyPositionData[0].id.id)
-    //   }
-
-      const tx = new Transaction()
-      tx.setSender(address)
-
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
+          tx.object(coinConfig.version),
           tx.pure.u64(lpValue),
-        //   tx.object(coinConfig.pyPositionId),
+          pyPosition,
           tx.object(coinConfig.marketStateId),
-        //   tx.object(coinConfig.marketPositionId),
+          // mergedPosition,
+          tx.object(marketPositions[0].id.id),
           tx.object("0x6"),
         ],
         typeArguments: debugInfo.moveCall.typeArguments,
@@ -76,18 +108,20 @@ export default function useQuerySyOutFromBurnLp(
         results: result?.results,
       }
 
+      console.log("result?.error", result)
+
       if (result?.error) {
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.results?.[1]?.returnValues?.[0]) {
+      if (!result?.results?.[result.results.length - 1]?.returnValues?.[0]) {
         const message = "Failed to get SY amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
       const outputAmount = bcs.U64.parse(
-        new Uint8Array(result.results[1].returnValues[0][0]),
+        new Uint8Array(result.results[result.results.length - 1].returnValues[0][0]),
       )
 
       debugInfo.parsedOutput = outputAmount.toString()
@@ -97,4 +131,4 @@ export default function useQuerySyOutFromBurnLp(
       return debug ? [returnValue, debugInfo] : [returnValue]
     },
   })
-} 
+}

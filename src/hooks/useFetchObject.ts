@@ -4,7 +4,7 @@ import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 import type { GetObjectParams } from "./useQueryButton"
 
-const useGetObject = (_coinConfig: unknown, debug = false) => {
+const useFetchObject = (_coinConfig: unknown, debug = false) => {
   const client = useSuiClient()
   return useMutation({
     mutationFn: async ({ objectId, options }: GetObjectParams): Promise<string | [string, DebugInfo]> => {
@@ -61,4 +61,4 @@ const useGetObject = (_coinConfig: unknown, debug = false) => {
   })
 }
 
-export default useGetObject 
+export default useFetchObject 
