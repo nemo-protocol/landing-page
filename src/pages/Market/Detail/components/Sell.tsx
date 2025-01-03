@@ -154,9 +154,7 @@ export default function Sell() {
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        const amount = new Decimal(redeemValue)
-          .mul(10 ** coinConfig.decimal)
-          .toString()
+        const amount = new Decimal(redeemValue).toString()
 
         const swapFn = tokenType === "pt" ? swapExactPtForSy : swapExactYtForSy
         const syCoin = swapFn(tx, coinConfig, amount, pyPosition, priceVoucher)
