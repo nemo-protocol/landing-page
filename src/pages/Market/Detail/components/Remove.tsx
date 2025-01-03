@@ -20,16 +20,20 @@ import AmountInput from "@/components/AmountInput"
 import { Skeleton } from "@/components/ui/skeleton"
 import PoolSelect from "@/components/PoolSelect"
 import { useLoadingState } from "@/hooks/useLoadingState"
-import { useCoinConfig, useQueryLPRatio } from "@/queries"
+import { useCoinConfig } from "@/queries"
+import useBurnLpOutDryRun from "@/hooks/useBurnLpOutDryRun"
+import { ContractError } from "@/hooks/types"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const { coinType, maturity } = useParams()
   const [lpValue, setLpValue] = useState("")
+  const [targetValue, setTargetValue] = useState("")
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
+  const [error, setError] = useState<string>()
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isInputLoading, setIsInputLoading] = useState(false)
   const navigate = useNavigate()
@@ -45,14 +49,7 @@ export default function Remove() {
 
   const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
 
-  const { data: dataRatio, isFetching: isRatioFetching } = useQueryLPRatio(
-    address,
-    coinConfig?.marketStateId,
-  )
-
-  const conversionRate = useMemo(() => dataRatio?.conversionRate, [dataRatio])
-
-  const ratio = useMemo(() => dataRatio?.syLpRate, [dataRatio, conversionRate])
+  const { mutateAsync: burnLpDryRun } = useBurnLpOutDryRun(coinConfig)
 
   const { data: lppMarketPositionData } = useLpMarketPositionData(
     address,
@@ -68,10 +65,7 @@ export default function Remove() {
     coinConfig?.pyPositionTypeList,
   )
 
-  const { isLoading } = useLoadingState(
-    lpValue,
-    isRatioFetching || isConfigLoading,
-  )
+  const { isLoading } = useLoadingState(lpValue, isConfigLoading)
 
   const lpCoinBalance = useMemo(() => {
     if (lppMarketPositionData?.length) {
@@ -89,14 +83,33 @@ export default function Remove() {
   )
 
   useEffect(() => {
-    if (lpValue) {
-      setIsInputLoading(true)
-      const timer = setTimeout(() => {
-        setIsInputLoading(false)
-      }, 500)
-      return () => clearTimeout(timer)
+    const getSyOut = async () => {
+      if (lpValue && lpValue !== "0" && decimal) {
+        setIsInputLoading(true)
+        try {
+          const amount = new Decimal(lpValue).mul(10 ** decimal).toString()
+          const [[syOut]] = await burnLpDryRun(amount)
+          const syAmount = new Decimal(syOut).div(10 ** decimal).toString()
+          setTargetValue(syAmount)
+          setError(undefined)
+        } catch (error) {
+          setError((error as ContractError)?.message)
+          console.error("Failed to get SY out:", error)
+          setTargetValue("")
+        } finally {
+          setIsInputLoading(false)
+        }
+      } else {
+        setTargetValue("")
+      }
     }
-  }, [lpValue])
+
+    const timer = setTimeout(() => {
+      getSyOut()
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [lpValue, decimal, burnLpDryRun])
 
   async function remove() {
     if (
@@ -126,7 +139,13 @@ export default function Remove() {
           coinConfig.decimal,
         )
 
-        const syCoin = burnLp(tx, coinConfig, lpValue, pyPosition, mergedPositionId)
+        const syCoin = burnLp(
+          tx,
+          coinConfig,
+          lpValue,
+          pyPosition,
+          mergedPositionId,
+        )
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
@@ -219,11 +238,13 @@ export default function Remove() {
                 <span className="flex items-center gap-x-1.5 h-7">
                   {isInputLoading ? (
                     <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
-                  ) : lpValue && ratio ? (
+                  ) : !lpValue ? (
+                    "--"
+                  ) : error ? (
+                    <span className="text-red-500">{error}</span>
+                  ) : (
                     <>
-                      <span>
-                        {new Decimal(lpValue).div(ratio).toFixed(decimal)}
-                      </span>
+                      <span>{targetValue}</span>
                       <span>{coinConfig?.coinName}</span>
                       {coinConfig?.coinLogo && (
                         <img
@@ -233,8 +254,6 @@ export default function Remove() {
                         />
                       )}
                     </>
-                  ) : (
-                    "--"
                   )}
                 </span>
               </div>

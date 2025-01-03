@@ -71,8 +71,8 @@ export default function Sell() {
   const { mutateAsync: querySyOutFromPt } =
     useQuerySyOutFromPtInWithVoucher(coinConfig)
 
-  const debouncedGetSyOut = useCallback(
-    debounce(async (value: string, decimal: number) => {
+  const debouncedGetSyOut = useCallback((value: string, decimal: number) => {
+    const getSyOut = debounce(async () => {
       if (value && value !== "0" && decimal) {
         try {
           const amount = new Decimal(value).mul(10 ** decimal).toString()
@@ -93,16 +93,15 @@ export default function Sell() {
       } else {
         setTargetValue("")
       }
-    }, 500),
-    [querySyOutFromYt, querySyOutFromPt, tokenType],
-  )
+    }, 500)
+    getSyOut()
+    return getSyOut.cancel
+  }, [querySyOutFromYt, querySyOutFromPt, tokenType])
 
   useEffect(() => {
-    if (coinConfig?.decimal) {
-      debouncedGetSyOut(redeemValue, coinConfig.decimal)
-    }
+    const cancelFn = debouncedGetSyOut(redeemValue, coinConfig?.decimal ?? 0)
     return () => {
-      debouncedGetSyOut.cancel()
+      cancelFn()
     }
   }, [redeemValue, coinConfig?.decimal, debouncedGetSyOut])
 

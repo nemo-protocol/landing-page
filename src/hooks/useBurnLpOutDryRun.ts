@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
@@ -23,7 +22,7 @@ export default function useBurnLpMutation(
   return useMutation({
     mutationFn: async (
       lpValue: string,
-    ): Promise<[string] | [string, DebugInfo]> => {
+    ): Promise<[string[]] | [string[], DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -55,13 +54,15 @@ export default function useBurnLpMutation(
       }
 
       // Merge LP positions
-      // const mergedPosition = mergeLpPositions(
-      //   tx,
-      //   coinConfig,
-      //   marketPositions,
-      //   lpValue,
-      //   coinConfig.decimal,
-      // )
+      const mergedPosition = mergeLpPositions(
+        tx,
+        coinConfig,
+        marketPositions,
+        lpValue,
+        coinConfig.decimal,
+      )
+
+      console.log("mergedPosition", mergedPosition)
 
       const debugInfo: DebugInfo = {
         moveCall: {
@@ -108,25 +109,22 @@ export default function useBurnLpMutation(
         results: result?.results,
       }
 
-      console.log("result?.error", result)
-
       if (result?.error) {
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.results?.[result.results.length - 1]?.returnValues?.[0]) {
+      if (!result?.events?.[0]?.parsedJson?.sy_amount) {
         const message = "Failed to get SY amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const outputAmount = bcs.U64.parse(
-        new Uint8Array(result.results[result.results.length - 1].returnValues[0][0]),
-      )
+      const syAmount = result.events[0].parsedJson.sy_amount as string
+      const pyAmount = result.events[0].parsedJson.py_amount as string
 
-      debugInfo.parsedOutput = outputAmount.toString()
+      debugInfo.parsedOutput = JSON.stringify([syAmount, pyAmount])
 
-      const returnValue = outputAmount.toString()
+      const returnValue = [syAmount, pyAmount]
 
       return debug ? [returnValue, debugInfo] : [returnValue]
     },
