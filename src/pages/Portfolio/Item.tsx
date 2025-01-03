@@ -245,7 +245,6 @@ export default function Item({
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
-
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
         const syCoin = redeemPy(

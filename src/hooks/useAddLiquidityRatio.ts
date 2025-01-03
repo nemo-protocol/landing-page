@@ -42,7 +42,7 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
         try {
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
           const parsedData = JSON.parse(exchangeRate.toString())
-          const { ptValue, syValue } = splitSyAmount(baseAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
+          const {  syValue, ptValue, } = splitSyAmount(baseAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
           let lpAmount: string
           if (marketState.lpSupply == "0") {
             lpAmount = (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000 ).toString();

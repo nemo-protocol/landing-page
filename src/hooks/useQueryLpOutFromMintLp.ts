@@ -42,7 +42,6 @@ export default function useQueryLpOutFromMintLp(
 
       const tx = new Transaction()
       tx.setSender(address)
-
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [

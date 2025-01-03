@@ -250,22 +250,23 @@ export default function SingleCoin() {
     // convertedRate: string,
   ): Promise<void> {
     const lpOut =await calculateLpOut(addAmount)
+    // pt is mint_py input, sy is sy desired
     const amounts = {
-      pt: new Decimal(lpOut.ptValue).toFixed(0),
+      syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
+      // pt: new Decimal(lpOut.ptValue).toFixed(0),
       sy: new Decimal(lpOut.syValue).toFixed(0),
     }
 
     const [splitCoinForSy, splitCoinForPt] =
       tokenType === 0
-        ? mintSycoin(tx, coinConfig, coinData, [amounts.sy, amounts.pt])
-        : splitCoinHelper(tx, coinData, [amounts.sy, amounts.pt], coinType)
+        ? mintSycoin(tx, coinConfig, coinData, [amounts.sy, amounts.syForPt])
+        : splitCoinHelper(tx, coinData, [amounts.sy, amounts.syForPt], coinType)
 
-    const syCoin = depositSyCoin(tx, coinConfig, splitCoinForPt, coinType)
+    const syCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
 
-    const pyCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
-
+    const pyCoin = depositSyCoin(tx, coinConfig, splitCoinForPt, coinType)
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-    mintPy(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
+    const [pt_amount] = mintPy(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
 
     const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
 
@@ -274,7 +275,7 @@ export default function SingleCoin() {
       arguments: [
         coinConfig.version,
         syCoin,
-        amounts.pt,
+        pt_amount,
         tx.pure.u64(minLpAmount),
         priceVoucherForMintLp,
         pyPosition,
@@ -291,7 +292,7 @@ export default function SingleCoin() {
       arguments: [
         tx.object(coinConfig.version),
         syCoin,
-        tx.pure.u64(amounts.pt),
+        pt_amount,
         tx.pure.u64(minLpAmount),
         priceVoucherForMintLp,
         pyPosition,

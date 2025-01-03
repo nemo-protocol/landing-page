@@ -53,7 +53,7 @@ export default function useQuerySyOutFromPtInWithVoucher(
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
-          tx.pure.u64(ptAmount),
+          tx.pure.u64(1000),
           priceVoucher,
           tx.object(coinConfig.pyStateId),
           tx.object(coinConfig.marketFactoryConfigId),
@@ -70,7 +70,7 @@ export default function useQuerySyOutFromPtInWithVoucher(
           onlyTransactionKind: true,
         }),
       })
-
+      console.log("result", ptAmount, result)
       // Record raw result
       debugInfo.rawResult = {
         error: result?.error,

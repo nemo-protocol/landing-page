@@ -488,6 +488,7 @@ export const swapExactPtForSy = (
     ],
     typeArguments: [coinConfig.syCoinType],
   })
+  console.log("redeemValue", redeemValue, )
   return syCoin
 }
 

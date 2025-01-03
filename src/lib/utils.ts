@@ -56,25 +56,13 @@ export const safeDivide = (str?: string | number): number => {
   return num
 }
 
-export const splitSyAmount = (
-  syAmount: string,
-  lpSupply: string,
-  totalSy: string,
-  totalPt: string,
-  exchange_rate: string,
-  py_index_stored: string,
-) => {
-  const result = getMintLpParameter(
-    syAmount,
-    lpSupply,
-    totalSy,
-    totalPt,
-    exchange_rate,
-    py_index_stored,
-  )
-  const ptValue = result?.syForPt.toFixed(0) || "1"
-  const syValue = result?.syDesired.toFixed(0) || "1"
-  return { ptValue, syValue }
+export const splitSyAmount = (syAmount: string, lpSupply: string, totalSy: string, totalPt: string, exchange_rate: string, py_index_stored: string) => {
+  const result = getMintLpParameter(syAmount, lpSupply, totalSy, totalPt, exchange_rate, py_index_stored)
+  const syForPtValue = result?.syForPt.toFixed(0) || "1"
+  const syValue = result?.syDesired.toFixed(0)|| "1"
+  const ptValue = result?.pt.toFixed(0) || "1"
+  console.log("ptValue syValue", syForPtValue, ptValue, syValue)
+  return { syForPtValue, syValue, ptValue }
 }
 
 // export const splitSyAmount = (syAmount: string) => {
@@ -89,8 +77,8 @@ function getMintLpParameter(
   totalSy: string,
   totalPt: string,
   exchange_rate: string,
-  py_index_stored: string,
-): { syForPt: number; syDesired: number } | null {
+  py_index_stored: string
+): { syForPt: number; syDesired: number; pt: number } | null {
   const total_sy = Number(syAmount);
   const lp_supply = Number(lpSupply);
   const total_sy_reserve = Number(totalSy);
@@ -103,7 +91,7 @@ function getMintLpParameter(
       const ptIn = new Decimal(syAmount).div(2).mul(max_rate).toString()
       const syInNumber = Number(syIn);
       const ptInNumber = Number(ptIn);
-      return { syForPt: ptInNumber, syDesired: syInNumber };
+      return { syForPt: ptInNumber, syDesired: syInNumber, pt: get_pt_out(ptInNumber, exchange_rate_num, py_index_stored_num ) };
   }
   let left = 0;
   let right = total_sy;
@@ -116,10 +104,10 @@ function getMintLpParameter(
       (get_pt_out(mid, exchange_rate_num, py_index_stored_num) * lp_supply) /
       total_pt_reserve
     const sy_desired =
-      (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply
-    if (total_sy >= mid + sy_desired && total_sy <= mid + sy_desired) {
-      sy_for_pt = mid
-      return { syForPt: sy_for_pt, syDesired: sy_desired }
+      (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply;
+    if (total_sy >= (mid + sy_desired) && total_sy  <= (mid + sy_desired) + 100 ) {
+      sy_for_pt = mid;
+      return { syForPt: sy_for_pt, syDesired: sy_desired, pt: get_pt_out(sy_for_pt, exchange_rate_num, py_index_stored_num )};
     } else if (mid + sy_desired < total_sy) {
       left = mid + 1
     } else {

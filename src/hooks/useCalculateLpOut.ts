@@ -29,7 +29,7 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
       const exchangeRate = await exchangeRateFun({objectId: coinConfig.pyStateId, options: {showContent: true}})
       const priceVoucher = await priceVoucherFun()
       const parsedData = JSON.parse(exchangeRate.toString())
-      const { ptValue, syValue } = splitSyAmount(syAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
+      const { syForPtValue, syValue, ptValue } = splitSyAmount(syAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
       console.log("syAmount", syAmount, "ptValue", ptValue, "syValue", syValue)
 
       let lpAmount: string
@@ -41,9 +41,9 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
           syValue,
         })
       }
-      console.log("lpAmount", lpAmount)
+      console.log("lpAmount", lpAmount, marketState.lpSupply)
 
-      return {lpAmount: new Decimal(lpAmount).div(10 ** coinConfig.decimal).toString(), ptValue, syValue}
+      return {lpAmount: new Decimal(lpAmount).div(10 ** coinConfig.decimal).toString(), ptValue, syValue, syForPtValue}
     },
   })
 }
