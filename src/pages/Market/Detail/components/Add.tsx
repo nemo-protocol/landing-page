@@ -327,7 +327,7 @@ export default function SingleCoin() {
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
     const addLiquidityMoveCall = {
-      target: `${coinConfig.nemoContractId}::market::add_liquidity_single_sy`,
+      target: `${coinConfig.nemoContractId}::route::add_liquidity_single_sy`,
       arguments: [
         coinConfig.version,
         syCoin,
