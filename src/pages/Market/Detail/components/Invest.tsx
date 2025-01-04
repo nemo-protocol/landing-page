@@ -137,11 +137,12 @@ export default function Invest() {
 
   useEffect(() => {
     async function fetchPtOut() {
-      if (swapValue && decimal && coinConfig) {
+      if (swapValue && decimal && coinConfig && conversionRate) {
         try {
           const swapAmount = new Decimal(swapValue)
+            .div(tokenType === 0 ? conversionRate : 1)
             .mul(10 ** coinConfig.decimal)
-            .toString()
+            .toFixed(0)
           const [ptOut] = await queryPtOut(swapAmount)
           setPtOutAmount(ptOut)
         } catch (error) {
@@ -153,7 +154,7 @@ export default function Invest() {
       }
     }
     fetchPtOut()
-  }, [swapValue, decimal, coinConfig, queryPtOut])
+  }, [swapValue, decimal, coinConfig, queryPtOut, tokenType, conversionRate])
 
   async function swap() {
     if (
@@ -162,27 +163,36 @@ export default function Invest() {
       coinType &&
       swapValue &&
       coinConfig &&
+      conversionRate &&
       coinData?.length &&
       !insufficientBalance
     ) {
       try {
-        await refetch()
         const tx = new Transaction()
         const swapAmount = new Decimal(swapValue)
+          .div(tokenType === 0 ? conversionRate : 1)
           .mul(10 ** coinConfig.decimal)
-          .toString()
+          .toFixed(0)
+
+        // console.log("swapAmount", swapAmount)
 
         const [ptOut] = await queryPtOut(swapAmount)
         const minPtOut = new Decimal(ptOut)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
+        // console.log("minPtOut", minPtOut)
+
         const [splitCoin] =
           tokenType === 0
             ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
             : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
+        // tx.transferObjects([splitCoin], address)
+
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
+
+        // tx.transferObjects([syCoin], address)
 
         let pyPosition
         let created = false
@@ -215,10 +225,7 @@ export default function Invest() {
           target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
           arguments: [
             coinConfig.version,
-            new Decimal(swapValue)
-              .mul(10 ** coinConfig.decimal)
-              .mul(1 - new Decimal(slippage).div(100).toNumber())
-              .toFixed(0),
+            minPtOut,
             "syCoin",
             "priceVoucher",
             "pyPosition",
@@ -233,12 +240,6 @@ export default function Invest() {
         if (created) {
           tx.transferObjects([pyPosition], address)
         }
-
-        // if (created) {
-        //   tx.setGasBudget(0.2 * 1e9)
-        // } else {
-        //   tx.setGasBudget(0.05 * 1e9)
-        // }
 
         const res = await signAndExecuteTransaction({
           transaction: tx,

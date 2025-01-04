@@ -368,17 +368,16 @@ export default function SingleCoin() {
       coinType &&
       slippage &&
       coinConfig &&
+      conversionRate &&
       marketStateData &&
       coinData?.length &&
       !insufficientBalance
     ) {
       try {
-        const addAmount = new Decimal(addValue).mul(10 ** decimal).toString()
-        const convertedRate = (conversionRate || "1").toString()
-        const convertedAmount =
-          tokenType === 0
-            ? new Decimal(addAmount).div(convertedRate).toFixed(0)
-            : addAmount
+        const addAmount = new Decimal(addValue)
+          .div(tokenType === 0 ? conversionRate : 1)
+          .mul(10 ** coinConfig.decimal)
+          .toFixed(0)
 
         const tx = new Transaction()
 
@@ -391,7 +390,7 @@ export default function SingleCoin() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const calculatedLpOut = await calculateLpOut(convertedAmount)
+        const calculatedLpOut = await calculateLpOut(addAmount)
 
         const minLpAmount = new Decimal(calculatedLpOut.lpAmount)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
