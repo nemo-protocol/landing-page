@@ -138,8 +138,8 @@ export default function Trade() {
             .div(tokenType === 0 ? conversionRate : 1)
             .mul(10 ** coinConfig.decimal)
             .toFixed(0)
-          const [ptOut] = await queryYtOut(swapAmount)
-          setYtout(ptOut)
+          const [ytOut] = await queryYtOut(swapAmount)
+          setYtout(ytOut)
         } catch (error) {
           console.error("Failed to fetch YT out amount:", error)
           setYtout(undefined)
@@ -371,7 +371,7 @@ export default function Trade() {
             </div>
           </div>
           <TradeInfo
-            ratio={ytOut ? new Decimal(ytOut).div(swapValue).toString() : "--"}
+            ratio={ytOut && swapValue ? new Decimal(ytOut).div(swapValue).toString() : new Decimal(0).toString()}
             coinName={coinName}
             slippage={slippage}
             isLoading={isLoading}
