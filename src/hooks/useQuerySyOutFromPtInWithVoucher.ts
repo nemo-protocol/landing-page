@@ -34,7 +34,7 @@ export default function useQuerySyOutFromPtInWithVoucher(
 
       const debugInfo: DebugInfo = {
         moveCall: {
-          target: `${coinConfig.nemoContractId}::market::get_sy_amount_out_for_exact_pt_in_with_price_voucher`,
+          target: `${coinConfig.nemoContractId}::router::get_sy_amount_out_for_exact_pt_in_with_price_voucher`,
           arguments: [
             { name: "exact_pt_in", value: ptAmount },
             { name: "price_voucher", value: "priceVoucher" },
