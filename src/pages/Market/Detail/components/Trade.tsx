@@ -156,7 +156,7 @@ export default function Trade() {
 
         const [splitCoin] =
           tokenType === 0
-            ? mintSycoin(tx, coinConfig, coinData, [syCoinAmount])
+            ? mintSycoin(tx, coinConfig, coinData, [new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0)])
             : splitCoinHelper(tx, coinData, [syCoinAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
