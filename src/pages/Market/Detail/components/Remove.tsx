@@ -102,9 +102,12 @@ export default function Remove() {
             setTargetValue(syOut)
             setError(undefined)
           } catch (error) {
-            setError((error as ContractError)?.message)
+            const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
+            const syOut = new Decimal(syAmount).div(10 ** decimal).toString()
+            const ptOut = new Decimal(ptAmount).div(10 ** decimal).toString()
+            setError(`Insufficient liquidity extra return ${ptOut} PT`, )
             console.error("Failed to get SY out:", error)
-            setTargetValue("")
+            setTargetValue(syOut)
           } finally {
             setIsInputLoading(false)
           }
