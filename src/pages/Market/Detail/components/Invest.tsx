@@ -179,15 +179,6 @@ export default function Invest() {
           .mul(10 ** coinConfig.decimal)
           .toFixed(0)
 
-        const [ptOut] = await queryPtOut(
-          new Decimal(swapAmount)
-            .div(tokenType === 0 ? conversionRate : 1)
-            .toFixed(0),
-        )
-        const minPtOut = new Decimal(ptOut)
-          .mul(1 - new Decimal(slippage).div(100).toNumber())
-          .toFixed(0)
-
         const [splitCoin] =
           tokenType === 0
             ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
@@ -203,6 +194,15 @@ export default function Invest() {
         } else {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
+
+        const [ptOut] = await queryPtOut(
+          new Decimal(swapAmount)
+            .div(tokenType === 0 ? conversionRate : 1)
+            .toFixed(0),
+        )
+        const minPtOut = new Decimal(ptOut)
+          .mul(1 - new Decimal(slippage).div(100).toNumber())
+          .toFixed(0)
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
