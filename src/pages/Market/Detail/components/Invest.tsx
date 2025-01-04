@@ -94,7 +94,13 @@ export default function Invest() {
     isFetching: isRatioFetching,
   } = useInvestRatios(coinConfig)
 
-  const ratio = useMemo(() => swapRatio?.ratio, [swapRatio])
+  const ratio = useMemo(
+    () =>
+      tokenType === 0 && swapRatio
+        ? new Decimal(swapRatio.ratio).div(swapRatio.conversionRate).toFixed()
+        : swapRatio?.ratio,
+    [swapRatio, tokenType],
+  )
   const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
 
   const { data: pyPositionData } = usePyPositionData(
@@ -177,6 +183,7 @@ export default function Invest() {
         // console.log("swapAmount", swapAmount)
 
         const [ptOut] = await queryPtOut(swapAmount)
+        console.log("ptOut", ptOut)
         const minPtOut = new Decimal(ptOut)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)

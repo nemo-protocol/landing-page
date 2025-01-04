@@ -85,7 +85,13 @@ export default function Trade() {
   } = useTradeRatios(coinConfig)
 
   const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
-  const ratio = useMemo(() => swapRatio?.ratio, [swapRatio])
+  const ratio = useMemo(
+    () =>
+      tokenType === 0 && swapRatio
+        ? new Decimal(swapRatio.ratio).div(swapRatio.conversionRate).toFixed()
+        : swapRatio?.ratio,
+    [swapRatio, tokenType],
+  )
 
   const { data: pyPositionData } = usePyPositionData(
     address,
@@ -131,6 +137,7 @@ export default function Trade() {
       address &&
       swapValue &&
       coinConfig &&
+      conversionRate &&
       coinData?.length &&
       !insufficientBalance
     ) {
@@ -138,8 +145,9 @@ export default function Trade() {
         const tx = new Transaction()
 
         const syCoinAmount = new Decimal(swapValue)
+          .div(tokenType === 0 ? conversionRate : 1)
           .mul(10 ** coinConfig.decimal)
-          .toString()
+          .toFixed(0)
 
         const [ytOut] = await queryYtOut(syCoinAmount)
         const minYtOut = new Decimal(ytOut)
