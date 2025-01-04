@@ -150,9 +150,7 @@ export const initPyPosition = (tx: Transaction, coinConfig: CoinConfig) => {
     ...moveCall,
     arguments: moveCall.arguments.map((arg) => tx.object(arg)),
   })
-  if (pyPosition === undefined) {
-    throw new Error("initPyPosition failed")
-  }
+
   return pyPosition
 }
 
@@ -382,9 +380,9 @@ export const mintPy = (
     target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
     arguments: [
       coinConfig.version,
-      "pyCoin",
-      "priceVoucher",
-      "pyPosition",
+      pyCoin,
+      priceVoucher,
+      pyPosition,
       coinConfig.pyStateId,
       coinConfig.yieldFactoryConfigId,
       "0x6",
@@ -549,4 +547,24 @@ export const redeemPy = (
     typeArguments: [coinConfig.syCoinType],
   })
   return sy
+}
+
+export const getPrice = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  priceVoucher: TransactionArgument,
+) => {
+  const moveCall = {
+    target: `${coinConfig.nemoContractId}::oracle::get_price`,
+    arguments: ["priceVoucher"],
+    typeArguments: [coinConfig.syCoinType],
+  }
+  debugLog("get_price move call:", moveCall)
+
+  const [price] = tx.moveCall({
+    ...moveCall,
+    arguments: [priceVoucher],
+  })
+
+  return price
 }
