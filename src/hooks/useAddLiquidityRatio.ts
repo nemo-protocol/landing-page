@@ -14,9 +14,15 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
   const lastPowerRef = useRef(0)
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
-  const {data: marketState } =   useMarketStateData(coinConfig?.marketStateId)
-  const {mutateAsync: exchangeRateFun} = useFetchObject(coinConfig?.pyStateId, false, )
-  const {mutateAsync: priceVoucherFun} = useQueryPriceVoucher(coinConfig, false)
+  const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
+  const { mutateAsync: exchangeRateFun } = useFetchObject(
+    coinConfig?.pyStateId,
+    false,
+  )
+  const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
+    coinConfig,
+    false,
+  )
 
   return useQuery({
     queryKey: ["addLiquidityRatio", coinConfig?.marketStateId],
@@ -30,7 +36,10 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
       if (marketState === undefined) {
         throw new Error("not found market")
       }
-      const exchangeRate = await exchangeRateFun({objectId: coinConfig.pyStateId, options: { showContent: true }})
+      const exchangeRate = await exchangeRateFun({
+        objectId: coinConfig.pyStateId,
+        options: { showContent: true },
+      })
       const priceVoucher = await priceVoucherFun()
       const decimal = coinConfig.decimal
       const calculateRatio = async (
@@ -42,17 +51,18 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
         try {
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
           const parsedData = JSON.parse(exchangeRate.toString())
-          const {  syValue, ptValue, } = splitSyAmount(baseAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
-          let lpAmount: string
-          if (marketState.lpSupply == "0") {
-            lpAmount = (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000 ).toString();
-          }else{
-            [lpAmount] = await queryLpOut({
-              ptValue,
-              syValue,
-            })
-          }
-
+          const { syValue, ptValue } = splitSyAmount(
+            baseAmount,
+            marketState.lpSupply,
+            marketState.totalSy,
+            marketState.totalPt,
+            parsedData?.content?.fields?.py_index_stored?.fields?.value,
+            priceVoucher.toString(),
+          )
+          const lpAmount =
+            marketState.lpSupply == "0"
+              ? (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000).toString()
+              : (await queryLpOut({ ptValue, syValue }))[0]
           const ratio = new Decimal(lpAmount).div(baseAmount).toString()
           const { conversionRate } = await getLPRatio(
             coinConfig.marketStateId,

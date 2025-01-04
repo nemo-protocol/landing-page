@@ -25,14 +25,14 @@ export default function PoolSelect({
 }: PoolSelectProps) {
   const { data: list } = useCoinInfoList()
 
-  const value = useMemo(() => 
-    coinType && maturity ? `${coinType}-${maturity}` : "", 
-    [coinType, maturity]
+  const value = useMemo(
+    () => (coinType && maturity ? `${coinType}-${maturity}` : ""),
+    [coinType, maturity],
   )
 
   const selectedPool = useMemo(() => {
-    return list?.find(item => 
-      item.coinAddress === coinType && item.maturity === maturity
+    return list?.find(
+      (item) => item.coinAddress === coinType && item.maturity === maturity,
     )
   }, [list, coinType, maturity])
 
@@ -60,12 +60,16 @@ export default function PoolSelect({
       <SelectTrigger
         className={cn(
           "w-full text-wrap border-none bg-[#131520] h-16 p-3 rounded-2xl",
-          className
+          className,
         )}
       >
         <div className="flex items-center gap-x-3">
           {selectedPool?.coinLogo && (
-            <img src={selectedPool.coinLogo} alt={selectedPool.coinName} className="size-8 lg:size-10" />
+            <img
+              src={selectedPool.coinLogo}
+              alt={selectedPool.coinName}
+              className="size-8 lg:size-10"
+            />
           )}
           <h2 className="text-lg lg:text-xl font-normal text-left">
             {displayName}
@@ -74,33 +78,34 @@ export default function PoolSelect({
       </SelectTrigger>
       <SelectContent className="border-none bg-[#131520]">
         <SelectGroup className="flex flex-col gap-y-2">
-          {list?.filter((coin) => parseInt(coin.maturity) > Date.now()).map((item) => (
-            <SelectItem
-              className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-4 rounded-md"
-              key={item.coinAddress + "-" + item.maturity}
-              value={item.coinAddress + "-" + item.maturity}
-            >
-              <div className="flex items-center gap-x-3">
-                <img 
-                  src={item.coinLogo} 
-                  alt={item.coinName} 
-                  className="size-8"
-                />
-                <div className="flex flex-col">
-                  <span className="text-sm">
-                    {item.coinName} - {
-                      dayjs(parseInt(item.maturity)).diff(dayjs(), "day") > 0 
+          {list
+            ?.filter((coin) => parseInt(coin.maturity) > Date.now())
+            .map((item, index) => (
+              <SelectItem
+                className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-4 rounded-md"
+                key={item.coinAddress + "-" + item.maturity + index}
+                value={item.coinAddress + "-" + item.maturity}
+              >
+                <div className="flex items-center gap-x-3">
+                  <img
+                    src={item.coinLogo}
+                    alt={item.coinName}
+                    className="size-8"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm">
+                      {item.coinName} -{" "}
+                      {dayjs(parseInt(item.maturity)).diff(dayjs(), "day") > 0
                         ? `${dayjs(parseInt(item.maturity)).diff(dayjs(), "day")} DAYS`
-                        : "END"
-                    }
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {dayjs(parseInt(item.maturity)).format("DD MMM YYYY")}
-                  </span>
+                        : "END"}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {dayjs(parseInt(item.maturity)).format("DD MMM YYYY")}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </SelectItem>
-          ))}
+              </SelectItem>
+            ))}
         </SelectGroup>
       </SelectContent>
     </Select>

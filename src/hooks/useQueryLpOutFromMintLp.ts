@@ -30,7 +30,7 @@ export default function useQueryLpOutFromMintLp(
 
       const debugInfo: DebugInfo = {
         moveCall: {
-          target: `${coinConfig.nemoContractId}::market::get_lp_out_from_mint_lp`,
+          target: `${coinConfig.nemoContractId}::router::get_lp_out_from_mint_lp`,
           arguments: [
             { name: "pt_value", value: ptValue },
             { name: "sy_value", value: syValue },

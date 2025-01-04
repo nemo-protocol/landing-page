@@ -58,9 +58,9 @@ export default function SingleCoin() {
   const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(1)
   const [openConnect, setOpenConnect] = useState(false)
+  const [lpPosition, setLpPosition] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
-  const [lpPosition, setLpPosition] = useState<string>()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -249,7 +249,7 @@ export default function SingleCoin() {
     minLpAmount: string,
     // convertedRate: string,
   ): Promise<void> {
-    const lpOut =await calculateLpOut(addAmount)
+    const lpOut = await calculateLpOut(addAmount)
     // pt is mint_py input, sy is sy desired
     const amounts = {
       syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
@@ -375,9 +375,10 @@ export default function SingleCoin() {
       try {
         const addAmount = new Decimal(addValue).mul(10 ** decimal).toString()
         const convertedRate = (conversionRate || "1").toString()
-        const convertedAmount = tokenType === 0
-          ? new Decimal(addAmount).div(convertedRate).toFixed(0)
-          : addAmount
+        const convertedAmount =
+          tokenType === 0
+            ? new Decimal(addAmount).div(convertedRate).toFixed(0)
+            : addAmount
 
         const tx = new Transaction()
 
@@ -396,7 +397,7 @@ export default function SingleCoin() {
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
-        if (marketStateData?.lpSupply === "0") {
+        if (marketStateData.lpSupply === "0") {
           await handleSeedLiquidity(
             tx,
             addAmount,
@@ -459,26 +460,30 @@ export default function SingleCoin() {
     }
   }
 
-  const debouncedGetLpPosition = useCallback((value: string, decimal: number, config: CoinConfig | undefined) => {
-    const getLpPosition = debounce(async () => {
-      if (value && value !== "0" && decimal && config && conversionRate) {
-        try {
-          const amount = new Decimal(value).mul(10 ** decimal).toString()
-          const convertedAmount = tokenType === 0
-            ? new Decimal(amount).div(conversionRate).toFixed(0)
-            : amount
-          const lpOut = await calculateLpOut(convertedAmount)
-          setLpPosition(lpOut.lpAmount)
-        } catch (error) {
-          console.error("Failed to get LP position:", error)
+  const debouncedGetLpPosition = useCallback(
+    (value: string, decimal: number, config: CoinConfig | undefined) => {
+      const getLpPosition = debounce(async () => {
+        if (value && value !== "0" && decimal && config && conversionRate) {
+          try {
+            const amount = new Decimal(value).mul(10 ** decimal).toString()
+            const convertedAmount =
+              tokenType === 0
+                ? new Decimal(amount).div(conversionRate).toFixed(0)
+                : amount
+            const lpOut = await calculateLpOut(convertedAmount)
+            setLpPosition(lpOut.lpAmount)
+          } catch (error) {
+            console.error("Failed to get LP position:", error)
+          }
+        } else {
+          setLpPosition(undefined)
         }
-      } else {
-        setLpPosition(undefined)
-      }
-    }, 500)
-    getLpPosition()
-    return getLpPosition.cancel
-  }, [calculateLpOut, tokenType, conversionRate])
+      }, 500)
+      getLpPosition()
+      return getLpPosition.cancel
+    },
+    [calculateLpOut, tokenType, conversionRate],
+  )
 
   useEffect(() => {
     const cancelFn = debouncedGetLpPosition(addValue, decimal ?? 0, coinConfig)
@@ -588,9 +593,8 @@ export default function SingleCoin() {
                         "--"
                       ) : (
                         <>
-                          {"≈  " +
-                            formatDecimalValue(lpPosition || "0", decimal)}{" "}
-                          LP {coinConfig?.coinName}
+                          {"≈  " + formatDecimalValue(lpPosition, decimal)} LP{" "}
+                          {coinConfig?.coinName}
                           {coinConfig?.coinLogo && (
                             <img
                               src={coinConfig.coinLogo}
@@ -710,7 +714,6 @@ export default function SingleCoin() {
                       {isMarketStateDataLoading ? (
                         <Skeleton className="h-2 w-full bg-[#2D2D48]" />
                       ) : marketStateData ? (
-
                         <Progress
                           className="h-2 bg-[#2DF4DD] cursor-pointer"
                           indicatorClassName="bg-[#2C62D8]"
@@ -722,7 +725,6 @@ export default function SingleCoin() {
                       ) : (
                         <span>No data</span>
                       )}
-
                     </TooltipTrigger>
 
                     {/* Tooltip with bottom alignment and arrow */}
@@ -781,15 +783,28 @@ export default function SingleCoin() {
                           />
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-3 text-sm relative mb-2" side="top" align="end" sideOffset={5}>
+                      <TooltipContent
+                        className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-3 text-sm relative mb-2"
+                        side="top"
+                        align="end"
+                        sideOffset={5}
+                      >
                         <div className="text-white space-y-1">
                           <div className="flex justify-between items-center gap-x-4">
                             <span>PT {coinConfig?.coinName}:</span>
-                            <span>{coinConfig?.ptTvl ? `$${formatDecimalValue(coinConfig.ptTvl, 2)}` : "--"}</span>
+                            <span>
+                              {coinConfig?.ptTvl
+                                ? `$${formatDecimalValue(coinConfig.ptTvl, 2)}`
+                                : "--"}
+                            </span>
                           </div>
                           <div className="flex justify-between items-center gap-x-4">
                             <span>{coinConfig?.coinName}:</span>
-                            <span>{coinConfig?.syTvl ? `$${formatDecimalValue(coinConfig.syTvl, 2)}` : "--"}</span>
+                            <span>
+                              {coinConfig?.syTvl
+                                ? `$${formatDecimalValue(coinConfig.syTvl, 2)}`
+                                : "--"}
+                            </span>
                           </div>
                         </div>
                       </TooltipContent>

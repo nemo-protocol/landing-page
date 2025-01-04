@@ -11,9 +11,15 @@ import { useQueryPriceVoucher } from "@/hooks/index.tsx"
 export function useCalculateLpOut(coinConfig?: CoinConfig) {
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
-  const {data: marketState } =   useMarketStateData(coinConfig?.marketStateId)
-  const {mutateAsync: exchangeRateFun} = useFetchObject(coinConfig?.pyStateId, false)
-  const {mutateAsync: priceVoucherFun} = useQueryPriceVoucher(coinConfig, false)
+  const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
+  const { mutateAsync: exchangeRateFun } = useFetchObject(
+    coinConfig?.pyStateId,
+    false,
+  )
+  const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
+    coinConfig,
+    false,
+  )
   return useMutation({
     mutationFn: async (syAmount: string) => {
       if (!coinConfig) {
@@ -26,24 +32,41 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
         console.log(marketState)
         throw new Error("not found market")
       }
-      const exchangeRate = await exchangeRateFun({objectId: coinConfig.pyStateId, options: {showContent: true}})
+      const exchangeRate = await exchangeRateFun({
+        objectId: coinConfig.pyStateId,
+        options: { showContent: true },
+      })
       const priceVoucher = await priceVoucherFun()
       const parsedData = JSON.parse(exchangeRate.toString())
-      const { syForPtValue, syValue, ptValue } = splitSyAmount(syAmount, marketState.lpSupply, marketState.totalSy, marketState.totalPt, parsedData?.content?.fields?.py_index_stored?.fields?.value, priceVoucher.toString())
-      console.log("syAmount", syAmount, "ptValue", ptValue, "syValue", syValue)
+      const { syForPtValue, syValue, ptValue } = splitSyAmount(
+        syAmount,
+        marketState.lpSupply,
+        marketState.totalSy,
+        marketState.totalPt,
+        parsedData?.content?.fields?.py_index_stored?.fields?.value,
+        priceVoucher.toString(),
+      )
+      // console.log("syAmount", syAmount, "ptValue", ptValue, "syValue", syValue)
 
-      let lpAmount: string
-      if (marketState.lpSupply == "0") {
-        lpAmount = (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000 ).toString();
-      }else{
-        [lpAmount] = await queryLpOut({
-          ptValue,
-          syValue,
-        })
+      const lpAmount =
+        marketState.lpSupply == "0"
+          ? (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000).toString()
+          : (await queryLpOut({ ptValue, syValue }))[0]
+      // console.log(
+      //   "lpAmount",
+      //   lpAmount,
+      //   marketState.lpSupply,
+      //   marketState.lpSupply == "0",
+      // )
+
+      return {
+        lpAmount: new Decimal(lpAmount)
+          .div(10 ** coinConfig.decimal)
+          .toString(),
+        ptValue,
+        syValue,
+        syForPtValue,
       }
-      console.log("lpAmount", lpAmount, marketState.lpSupply)
-
-      return {lpAmount: new Decimal(lpAmount).div(10 ** coinConfig.decimal).toString(), ptValue, syValue, syForPtValue}
     },
   })
 }
