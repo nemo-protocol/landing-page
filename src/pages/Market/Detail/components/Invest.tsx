@@ -176,30 +176,24 @@ export default function Invest() {
       try {
         const tx = new Transaction()
         const swapAmount = new Decimal(swapValue)
-          .div(tokenType === 0 ? conversionRate : 1)
           .mul(10 ** coinConfig.decimal)
           .toFixed(0)
 
-        // console.log("swapAmount", swapAmount)
-
-        const [ptOut] = await queryPtOut(swapAmount)
-        console.log("ptOut", ptOut)
+        const [ptOut] = await queryPtOut(
+          new Decimal(swapAmount)
+            .div(tokenType === 0 ? conversionRate : 1)
+            .toFixed(0),
+        )
         const minPtOut = new Decimal(ptOut)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
-        // console.log("minPtOut", minPtOut)
-
         const [splitCoin] =
           tokenType === 0
-            ? mintSycoin(tx, coinConfig, coinData, [new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0)])
+            ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
             : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
-        // tx.transferObjects([splitCoin], address)
-
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
-
-        // tx.transferObjects([syCoin], address)
 
         let pyPosition
         let created = false
