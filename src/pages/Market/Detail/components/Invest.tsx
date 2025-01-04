@@ -196,7 +196,7 @@ export default function Invest() {
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
         tx.moveCall({
-          target: `${coinConfig.nemoContractId}::market::swap_exact_sy_for_pt`,
+          target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(minPtOut),
@@ -212,7 +212,7 @@ export default function Invest() {
         })
 
         debugLog("swap_exact_sy_for_pt move call:", {
-          target: `${coinConfig.nemoContractId}::market::swap_exact_sy_for_pt`,
+          target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
           arguments: [
             coinConfig.version,
             new Decimal(swapValue)
