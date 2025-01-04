@@ -192,7 +192,7 @@ export default function Invest() {
 
         const [splitCoin] =
           tokenType === 0
-            ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
+            ? mintSycoin(tx, coinConfig, coinData, [new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0)])
             : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
         // tx.transferObjects([splitCoin], address)
