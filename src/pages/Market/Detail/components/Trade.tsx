@@ -371,7 +371,7 @@ export default function Trade() {
             </div>
           </div>
           <TradeInfo
-            ratio={ytOut && swapValue ? new Decimal(ytOut).div(swapValue).toString() : new Decimal(0).toString()}
+            ratio={ytOut && swapValue ? new Decimal(ytOut).div(swapValue).div(10 ** (coinConfig?.decimal|| 0)).toString() : new Decimal(0).toString()}
             coinName={coinName}
             slippage={slippage}
             isLoading={isLoading}

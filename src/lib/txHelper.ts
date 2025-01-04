@@ -501,7 +501,7 @@ export const swapExactYtForSy = (
   priceVoucher: TransactionArgument,
 ) => {
   const [syCoin] = tx.moveCall({
-    target: `${coinConfig.nemoContractId}::market::swap_exact_yt_for_sy`,
+    target: `${coinConfig.nemoContractId}::router::swap_exact_yt_for_sy`,
     arguments: [
       tx.object(coinConfig.version),
       tx.pure.u64(
