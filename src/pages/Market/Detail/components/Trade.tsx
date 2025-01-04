@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { DEBUG, debugLog, network } from "@/config"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
 import { Transaction } from "@mysten/sui/transactions"
@@ -23,7 +23,6 @@ import {
   getPriceVoucher,
   initPyPosition,
   mintSycoin,
-  redeemSyCoin,
   splitCoinHelper,
 } from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
@@ -48,6 +47,7 @@ export default function Trade() {
   const [openConnect, setOpenConnect] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [ytOut, setYtout] = useState<string>();
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -85,13 +85,13 @@ export default function Trade() {
   } = useTradeRatios(coinConfig)
 
   const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
-  const ratio = useMemo(
-    () =>
-      tokenType === 0 && swapRatio
-        ? new Decimal(swapRatio.ratio).div(swapRatio.conversionRate).toFixed()
-        : swapRatio?.ratio,
-    [swapRatio, tokenType],
-  )
+  // const ratio = useMemo(
+  //   () =>
+  //     tokenType === 0 && swapRatio
+  //       ? new Decimal(swapRatio.ratio).div(swapRatio.conversionRate).toFixed()
+  //       : swapRatio?.ratio,
+  //   [swapRatio, tokenType],
+  // )
 
   const { data: pyPositionData } = usePyPositionData(
     address,
@@ -130,7 +130,26 @@ export default function Trade() {
   )
 
   const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
-
+  useEffect(() => {
+    async function fetchYtOut() {
+      if (swapValue && decimal && coinConfig && conversionRate) {
+        try {
+          const swapAmount = new Decimal(swapValue)
+            .div(tokenType === 0 ? conversionRate : 1)
+            .mul(10 ** coinConfig.decimal)
+            .toFixed(0)
+          const [ptOut] = await queryYtOut(swapAmount)
+          setYtout(ptOut)
+        } catch (error) {
+          console.error("Failed to fetch YT out amount:", error)
+          setYtout(undefined)
+        }
+      } else {
+        setYtout(undefined)
+      }
+    }
+    fetchYtOut()
+  }, [swapValue, decimal, coinConfig, queryYtOut, tokenType, conversionRate])
   async function swap() {
     if (
       coinType &&
@@ -150,6 +169,7 @@ export default function Trade() {
           .toFixed(0)
 
         const [ytOut] = await queryYtOut(syCoinAmount)
+        setYtout(ytOut)
         const minYtOut = new Decimal(ytOut)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
@@ -177,8 +197,8 @@ export default function Trade() {
         }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-        const [sy] = tx.moveCall({
-          target: `${coinConfig.nemoContractId}::router::swap_sy_for_exact_yt`,
+        tx.moveCall({
+          target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_yt`,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(minYtOut),
@@ -186,7 +206,7 @@ export default function Trade() {
             priceVoucher,
             pyPosition,
             tx.object(coinConfig.pyStateId),
-            tx.object(coinConfig.syStateId),
+            // tx.object(coinConfig.syStateId),
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig.marketFactoryConfigId),
             tx.object(coinConfig.marketStateId),
@@ -196,14 +216,10 @@ export default function Trade() {
         })
 
         debugLog("swap_sy_for_exact_yt move call:", {
-          target: `${coinConfig.nemoContractId}::router::swap_sy_for_exact_yt`,
+          target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_yt`,
           arguments: [
             coinConfig.version,
-            new Decimal(swapValue)
-              .mul(10 ** coinConfig.decimal)
-              .mul(new Decimal(ratio || 1))
-              .mul(1 - new Decimal(slippage).div(100).toNumber())
-              .toFixed(0),
+            minYtOut,
             "syCoin",
             "priceVoucher",
             "pyPosition",
@@ -217,9 +233,9 @@ export default function Trade() {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        const sCoin = redeemSyCoin(tx, coinConfig, sy)
-
-        tx.transferObjects([sCoin], address)
+        // const sCoin = redeemSyCoin(tx, coinConfig, sy)
+        //
+        // tx.transferObjects([sCoin], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -323,15 +339,11 @@ export default function Trade() {
                     "--"
                   ) : isLoading ? (
                     <Skeleton className="h-7 w-60 bg-[#2D2D48]" />
-                  ) : !decimal || !ratio ? (
+                  ) : !decimal || !ytOut ? (
                     "--"
                   ) : (
                     <span className="flex items-center gap-x-1.5">
-                      {"≈  " +
-                        formatDecimalValue(
-                          new Decimal(swapValue).mul(ratio),
-                          decimal,
-                        )}{" "}
+                      {"≈  " + (ytOut ? formatDecimalValue(new Decimal(ytOut).div(10 ** decimal), decimal) : "NAN")}{" "}
                       <span>YT {coinConfig?.coinName}</span>
                       <img
                         src={coinConfig?.coinLogo}
@@ -359,7 +371,7 @@ export default function Trade() {
             </div>
           </div>
           <TradeInfo
-            ratio={ratio}
+            ratio={ytOut ? new Decimal(ytOut).div(swapValue).toString() : "--"}
             coinName={coinName}
             slippage={slippage}
             isLoading={isLoading}
