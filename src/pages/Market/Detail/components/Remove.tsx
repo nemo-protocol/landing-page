@@ -36,6 +36,7 @@ export default function Remove() {
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
   const [error, setError] = useState<string>()
+  const [warning, setWarning] = useState<string>()
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isInputLoading, setIsInputLoading] = useState(false)
   const navigate = useNavigate()
@@ -100,12 +101,15 @@ export default function Remove() {
             const syOut = totalSyOut.div(10 ** decimal).toString()
             setTargetValue(syOut)
             setError(undefined)
+            setWarning(undefined)
           } catch (error) {
             const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
             const syOut = new Decimal(syAmount).div(10 ** decimal).toString()
             const ptOut = new Decimal(ptAmount).div(10 ** decimal).toString()
-            setError(`Insufficient liquidity extra return ${ptOut} PT`, )
-            console.error("Failed to get SY out:", error)
+            setWarning(
+              `Returning ${ptOut} PT ${coinConfig?.coinName} which could be redeemed after maturity`,
+            )
+            setError(undefined)
             setTargetValue(syOut)
           } finally {
             setIsInputLoading(false)
@@ -252,6 +256,7 @@ export default function Remove() {
 
           <AmountInput
             error={error}
+            warning={warning}
             amount={lpValue}
             price={coinConfig?.lpPrice}
             decimal={coinConfig?.decimal}

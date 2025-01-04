@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 interface AmountInputProps {
   price?: string
   error?: string
+  warning?: string
   amount: string
   decimal?: number
   coinName?: string
@@ -30,6 +31,7 @@ const formatDecimalValue = (value: Decimal, decimalPlaces: number): string => {
 export default function AmountInput({
   price,
   error,
+  warning,
   amount,
   decimal = 0,
   coinName,
@@ -121,6 +123,9 @@ export default function AmountInput({
       </div>
       {error && (
         <div className="mt-2 text-sm text-red-500 break-words">{error}</div>
+      )}
+      {warning && (
+        <div className="mt-2 text-sm text-yellow-500 break-words">{warning}</div>
       )}
     </div>
   )
