@@ -1,19 +1,7 @@
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 import { UseQueryResult } from "@tanstack/react-query"
 import { Decimal } from "decimal.js"
-
-export interface LppMarketPosition {
-  id: { id: string }
-  description: string
-  expiry: string
-  expiry_days: string
-  lp_amount: string
-  lp_amount_display: string
-  market_state_id: string
-  name: string
-  url: string
-  yield_token: string
-}
+import { LppMarketPosition } from "./types"
 
 const useLpMarketPositionData = (
   address?: string,

@@ -2,11 +2,9 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "../types"
+import type { DebugInfo, LppMarketPosition } from "../types"
 import { ContractError } from "../types"
-import useFetchLpPosition, {
-  type LppMarketPosition,
-} from "../useFetchLpPosition"
+import useFetchLpPosition from "../useFetchLpPosition"
 import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
 import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
 import Decimal from "decimal.js"

@@ -4,20 +4,7 @@ import { Decimal } from "decimal.js"
 import { type SuiObjectResponse } from "@mysten/sui/client"
 import { type CoinConfig } from "@/queries/types/market"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import type { DebugInfo } from "./types"
-
-export interface LppMarketPosition {
-  id: { id: string }
-  description: string
-  expiry: string
-  expiry_days: string
-  lp_amount: string
-  lp_amount_display: string
-  market_state_id: string
-  name: string
-  url: string
-  yield_token: string
-}
+import type { DebugInfo, LppMarketPosition } from "./types"
 
 const useFetchLpPosition = (
   coinConfig?: CoinConfig,
@@ -26,7 +13,7 @@ const useFetchLpPosition = (
   const suiClient = useSuiClient()
   const { address } = useWallet()
 
-  return useMutation({
+  return useMutation<[LppMarketPosition[], DebugInfo?], Error>({
     mutationFn: async () => {
       if (!address || !coinConfig) {
         throw new Error("Missing required parameters")

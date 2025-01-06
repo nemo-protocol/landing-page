@@ -22,3 +22,16 @@ export class ContractError extends Error {
     this.debugInfo = debugInfo
   }
 }
+
+export interface LppMarketPosition {
+  id: { id: string }
+  description: string
+  expiry: string
+  expiry_days: string
+  lp_amount: string
+  lp_amount_display: string
+  market_state_id: string
+  name: string
+  url: string
+  yield_token: string
+}

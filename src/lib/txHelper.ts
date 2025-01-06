@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { debugLog } from "@/config"
 import { CoinData } from "@/hooks/useCoinData"
 import { CoinConfig } from "@/queries/types/market"
-import { LppMarketPosition } from "@/hooks/useLpMarketPositionData"
+import { LppMarketPosition } from "@/hooks/types"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 
 interface MoveCallArgument {
@@ -564,4 +564,47 @@ export const getPrice = (
   })
 
   return price
+}
+
+export const mergeAllLpPositions = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  lpPositions: LppMarketPosition[],
+  marketPosition: TransactionArgument,
+) => {
+  debugLog("mergeAllLpPositions params:", {
+    lpPositions,
+  })
+
+  if (lpPositions.length === 0) {
+    return marketPosition
+  }
+
+  const joinMoveCall = {
+    target: `${coinConfig.nemoContractId}::market_position::join`,
+    arguments: [lpPositions[0].id.id, marketPosition, "0x6"],
+    typeArguments: [],
+  }
+  debugLog("market_position::join move call:", joinMoveCall)
+
+  tx.moveCall({
+    ...joinMoveCall,
+    arguments: joinMoveCall.arguments.map((arg) => tx.object(arg)),
+  })
+
+  for (let i = 1; i < lpPositions.length; i++) {
+    const joinMoveCall = {
+      target: `${coinConfig.nemoContractId}::market_position::join`,
+      arguments: [lpPositions[0].id.id, lpPositions[i].id.id, "0x6"],
+      typeArguments: [],
+    }
+    debugLog("market_position::join move call:", joinMoveCall)
+
+    tx.moveCall({
+      ...joinMoveCall,
+      arguments: joinMoveCall.arguments.map((arg) => tx.object(arg)),
+    })
+  }
+
+  return tx.object(lpPositions[0].id.id)
 }

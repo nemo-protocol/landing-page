@@ -31,6 +31,7 @@ import {
   depositSyCoin,
   mintPy,
   redeemSyCoin,
+  mergeAllLpPositions,
 } from "@/lib/txHelper"
 import {
   Tooltip,
@@ -47,6 +48,7 @@ import {
   SelectContent,
 } from "@/components/ui/select"
 import { useAddLiquidityRatio } from "@/hooks/useAddLiquidityRatio"
+import useFetchLpPosition from "@/hooks/useFetchLpPosition"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -70,6 +72,8 @@ export default function SingleCoin() {
     maturity,
     address,
   )
+
+  const { mutateAsync: fetchLpPositions } = useFetchLpPosition(coinConfig)
 
   const coinName = useMemo(
     () =>
@@ -244,16 +248,12 @@ export default function SingleCoin() {
     coinData: CoinData[],
     coinType: string,
     pyPosition: TransactionArgument,
-    // _syPtRate: string,
     address: string,
     minLpAmount: string,
-    // convertedRate: string,
   ): Promise<void> {
     const lpOut = await calculateLpOut(addAmount)
-    // pt is mint_py input, sy is sy desired
     const amounts = {
       syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
-      // pt: new Decimal(lpOut.ptValue).toFixed(0),
       sy: new Decimal(lpOut.syValue).toFixed(0),
     }
 
@@ -303,7 +303,9 @@ export default function SingleCoin() {
     })
 
     const yieldToken = redeemSyCoin(tx, coinConfig, remainingSyCoin)
-    tx.transferObjects([yieldToken, marketPosition], address)
+    const [lpPositions] = await fetchLpPositions()
+    const mergedPosition = mergeAllLpPositions(tx, coinConfig, lpPositions, marketPosition)
+    tx.transferObjects([yieldToken, mergedPosition], address)
   }
 
   async function handleAddLiquiditySingleSy(
@@ -358,7 +360,9 @@ export default function SingleCoin() {
       ],
     })
 
-    tx.transferObjects([mp], address)
+    const [lpPositions] = await fetchLpPositions()
+    const mergedPosition = mergeAllLpPositions(tx, coinConfig, lpPositions, mp)
+    tx.transferObjects([mergedPosition], address)
   }
 
   async function add() {
@@ -794,11 +798,11 @@ export default function SingleCoin() {
                               {marketStateData?.totalPt && decimal
                                 ? `${formatDecimalValue(
                                     new Decimal(marketStateData.totalPt).div(
-                                      10 ** decimal
+                                      10 ** decimal,
                                     ),
-                                    2
+                                    2,
                                   )} `
-                                : "--"} 
+                                : "--"}
                               PT {coinConfig?.coinName}:
                             </span>
                             <span>
@@ -812,9 +816,9 @@ export default function SingleCoin() {
                               {marketStateData?.totalSy && decimal
                                 ? `${formatDecimalValue(
                                     new Decimal(marketStateData.totalSy).div(
-                                      10 ** decimal
+                                      10 ** decimal,
                                     ),
-                                    2
+                                    2,
                                   )} `
                                 : "--"}
                               {coinConfig?.coinName}:
