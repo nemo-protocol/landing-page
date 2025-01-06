@@ -96,7 +96,7 @@ export default function Invest() {
 
   const ratio = useMemo(
     () =>
-      tokenType === 0 && swapRatio
+      tokenType === 0 && swapRatio?.ratio && swapRatio?.conversionRate
         ? new Decimal(swapRatio.ratio).div(swapRatio.conversionRate).toFixed()
         : swapRatio?.ratio,
     [swapRatio, tokenType],
