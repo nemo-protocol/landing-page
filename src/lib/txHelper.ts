@@ -314,9 +314,6 @@ export const mergeLpPositions = (
     }
   }
 
-  console.log("accumulatedAmount", accumulatedAmount.toNumber())
-  console.log("targetAmount", targetAmount.toNumber())
-
   if (accumulatedAmount.lt(targetAmount)) {
     throw new Error("Insufficient LP amount")
   }

@@ -790,7 +790,17 @@ export default function SingleCoin() {
                       >
                         <div className="text-white space-y-1">
                           <div className="flex justify-between items-center gap-x-4">
-                            <span>PT {coinConfig?.coinName}:</span>
+                            <span>
+                              {marketStateData?.totalPt && decimal
+                                ? `${formatDecimalValue(
+                                    new Decimal(marketStateData.totalPt).div(
+                                      10 ** decimal
+                                    ),
+                                    2
+                                  )} `
+                                : "--"} 
+                              PT {coinConfig?.coinName}:
+                            </span>
                             <span>
                               {coinConfig?.ptTvl
                                 ? `$${formatDecimalValue(coinConfig.ptTvl, 2)}`
@@ -798,7 +808,17 @@ export default function SingleCoin() {
                             </span>
                           </div>
                           <div className="flex justify-between items-center gap-x-4">
-                            <span>{coinConfig?.coinName}:</span>
+                            <span>
+                              {marketStateData?.totalSy && decimal
+                                ? `${formatDecimalValue(
+                                    new Decimal(marketStateData.totalSy).div(
+                                      10 ** decimal
+                                    ),
+                                    2
+                                  )} `
+                                : "--"}
+                              {coinConfig?.coinName}:
+                            </span>
                             <span>
                               {coinConfig?.syTvl
                                 ? `$${formatDecimalValue(coinConfig.syTvl, 2)}`

@@ -91,6 +91,8 @@ export default function Remove() {
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
       const getSyOut = debounce(async () => {
+        setError(undefined)
+        setWarning(undefined)
         if (value && value !== "0" && decimal) {
           setIsInputLoading(true)
           try {
@@ -100,8 +102,6 @@ export default function Remove() {
             totalSyOut = totalSyOut.add(ptToSy)
             const syOut = totalSyOut.div(10 ** decimal).toString()
             setTargetValue(syOut)
-            setError(undefined)
-            setWarning(undefined)
           } catch (error) {
             const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
             const syOut = new Decimal(syAmount).div(10 ** decimal).toString()
@@ -109,7 +109,6 @@ export default function Remove() {
             setWarning(
               `Returning ${ptOut} PT ${coinConfig?.coinName} which could be redeemed after maturity`,
             )
-            setError(undefined)
             setTargetValue(syOut)
           } finally {
             setIsInputLoading(false)
@@ -122,7 +121,7 @@ export default function Remove() {
       getSyOut()
       return getSyOut.cancel
     },
-    [burnLpDryRun, querySyOutFromPtIn],
+    [burnLpDryRun, querySyOutFromPtIn, coinConfig?.coinName],
   )
 
   useEffect(() => {
