@@ -15,8 +15,9 @@ import {
   splitCoinHelper,
   depositSyCoin,
 } from "@/lib/txHelper"
-import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import ActionButton from "@/components/ActionButton"
 
 export default function Mint({
   maturity,
@@ -29,6 +30,7 @@ export default function Mint({
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [isMinting, setIsMinting] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
 
@@ -90,6 +92,7 @@ export default function Mint({
       address
     ) {
       try {
+        setIsMinting(true)
         const tx = new Transaction()
 
         let pyPosition
@@ -129,6 +132,8 @@ export default function Mint({
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))
+      } finally {
+        setIsMinting(false)
       }
     }
   }
@@ -280,38 +285,17 @@ export default function Mint({
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />
       </div>
-      {!isConnected ? (
-        <ConnectModal
-          open={openConnect}
-          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          // trigger={
-          //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-          //     Connect Wallet
-          //   </button>
-          // }
-        >
-          <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-            Connect Wallet
-          </button>
-        </ConnectModal>
-      ) : insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
-          Insufficient Balance
-        </div>
-      ) : (
-        <button
+      <div className="mt-7.5">
+        <ActionButton
+          btnText="Mint"
           onClick={mint}
+          loading={isMinting}
+          openConnect={openConnect}
+          setOpenConnect={setOpenConnect}
+          insufficientBalance={insufficientBalance}
           disabled={mintValue === ""}
-          className={[
-            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
-            mintValue === ""
-              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
-              : "bg-[#0F60FF] text-white",
-          ].join(" ")}
-        >
-          Mint
-        </button>
-      )}
+        />
+      </div>
     </div>
   )
 }

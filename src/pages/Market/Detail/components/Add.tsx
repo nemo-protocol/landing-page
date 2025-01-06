@@ -62,6 +62,7 @@ export default function SingleCoin() {
   const [openConnect, setOpenConnect] = useState(false)
   const [lpPosition, setLpPosition] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [isAdding, setIsAdding] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
@@ -378,6 +379,7 @@ export default function SingleCoin() {
       !insufficientBalance
     ) {
       try {
+        setIsAdding(true)
         const addAmount = new Decimal(addValue)
           .div(tokenType === 0 ? conversionRate : 1)
           .mul(10 ** coinConfig.decimal)
@@ -459,6 +461,7 @@ export default function SingleCoin() {
         setMessage(parseErrorMessage(msg || ""))
       } finally {
         setOpen(true)
+        setIsAdding(false)
       }
     }
   }
@@ -664,6 +667,7 @@ export default function SingleCoin() {
               <ActionButton
                 btnText={"Add"}
                 onClick={add}
+                loading={isAdding}
                 openConnect={openConnect}
                 setOpenConnect={setOpenConnect}
                 insufficientBalance={insufficientBalance}

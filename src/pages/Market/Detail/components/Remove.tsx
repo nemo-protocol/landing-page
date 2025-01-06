@@ -14,7 +14,7 @@ import {
   redeemSyCoin,
   burnLp,
 } from "@/lib/txHelper"
-import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import { ChevronsDown } from "lucide-react"
 import AmountInput from "@/components/AmountInput"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -25,6 +25,7 @@ import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
 import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
 import { getPriceVoucher, swapExactPtForSy } from "@/lib/txHelper"
 import { debounce } from "@/lib/utils"
+import ActionButton from "@/components/ActionButton"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -37,6 +38,7 @@ export default function Remove() {
   const [openConnect, setOpenConnect] = useState(false)
   const [error, setError] = useState<string>()
   const [warning, setWarning] = useState<string>()
+  const [isRemoving, setIsRemoving] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isInputLoading, setIsInputLoading] = useState(false)
   const navigate = useNavigate()
@@ -141,6 +143,7 @@ export default function Remove() {
       lppMarketPositionData?.length
     ) {
       try {
+        setIsRemoving(true)
         const [{ ptAmount }] = await burnLpDryRun(lpValue)
 
         let canSwapPt = false
@@ -220,6 +223,8 @@ export default function Remove() {
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))
+      } finally {
+        setIsRemoving(false)
       }
     }
   }
@@ -276,7 +281,7 @@ export default function Remove() {
 
           <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
             <div className="flex flex-col items-end gap-y-1">
-              <div className="flex items-center justify-between w-full">
+              <div className="flex items-center justify-between w-full h-[28px]">
                 <span>Receiving</span>
                 <span className="flex items-center gap-x-1.5 h-7">
                   {isInputLoading ? (
@@ -306,42 +311,20 @@ export default function Remove() {
             </div>
           </div>
 
-          {/* Action Button */}
-          {!isConnected ? (
-            <ConnectModal
-              open={openConnect}
-              onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-            >
-              <button className="mt-4 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-12 hover:bg-[#0F60FF]/90 transition-colors">
-                Connect Wallet
-              </button>
-            </ConnectModal>
-          ) : insufficientBalance ? (
-            <div className="mt-4 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-12 flex items-center justify-center">
-              Insufficient Balance
-            </div>
-          ) : (
-            <button
-              onClick={remove}
-              disabled={
-                lpValue === "" ||
-                lpValue === "0" ||
-                insufficientBalance ||
-                new Decimal(lpValue).toNumber() === 0
-              }
-              className={[
-                "mt-4 px-8 py-2.5 rounded-full w-full h-12 transition-colors",
-                lpValue === "" ||
-                lpValue === "0" ||
-                insufficientBalance ||
-                new Decimal(lpValue).toNumber() === 0
-                  ? "bg-[#0F60FF]/50 text-white/50"
-                  : "bg-[#0F60FF] text-white hover:bg-[#0F60FF]/90",
-              ].join(" ")}
-            >
-              Remove Liquidity
-            </button>
-          )}
+          <ActionButton
+            btnText="Remove Liquidity"
+            onClick={remove}
+            loading={isRemoving}
+            openConnect={openConnect}
+            setOpenConnect={setOpenConnect}
+            insufficientBalance={insufficientBalance}
+            disabled={
+              lpValue === "" ||
+              lpValue === "0" ||
+              insufficientBalance ||
+              new Decimal(lpValue).toNumber() === 0
+            }
+          />
         </div>
       </div>
     </div>

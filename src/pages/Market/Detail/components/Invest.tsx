@@ -22,6 +22,7 @@ import {
   depositSyCoin,
 } from "@/lib/txHelper"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
 import {
   Select,
   SelectContent,
@@ -55,6 +56,8 @@ export default function Invest() {
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [ptOutAmount, setPtOutAmount] = useState<string>()
+  const [error, setError] = useState<string>()
+  const [isSwapping, setIsSwapping] = useState(false)
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -140,11 +143,13 @@ export default function Invest() {
   )
 
   const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
+  const { mutateAsync: dryRunSwap } = useSwapExactSyForPtDryRun(coinConfig)
 
   useEffect(() => {
     async function fetchPtOut() {
       if (swapValue && decimal && coinConfig && conversionRate) {
         try {
+          setError(undefined)
           const swapAmount = new Decimal(swapValue)
             .div(tokenType === 0 ? conversionRate : 1)
             .mul(10 ** coinConfig.decimal)
@@ -153,10 +158,12 @@ export default function Invest() {
           setPtOutAmount(ptOut)
         } catch (error) {
           console.error("Failed to fetch PT out amount:", error)
+          setError((error as Error).message || "Failed to fetch PT amount")
           setPtOutAmount(undefined)
         }
       } else {
         setPtOutAmount(undefined)
+        setError(undefined)
       }
     }
     fetchPtOut()
@@ -174,6 +181,7 @@ export default function Invest() {
       !insufficientBalance
     ) {
       try {
+        setIsSwapping(true)
         const tx = new Transaction()
         const swapAmount = new Decimal(swapValue)
           .mul(10 ** coinConfig.decimal)
@@ -203,6 +211,8 @@ export default function Invest() {
         const minPtOut = new Decimal(ptOut)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
+
+        await dryRunSwap({ tx, syCoin, minPtOut })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
@@ -247,12 +257,6 @@ export default function Invest() {
         })
 
         setTxId(res.digest)
-        // if (res.effects?.status.status === "failure") {
-        //   setOpen(true)
-        //   setStatus("Failed")
-        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
-        //   return
-        // }
         setStatus("Success")
         setOpen(true)
         setSwapValue("")
@@ -275,6 +279,8 @@ export default function Invest() {
         } else {
           setMessage(parseErrorMessage(msg || ""))
         }
+      } finally {
+        setIsSwapping(false)
       }
     }
   }
@@ -306,6 +312,7 @@ export default function Invest() {
           isConnected={isConnected}
           isConfigLoading={isConfigLoading}
           isBalanceLoading={isBalanceLoading}
+          error={error}
           onChange={(value) => setSwapValue(value)}
           coinNameComponent={
             <Select
@@ -482,10 +489,11 @@ export default function Invest() {
         <ActionButton
           onClick={swap}
           btnText="Invest"
+          loading={isSwapping}
           openConnect={openConnect}
           setOpenConnect={setOpenConnect}
           insufficientBalance={insufficientBalance}
-          disabled={["", undefined, "0"].includes(swapValue)}
+          disabled={["", undefined, "0"].includes(swapValue) || !!error}
         />
       </div>
     </div>

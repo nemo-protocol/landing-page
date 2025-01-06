@@ -45,6 +45,7 @@ export default function Sell() {
   const [error, setError] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
+  const [isRedeeming, setIsRedeeming] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -140,6 +141,7 @@ export default function Sell() {
   async function redeem() {
     if (!insufficientBalance && coinConfig && coinType && address) {
       try {
+        setIsRedeeming(true)
         const tx = new Transaction()
 
         let pyPosition
@@ -182,6 +184,8 @@ export default function Sell() {
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))
+      } finally {
+        setIsRedeeming(false)
       }
     }
   }
@@ -296,6 +300,7 @@ export default function Sell() {
         <ActionButton
           btnText="Sell"
           onClick={redeem}
+          loading={isRedeeming}
           openConnect={openConnect}
           setOpenConnect={setOpenConnect}
           insufficientBalance={insufficientBalance}

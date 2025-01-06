@@ -8,6 +8,7 @@ interface ActionButtonProps {
   openConnect: boolean
   insufficientBalance: boolean
   setOpenConnect: (isOpen: boolean) => void
+  loading?: boolean
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({
@@ -17,6 +18,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   openConnect,
   setOpenConnect,
   insufficientBalance,
+  loading = false,
 }) => {
   const { address } = useWallet()
 
@@ -40,15 +42,18 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       ) : (
         <button
           onClick={onClick}
-          disabled={disabled}
+          disabled={disabled || loading}
           className={[
-            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
-            disabled
+            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14 flex items-center justify-center gap-2",
+            disabled || loading
               ? "bg-[#0F60FF]/50 text-white/50 cursor-not-allowed"
               : "bg-[#0F60FF] text-white",
           ].join(" ")}
         >
-          {btnText}
+          {loading && (
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-b-transparent border-white/50" />
+          )}
+          {loading ? "Processing..." : btnText}
         </button>
       )}
     </>

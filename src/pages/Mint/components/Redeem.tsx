@@ -12,8 +12,9 @@ import {
   redeemPy,
   redeemSyCoin,
 } from "@/lib/txHelper"
-import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import ActionButton from "@/components/ActionButton"
 
 export default function Redeem({
   maturity,
@@ -26,39 +27,21 @@ export default function Redeem({
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  // const { currentWallet, isConnected } = useCurrentWallet()
   const [openConnect, setOpenConnect] = useState(false)
   const [ptRedeemValue, setPTRedeemValue] = useState("")
   const [ytRedeemValue, setYTRedeemValue] = useState("")
+  const [isRedeeming, setIsRedeeming] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
-
   const isConnected = useMemo(() => !!address, [address])
 
-  // const { mutateAsync: signAndExecuteTransaction } =
-  //   useCustomSignAndExecuteTransaction()
-
-  // const [currentWallet, setCurrentWallet] = useState<any>([])
-  // const { getAccounts, connected: isConnected, signAndExecuteTransaction } = useWallet()
-
-  // useEffect(() => {
-  //   if (isConnected) {
-  //     setCurrentWallet(getAccounts())
-  //   }
-  // }, [isConnected])
-  // const address = useMemo(
-  //   () => currentWallet.length != 0 && currentWallet?.accounts[0].address,
-  //   [isConnected],
-  // )
-
   const { data: coinConfig } = useCoinConfig(coinType, maturity)
-  const { data: pyPositionData, refetch: refetchPyPosition } =
-    usePyPositionData(
-      address,
-      coinConfig?.pyStateId,
-      coinConfig?.maturity,
-      coinConfig?.pyPositionTypeList,
-    )
+  const { data: pyPositionData, refetch: refetchPyPosition } = usePyPositionData(
+    address,
+    coinConfig?.pyStateId,
+    coinConfig?.maturity,
+    coinConfig?.pyPositionTypeList,
+  )
 
   const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
   const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
@@ -101,6 +84,7 @@ export default function Redeem({
       ytRedeemValue
     ) {
       try {
+        setIsRedeeming(true)
         const tx = new Transaction()
 
         let pyPosition
@@ -133,15 +117,7 @@ export default function Redeem({
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
-          // chain: `sui:${network}`,
         })
-        //TODO: handle error
-        // if (res.effects?.status.status === "failure") {
-        //   setOpen(true)
-        //   setStatus("Failed")
-        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
-        //   return
-        // }
         setTxId(res.digest)
         setOpen(true)
         setPTRedeemValue("")
@@ -154,19 +130,11 @@ export default function Redeem({
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))
+      } finally {
+        setIsRedeeming(false)
       }
     }
   }
-
-  // const debouncedSetPTValue = debounce((value: string) => {
-  //   setPTRedeemValue(value)
-  //   setYTRedeemValue(new Decimal(value).div(ptRatio).toFixed(9))
-  // }, 300)
-
-  // const debouncedSetYTValue = debounce((value: string) => {
-  //   setYTRedeemValue(value)
-  //   setPTRedeemValue(new Decimal(value).mul(ytRatio).toFixed(9))
-  // }, 300)
 
   return (
     <div className="flex flex-col items-center">
@@ -199,7 +167,6 @@ export default function Redeem({
               }
             />
             <span>PT {coinConfig?.coinName}</span>
-            {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
@@ -207,10 +174,7 @@ export default function Redeem({
               type="number"
               value={ptRedeemValue}
               disabled={!isConnected}
-              onChange={
-                (e) => setPTRedeemValue(e.target.value)
-                // debouncedSetPTValue(new Decimal(e.target.value).toString())
-              }
+              onChange={(e) => setPTRedeemValue(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
@@ -267,7 +231,6 @@ export default function Redeem({
               }
             />
             <span>YT {coinConfig?.coinName}</span>
-            {/* <DownArrowIcon /> */}
           </div>
           <div className="flex flex-col items-end gap-y-1">
             <input
@@ -275,10 +238,7 @@ export default function Redeem({
               type="number"
               value={ytRedeemValue}
               disabled={!isConnected}
-              onChange={
-                (e) => setYTRedeemValue(e.target.value)
-                // debouncedSetYTValue(new Decimal(e.target.value).toString())
-              }
+              onChange={(e) => setYTRedeemValue(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
@@ -330,7 +290,6 @@ export default function Redeem({
               }
             />
             <span>{coinConfig?.coinName}</span>
-            {/* <DownArrowIcon /> */}
           </div>
           <input
             disabled
@@ -346,40 +305,17 @@ export default function Redeem({
           />
         </div>
       </div>
-      {!isConnected ? (
-        <ConnectModal
-          open={openConnect}
-          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-          // trigger={
-          //   <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-          //     Connect Wallet
-          //   </button>
-          // }
-        >
-          <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
-            Connect Wallet
-          </button>
-        </ConnectModal>
-      ) : insufficientBalance ? (
-        <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
-          Insufficient Balance
-        </div>
-      ) : (
-        <button
+      <div className="mt-7.5">
+        <ActionButton
+          btnText="Redeem"
           onClick={redeem}
-          className={[
-            "mt-7.5 px-8 py-2.5 rounded-full w-full h-14",
-            ptRedeemValue === "" || ytRedeemValue === "" || insufficientBalance
-              ? "bg-[#0F60FF]/50 text-white/50 cursor-pointer"
-              : "bg-[#0F60FF] text-white",
-          ].join(" ")}
-          disabled={
-            ptRedeemValue === "" || ytRedeemValue === "" || insufficientBalance
-          }
-        >
-          Redeem
-        </button>
-      )}
+          loading={isRedeeming}
+          openConnect={openConnect}
+          setOpenConnect={setOpenConnect}
+          insufficientBalance={insufficientBalance}
+          disabled={ptRedeemValue === "" || ytRedeemValue === ""}
+        />
+      </div>
     </div>
   )
 }

@@ -1,0 +1,137 @@
+import { useMutation } from "@tanstack/react-query"
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
+import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
+import type { CoinConfig } from "@/queries/types/market"
+import type { DebugInfo } from "../types"
+import { ContractError } from "../types"
+import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
+import { initPyPosition, getPriceVoucher } from "@/lib/txHelper"
+
+type SwapResult = {
+  ytAmount: string
+}
+
+export default function useSwapExactSyForYtDryRun(
+  coinConfig?: CoinConfig,
+  debug: boolean = false,
+) {
+  const client = useSuiClient()
+  const { address } = useWallet()
+  const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
+
+  return useMutation({
+    mutationFn: async ({
+      tx,
+      syCoin,
+      minYtOut,
+    }: {
+      tx: Transaction
+      syCoin: TransactionArgument
+      minYtOut: string
+    }): Promise<[SwapResult] | [SwapResult, DebugInfo]> => {
+      if (!address) {
+        throw new Error("Please connect wallet first")
+      }
+      if (!coinConfig) {
+        throw new Error("Please select a pool")
+      }
+
+      const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
+
+      tx.setSender(address)
+
+      // Handle py position creation
+      let pyPosition
+      let created = false
+      if (!pyPositions?.length) {
+        created = true
+        pyPosition = initPyPosition(tx, coinConfig)
+      } else {
+        pyPosition = tx.object(pyPositions[0].id.id)
+      }
+
+      // Get price voucher
+      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+
+      const debugInfo: DebugInfo = {
+        moveCall: {
+          target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_yt`,
+          arguments: [
+            { name: "version", value: coinConfig.version },
+            { name: "min_yt_out", value: minYtOut },
+            { name: "sy_coin", value: "syCoin" },
+            { name: "price_voucher", value: "priceVoucher" },
+            {
+              name: "py_position",
+              value: created ? "pyPosition" : pyPositions[0].id.id,
+            },
+            { name: "py_state", value: coinConfig.pyStateId },
+            { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
+            {
+              name: "market_factory_config",
+              value: coinConfig.marketFactoryConfigId,
+            },
+            { name: "market", value: coinConfig.marketStateId },
+            { name: "clock", value: "0x6" },
+          ],
+          typeArguments: [coinConfig.syCoinType],
+        },
+      }
+
+      tx.moveCall({
+        target: debugInfo.moveCall.target,
+        arguments: [
+          tx.object(coinConfig.version),
+          tx.pure.u64(minYtOut),
+          syCoin,
+          priceVoucher,
+          pyPosition,
+          tx.object(coinConfig.pyStateId),
+          tx.object(coinConfig.yieldFactoryConfigId),
+          tx.object(coinConfig.marketFactoryConfigId),
+          tx.object(coinConfig.marketStateId),
+          tx.object("0x6"),
+        ],
+        typeArguments: debugInfo.moveCall.typeArguments,
+      })
+
+      if (created) {
+        tx.transferObjects([pyPosition], address)
+      }
+
+      const result = await client.devInspectTransactionBlock({
+        sender: address,
+        transactionBlock: await tx.build({
+          client: client,
+          onlyTransactionKind: true,
+        }),
+      })
+
+      // Record raw result
+      debugInfo.rawResult = {
+        error: result?.error,
+        results: result?.results,
+      }
+
+      console.log("result", result)
+
+      if (result?.error) {
+        throw new ContractError(result.error, debugInfo)
+      }
+
+      if (!result?.events?.[0]?.parsedJson) {
+        const message = "Failed to get swap data"
+        debugInfo.rawResult.error = message
+        throw new ContractError(message, debugInfo)
+      }
+
+      const ytAmount = result.events[0].parsedJson.yt_amount as string
+
+      debugInfo.parsedOutput = JSON.stringify({ ytAmount })
+
+      const returnValue = { ytAmount }
+
+      return debug ? [returnValue, debugInfo] : [returnValue]
+    },
+  })
+} 

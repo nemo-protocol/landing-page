@@ -35,6 +35,7 @@ import { useLoadingState } from "@/hooks/useLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import { useTradeRatios } from "@/hooks/useTradeRatios"
 import useQueryYtOutBySyInWithVoucher from "@/hooks/useQueryYtOutBySyInWithVoucher"
+import useSwapExactSyForYtDryRun from "@/hooks/dryrun/useSwapExactSyForYtDryRun"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -48,6 +49,8 @@ export default function Trade() {
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [ytOut, setYtout] = useState<string>();
+  const [error, setError] = useState<string>()
+  const [isSwapping, setIsSwapping] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -130,10 +133,13 @@ export default function Trade() {
   )
 
   const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
+  const { mutateAsync: dryRunSwap } = useSwapExactSyForYtDryRun(coinConfig)
+
   useEffect(() => {
     async function fetchYtOut() {
       if (swapValue && decimal && coinConfig && conversionRate) {
         try {
+          setError(undefined)
           const swapAmount = new Decimal(swapValue)
             .div(tokenType === 0 ? conversionRate : 1)
             .mul(10 ** coinConfig.decimal)
@@ -142,10 +148,12 @@ export default function Trade() {
           setYtout(ytOut)
         } catch (error) {
           console.error("Failed to fetch YT out amount:", error)
+          setError((error as Error).message || "Failed to fetch YT amount")
           setYtout(undefined)
         }
       } else {
         setYtout(undefined)
+        setError(undefined)
       }
     }
     fetchYtOut()
@@ -161,6 +169,7 @@ export default function Trade() {
       !insufficientBalance
     ) {
       try {
+        setIsSwapping(true)
         const tx = new Transaction()
 
         const syCoinAmount = new Decimal(swapValue)
@@ -196,6 +205,8 @@ export default function Trade() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
+        await dryRunSwap({ tx, syCoin, minYtOut })
+
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
         tx.moveCall({
           target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_yt`,
@@ -206,7 +217,6 @@ export default function Trade() {
             priceVoucher,
             pyPosition,
             tx.object(coinConfig.pyStateId),
-            // tx.object(coinConfig.syStateId),
             tx.object(coinConfig.yieldFactoryConfigId),
             tx.object(coinConfig.marketFactoryConfigId),
             tx.object(coinConfig.marketStateId),
@@ -233,26 +243,15 @@ export default function Trade() {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        // const sCoin = redeemSyCoin(tx, coinConfig, sy)
-        //
-        // tx.transferObjects([sCoin], address)
-
         if (created) {
           tx.transferObjects([pyPosition], address)
         }
 
         const res = await signAndExecuteTransaction({
-          transaction: Transaction.from(tx),
-          // chain: `sui:${network}`,
+          transaction: tx,
         })
 
         setTxId(res.digest)
-        // if (res.effects?.status.status === "failure") {
-        //   setOpen(true)
-        //   setStatus("Failed")
-        //   setMessage(parseErrorMessage(res.effects?.status.error || ""))
-        //   return
-        // }
         setStatus("Success")
         setOpen(true)
         setSwapValue("")
@@ -264,6 +263,8 @@ export default function Trade() {
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))
+      } finally {
+        setIsSwapping(false)
       }
     }
   }
@@ -296,6 +297,7 @@ export default function Trade() {
             isConnected={isConnected}
             isConfigLoading={isConfigLoading}
             isBalanceLoading={isBalanceLoading}
+            error={error}
             onChange={(value) => {
               setSwapValue(value)
             }}
@@ -398,10 +400,11 @@ export default function Trade() {
           <ActionButton
             btnText="Buy"
             onClick={swap}
+            loading={isSwapping}
             openConnect={openConnect}
             setOpenConnect={setOpenConnect}
             insufficientBalance={insufficientBalance}
-            disabled={["", undefined, "0"].includes(swapValue)}
+            disabled={["", undefined, "0"].includes(swapValue) || !!error}
           />
         </div>
       </div>
