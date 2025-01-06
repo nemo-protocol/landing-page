@@ -102,6 +102,7 @@ export default function AmountInput({
               value={amount}
               placeholder={"0"}
               onChange={(e) => onChange && onChange(e.target.value)}
+              onWheel={(e) => e.target instanceof HTMLElement && e.target.blur()}
               className="bg-transparent outline-none grow text-right min-w-0 placeholder:text-3xl p-0 text-3xl font-bold w-full"
             />
             <div className="flex items-end">
