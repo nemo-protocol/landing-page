@@ -48,7 +48,7 @@ export default function Trade() {
   const [openConnect, setOpenConnect] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const [ytOut, setYtout] = useState<string>();
+  const [ytOut, setYtout] = useState<string>()
   const [error, setError] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
 
@@ -185,7 +185,9 @@ export default function Trade() {
 
         const [splitCoin] =
           tokenType === 0
-            ? mintSycoin(tx, coinConfig, coinData, [new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0)])
+            ? mintSycoin(tx, coinConfig, coinData, [
+                new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0),
+              ])
             : splitCoinHelper(tx, coinData, [syCoinAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
@@ -205,7 +207,13 @@ export default function Trade() {
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        await dryRunSwap({ tx, syCoin, minYtOut })
+        await dryRunSwap({
+          tokenType,
+          swapAmount: syCoinAmount,
+          coinData,
+          coinType,
+          minYtOut,
+        })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
         tx.moveCall({
@@ -345,7 +353,13 @@ export default function Trade() {
                     "--"
                   ) : (
                     <span className="flex items-center gap-x-1.5">
-                      {"≈  " + (ytOut ? formatDecimalValue(new Decimal(ytOut).div(10 ** decimal), decimal) : "NAN")}{" "}
+                      {"≈  " +
+                        (ytOut
+                          ? formatDecimalValue(
+                              new Decimal(ytOut).div(10 ** decimal),
+                              decimal,
+                            )
+                          : "NAN")}{" "}
                       <span>YT {coinConfig?.coinName}</span>
                       <img
                         src={coinConfig?.coinLogo}
@@ -373,7 +387,14 @@ export default function Trade() {
             </div>
           </div>
           <TradeInfo
-            ratio={ytOut && swapValue ? new Decimal(ytOut).div(swapValue).div(10 ** (coinConfig?.decimal|| 0)).toString() : new Decimal(0).toString()}
+            ratio={
+              ytOut && swapValue
+                ? new Decimal(ytOut)
+                    .div(swapValue)
+                    .div(10 ** (coinConfig?.decimal || 0))
+                    .toString()
+                : new Decimal(0).toString()
+            }
             coinName={coinName}
             slippage={slippage}
             isLoading={isLoading}

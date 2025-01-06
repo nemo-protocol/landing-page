@@ -212,7 +212,13 @@ export default function Invest() {
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
-        await dryRunSwap({ tx, syCoin, minPtOut })
+        await dryRunSwap({
+          tokenType,
+          swapAmount,
+          coinData,
+          coinType,
+          minPtOut,
+        })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 

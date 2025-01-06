@@ -1,11 +1,12 @@
 import { useMutation } from "@tanstack/react-query"
-import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
+import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
 import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
-import { initPyPosition, getPriceVoucher } from "@/lib/txHelper"
+import { initPyPosition, getPriceVoucher, mintSycoin, splitCoinHelper, depositSyCoin } from "@/lib/txHelper"
+import { CoinData } from "../useCoinData"
 
 type SwapResult = {
   ptAmount: string
@@ -21,12 +22,16 @@ export default function useSwapExactSyForPtDryRun(
 
   return useMutation({
     mutationFn: async ({
-      tx,
-      syCoin,
+      tokenType,
+      swapAmount,
+      coinData,
+      coinType,
       minPtOut,
     }: {
-      tx: Transaction
-      syCoin: TransactionArgument
+      tokenType: number
+      swapAmount: string
+      coinData: CoinData[]
+      coinType: string
       minPtOut: string
     }): Promise<[SwapResult] | [SwapResult, DebugInfo]> => {
       if (!address) {
@@ -38,8 +43,15 @@ export default function useSwapExactSyForPtDryRun(
 
       const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
 
-    //   const tx = new Transaction()
+      const tx = new Transaction()
       tx.setSender(address)
+
+      const [splitCoin] =
+      tokenType === 0
+        ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
+        : splitCoinHelper(tx, coinData, [swapAmount], coinType)
+
+    const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
       // Handle py position creation
       let pyPosition
