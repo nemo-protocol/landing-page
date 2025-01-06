@@ -33,6 +33,7 @@ import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ContractError } from "@/hooks/types"
 import dayjs from "dayjs"
+import SlippageSetting from "@/components/SlippageSetting"
 
 export default function Sell() {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -46,6 +47,7 @@ export default function Sell() {
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
   const [isRedeeming, setIsRedeeming] = useState(false)
+  const [slippage, setSlippage] = useState("0.5")
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -209,6 +211,9 @@ export default function Sell() {
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
         <h2 className="text-center text-xl">Sell</h2>
+        <div className="flex justify-end w-full">
+          <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
+        </div>
         <TransactionStatusDialog
           open={open}
           status={status}
