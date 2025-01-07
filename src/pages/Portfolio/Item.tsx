@@ -105,7 +105,7 @@ export default function Item({
   const { address } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: lpMarketPositionData } = useLpMarketPositionData(
+  const { data: lpMarketPositionData, refetch: refetchLpPosition } = useLpMarketPositionData(
     address,
     coinConfig.marketStateId,
     coinConfig.maturity,
@@ -114,7 +114,7 @@ export default function Item({
       : [coinConfig.marketPositionType],
   )
 
-  const { data: pyPositionData } = usePyPositionData(
+  const { data: pyPositionData, refetch: refetchPyPosition } = usePyPositionData(
     address,
     coinConfig.pyStateId,
     coinConfig.maturity,
@@ -156,6 +156,13 @@ export default function Item({
   const [loading, setLoading] = useState(false)
 
   const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
+
+  const refreshData = async () => {
+    await Promise.all([
+      refetchLpPosition(),
+      refetchPyPosition()
+    ])
+  }
 
   useEffect(() => {
     if (isConnected) {
@@ -269,6 +276,7 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
+        await refreshData()
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -332,6 +340,7 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
+        await refreshData()
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -364,6 +373,7 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
+        await refreshData()
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
