@@ -452,7 +452,7 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">{ptBalance}</TableCell>
           <TableCell align="center" className="text-white">
-            {parseInt(coinConfig?.maturity) > dayjs().unix() ? (
+            {parseInt(coinConfig?.maturity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
                   to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/pt`}
@@ -533,7 +533,7 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">
-            {parseInt(coinConfig?.maturity) > dayjs().unix() ? (
+            {parseInt(coinConfig?.maturity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
                   to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/yt`}
