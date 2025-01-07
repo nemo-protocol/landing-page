@@ -23,6 +23,26 @@ export default function Header({ className }: { className?: string }) {
   const [open, setOpen] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success("Address copied to clipboard")
+    } catch (err) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement("textarea")
+      textArea.value = text
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand("copy")
+        toast.success("Address copied to clipboard")
+      } catch (err) {
+        toast.error("Failed to copy address")
+      }
+      document.body.removeChild(textArea)
+    }
+  }
+
   return (
     <header className={cn("h-16 shrink-0", className)}>
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
@@ -155,10 +175,7 @@ export default function Header({ className }: { className?: string }) {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(currentAccount?.address || "")
-                      toast.success("Address copied to clipboard")
-                    }}
+                    onClick={() => copyToClipboard(currentAccount?.address || "")}
                     className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-full h-8"
                   >
                     Copy Address
