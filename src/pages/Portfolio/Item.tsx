@@ -20,18 +20,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import {
-  getPriceVoucher,
-  redeemSyCoin,
-  initPyPosition,
-  mergeLpPositions,
-  burnLp,
-  redeemPy,
-  swapExactPtForSy,
-} from "@/lib/txHelper"
-import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
-import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
+import { getPriceVoucher, redeemSyCoin, redeemPy } from "@/lib/txHelper"
 import { formatDecimalValue } from "@/lib/utils"
+import useRedeemLp from "@/hooks/actions/useRedeemLp"
 
 // 创建一个更简单的 loading spinner SVG
 const LoadingSpinner = () => (
@@ -58,13 +49,13 @@ const LoadingSpinner = () => (
 )
 
 // 首先定义一个统一的 LoadingButton 组件
-const LoadingButton = ({ 
-  loading, 
-  disabled, 
-  onClick, 
-  loadingText, 
-  buttonText 
-}: { 
+const LoadingButton = ({
+  loading,
+  disabled,
+  onClick,
+  loadingText,
+  buttonText,
+}: {
   loading: boolean
   disabled: boolean
   onClick: () => void
@@ -75,7 +66,8 @@ const LoadingButton = ({
     className={[
       "rounded-3xl h-8",
       loading ? "bg-transparent w-32" : "w-24",
-      !loading && (disabled ? "bg-[#0F60FF]/50 cursor-not-allowed" : "bg-[#0F60FF]"),
+      !loading &&
+        (disabled ? "bg-[#0F60FF]/50 cursor-not-allowed" : "bg-[#0F60FF]"),
     ].join(" ")}
     onClick={onClick}
     disabled={disabled || loading}
@@ -162,11 +154,9 @@ export default function Item({
     return 0
   }, [lpMarketPositionData])
 
-  const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
-  const { mutateAsync: querySyOutFromPtIn } =
-    useQuerySyOutFromPtInWithVoucher(coinConfig)
-
   const [loading, setLoading] = useState(false)
+
+  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
 
   useEffect(() => {
     if (isConnected) {
@@ -359,78 +349,18 @@ export default function Item({
   async function redeemLP() {
     if (
       address &&
-      coinConfig?.coinType &&
       lpCoinBalance &&
+      coinConfig?.coinType &&
+      pyPositionData?.length &&
       lpMarketPositionData?.length
     ) {
       try {
         setLoading(true)
-        // First check if we can swap PT
-        const [{ ptAmount }] = await burnLpDryRun(lpCoinBalance)
-
-        let canSwapPt = false
-        if (ptAmount && new Decimal(ptAmount).gt(0)) {
-          try {
-            await querySyOutFromPtIn(ptAmount)
-            canSwapPt = true
-          } catch (error) {
-            console.log("PT swap simulation failed:", error)
-            canSwapPt = false
-          }
-        }
-
-        const tx = new Transaction()
-
-        let pyPosition
-        let created = false
-        if (!pyPositionData?.length) {
-          created = true
-          pyPosition = initPyPosition(tx, coinConfig)
-        } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
-        }
-
-        const mergedPositionId = mergeLpPositions(
-          tx,
+        const { digest } = await redeemLp({
+          lpAmount: lpCoinBalance,
           coinConfig,
           lpMarketPositionData,
-          lpCoinBalance,
-          coinConfig.decimal,
-        )
-
-        const syCoin = burnLp(
-          tx,
-          coinConfig,
-          lpCoinBalance,
-          pyPosition,
-          mergedPositionId,
-          coinConfig.decimal,
-        )
-
-        const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-        tx.transferObjects([yieldToken], address)
-
-        // Add PT swap if possible
-        if (canSwapPt) {
-          const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-          const swappedSyCoin = swapExactPtForSy(
-            tx,
-            coinConfig,
-            new Decimal(ptAmount).div(10 ** coinConfig.decimal).toString(),
-            pyPosition,
-            priceVoucher,
-          )
-
-          const swappedYieldToken = redeemSyCoin(tx, coinConfig, swappedSyCoin)
-          tx.transferObjects([swappedYieldToken], address)
-        }
-
-        if (created) {
-          tx.transferObjects([pyPosition], address)
-        }
-
-        const { digest } = await signAndExecuteTransaction({
-          transaction: tx,
+          pyPositionData,
         })
         setTxId(digest)
         setOpen(true)

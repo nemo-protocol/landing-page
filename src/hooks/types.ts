@@ -35,3 +35,13 @@ export interface LPMarketPosition {
   url: string
   yield_token: string
 }
+
+export interface PyPosition {
+  name: string
+  expiry: string
+  id: { id: string }
+  pt_balance: string
+  yt_balance: string
+  description: string
+  py_state_id: string
+}

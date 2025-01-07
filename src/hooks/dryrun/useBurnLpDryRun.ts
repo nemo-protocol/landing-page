@@ -26,11 +26,13 @@ export default function useBurnLpDryRun(
   return useMutation({
     mutationFn: async (
       lpValue: string,
+      config?: CoinConfig
     ): Promise<[BurnLpResult] | [BurnLpResult, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
-      if (!coinConfig) {
+      const effectiveConfig = config || coinConfig
+      if (!effectiveConfig) {
         throw new Error("Please select a pool")
       }
 
@@ -51,7 +53,7 @@ export default function useBurnLpDryRun(
       let created = false
       if (!pyPositions?.length) {
         created = true
-        pyPosition = initPyPosition(tx, coinConfig)
+        pyPosition = initPyPosition(tx, effectiveConfig)
       } else {
         pyPosition = tx.object(pyPositions[0].id.id)
       }
@@ -59,21 +61,21 @@ export default function useBurnLpDryRun(
       // Merge LP positions
       const mergedPosition = mergeLpPositions(
         tx,
-        coinConfig,
+        effectiveConfig,
         marketPositions,
         lpValue,
-        coinConfig.decimal,
+        effectiveConfig.decimal,
       )
 
       const lpAmount = new Decimal(lpValue)
-        .mul(10 ** coinConfig.decimal)
+        .mul(10 ** effectiveConfig.decimal)
         .toFixed()
 
       console.log("mergedPosition", mergedPosition)
 
       const debugInfo: DebugInfo = {
         moveCall: {
-          target: `${coinConfig.nemoContractId}::market::burn_lp`,
+          target: `${effectiveConfig.nemoContractId}::market::burn_lp`,
           arguments: [
             { name: "lp_amount", value: lpAmount },
             {
@@ -84,17 +86,17 @@ export default function useBurnLpDryRun(
             { name: "market_position", value: marketPositions[0].id.id },
             { name: "clock", value: "0x6" },
           ],
-          typeArguments: [coinConfig.syCoinType],
+          typeArguments: [effectiveConfig.syCoinType],
         },
       }
 
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
-          tx.object(coinConfig.version),
+          tx.object(effectiveConfig.version),
           tx.pure.u64(lpAmount),
           pyPosition,
-          tx.object(coinConfig.marketStateId),
+          tx.object(effectiveConfig.marketStateId),
           mergedPosition,
           tx.object("0x6"),
         ],

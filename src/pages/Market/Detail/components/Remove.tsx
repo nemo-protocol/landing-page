@@ -3,17 +3,10 @@ import Decimal from "decimal.js"
 import { network, DEBUG } from "@/config"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { Transaction } from "@mysten/sui/transactions"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import {
-  initPyPosition,
-  mergeLpPositions,
-  redeemSyCoin,
-  burnLp,
-} from "@/lib/txHelper"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { ChevronsDown } from "lucide-react"
 import AmountInput from "@/components/AmountInput"
@@ -23,9 +16,9 @@ import { useLoadingState } from "@/hooks/useLoadingState"
 import { useCoinConfig } from "@/queries"
 import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
 import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
-import { getPriceVoucher, swapExactPtForSy } from "@/lib/txHelper"
 import { debounce } from "@/lib/utils"
 import ActionButton from "@/components/ActionButton"
+import useRedeemLp from "@/hooks/actions/useRedeemLp"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -39,46 +32,38 @@ export default function Remove() {
   const [error, setError] = useState<string>()
   const [warning, setWarning] = useState<string>()
   const [isRemoving, setIsRemoving] = useState(false)
-  const { account: currentAccount, signAndExecuteTransaction } = useWallet()
+  const { account: currentAccount } = useWallet()
   const [isInputLoading, setIsInputLoading] = useState(false)
   const navigate = useNavigate()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
 
-  const { 
-    data: coinConfig, 
+  const {
+    data: coinConfig,
     isLoading: isConfigLoading,
-    refetch: refetchCoinConfig 
-  } = useCoinConfig(
-    coinType,
-    maturity,
-    address,
-  )
+    refetch: refetchCoinConfig,
+  } = useCoinConfig(coinType, maturity, address)
 
   const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
 
-  const { 
-    data: lppMarketPositionData,
-    refetch: refetchLpPosition 
-  } = useLpMarketPositionData(
-    address,
-    coinConfig?.marketStateId,
-    coinConfig?.maturity,
-    coinConfig?.marketPositionTypeList,
-  )
+  const { data: lppMarketPositionData, refetch: refetchLpPosition } =
+    useLpMarketPositionData(
+      address,
+      coinConfig?.marketStateId,
+      coinConfig?.maturity,
+      coinConfig?.marketPositionTypeList,
+    )
 
-  const { 
-    data: pyPositionData, 
-    refetch: refetchPyPosition 
-  } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig?.pyStateId,
+      coinConfig?.maturity,
+      coinConfig?.pyPositionTypeList,
+    )
 
   const { isLoading } = useLoadingState(lpValue, isConfigLoading)
 
@@ -147,9 +132,11 @@ export default function Remove() {
     await Promise.all([
       refetchCoinConfig(),
       refetchLpPosition(),
-      refetchPyPosition()
+      refetchPyPosition(),
     ])
   }, [refetchCoinConfig, refetchLpPosition, refetchPyPosition])
+
+  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
 
   async function remove() {
     if (
@@ -162,79 +149,19 @@ export default function Remove() {
     ) {
       try {
         setIsRemoving(true)
-        const [{ ptAmount }] = await burnLpDryRun(lpValue)
-
-        let canSwapPt = false
-        if (ptAmount && new Decimal(ptAmount).gt(0)) {
-          try {
-            await querySyOutFromPtIn(ptAmount)
-            canSwapPt = true
-          } catch (error) {
-            console.log("PT swap simulation failed:", error)
-            canSwapPt = false
-          }
-        }
-
-        const tx = new Transaction()
-
-        let pyPosition
-        let created = false
-        if (!pyPositionData?.length) {
-          created = true
-          pyPosition = initPyPosition(tx, coinConfig)
-        } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
-        }
-
-        const mergedPositionId = mergeLpPositions(
-          tx,
+        const { digest } = await redeemLp({
+          lpAmount: lpValue,
           coinConfig,
-          lppMarketPositionData,
-          lpValue,
-          coinConfig.decimal,
-        )
-
-        const syCoin = burnLp(
-          tx,
-          coinConfig,
-          lpValue,
-          pyPosition,
-          mergedPositionId,
-          decimal,
-        )
-
-        const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-        tx.transferObjects([yieldToken], address)
-
-        if (canSwapPt) {
-          const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-          const swappedSyCoin = swapExactPtForSy(
-            tx,
-            coinConfig,
-            new Decimal(ptAmount).div(10 ** coinConfig.decimal).toString(),
-            pyPosition,
-            priceVoucher,
-          )
-
-          const yieldToken = redeemSyCoin(tx, coinConfig, swappedSyCoin)
-          tx.transferObjects([yieldToken], address)
-        }
-
-        if (created) {
-          tx.transferObjects([pyPosition], address)
-        }
-
-        const res = await signAndExecuteTransaction({
-          transaction: tx,
+          lpMarketPositionData: lppMarketPositionData,
+          pyPositionData: pyPositionData || [],
         })
 
-        setTxId(res.digest)
+        setTxId(digest)
         setOpen(true)
         setLpValue("")
         setStatus("Success")
-        
+
         await refreshData()
-        
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)

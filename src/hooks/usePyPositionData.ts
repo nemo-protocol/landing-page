@@ -1,15 +1,6 @@
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 import { UseQueryResult } from "@tanstack/react-query"
-
-export interface PyPosition {
-  name: string
-  expiry: string
-  id: { id: string }
-  pt_balance: string
-  yt_balance: string
-  description: string
-  py_state_id: string
-}
+import { PyPosition } from "./types"
 
 const usePyPositionData = (
   address?: string,
