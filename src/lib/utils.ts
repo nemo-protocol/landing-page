@@ -165,9 +165,11 @@ export function handleInfinityValues<T>(data: T): T {
 
   Object.entries(result).forEach(([key, value]) => {
     if (typeof value === "string" && (value === "+Inf" || value === "-Inf")) {
-      (result as Record<string, unknown>)[key] = ""
+      const typedResult = result as Record<string, unknown>
+      typedResult[key] = ""
     } else if (typeof value === "object" && value !== null) {
-      (result as Record<string, unknown>)[key] = handleInfinityValues(value)
+      const typedResult = result as Record<string, unknown>
+      typedResult[key] = handleInfinityValues(value)
     }
   })
 

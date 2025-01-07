@@ -26,7 +26,7 @@ import {
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import AmountInput from "@/components/AmountInput"
 import ActionButton from "@/components/ActionButton"
-import { formatDecimalValue } from "@/lib/utils"
+import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQuerySyOutFromYtInWithVoucher from "@/hooks/useQuerySyOutFromYtInWithVoucher"
 import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
@@ -35,6 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ContractError } from "@/hooks/types"
 import dayjs from "dayjs"
 import SlippageSetting from "@/components/SlippageSetting"
+import { useLoadingState } from "@/hooks/useLoadingState"
 
 export default function Sell() {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -230,6 +231,11 @@ export default function Sell() {
 
   const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
 
+  const { isLoading } = useLoadingState(
+    redeemValue,
+    isConfigLoading
+  )
+
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
@@ -254,10 +260,11 @@ export default function Sell() {
           decimal={decimal}
           amount={redeemValue}
           coinName={coinName}
-          isLoading={isConfigLoading}
+          isLoading={isLoading}
           coinLogo={coinConfig?.coinLogo}
           coinBalance={tokenType === "pt" ? ptBalance : ytBalance}
           isConnected={isConnected}
+          isConfigLoading={isConfigLoading}
           onChange={handleInputChange}
           coinNameComponent={
             <Select
@@ -292,9 +299,9 @@ export default function Sell() {
               <span>
                 {!redeemValue ? (
                   "--"
-                ) : isConfigLoading ? (
+                ) : isLoading ? (
                   <Skeleton className="h-7 w-48 bg-[#2D2D48]" />
-                ) : !decimal ? (
+                ) : !decimal || !isValidAmount(targetValue) ? (
                   "--"
                 ) : (
                   <div className="flex items-center gap-x-1.5">
