@@ -173,3 +173,14 @@ export function handleInfinityValues<T>(data: T): T {
 
   return result as T
 }
+
+/**
+ * Checks if a string amount is valid (not empty, not "0", and is a valid number)
+ * @param amount The amount string to check
+ * @returns boolean indicating if the amount is valid
+ */
+export const isValidAmount = (amount?: string | null): boolean => {
+  if (!amount || amount === "" || amount === "0") return false
+  const num = Number(amount)
+  return !isNaN(num) && num > 0
+}

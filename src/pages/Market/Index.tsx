@@ -100,8 +100,24 @@ export default function Home() {
                             {dayjs(parseInt(item.maturity)).format("DD MMM YYYY")}
                           </span>
                           <span className="text-[#576682] ml-2">
-                            {dayjs(parseInt(item.maturity)).diff(dayjs(), "day")}
-                            &nbsp; DAYS
+                            {(() => {
+                              const maturity = dayjs(parseInt(item.maturity))
+                              const now = dayjs()
+                              const diffDays = maturity.diff(now, "day")
+                              if (diffDays > 0) {
+                                return `${diffDays} DAYS`
+                              }
+                              const diffHours = maturity.diff(now, "hour")
+                              if (diffHours > 0) {
+                                return `${diffHours} HOURS`
+                              }
+                              const diffMinutes = maturity.diff(now, "minute")
+                              if (diffMinutes > 0) {
+                                return `${diffMinutes} MINS`
+                              }
+                              const diffSeconds = maturity.diff(now, "second")
+                              return `${diffSeconds} SECS`
+                            })()}
                           </span>
                         </div>
                       )}

@@ -21,10 +21,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { getPriceVoucher, redeemSyCoin, redeemPy } from "@/lib/txHelper"
-import { formatDecimalValue } from "@/lib/utils"
+import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
 
-// 创建一个更简单的 loading spinner SVG
 const LoadingSpinner = () => (
   <svg viewBox="0 0 50 50" className="animate-spin h-4 w-4 text-white">
     <circle
@@ -131,7 +130,7 @@ export default function Item({
         .div(1e9)
         .toString()
     }
-    return 0
+    return "0"
   }, [pyPositionData])
 
   const ytBalance = useMemo(() => {
@@ -283,8 +282,8 @@ export default function Item({
     }
   }
 
-  async function redeemPT() {
-    if (ptBalance && coinConfig?.coinType && address) {
+  async function redeemPY() {
+    if (coinConfig?.coinType && address && isValidAmount(ptBalance)) {
       try {
         setLoading(true)
         const tx = new Transaction()
@@ -453,7 +452,7 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">{ptBalance}</TableCell>
           <TableCell align="center" className="text-white">
-            {dayjs(parseInt(coinConfig?.maturity)).diff(dayjs(), "day") > 0 ? (
+            {parseInt(coinConfig?.maturity) > dayjs().unix() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
                   to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/pt`}
@@ -474,7 +473,7 @@ export default function Item({
               <LoadingButton
                 loading={loading}
                 disabled={!ptBalance || ptBalance === "0"}
-                onClick={redeemPT}
+                onClick={redeemPY}
                 loadingText="Redeeming"
                 buttonText="Redeem"
               />
@@ -525,11 +524,11 @@ export default function Item({
                 </span>
               </div>
               <LoadingButton
-                loading={loading}
-                disabled={!ytBalance || ytBalance === "0"}
                 onClick={claim}
-                loadingText="Claiming"
+                loading={loading}
                 buttonText="Claim"
+                loadingText="Claiming"
+                disabled={!isValidAmount(ytBalance)}
               />
             </div>
           </TableCell>

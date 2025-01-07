@@ -1,18 +1,18 @@
-import { IS_DEV } from "@/config"
 import { cn } from "@/lib/utils"
-import { truncateStr } from "@/lib/utils"
-import { ChevronDown, LayoutGrid } from "lucide-react"
-import { useToast } from "@/components/Toast"
 import { useState } from "react"
-import { Link, useLocation } from "react-router-dom"
-
-import { ConnectModal, useWallet } from "@nemoprotocol/wallet-kit"
+import copy from "clipboard-copy"
+import { IS_DEV } from "@/config"
 import { motion } from "framer-motion"
+import { truncateStr } from "@/lib/utils"
+import { useToast } from "@/components/Toast"
+import { Link, useLocation } from "react-router-dom"
+import { ChevronDown, LayoutGrid } from "lucide-react"
+import { ConnectModal, useWallet } from "@nemoprotocol/wallet-kit"
 import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuContent,
 } from "@/components/ui/dropdown-menu"
 
 export default function Header({ className }: { className?: string }) {
@@ -25,21 +25,10 @@ export default function Header({ className }: { className?: string }) {
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text)
+      await copy(text)
       toast.success("Address copied to clipboard")
     } catch (err) {
-      // Fallback for browsers that don't support clipboard API
-      const textArea = document.createElement("textarea")
-      textArea.value = text
-      document.body.appendChild(textArea)
-      textArea.select()
-      try {
-        document.execCommand("copy")
-        toast.success("Address copied to clipboard")
-      } catch (err) {
-        toast.error("Failed to copy address")
-      }
-      document.body.removeChild(textArea)
+      toast.error("Failed to copy address")
     }
   }
 
@@ -161,7 +150,9 @@ export default function Header({ className }: { className?: string }) {
           {currentAccount?.address ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-x-1 border-none outline-none">
-                <span className="text-white">{truncateStr(currentAccount?.address || "", 4)}</span>
+                <span className="text-white">
+                  {truncateStr(currentAccount?.address || "", 4)}
+                </span>
                 <ChevronDown className="size-3 mt-1" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-[#0E0F16] border-none min-w-[140px]">
@@ -175,7 +166,9 @@ export default function Header({ className }: { className?: string }) {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button
-                    onClick={() => copyToClipboard(currentAccount?.address || "")}
+                    onClick={() =>
+                      copyToClipboard(currentAccount?.address || "")
+                    }
                     className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-full h-8"
                   >
                     Copy Address
