@@ -12,6 +12,7 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table"
+import Loading from "@/components/Loading"
 
 interface ListProps {
   list?: PortfolioItem[]
@@ -91,9 +92,7 @@ export default function List({ list, isLoading }: ListProps) {
             <TableBody>
               <TableRow>
                 <td colSpan={selectType === "yt" ? 6 : 5} className="py-[60px]">
-                  <div className="flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                  </div>
+                  <Loading />
                 </td>
               </TableRow>
             </TableBody>

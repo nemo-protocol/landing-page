@@ -68,10 +68,22 @@ export default function SingleCoin() {
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig, isLoading: isConfigLoading } = useCoinConfig(
+  const { data: coinConfig, isLoading: isConfigLoading, refetch: refetchCoinConfig } = useCoinConfig(
     coinType,
     maturity,
     address,
+  )
+
+  const { data: pyPositionData, refetch: refetchPyPosition } = usePyPositionData(
+    address,
+    coinConfig?.pyStateId,
+    coinConfig?.maturity,
+    coinConfig?.pyPositionTypeList,
+  )
+
+  const { data: coinData, isLoading: isBalanceLoading, refetch: refetchCoinData } = useCoinData(
+    address,
+    tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
 
   const { mutateAsync: fetchLpPositions } = useFetchLpPosition(coinConfig)
@@ -101,23 +113,6 @@ export default function SingleCoin() {
 
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
-
-  const { data: pyPositionData } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
-
-  const { isLoading } = useLoadingState(
-    addValue,
-    isConfigLoading || isLpAmountOutLoading,
-  )
-
-  const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
-    address,
-    tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
-  )
 
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
@@ -184,6 +179,11 @@ export default function SingleCoin() {
 
   const { isLoading: isRatioLoading } = useRatioLoadingState(
     isConfigLoading || isRatioFetching,
+  )
+
+  const { isLoading } = useLoadingState(
+    addValue,
+    isConfigLoading || isLpAmountOutLoading,
   )
 
   async function handleSeedLiquidity(
@@ -366,6 +366,55 @@ export default function SingleCoin() {
     tx.transferObjects([mergedPosition], address)
   }
 
+  const debouncedGetLpPosition = useCallback(
+    (value: string, decimal: number, config: CoinConfig | undefined) => {
+      const getLpPosition = debounce(async () => {
+        if (value && value !== "0" && decimal && config && conversionRate) {
+          try {
+            const amount = new Decimal(value).mul(10 ** decimal).toString()
+            const convertedAmount =
+              tokenType === 0
+                ? new Decimal(amount).div(conversionRate).toFixed(0)
+                : amount
+            const lpOut = await calculateLpOut(convertedAmount)
+            setLpPosition(lpOut.lpAmount)
+          } catch (error) {
+            console.error("Failed to get LP position:", error)
+          }
+        } else {
+          setLpPosition(undefined)
+        }
+      }, 500)
+      getLpPosition()
+      return getLpPosition.cancel
+    },
+    [calculateLpOut, tokenType, conversionRate],
+  )
+
+  useEffect(() => {
+    const cancelFn = debouncedGetLpPosition(addValue, decimal ?? 0, coinConfig)
+    return () => {
+      cancelFn()
+    }
+  }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
+
+  const handleRefresh = useCallback(async () => {
+    refetchRatio()
+    if (addValue && decimal) {
+      const amount = new Decimal(addValue).mul(10 ** decimal).toString()
+      const lpOut = await calculateLpOut(amount)
+      setLpPosition(lpOut.lpAmount)
+    }
+  }, [refetchRatio, addValue, decimal, calculateLpOut])
+
+  const refreshData = useCallback(async () => {
+    await Promise.all([
+      refetchCoinConfig(),
+      refetchPyPosition(),
+      refetchCoinData()
+    ])
+  }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
+
   async function add() {
     if (
       decimal &&
@@ -452,6 +501,9 @@ export default function SingleCoin() {
         setTxId(res.digest)
         setAddValue("")
         setStatus("Success")
+        
+        await refreshData()
+        
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -465,47 +517,6 @@ export default function SingleCoin() {
       }
     }
   }
-
-  const debouncedGetLpPosition = useCallback(
-    (value: string, decimal: number, config: CoinConfig | undefined) => {
-      const getLpPosition = debounce(async () => {
-        if (value && value !== "0" && decimal && config && conversionRate) {
-          try {
-            const amount = new Decimal(value).mul(10 ** decimal).toString()
-            const convertedAmount =
-              tokenType === 0
-                ? new Decimal(amount).div(conversionRate).toFixed(0)
-                : amount
-            const lpOut = await calculateLpOut(convertedAmount)
-            setLpPosition(lpOut.lpAmount)
-          } catch (error) {
-            console.error("Failed to get LP position:", error)
-          }
-        } else {
-          setLpPosition(undefined)
-        }
-      }, 500)
-      getLpPosition()
-      return getLpPosition.cancel
-    },
-    [calculateLpOut, tokenType, conversionRate],
-  )
-
-  useEffect(() => {
-    const cancelFn = debouncedGetLpPosition(addValue, decimal ?? 0, coinConfig)
-    return () => {
-      cancelFn()
-    }
-  }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
-
-  const handleRefresh = useCallback(async () => {
-    refetchRatio()
-    if (addValue && decimal) {
-      const amount = new Decimal(addValue).mul(10 ** decimal).toString()
-      const lpOut = await calculateLpOut(amount)
-      setLpPosition(lpOut.lpAmount)
-    }
-  }, [refetchRatio, addValue, decimal, calculateLpOut])
 
   return (
     <div className="w-full md:w-[500px] lg:w-full bg-[#0E0F16] rounded-[40px] p-4 lg:p-8 border border-white/[0.07]">

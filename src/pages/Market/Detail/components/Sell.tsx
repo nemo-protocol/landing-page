@@ -58,11 +58,18 @@ export default function Sell() {
     }
   }, [_tokenType])
 
-  const { data: coinConfig, isLoading: isConfigLoading } = useCoinConfig(
+  const { 
+    data: coinConfig, 
+    isLoading: isConfigLoading,
+    refetch: refetchCoinConfig 
+  } = useCoinConfig(
     coinType,
     maturity,
   )
-  const { data: pyPositionData } = usePyPositionData(
+  const { 
+    data: pyPositionData,
+    refetch: refetchPyPosition 
+  } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
@@ -140,6 +147,13 @@ export default function Sell() {
     setRedeemValue(value)
   }
 
+  const refreshData = useCallback(async () => {
+    await Promise.all([
+      refetchCoinConfig(),
+      refetchPyPosition()
+    ])
+  }, [refetchCoinConfig, refetchPyPosition])
+
   async function redeem() {
     if (!insufficientBalance && coinConfig && coinType && address) {
       try {
@@ -180,6 +194,9 @@ export default function Sell() {
         setRedeemValue("")
         setTargetValue("")
         setStatus("Success")
+        
+        await refreshData()
+        
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)

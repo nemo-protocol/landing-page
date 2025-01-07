@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useCallback } from "react"
 import useCoinData from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
@@ -55,15 +55,25 @@ export default function Mint({
   //   [isConnected],
   // )
 
-  const { data: coinConfig, isLoading } = useCoinConfig(coinType, maturity)
-  const { data: pyPositionData } = usePyPositionData(
+  const { 
+    data: coinConfig, 
+    isLoading,
+    refetch: refetchCoinConfig 
+  } = useCoinConfig(coinType, maturity)
+  const { 
+    data: pyPositionData,
+    refetch: refetchPyPosition 
+  } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
     coinConfig?.pyPositionTypeList,
   )
 
-  const { data: coinData } = useCoinData(address, coinType)
+  const { 
+    data: coinData,
+    refetch: refetchCoinData 
+  } = useCoinData(address, coinType)
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
       return coinData
@@ -82,6 +92,14 @@ export default function Mint({
     () => new Decimal(coinBalance).lt(mintValue || 0),
     [coinBalance, mintValue],
   )
+
+  const refreshData = useCallback(async () => {
+    await Promise.all([
+      refetchCoinConfig(),
+      refetchPyPosition(),
+      refetchCoinData()
+    ])
+  }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
   async function mint() {
     if (
@@ -126,6 +144,9 @@ export default function Mint({
         setOpen(true)
         setMintValue("")
         setStatus("Success")
+        
+        await refreshData()
+        
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)

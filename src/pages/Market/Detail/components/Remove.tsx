@@ -46,7 +46,11 @@ export default function Remove() {
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig, isLoading: isConfigLoading } = useCoinConfig(
+  const { 
+    data: coinConfig, 
+    isLoading: isConfigLoading,
+    refetch: refetchCoinConfig 
+  } = useCoinConfig(
     coinType,
     maturity,
     address,
@@ -56,14 +60,20 @@ export default function Remove() {
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
 
-  const { data: lppMarketPositionData } = useLpMarketPositionData(
+  const { 
+    data: lppMarketPositionData,
+    refetch: refetchLpPosition 
+  } = useLpMarketPositionData(
     address,
     coinConfig?.marketStateId,
     coinConfig?.maturity,
     coinConfig?.marketPositionTypeList,
   )
 
-  const { data: pyPositionData, refetch } = usePyPositionData(
+  const { 
+    data: pyPositionData, 
+    refetch: refetchPyPosition 
+  } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
@@ -132,6 +142,14 @@ export default function Remove() {
       cancelFn()
     }
   }, [lpValue, decimal, debouncedGetSyOut])
+
+  const refreshData = useCallback(async () => {
+    await Promise.all([
+      refetchCoinConfig(),
+      refetchLpPosition(),
+      refetchPyPosition()
+    ])
+  }, [refetchCoinConfig, refetchLpPosition, refetchPyPosition])
 
   async function remove() {
     if (
@@ -214,7 +232,9 @@ export default function Remove() {
         setOpen(true)
         setLpValue("")
         setStatus("Success")
-        refetch()
+        
+        await refreshData()
+        
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)

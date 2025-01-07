@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { DEBUG, debugLog, network } from "@/config"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
 import { Transaction } from "@mysten/sui/transactions"
@@ -55,7 +55,11 @@ export default function Trade() {
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig, isLoading: isConfigLoading } = useCoinConfig(
+  const { 
+    data: coinConfig, 
+    isLoading: isConfigLoading,
+    refetch: refetchCoinConfig 
+  } = useCoinConfig(
     coinType,
     maturity,
     address,
@@ -96,7 +100,10 @@ export default function Trade() {
   //   [swapRatio, tokenType],
   // )
 
-  const { data: pyPositionData } = usePyPositionData(
+  const { 
+    data: pyPositionData,
+    refetch: refetchPyPosition 
+  } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
@@ -112,7 +119,11 @@ export default function Trade() {
     isRatioFetching || isConfigLoading,
   )
 
-  const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
+  const { 
+    data: coinData, 
+    isLoading: isBalanceLoading,
+    refetch: refetchCoinData 
+  } = useCoinData(
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
@@ -134,6 +145,14 @@ export default function Trade() {
 
   const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
   const { mutateAsync: dryRunSwap } = useSwapExactSyForYtDryRun(coinConfig)
+
+  const refreshData = useCallback(async () => {
+    await Promise.all([
+      refetchCoinConfig(),
+      refetchPyPosition(),
+      refetchCoinData()
+    ])
+  }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
   useEffect(() => {
     async function fetchYtOut() {
@@ -263,6 +282,9 @@ export default function Trade() {
         setStatus("Success")
         setOpen(true)
         setSwapValue("")
+        
+        await refreshData()
+        
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)

@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useCallback } from "react"
 import { Transaction } from "@mysten/sui/transactions"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
@@ -35,8 +35,14 @@ export default function Redeem({
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig } = useCoinConfig(coinType, maturity)
-  const { data: pyPositionData, refetch: refetchPyPosition } = usePyPositionData(
+  const { 
+    data: coinConfig,
+    refetch: refetchCoinConfig 
+  } = useCoinConfig(coinType, maturity)
+  const { 
+    data: pyPositionData,
+    refetch: refetchPyPosition 
+  } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
@@ -73,6 +79,13 @@ export default function Redeem({
       new Decimal(ytBalance).lt(ytRedeemValue || 0)
     )
   }, [ptBalance, ytBalance, ptRedeemValue, ytRedeemValue])
+
+  const refreshData = useCallback(async () => {
+    await Promise.all([
+      refetchCoinConfig(),
+      refetchPyPosition()
+    ])
+  }, [refetchCoinConfig, refetchPyPosition])
 
   async function redeem() {
     if (
@@ -123,7 +136,9 @@ export default function Redeem({
         setPTRedeemValue("")
         setYTRedeemValue("")
         setStatus("Success")
-        refetchPyPosition()
+        
+        await refreshData()
+        
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)

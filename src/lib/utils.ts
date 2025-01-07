@@ -126,3 +126,24 @@ function get_pt_out(syAmount: number, exchange_rate: number, py_index_stored: nu
   const max_rate = Math.max(exchange_rate / (2 ** 64), py_index_stored/ (2 ** 64));
   return syAmount * max_rate;
 }
+
+/**
+ * Recursively handles +Inf/-Inf values in an object, converting them to empty strings
+ * @param data The data object to process
+ * @returns Processed data with Infinity values converted to empty strings
+ */
+export function handleInfinityValues<T>(data: T): T {
+  if (typeof data !== 'object' || data === null) return data;
+  
+  const result = Array.isArray(data) ? [...data] : { ...data };
+  
+  Object.entries(result).forEach(([key, value]) => {
+    if (typeof value === 'string' && (value === '+Inf' || value === '-Inf')) {
+      (result as Record<string, unknown>)[key] = '';
+    } else if (typeof value === 'object' && value !== null) {
+      (result as Record<string, unknown>)[key] = handleInfinityValues(value);
+    }
+  });
+  
+  return result as T;
+}

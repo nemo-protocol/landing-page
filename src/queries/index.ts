@@ -7,6 +7,7 @@ import {
   PortfolioItem,
   PointItem,
 } from "./types/market"
+import { handleInfinityValues } from "../lib/utils"
 
 function getCoinInfoList(name = "", address = "") {
   return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo")
@@ -45,13 +46,15 @@ function getCoinConfig(coinType: string, maturity: string, address?: string) {
   if (address) {
     headers.set("userAddress", address)
   }
-  return nemoApi<CoinConfig>("/api/v1/market/config/detail").get(
-    {
-      coinType,
-      maturity,
-    },
-    headers,
-  )
+  return nemoApi<CoinConfig>("/api/v1/market/config/detail")
+    .get(
+      {
+        coinType,
+        maturity,
+      },
+      headers,
+    )
+    .then(handleInfinityValues)
 }
 
 function getPortfolioList() {
@@ -78,7 +81,7 @@ export async function getSwapRatio(
   tokenType: string,
   swapType = "buy",
 ) {
-  return await nemoApi<{
+  const response = await nemoApi<{
     fixReturn: string
     exchangeRate: string
     conversionRate: string
@@ -87,6 +90,7 @@ export async function getSwapRatio(
     tokenType,
     swapType,
   })
+  return handleInfinityValues(response)
 }
 
 interface MintPYResult {
@@ -123,13 +127,14 @@ export async function getLPRatio(
 ) {
   const headers = new Headers()
   headers.set("userAddress", address)
-  return await nemoApi<LPResult>("/api/v1/market/lp/mintConfig").get(
+  const response = await nemoApi<LPResult>("/api/v1/market/lp/mintConfig").get(
     {
       marketStateId,
       mintType,
     },
     headers,
   )
+  return handleInfinityValues(response)
 }
 
 export function useQueryMintLpAmount(

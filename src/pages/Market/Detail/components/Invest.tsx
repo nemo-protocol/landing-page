@@ -1,7 +1,7 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { DEBUG, network } from "@/config"
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
 import AmountInput from "@/components/AmountInput"
@@ -65,7 +65,11 @@ export default function Invest() {
   const { address } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig, isLoading: isConfigLoading } = useCoinConfig(
+  const { 
+    data: coinConfig, 
+    isLoading: isConfigLoading,
+    refetch: refetchCoinConfig 
+  } = useCoinConfig(
     coinType,
     maturity,
     address,
@@ -106,7 +110,10 @@ export default function Invest() {
   )
   const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
 
-  const { data: pyPositionData } = usePyPositionData(
+  const { 
+    data: pyPositionData,
+    refetch: refetchPyPosition 
+  } = usePyPositionData(
     address,
     coinConfig?.pyStateId,
     coinConfig?.maturity,
@@ -122,7 +129,11 @@ export default function Invest() {
     isRatioFetching || isConfigLoading,
   )
 
-  const { data: coinData, isLoading: isBalanceLoading } = useCoinData(
+  const { 
+    data: coinData, 
+    isLoading: isBalanceLoading,
+    refetch: refetchCoinData 
+  } = useCoinData(
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
@@ -168,6 +179,14 @@ export default function Invest() {
     }
     fetchPtOut()
   }, [swapValue, decimal, coinConfig, queryPtOut, tokenType, conversionRate])
+
+  const refreshData = useCallback(async () => {
+    await Promise.all([
+      refetchCoinConfig(),
+      refetchPyPosition(),
+      refetchCoinData()
+    ])
+  }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
   async function swap() {
     if (
@@ -266,6 +285,9 @@ export default function Invest() {
         setStatus("Success")
         setOpen(true)
         setSwapValue("")
+        
+        await refreshData()
+        
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)

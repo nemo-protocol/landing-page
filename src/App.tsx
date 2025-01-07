@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react"
 import { HashRouter, Route, Routes } from "react-router-dom"
 import "./App.css"
+import Loading from "@/components/Loading"
 
 const Home = lazy(() => import("./pages/Home/Index"))
 const Test = lazy(() => import("./pages/Test/Index"))
@@ -16,7 +17,7 @@ const WalletKit = lazy(() => import("./pages/WalletKit"))
 function App() {
   return (
     <HashRouter>
-      <Suspense fallback={<div className="h-[100%]">Loading...</div>}>
+      <Suspense fallback={<Loading className="h-screen" />}>
         <div className="relative">
           <div className="min-h-screen w-full bg-transparent">
             <Routes>
