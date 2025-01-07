@@ -15,6 +15,7 @@ interface PoolSelectProps {
   maturity?: string
   className?: string
   onChange?: (coinType: string, maturity: string) => void
+  filterExpired?: boolean
 }
 
 export default function PoolSelect({
@@ -22,6 +23,7 @@ export default function PoolSelect({
   maturity,
   className,
   onChange,
+  filterExpired = true,
 }: PoolSelectProps) {
   const { data: list } = useCoinInfoList()
 
@@ -79,7 +81,7 @@ export default function PoolSelect({
       <SelectContent className="border-none bg-[#131520]">
         <SelectGroup className="flex flex-col gap-y-2">
           {list
-            ?.filter((coin) => parseInt(coin.maturity) > Date.now())
+            ?.filter((coin) => !filterExpired || parseInt(coin.maturity) > Date.now())
             .map((item, index) => (
               <SelectItem
                 className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-4 rounded-md"
