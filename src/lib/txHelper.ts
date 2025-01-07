@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { debugLog } from "@/config"
 import { CoinData } from "@/hooks/useCoinData"
 import { CoinConfig } from "@/queries/types/market"
-import { LppMarketPosition } from "@/hooks/types"
+import { LPMarketPosition } from "@/hooks/types"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 
 interface MoveCallArgument {
@@ -288,7 +288,7 @@ export function splitCoinHelper(
 export const mergeLpPositions = (
   tx: Transaction,
   coinConfig: CoinConfig,
-  lpPositions: LppMarketPosition[],
+  lpPositions: LPMarketPosition[],
   lpValue: string,
   decimal: number,
 ) => {
@@ -303,7 +303,7 @@ export const mergeLpPositions = (
   )
 
   let accumulatedAmount = new Decimal(0)
-  const positionsToMerge: LppMarketPosition[] = []
+  const positionsToMerge: LPMarketPosition[] = []
   const targetAmount = new Decimal(lpValue).mul(10 ** decimal)
   for (const position of sortedPositions) {
     accumulatedAmount = accumulatedAmount.add(position.lp_amount)
@@ -569,7 +569,7 @@ export const getPrice = (
 export const mergeAllLpPositions = (
   tx: Transaction,
   coinConfig: CoinConfig,
-  lpPositions: LppMarketPosition[],
+  lpPositions: LPMarketPosition[],
   marketPosition: TransactionArgument,
 ) => {
   debugLog("mergeAllLpPositions params:", {

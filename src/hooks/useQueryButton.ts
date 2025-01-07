@@ -23,6 +23,7 @@ export interface GetObjectParams {
     showBcs?: boolean
     showStorageRebate?: boolean
   }
+  typeArguments?: string[]
 }
 
 export type QueryInputMap = {

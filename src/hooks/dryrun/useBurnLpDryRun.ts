@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo, LppMarketPosition } from "../types"
+import type { DebugInfo, LPMarketPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchLpPosition from "../useFetchLpPosition"
 import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
@@ -35,7 +35,7 @@ export default function useBurnLpDryRun(
       }
 
       const [marketPositions] = (await fetchLpPositionAsync()) as [
-        LppMarketPosition[],
+        LPMarketPosition[],
       ]
       const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
 

@@ -23,7 +23,7 @@ export class ContractError extends Error {
   }
 }
 
-export interface LppMarketPosition {
+export interface LPMarketPosition {
   id: { id: string }
   description: string
   expiry: string

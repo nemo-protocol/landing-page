@@ -4,7 +4,7 @@ import { Decimal } from "decimal.js"
 import { type SuiObjectResponse } from "@mysten/sui/client"
 import { type CoinConfig } from "@/queries/types/market"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import type { DebugInfo, LppMarketPosition } from "./types"
+import type { DebugInfo, LPMarketPosition } from "./types"
 
 const useFetchLpPosition = (
   coinConfig?: CoinConfig,
@@ -13,7 +13,7 @@ const useFetchLpPosition = (
   const suiClient = useSuiClient()
   const { address } = useWallet()
 
-  return useMutation<[LppMarketPosition[], DebugInfo?], Error>({
+  return useMutation<[LPMarketPosition[], DebugInfo?], Error>({
     mutationFn: async () => {
       if (!address || !coinConfig) {
         throw new Error("Missing required parameters")
@@ -61,21 +61,21 @@ const useFetchLpPosition = (
               }
             )?.fields,
         )
-        .filter((item: unknown): item is LppMarketPosition => {
+        .filter((item: unknown): item is LPMarketPosition => {
           return !!item && 
             typeof item === 'object' && 
             'expiry' in item && 
             'market_state_id' in item
         })
         .filter(
-          (item: LppMarketPosition) =>
+          (item: LPMarketPosition) =>
             item.expiry === coinConfig.maturity &&
             item.market_state_id === coinConfig.marketStateId,
         )
-        .sort((a: LppMarketPosition, b: LppMarketPosition) =>
+        .sort((a: LPMarketPosition, b: LPMarketPosition) =>
           Decimal.sub(b.lp_amount, a.lp_amount).toNumber(),
         )
-        .map((position: LppMarketPosition) => ({
+        .map((position: LPMarketPosition) => ({
           ...position,
           lp_amount_display: new Decimal(position.lp_amount)
             .div(10 ** (coinConfig.decimal || 0))

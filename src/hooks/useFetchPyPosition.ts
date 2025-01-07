@@ -51,7 +51,7 @@ const useFetchPyPosition = (
       })
 
       debugInfo.rawResult = {
-        results: response.data,
+        results: response,
       }
 
       const positions = response.data

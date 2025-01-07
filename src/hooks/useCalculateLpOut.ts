@@ -1,12 +1,12 @@
 import Decimal from "decimal.js"
+import { splitSyAmount } from "@/lib/utils"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import { splitSyAmount } from "@/lib/utils"
-import useMarketStateData from "@/hooks/useMarketStateData.ts"
 import useFetchObject from "@/hooks/useFetchObject.ts"
 import { useQueryPriceVoucher } from "@/hooks/index.tsx"
+import useMarketStateData from "@/hooks/useMarketStateData.ts"
+import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 
 export function useCalculateLpOut(coinConfig?: CoinConfig) {
   const { address } = useWallet()
@@ -46,18 +46,11 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
         parsedData?.content?.fields?.py_index_stored?.fields?.value,
         priceVoucher.toString(),
       )
-      // console.log("syAmount", syAmount, "ptValue", ptValue, "syValue", syValue)
 
       const lpAmount =
         marketState.lpSupply == "0"
           ? (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000).toString()
           : (await queryLpOut({ ptValue, syValue }))[0]
-      // console.log(
-      //   "lpAmount",
-      //   lpAmount,
-      //   marketState.lpSupply,
-      //   marketState.lpSupply == "0",
-      // )
 
       return {
         lpAmount: new Decimal(lpAmount)
