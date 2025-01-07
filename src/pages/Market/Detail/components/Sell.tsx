@@ -21,6 +21,7 @@ import {
   getPriceVoucher,
   swapExactPtForSy,
   swapExactYtForSy,
+  burnSCoin,
 } from "@/lib/txHelper"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import AmountInput from "@/components/AmountInput"
@@ -58,55 +59,53 @@ export default function Sell() {
     }
   }, [_tokenType])
 
-  const { 
-    data: coinConfig, 
+  const {
+    data: coinConfig,
     isLoading: isConfigLoading,
-    refetch: refetchCoinConfig 
-  } = useCoinConfig(
-    coinType,
-    maturity,
-  )
-  const { 
-    data: pyPositionData,
-    refetch: refetchPyPosition 
-  } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
+    refetch: refetchCoinConfig,
+  } = useCoinConfig(coinType, maturity)
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig?.pyStateId,
+      coinConfig?.maturity,
+      coinConfig?.pyPositionTypeList,
+    )
 
   const { mutateAsync: querySyOutFromYt } =
     useQuerySyOutFromYtInWithVoucher(coinConfig)
   const { mutateAsync: querySyOutFromPt } =
     useQuerySyOutFromPtInWithVoucher(coinConfig)
 
-  const debouncedGetSyOut = useCallback((value: string, decimal: number) => {
-    const getSyOut = debounce(async () => {
-      if (value && value !== "0" && decimal) {
-        try {
-          const amount = new Decimal(value).mul(10 ** decimal).toString()
-          console.log("Input amount:", amount)
-          const syOut = await (
-            tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
-          )(amount)
-          console.log("Raw syOut:", syOut)
-          const syAmount = new Decimal(syOut[0]).div(10 ** decimal).toString()
-          console.log("Formatted syAmount:", syAmount)
-          setTargetValue(syAmount)
-          setError(undefined)
-        } catch (error) {
-          setError((error as ContractError)?.message)
-          console.error("Failed to get SY out:", error)
+  const debouncedGetSyOut = useCallback(
+    (value: string, decimal: number) => {
+      const getSyOut = debounce(async () => {
+        if (value && value !== "0" && decimal) {
+          try {
+            const amount = new Decimal(value).mul(10 ** decimal).toString()
+            console.log("Input amount:", amount)
+            const syOut = await (
+              tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
+            )(amount)
+            console.log("Raw syOut:", syOut)
+            const syAmount = new Decimal(syOut[0]).div(10 ** decimal).toString()
+            console.log("Formatted syAmount:", syAmount)
+            setTargetValue(syAmount)
+            setError(undefined)
+          } catch (error) {
+            setError((error as ContractError)?.message)
+            console.error("Failed to get SY out:", error)
+            setTargetValue("")
+          }
+        } else {
           setTargetValue("")
         }
-      } else {
-        setTargetValue("")
-      }
-    }, 500)
-    getSyOut()
-    return getSyOut.cancel
-  }, [querySyOutFromYt, querySyOutFromPt, tokenType])
+      }, 500)
+      getSyOut()
+      return getSyOut.cancel
+    },
+    [querySyOutFromYt, querySyOutFromPt, tokenType],
+  )
 
   useEffect(() => {
     const cancelFn = debouncedGetSyOut(redeemValue, coinConfig?.decimal ?? 0)
@@ -148,10 +147,7 @@ export default function Sell() {
   }
 
   const refreshData = useCallback(async () => {
-    await Promise.all([
-      refetchCoinConfig(),
-      refetchPyPosition()
-    ])
+    await Promise.all([refetchCoinConfig(), refetchPyPosition()])
   }, [refetchCoinConfig, refetchPyPosition])
 
   async function redeem() {
@@ -180,7 +176,18 @@ export default function Sell() {
           priceVoucher,
         )
         const sCoin = redeemSyCoin(tx, coinConfig, syCoin)
-        tx.transferObjects([sCoin], address)
+
+        // tx.transferObjects([sCoin], address)
+
+        try {
+          // Try to burn sCoin first
+          const underlyingCoin = burnSCoin(tx, coinConfig, sCoin)
+          tx.transferObjects([underlyingCoin], address)
+        } catch (burnError) {
+          console.warn("Failed to burn sCoin:", burnError)
+          // Fallback: directly transfer sCoin if burn fails
+          tx.transferObjects([sCoin], address)
+        }
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -194,9 +201,8 @@ export default function Sell() {
         setRedeemValue("")
         setTargetValue("")
         setStatus("Success")
-        
+
         await refreshData()
-        
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)
@@ -293,7 +299,7 @@ export default function Sell() {
                 ) : (
                   <div className="flex items-center gap-x-1.5">
                     <span>
-                      ≈ {formatDecimalValue(targetValue, decimal || 9)}
+                      ≈ {formatDecimalValue(new Decimal(targetValue), decimal)}
                     </span>
                     <span>{coinConfig?.coinName}</span>
                     {coinConfig?.coinLogo && (

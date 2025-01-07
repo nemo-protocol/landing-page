@@ -22,7 +22,7 @@ import {
   depositSyCoin,
   getPriceVoucher,
   initPyPosition,
-  mintSycoin,
+  mintSCoin,
   splitCoinHelper,
 } from "@/lib/txHelper"
 import ActionButton from "@/components/ActionButton"
@@ -204,7 +204,7 @@ export default function Trade() {
 
         const [splitCoin] =
           tokenType === 0
-            ? mintSycoin(tx, coinConfig, coinData, [
+            ? mintSCoin(tx, coinConfig, coinData, [
                 new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0),
               ])
             : splitCoinHelper(tx, coinData, [syCoinAmount], coinType)

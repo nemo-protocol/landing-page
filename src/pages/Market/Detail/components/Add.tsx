@@ -24,7 +24,7 @@ import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { CoinConfig } from "@/queries/types/market"
 import { useCalculateLpOut } from "@/hooks/useCalculateLpOut"
 import {
-  mintSycoin,
+  mintSCoin,
   initPyPosition,
   getPriceVoucher,
   splitCoinHelper,
@@ -199,7 +199,7 @@ export default function SingleCoin() {
   ): Promise<void> {
     const [splitCoin] =
       tokenType === 0
-        ? mintSycoin(tx, coinConfig, coinData, [addAmount])
+        ? mintSCoin(tx, coinConfig, coinData, [addAmount])
         : splitCoinHelper(tx, coinData, [addAmount], coinType)
 
     const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
@@ -260,7 +260,7 @@ export default function SingleCoin() {
 
     const [splitCoinForSy, splitCoinForPt] =
       tokenType === 0
-        ? mintSycoin(tx, coinConfig, coinData, [amounts.sy, amounts.syForPt])
+        ? mintSCoin(tx, coinConfig, coinData, [amounts.sy, amounts.syForPt])
         : splitCoinHelper(tx, coinData, [amounts.sy, amounts.syForPt], coinType)
 
     const syCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
@@ -322,7 +322,7 @@ export default function SingleCoin() {
   ): Promise<void> {
     const [splitCoin] =
       tokenType === 0
-        ? mintSycoin(tx, coinConfig, coinData, [addAmount])
+        ? mintSCoin(tx, coinConfig, coinData, [addAmount])
         : splitCoinHelper(tx, coinData, [addAmount], coinType)
 
     const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)

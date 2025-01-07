@@ -533,7 +533,7 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">
-            {dayjs(parseInt(coinConfig?.maturity)).diff(dayjs(), "day") > 0 ? (
+            {parseInt(coinConfig?.maturity) > dayjs().unix() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
                   to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/yt`}

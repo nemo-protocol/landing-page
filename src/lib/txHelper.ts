@@ -154,7 +154,7 @@ export const initPyPosition = (tx: Transaction, coinConfig: CoinConfig) => {
   return pyPosition
 }
 
-export const mintSycoin = (
+export const mintSCoin = (
   tx: Transaction,
   coinConfig: CoinConfig,
   coinData: CoinData[],
@@ -215,6 +215,65 @@ export const mintSycoin = (
       }
 
       return results
+    }
+    default:
+      throw new Error(
+        "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+      )
+  }
+}
+
+export const burnSCoin = (
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  sCoin: TransactionArgument,
+) => {
+  switch (coinConfig.underlyingProtocol) {
+    case "Scallop": {
+      // 1. First call burn_s_coin to get marketCoin
+      const burnSCoinMoveCall = {
+        target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::burn_s_coin`,
+        arguments: [coinConfig.sCoinTreasure, sCoin],
+        typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
+      }
+      debugLog(`burn_s_coin move call:`, burnSCoinMoveCall)
+
+      const marketCoin = tx.moveCall({
+        ...burnSCoinMoveCall,
+        arguments: [tx.object(coinConfig.sCoinTreasure), sCoin],
+      })
+
+      // return marketCoin
+
+      // 2. Then call redeem to get underlying coin
+      const SCALLOP_MARKET_OBJECT =
+        "0xa757975255146dc9686aa823b7838b507f315d704f428cbadad2f4ea061939d9"
+      const SCALLOP_VERSION_OBJECT =
+        "0x07871c4b3c847a0f674510d4978d5cf6f960452795e8ff6f189fd2088a3f6ac7"
+
+      const redeemMoveCall = {
+        target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::redeem::redeem`,
+        arguments: [
+          SCALLOP_VERSION_OBJECT,
+          SCALLOP_MARKET_OBJECT,
+          marketCoin,
+          "0x6",
+        ],
+        typeArguments: [coinConfig.underlyingCoinType],
+      }
+      debugLog(`scallop redeem move call:`, redeemMoveCall)
+
+      const [underlyingCoin] = tx.moveCall({
+        ...redeemMoveCall,
+        arguments: [
+          tx.object(SCALLOP_VERSION_OBJECT),
+          tx.object(SCALLOP_MARKET_OBJECT),
+          marketCoin,
+          tx.object("0x6"),
+        ],
+      })
+
+      return underlyingCoin
     }
     default:
       throw new Error(
@@ -544,8 +603,12 @@ export const redeemPy = (
     ytRedeemValue,
     ptRedeemValue,
     decimal: coinConfig.decimal,
-    ytAmount: new Decimal(ytRedeemValue).mul(10 ** coinConfig.decimal).toString(),
-    ptAmount: new Decimal(ptRedeemValue).mul(10 ** coinConfig.decimal).toString(),
+    ytAmount: new Decimal(ytRedeemValue)
+      .mul(10 ** coinConfig.decimal)
+      .toString(),
+    ptAmount: new Decimal(ptRedeemValue)
+      .mul(10 ** coinConfig.decimal)
+      .toString(),
   })
 
   const [sy] = tx.moveCall({

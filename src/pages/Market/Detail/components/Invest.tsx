@@ -18,7 +18,7 @@ import {
   getPriceVoucher,
   initPyPosition,
   splitCoinHelper,
-  mintSycoin,
+  mintSCoin,
   depositSyCoin,
 } from "@/lib/txHelper"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
@@ -208,7 +208,7 @@ export default function Invest() {
 
         const [splitCoin] =
           tokenType === 0
-            ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
+            ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
             : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)

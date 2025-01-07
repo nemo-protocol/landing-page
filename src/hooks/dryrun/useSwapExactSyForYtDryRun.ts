@@ -5,7 +5,7 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
 import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
-import { initPyPosition, getPriceVoucher, mintSycoin, splitCoinHelper, depositSyCoin } from "@/lib/txHelper"
+import { initPyPosition, getPriceVoucher, mintSCoin, splitCoinHelper, depositSyCoin } from "@/lib/txHelper"
 import { CoinData } from "../useCoinData"
 
 type SwapResult = {
@@ -48,7 +48,7 @@ export default function useSwapExactSyForYtDryRun(
 
       const [splitCoin] =
       tokenType === 0
-        ? mintSycoin(tx, coinConfig, coinData, [swapAmount])
+        ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
         : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
       const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
