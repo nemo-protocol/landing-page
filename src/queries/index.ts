@@ -9,12 +9,22 @@ import {
 } from "./types/market"
 import { handleInfinityValues } from "../lib/utils"
 
-function getCoinInfoList(name = "", address = "") {
-  return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo")
-    .get({ name, address })
-    // .then((response) =>
-    //   response.filter((coin) => parseInt(coin.maturity) > Date.now()),
-    // )
+interface CoinInfoListParams {
+  name?: string
+  address?: string
+  isShowExpiry?: number
+}
+
+function getCoinInfoList({
+  name = "",
+  address = "",
+  isShowExpiry = 0,
+}: CoinInfoListParams = {}) {
+  return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo").get({
+    name,
+    address,
+    isShowExpiry,
+  })
 }
 
 function getFixedReturnInfos() {
@@ -199,11 +209,11 @@ export function usePortfolioList() {
   })
 }
 
-export function useCoinInfoList(name = "", address = "") {
+export function useCoinInfoList(params: CoinInfoListParams = {}) {
+  const { name = "", address = "", isShowExpiry = 0 } = params
   return useQuery({
-    // FIXME： queryKey dose not work
-    queryKey: ["coinInfoList", name, address],
-    queryFn: () => getCoinInfoList(name, address),
+    queryKey: ["coinInfoList", name, address, isShowExpiry],
+    queryFn: () => getCoinInfoList({ name, address, isShowExpiry }),
   })
 }
 

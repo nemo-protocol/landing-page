@@ -24,7 +24,7 @@ export default function Trade() {
       <PoolSelect
         coinType={coinType}
         maturity={maturity}
-        filterExpired={false}
+        filterExpired={action !== "redeem"}
         onChange={(coinType, maturity) => {
           setCoinType(coinType)
           setMaturity(maturity)

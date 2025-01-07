@@ -6,6 +6,7 @@ import { useCoinInfoList } from "@/queries"
 import PieChart from "./components/PieChart.tsx"
 import { Link, useNavigate } from "react-router-dom"
 import Loading from "@/components/Loading"
+import { formatTimeDiff } from "@/lib/utils"
 
 const textVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -59,7 +60,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {list?.filter((coin) => parseInt(coin.maturity) > Date.now()).map((item) => (
+            {list?.map((item) => (
               <div
                 key={item.coinAddress + "_" + item.maturity}
                 className="border border-white/10 rounded-3xl"
@@ -100,24 +101,7 @@ export default function Home() {
                             {dayjs(parseInt(item.maturity)).format("DD MMM YYYY")}
                           </span>
                           <span className="text-[#576682] ml-2">
-                            {(() => {
-                              const maturity = dayjs(parseInt(item.maturity))
-                              const now = dayjs()
-                              const diffDays = maturity.diff(now, "day")
-                              if (diffDays > 0) {
-                                return `${diffDays} DAYS`
-                              }
-                              const diffHours = maturity.diff(now, "hour")
-                              if (diffHours > 0) {
-                                return `${diffHours} HOURS`
-                              }
-                              const diffMinutes = maturity.diff(now, "minute")
-                              if (diffMinutes > 0) {
-                                return `${diffMinutes} MINS`
-                              }
-                              const diffSeconds = maturity.diff(now, "second")
-                              return `${diffSeconds} SECS`
-                            })()}
+                            {formatTimeDiff(parseInt(item.maturity))}
                           </span>
                         </div>
                       )}

@@ -1,6 +1,7 @@
 import Decimal from "decimal.js"
 import { twMerge } from "tailwind-merge"
 import { type ClassValue, clsx } from "clsx"
+import dayjs from "dayjs"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -185,4 +186,33 @@ export const isValidAmount = (amount?: string | null): boolean => {
   if (!amount || amount === "" || amount === "0") return false
   const num = Number(amount)
   return !isNaN(num) && num > 0
+}
+
+/**
+ * Formats time difference to display string
+ * @param timestamp Unix timestamp to compare with current time
+ * @returns Formatted string like "5 DAYS", "3 HOURS", "2 MINS", "30 SECS" or "END"
+ */
+export const formatTimeDiff = (timestamp: number): string => {
+  const maturityTime = dayjs(timestamp)
+  const now = dayjs()
+  const diffSeconds = maturityTime.diff(now, "second")
+  
+  if (diffSeconds <= 0) {
+    return "END"
+  }
+  
+  const diffDays = maturityTime.diff(now, "day")
+  if (diffDays > 0) {
+    return `${diffDays} DAYS`
+  }
+  const diffHours = maturityTime.diff(now, "hour")
+  if (diffHours > 0) {
+    return `${diffHours} HOURS`
+  }
+  const diffMinutes = maturityTime.diff(now, "minute")
+  if (diffMinutes > 0) {
+    return `${diffMinutes} MINS`
+  }
+  return `${diffSeconds} SECS`
 }

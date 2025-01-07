@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import { useMemo } from "react"
-import { cn } from "@/lib/utils"
+import { cn, formatTimeDiff } from "@/lib/utils"
 import { useCoinInfoList } from "@/queries"
 import {
   Select,
@@ -25,7 +25,7 @@ export default function PoolSelect({
   onChange,
   filterExpired = true,
 }: PoolSelectProps) {
-  const { data: list } = useCoinInfoList()
+  const { data: list } = useCoinInfoList({ isShowExpiry: 1 })
 
   const value = useMemo(
     () => (coinType && maturity ? `${coinType}-${maturity}` : ""),
@@ -40,11 +40,7 @@ export default function PoolSelect({
 
   const displayName = useMemo(() => {
     if (selectedPool) {
-      return `${selectedPool.coinName} - ${
-        dayjs(parseInt(maturity!)).diff(dayjs(), "day") > 0
-          ? `${dayjs(parseInt(maturity!)).diff(dayjs(), "day")} DAYS`
-          : "END"
-      }`
+      return `${selectedPool.coinName} - ${formatTimeDiff(parseInt(maturity || "0"))}`
     }
     return "Select a pool"
   }, [selectedPool, maturity])
@@ -81,7 +77,9 @@ export default function PoolSelect({
       <SelectContent className="border-none bg-[#131520]">
         <SelectGroup className="flex flex-col gap-y-2">
           {list
-            ?.filter((coin) => !filterExpired || parseInt(coin.maturity) > Date.now())
+            ?.filter((coin) => {
+              return filterExpired ? parseInt(coin.maturity) > Date.now() : true
+            })
             .map((item, index) => (
               <SelectItem
                 className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-4 rounded-md"
@@ -97,12 +95,12 @@ export default function PoolSelect({
                   <div className="flex flex-col">
                     <span className="text-sm">
                       {item.coinName} -{" "}
-                      {dayjs(parseInt(item.maturity)).diff(dayjs(), "day") > 0
-                        ? `${dayjs(parseInt(item.maturity)).diff(dayjs(), "day")} DAYS`
-                        : "END"}
+                      {formatTimeDiff(parseInt(item.maturity))}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {dayjs(parseInt(item.maturity)).format("DD MMM YYYY")}
+                      {dayjs
+                        .unix(parseInt(item.maturity))
+                        .format("DD MMM YYYY HH:mm:ss")}
                     </span>
                   </div>
                 </div>
