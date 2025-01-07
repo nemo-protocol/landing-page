@@ -44,7 +44,7 @@ export const formatDecimalValue = (
 ): string => {
   const value = _value instanceof Decimal ? _value : new Decimal(_value || 0)
   return value.decimalPlaces() > decimal
-    ? value.toFixed(decimal)
+    ? value.toFixed(Number(decimal))
     : value.toFixed(value.decimalPlaces())
 }
 
@@ -56,10 +56,24 @@ export const safeDivide = (str?: string | number): number => {
   return num
 }
 
-export const splitSyAmount = (syAmount: string, lpSupply: string, totalSy: string, totalPt: string, exchange_rate: string, py_index_stored: string) => {
-  const result = getMintLpParameter(syAmount, lpSupply, totalSy, totalPt, exchange_rate, py_index_stored)
+export const splitSyAmount = (
+  syAmount: string,
+  lpSupply: string,
+  totalSy: string,
+  totalPt: string,
+  exchange_rate: string,
+  py_index_stored: string,
+) => {
+  const result = getMintLpParameter(
+    syAmount,
+    lpSupply,
+    totalSy,
+    totalPt,
+    exchange_rate,
+    py_index_stored,
+  )
   const syForPtValue = result?.syForPt.toFixed(0) || "1"
-  const syValue = result?.syDesired.toFixed(0)|| "1"
+  const syValue = result?.syDesired.toFixed(0) || "1"
   const ptValue = result?.pt.toFixed(0) || "1"
   console.log("ptValue syValue", syForPtValue, ptValue, syValue)
   return { syForPtValue, syValue, ptValue }
@@ -77,25 +91,29 @@ function getMintLpParameter(
   totalSy: string,
   totalPt: string,
   exchange_rate: string,
-  py_index_stored: string
+  py_index_stored: string,
 ): { syForPt: number; syDesired: number; pt: number } | null {
-  const total_sy = Number(syAmount);
-  const lp_supply = Number(lpSupply);
-  const total_sy_reserve = Number(totalSy);
-  const total_pt_reserve = Number(totalPt);
-  const exchange_rate_num = Number(exchange_rate);
-  const py_index_stored_num = Number(py_index_stored);
-  if (lpSupply == "0" ) {
-      const syIn = new Decimal(syAmount).div(2).toString()
-      const max_rate = get_max_rate(exchange_rate_num, py_index_stored_num)
-      const ptIn = new Decimal(syAmount).div(2).mul(max_rate).toString()
-      const syInNumber = Number(syIn);
-      const ptInNumber = Number(ptIn);
-      return { syForPt: ptInNumber, syDesired: syInNumber, pt: get_pt_out(ptInNumber, exchange_rate_num, py_index_stored_num ) };
+  const total_sy = Number(syAmount)
+  const lp_supply = Number(lpSupply)
+  const total_sy_reserve = Number(totalSy)
+  const total_pt_reserve = Number(totalPt)
+  const exchange_rate_num = Number(exchange_rate)
+  const py_index_stored_num = Number(py_index_stored)
+  if (lpSupply == "0") {
+    const syIn = new Decimal(syAmount).div(2).toString()
+    const max_rate = get_max_rate(exchange_rate_num, py_index_stored_num)
+    const ptIn = new Decimal(syAmount).div(2).mul(max_rate).toString()
+    const syInNumber = Number(syIn)
+    const ptInNumber = Number(ptIn)
+    return {
+      syForPt: ptInNumber,
+      syDesired: syInNumber,
+      pt: get_pt_out(ptInNumber, exchange_rate_num, py_index_stored_num),
+    }
   }
-  let left = 0;
-  let right = total_sy;
-  let sy_for_pt = -1; // 初始化为无效值，表示未找到
+  let left = 0
+  let right = total_sy
+  let sy_for_pt = -1 // 初始化为无效值，表示未找到
 
   while (left <= right) {
     const mid = Math.floor((left + right) / 2)
@@ -104,10 +122,14 @@ function getMintLpParameter(
       (get_pt_out(mid, exchange_rate_num, py_index_stored_num) * lp_supply) /
       total_pt_reserve
     const sy_desired =
-      (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply;
-    if (total_sy >= (mid + sy_desired) && total_sy  <= (mid + sy_desired) + 100 ) {
-      sy_for_pt = mid;
-      return { syForPt: sy_for_pt, syDesired: sy_desired, pt: get_pt_out(sy_for_pt, exchange_rate_num, py_index_stored_num )};
+      (total_sy_reserve * net_lp_by_pt + (lp_supply - 1)) / lp_supply
+    if (total_sy >= mid + sy_desired && total_sy <= mid + sy_desired + 100) {
+      sy_for_pt = mid
+      return {
+        syForPt: sy_for_pt,
+        syDesired: sy_desired,
+        pt: get_pt_out(sy_for_pt, exchange_rate_num, py_index_stored_num),
+      }
     } else if (mid + sy_desired < total_sy) {
       left = mid + 1
     } else {
@@ -119,12 +141,16 @@ function getMintLpParameter(
 }
 
 function get_max_rate(exchange_rate: number, py_index_stored: number): number {
-  return Math.max(exchange_rate / (2 ** 64), py_index_stored/ (2 ** 64))
+  return Math.max(exchange_rate / 2 ** 64, py_index_stored / 2 ** 64)
 }
 
-function get_pt_out(syAmount: number, exchange_rate: number, py_index_stored: number): number {
-  const max_rate = Math.max(exchange_rate / (2 ** 64), py_index_stored/ (2 ** 64));
-  return syAmount * max_rate;
+function get_pt_out(
+  syAmount: number,
+  exchange_rate: number,
+  py_index_stored: number,
+): number {
+  const max_rate = Math.max(exchange_rate / 2 ** 64, py_index_stored / 2 ** 64)
+  return syAmount * max_rate
 }
 
 /**
@@ -133,17 +159,17 @@ function get_pt_out(syAmount: number, exchange_rate: number, py_index_stored: nu
  * @returns Processed data with Infinity values converted to empty strings
  */
 export function handleInfinityValues<T>(data: T): T {
-  if (typeof data !== 'object' || data === null) return data;
-  
-  const result = Array.isArray(data) ? [...data] : { ...data };
-  
+  if (typeof data !== "object" || data === null) return data
+
+  const result = Array.isArray(data) ? [...data] : { ...data }
+
   Object.entries(result).forEach(([key, value]) => {
-    if (typeof value === 'string' && (value === '+Inf' || value === '-Inf')) {
-      (result as Record<string, unknown>)[key] = '';
-    } else if (typeof value === 'object' && value !== null) {
-      (result as Record<string, unknown>)[key] = handleInfinityValues(value);
+    if (typeof value === "string" && (value === "+Inf" || value === "-Inf")) {
+      (result as Record<string, unknown>)[key] = ""
+    } else if (typeof value === "object" && value !== null) {
+      (result as Record<string, unknown>)[key] = handleInfinityValues(value)
     }
-  });
-  
-  return result as T;
+  })
+
+  return result as T
 }

@@ -31,6 +31,65 @@ import {
 } from "@/lib/txHelper"
 import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
 import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
+import { formatDecimalValue } from "@/lib/utils"
+
+// 创建一个更简单的 loading spinner SVG
+const LoadingSpinner = () => (
+  <svg viewBox="0 0 50 50" className="animate-spin h-4 w-4 text-white">
+    <circle
+      cx="25"
+      cy="25"
+      r="20"
+      fill="none"
+      className="stroke-current opacity-25"
+      strokeWidth="4"
+    />
+    <circle
+      cx="25"
+      cy="25"
+      r="20"
+      fill="none"
+      className="stroke-current"
+      strokeWidth="4"
+      strokeDasharray="80"
+      strokeDashoffset="60"
+    />
+  </svg>
+)
+
+// 首先定义一个统一的 LoadingButton 组件
+const LoadingButton = ({ 
+  loading, 
+  disabled, 
+  onClick, 
+  loadingText, 
+  buttonText 
+}: { 
+  loading: boolean
+  disabled: boolean
+  onClick: () => void
+  loadingText: string
+  buttonText: string
+}) => (
+  <button
+    className={[
+      "rounded-3xl h-8",
+      loading ? "bg-transparent w-32" : "w-24",
+      !loading && (disabled ? "bg-[#0F60FF]/50 cursor-not-allowed" : "bg-[#0F60FF]"),
+    ].join(" ")}
+    onClick={onClick}
+    disabled={disabled || loading}
+  >
+    {loading ? (
+      <div className="flex items-center justify-center gap-1">
+        <LoadingSpinner />
+        <span className="text-sm whitespace-nowrap">{loadingText}</span>
+      </div>
+    ) : (
+      buttonText
+    )}
+  </button>
+)
 
 export default function Item({
   itemKey,
@@ -90,7 +149,7 @@ export default function Item({
         .div(1e9)
         .toString()
     }
-    return 0
+    return "0"
   }, [pyPositionData])
 
   const lpCoinBalance = useMemo(() => {
@@ -106,6 +165,8 @@ export default function Item({
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
   const { mutateAsync: querySyOutFromPtIn } =
     useQuerySyOutFromPtInWithVoucher(coinConfig)
+
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (isConnected) {
@@ -154,6 +215,7 @@ export default function Item({
   async function claim() {
     if (coinConfig?.coinType && address && ytBalance) {
       try {
+        setLoading(true)
         const tx = new Transaction()
 
         let pyPosition
@@ -225,6 +287,8 @@ export default function Item({
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
+      } finally {
+        setLoading(false)
       }
     }
   }
@@ -232,6 +296,7 @@ export default function Item({
   async function redeemPT() {
     if (ptBalance && coinConfig?.coinType && address) {
       try {
+        setLoading(true)
         const tx = new Transaction()
 
         let pyPosition
@@ -285,6 +350,8 @@ export default function Item({
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
+      } finally {
+        setLoading(false)
       }
     }
   }
@@ -297,6 +364,7 @@ export default function Item({
       lpMarketPositionData?.length
     ) {
       try {
+        setLoading(true)
         // First check if we can swap PT
         const [{ ptAmount }] = await burnLpDryRun(lpCoinBalance)
 
@@ -374,6 +442,8 @@ export default function Item({
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
+      } finally {
+        setLoading(false)
       }
     }
   }
@@ -471,12 +541,13 @@ export default function Item({
                 </Link>
               </div>
             ) : (
-              <button
-                className="rounded-3xl bg-[#0F60FF] h-8 w-24"
+              <LoadingButton
+                loading={loading}
+                disabled={!ptBalance || ptBalance === "0"}
                 onClick={redeemPT}
-              >
-                Redeem
-              </button>
+                loadingText="Redeeming"
+                buttonText="Redeem"
+              />
             )}
           </TableCell>
         </TableRow>
@@ -498,7 +569,11 @@ export default function Item({
               {new Decimal(ytBalance).mul(coinConfig?.ytPrice).gt(0) && "≈"}
             </span>
             <span>
-              ${new Decimal(ytBalance).mul(coinConfig?.ytPrice).toFixed(2)}
+              $
+              {formatDecimalValue(
+                new Decimal(ytBalance).mul(coinConfig?.ytPrice),
+                coinConfig?.decimal,
+              )}
             </span>
           </TableCell>
           <TableCell className="text-center">{ytBalance}</TableCell>
@@ -509,24 +584,23 @@ export default function Item({
                   {ytReward || 0}
                 </span>
                 <span className="text-white/50 text-xs">
-                  $
-                  {new Decimal(ytReward || 0)
-                    .mul(coinConfig?.underlyingPrice || 0)
-                    .toFixed(2)}
+                  {ytReward
+                    ? `$${formatDecimalValue(
+                        new Decimal(ytReward || 0).mul(
+                          coinConfig?.underlyingPrice || 0,
+                        ),
+                        coinConfig?.decimal,
+                      )}`
+                    : "$0"}
                 </span>
               </div>
-              <button
-                className={[
-                  "rounded-3xl py-1 px-2",
-                  ytBalance
-                    ? "bg-[#0F60FF]"
-                    : "bg-[#0F60FF]/50 cursor-not-allowed",
-                ].join(" ")}
+              <LoadingButton
+                loading={loading}
+                disabled={!ytBalance || ytBalance === "0"}
                 onClick={claim}
-                disabled={!ytBalance}
-              >
-                Claim
-              </button>
+                loadingText="Claiming"
+                buttonText="Claim"
+              />
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">
@@ -547,7 +621,9 @@ export default function Item({
                   </button>
                 </Link>
               </div>
-            ) : null}
+            ) : (
+              <span className="text-white/50">Expired</span>
+            )}
           </TableCell>
         </TableRow>
       )}
@@ -591,12 +667,13 @@ export default function Item({
                 </Link>
               </div>
             ) : (
-              <button
-                className="rounded-3xl bg-[#0F60FF] h-8 w-24"
+              <LoadingButton
+                loading={loading}
+                disabled={!lpCoinBalance || lpCoinBalance === "0"}
                 onClick={redeemLP}
-              >
-                Redeem
-              </button>
+                loadingText="Redeeming"
+                buttonText="Redeem"
+              />
             )}
           </TableCell>
         </TableRow>
