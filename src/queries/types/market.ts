@@ -4,6 +4,7 @@ export interface CoinInfo {
   coinName: string
   underlyingPrice: number
   coinAddress: string
+  nemoContractId: string
   underlyingApy: number
   provider: string
   providerLogo: string
@@ -19,6 +20,19 @@ export interface CoinInfo {
   poolApy: number
   bgGradient: string
   marketStateId: string
+  syCoinType: string
+  lstInfoId: string
+  syState: string
+  underlyingCoinType: string
+  providerMarket: string
+  providerVersion: string
+  metadataId: string
+  nativePool: string
+  priceOracleConfigId: string
+  aftermathSafeId: string
+  aftermathStakedSuiVaultId: string
+  haedalStakeingId: string
+  pyState: string
 }
 
 export interface CoinConfig {

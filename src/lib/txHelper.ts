@@ -1,7 +1,7 @@
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
 import { CoinData } from "@/hooks/useCoinData"
-import { CoinConfig } from "@/queries/types/market"
+import { CoinConfig, CoinInfo } from "@/queries/types/market"
 import { LPMarketPosition } from "@/hooks/types"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 
@@ -126,6 +126,128 @@ export const getPriceVoucher = (
           { name: "clock", value: "0x6" },
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+      }
+      // debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return [priceVoucher, moveCall]
+    }
+  }
+}
+
+export const getPriceVoucherWithCoinInfo = (
+  tx: Transaction,
+  coinInfo: CoinInfo,
+): [TransactionArgument, MoveCallInfo] => {
+  let moveCall: MoveCallInfo
+  switch (coinInfo.coinAddress) {
+    case "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT": {
+      moveCall = {
+        target: `${coinInfo.nemoContractId}::oracle::get_price_voucher_from_volo`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinInfo.priceOracleConfigId,
+          },
+          { name: "native_pool", value: coinInfo.nativePool },
+          { name: "metadata", value: coinInfo.metadataId },
+          { name: "sy_state", value: coinInfo.syState },
+        ],
+        typeArguments: [coinInfo.syCoinType],
+      }
+      debugLog("get_price_voucher_from_volo move call:", moveCall)
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return [priceVoucher, moveCall]
+    }
+    case "0x83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI": {
+      moveCall = {
+        target: `${coinInfo.nemoContractId}::oracle::get_price_voucher_from_spring`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinInfo.priceOracleConfigId,
+          },
+          { name: "lst_info", value: coinInfo.lstInfoId },
+          { name: "sy_state", value: coinInfo.syState },
+        ],
+        typeArguments: [coinInfo.syCoinType, coinInfo.underlyingCoinType],
+      }
+      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return [priceVoucher, moveCall]
+    }
+    case "0xf325ce1300e8dac124071d3152c5c5ee6174914f8bc2161e88329cf579246efc::afsui::AFSUI": {
+      moveCall = {
+        target: `${coinInfo.nemoContractId}::oracle::get_price_voucher_from_aftermath`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinInfo.priceOracleConfigId,
+          },
+          { name: "aftermath_safe", value: coinInfo.aftermathSafeId },
+          {
+            name: "aftermath_staked_sui_vault",
+            value: coinInfo.aftermathStakedSuiVaultId,
+          },
+          { name: "sy_state", value: coinInfo.syState },
+        ],
+        typeArguments: [coinInfo.syCoinType, coinInfo.underlyingCoinType],
+      }
+      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+
+      return [priceVoucher, moveCall]
+    }
+    case "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI": {
+      moveCall = {
+        target: `${coinInfo.nemoContractId}::oracle::get_price_voucher_from_haSui`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinInfo.priceOracleConfigId,
+          },
+          { name: "haedal_staking", value: coinInfo.haedalStakeingId },
+          { name: "sy_state", value: coinInfo.syState },
+        ],
+        typeArguments: [coinInfo.syCoinType, coinInfo.underlyingCoinType],
+      }
+      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return [priceVoucher, moveCall]
+    }
+    default: {
+      moveCall = {
+        target: `${coinInfo.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinInfo.priceOracleConfigId,
+          },
+          { name: "provider_version", value: coinInfo.providerVersion },
+          { name: "provider_market", value: coinInfo.providerMarket },
+          { name: "sy_state", value: coinInfo.syState },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinInfo.syCoinType, coinInfo.underlyingCoinType],
       }
       // debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
       const [priceVoucher] = tx.moveCall({

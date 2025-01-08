@@ -145,7 +145,7 @@ function get_max_rate(exchange_rate: number, py_index_stored: number): number {
   return Math.max(exchange_rate / 2 ** 64, py_index_stored / 2 ** 64)
 }
 
-function get_pt_out(
+export function get_pt_out(
   syAmount: number,
   exchange_rate: number,
   py_index_stored: number,
