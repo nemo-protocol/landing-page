@@ -1,12 +1,9 @@
 import Decimal from "decimal.js"
 import { useQuery } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
-import { get_pt_out } from "@/lib/utils"
-import useFetchObject from "@/hooks/useFetchObject.ts"
 import { useQueryPriceVoucherWithCoinInfo } from "@/hooks/useQueryPriceVoucher.ts"
 
 export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
-  const { mutateAsync: exchangeRateFun } = useFetchObject(coinInfo?.pyStateId)
   const { mutateAsync: priceVoucherFun } =
     useQueryPriceVoucherWithCoinInfo(coinInfo)
 
@@ -16,21 +13,11 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
       if (!coinInfo) {
         throw new Error("Please select a pool")
       }
-      const exchangeRate = await exchangeRateFun({
-        objectId: coinInfo.pyStateId,
-        options: { showContent: true },
-      })
-      const priceVoucher = await priceVoucherFun()
-      const baseAmount = new Decimal(1).toString()
-      const parsedData = JSON.parse(exchangeRate.toString())
-      const ptOut = get_pt_out(
-        Number(baseAmount),
-        Number(parsedData?.content?.fields?.py_index_stored?.fields?.value),
-        Number(priceVoucher.toString()),
-      )
-      const ptPrice = new Decimal(coinInfo.underlyingPrice).mul(1).div(ptOut)
+      const [, ptOut] = await priceVoucherFun()
+      const ptPrice = new Decimal(coinInfo.underlyingPrice).mul(1000).div(ptOut)
       const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
       const suiPrice = new Decimal(coinInfo.underlyingPrice).div(coinInfo.conversionRate)
+      console.log("ptPrice", ptPrice.toFixed(10), "suiPrice", suiPrice.toFixed(10))
       const daysToExpiry = new Decimal(
         (Number(coinInfo.maturity) - Date.now()) / 1000,
       )

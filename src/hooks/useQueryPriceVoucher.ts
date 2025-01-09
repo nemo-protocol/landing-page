@@ -81,7 +81,7 @@ export function useQueryPriceVoucherWithCoinInfo(
     "0x0000000000000000000000000000000000000000000000000000000000000001"
 
   return useMutation({
-    mutationFn: async (): Promise<string | [string, DebugInfo]> => {
+    mutationFn: async (): Promise<[string, string] | [string, string, DebugInfo]> => {
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
@@ -89,8 +89,20 @@ export function useQueryPriceVoucherWithCoinInfo(
       const tx = new Transaction()
       tx.setSender(address)
 
-      const [, moveCallInfo] = getPriceVoucher(tx, coinConfig)
-
+      const [priceVoucher, moveCallInfo] = getPriceVoucher(tx, coinConfig)
+      tx.moveCall({
+        target: `${coinConfig.nemoContractId}::router::get_pt_out_for_exact_sy_in_with_price_voucher`,
+        arguments: [
+          tx.pure.u64(1000),
+          tx.pure.u64("0"),
+          priceVoucher,
+          tx.object(coinConfig.pyStateId),
+          tx.object(coinConfig.marketFactoryConfigId),
+          tx.object(coinConfig.marketStateId),
+          tx.object("0x6"),
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      })
       const debugInfo: DebugInfo = {
         moveCall: moveCallInfo as MoveCallInfo,
       }
@@ -122,9 +134,19 @@ export function useQueryPriceVoucherWithCoinInfo(
       const outputVoucher = bcs.U128.parse(
         new Uint8Array(result.results[0].returnValues[0][0]),
       ).toString()
+
+      if (!result?.results?.[1]?.returnValues?.[0]) {
+        const message = "Failed to get pt out"
+        debugInfo.rawResult.error = message
+        throw new ContractError(message, debugInfo)
+      }
+      const ptOut = bcs.U64.parse(
+        new Uint8Array(result.results[1].returnValues[0][0]),
+      ).toString()
+
       debugInfo.parsedOutput = outputVoucher
 
-      return debug ? [outputVoucher, debugInfo] : outputVoucher
+      return debug ? [outputVoucher, ptOut, debugInfo] : [outputVoucher, ptOut]
     },
   })
 }

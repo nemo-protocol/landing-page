@@ -27,6 +27,7 @@ export interface BaseCoinInfo {
   pyStateId: string
   syStateId: string
   conversionRate: number | string
+  marketFactoryConfigId: string
   // /** @deprecated */
   // ptApy: number | string
   // /** @deprecated */
