@@ -51,7 +51,10 @@ export default function Mint({
       coinConfig?.pyPositionTypeList,
     )
 
-  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
+  const decimal = useMemo(
+    () => (typeof coinConfig?.decimal === "number" ? coinConfig?.decimal : 0),
+    [coinConfig],
+  )
 
   const { data: coinData, refetch: refetchCoinData } = useCoinData(
     address,
