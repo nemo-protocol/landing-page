@@ -49,6 +49,8 @@ import {
 } from "@/components/ui/select"
 import { useAddLiquidityRatio } from "@/hooks/useAddLiquidityRatio"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
+import useMintLpDryRun from "@/hooks/dryrun/useMintLpDryRun"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -61,6 +63,8 @@ export default function SingleCoin() {
   const [tokenType, setTokenType] = useState<number>(1)
   const [openConnect, setOpenConnect] = useState(false)
   const [lpPosition, setLpPosition] = useState<string>()
+  const [ytAmount, setYtAmount] = useState<string>()
+  const [positionLoading, setPositionLoading] = useState(false)
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [isAdding, setIsAdding] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
@@ -118,6 +122,7 @@ export default function SingleCoin() {
 
   const { mutateAsync: calculateLpOut, isPending: isLpAmountOutLoading } =
     useCalculateLpOut(coinConfig)
+  const { mutateAsync: mintLpDryRun } = useMintLpDryRun(coinConfig)
 
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
@@ -155,10 +160,12 @@ export default function SingleCoin() {
     return ["0", "0"]
   }, [coinConfig])
 
+  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+
   const totalApy = useMemo(() => {
     if (
       coinConfig?.underlyingApy &&
-      coinConfig?.ptApy &&
+      ptYtData?.ptApy &&
       coinConfig?.swapFeeApy &&
       !isNaN(Number(syRatio)) &&
       !isNaN(Number(ptRatio))
@@ -166,7 +173,7 @@ export default function SingleCoin() {
       const underlyingApyValue = new Decimal(coinConfig.underlyingApy).mul(
         syRatio,
       )
-      const ptApyValue = new Decimal(coinConfig.ptApy).mul(ptRatio)
+      const ptApyValue = new Decimal(ptYtData.ptApy).mul(ptRatio)
       const swapFeeApyValue = new Decimal(coinConfig.swapFeeApy).mul(100)
 
       const total = underlyingApyValue.add(ptApyValue).add(swapFeeApyValue)
@@ -174,7 +181,7 @@ export default function SingleCoin() {
       return total.isNaN() ? "--" : total.toFixed(2)
     }
     return "--"
-  }, [coinConfig, syRatio, ptRatio])
+  }, [coinConfig, ptYtData, syRatio, ptRatio])
 
   const {
     data: ratioData,
@@ -382,26 +389,71 @@ export default function SingleCoin() {
   const debouncedGetLpPosition = useCallback(
     (value: string, decimal: number, config: CoinConfig | undefined) => {
       const getLpPosition = debounce(async () => {
-        if (value && value !== "0" && decimal && config && conversionRate) {
+        if (
+          value &&
+          value !== "0" &&
+          decimal &&
+          config &&
+          conversionRate &&
+          coinData?.length
+        ) {
+          setPositionLoading(true)
           try {
             const amount = new Decimal(value).mul(10 ** decimal).toString()
             const convertedAmount =
               tokenType === 0
                 ? new Decimal(amount).div(conversionRate).toFixed(0)
                 : amount
-            const lpOut = await calculateLpOut(convertedAmount)
-            setLpPosition(lpOut.lpAmount)
+
+            // 检查是否需要执行mint_lp
+            if (
+              marketStateData &&
+              new Decimal(marketStateData.totalSy).mul(0.4).lt(convertedAmount)
+            ) {
+              const [{ lpAmount, ytAmount }] = await mintLpDryRun({
+                addAmount: convertedAmount,
+                tokenType,
+                slippage,
+                coinData,
+                pyPositions: pyPositionData,
+              })
+
+              setLpPosition(
+                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
+              )
+              setYtAmount(
+                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
+              )
+            } else {
+              const lpOut = await calculateLpOut(convertedAmount)
+              setLpPosition(lpOut.lpAmount)
+              setYtAmount(undefined)
+            }
           } catch (error) {
             console.error("Failed to get LP position:", error)
+            setLpPosition(undefined)
+            setYtAmount(undefined)
+          } finally {
+            setPositionLoading(false)
           }
         } else {
           setLpPosition(undefined)
+          setYtAmount(undefined)
         }
       }, 500)
       getLpPosition()
       return getLpPosition.cancel
     },
-    [calculateLpOut, tokenType, conversionRate],
+    [
+      calculateLpOut,
+      mintLpDryRun,
+      tokenType,
+      slippage,
+      coinData,
+      pyPositionData,
+      marketStateData,
+      conversionRate,
+    ],
   )
 
   useEffect(() => {
@@ -616,7 +668,7 @@ export default function SingleCoin() {
                     <span className="flex items-center gap-x-1.5">
                       {!addValue ? (
                         "--"
-                      ) : isLoading ? (
+                      ) : positionLoading ? (
                         <Skeleton className="h-7 w-48 bg-[#2D2D48]" />
                       ) : !decimal ? (
                         "--"
@@ -635,6 +687,34 @@ export default function SingleCoin() {
                       )}
                     </span>
                   </div>
+                  {(ytAmount ||
+                    (positionLoading &&
+                      marketStateData &&
+                      new Decimal(marketStateData.totalSy)
+                        .mul(0.4)
+                        .lt(
+                          new Decimal(addValue || "0")
+                            .mul(10 ** (decimal || 0))
+                            .toString(),
+                        ))) && (
+                    <div className="flex items-center justify-between w-full h-[28px] text-sm text-white/60">
+                      <span>YT Receive</span>
+                      <span className="flex items-center gap-x-1.5">
+                        {!addValue ? (
+                          "--"
+                        ) : positionLoading ? (
+                          <Skeleton className="h-5 w-32 bg-[#2D2D48]" />
+                        ) : !decimal ? (
+                          "--"
+                        ) : (
+                          <>
+                            {formatDecimalValue(ytAmount, decimal)} YT{" "}
+                            {coinConfig?.coinName}
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <hr className="border-t border-[#2D2D48] my-6" />
@@ -885,8 +965,8 @@ export default function SingleCoin() {
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled PT APY</span>
                       <span>
-                        {coinConfig?.ptApy
-                          ? `${new Decimal(coinConfig.ptApy).mul(ptRatio).toFixed(2)} %`
+                        {ptYtData?.ptApy
+                          ? `${new Decimal(ptYtData.ptApy).mul(ptRatio).toFixed(2)} %`
                           : "--"}
                       </span>
                     </div>

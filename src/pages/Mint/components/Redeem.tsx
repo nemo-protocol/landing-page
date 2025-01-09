@@ -5,6 +5,7 @@ import { Transaction } from "@mysten/sui/transactions"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import {
   initPyPosition,
@@ -83,6 +84,8 @@ export default function Redeem({
   const refreshData = useCallback(async () => {
     await Promise.all([refetchCoinConfig(), refetchPyPosition()])
   }, [refetchCoinConfig, refetchPyPosition])
+
+  const { data: ptYtData } = useCalculatePtYt(coinConfig)
 
   async function redeem() {
     if (
@@ -192,9 +195,11 @@ export default function Redeem({
             {isConnected && (
               <span className="text-xs text-white/80">
                 $
-                {new Decimal(coinConfig?.ptPrice || 0)
-                  .mul(ptRedeemValue || 0)
-                  .toFixed(2)}
+                {ptYtData?.ptPrice
+                  ? new Decimal(ptYtData.ptPrice)
+                      .mul(ptRedeemValue || 0)
+                      .toFixed(2)
+                  : "0.00"}
               </span>
             )}
           </div>
@@ -252,9 +257,11 @@ export default function Redeem({
             {isConnected && (
               <span className="text-xs text-white/80">
                 $
-                {new Decimal(coinConfig?.ptPrice || 0)
-                  .mul(ytRedeemValue || 0)
-                  .toFixed(2)}
+                {ptYtData?.ytPrice
+                  ? new Decimal(ptYtData.ytPrice)
+                      .mul(ytRedeemValue || 0)
+                      .toFixed(2)
+                  : "0.00"}
               </span>
             )}
           </div>

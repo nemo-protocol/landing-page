@@ -10,6 +10,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { TableRow, TableCell } from "@/components/ui/table"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 // TODO: 封装全局的提示框
 import {
   AlertDialog,
@@ -105,23 +106,25 @@ export default function Item({
   const { address } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: lpMarketPositionData, refetch: refetchLpPosition } = useLpMarketPositionData(
-    address,
-    coinConfig.marketStateId,
-    coinConfig.maturity,
-    coinConfig?.marketPositionTypeList
-      ? coinConfig?.marketPositionTypeList
-      : [coinConfig.marketPositionType],
-  )
+  const { data: lpMarketPositionData, refetch: refetchLpPosition } =
+    useLpMarketPositionData(
+      address,
+      coinConfig.marketStateId,
+      coinConfig.maturity,
+      coinConfig?.marketPositionTypeList
+        ? coinConfig?.marketPositionTypeList
+        : [coinConfig.marketPositionType],
+    )
 
-  const { data: pyPositionData, refetch: refetchPyPosition } = usePyPositionData(
-    address,
-    coinConfig.pyStateId,
-    coinConfig.maturity,
-    coinConfig?.pyPositionTypeList
-      ? coinConfig?.pyPositionTypeList
-      : [coinConfig?.pyPositionType],
-  )
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig.pyStateId,
+      coinConfig.maturity,
+      coinConfig?.pyPositionTypeList
+        ? coinConfig?.pyPositionTypeList
+        : [coinConfig?.pyPositionType],
+    )
 
   const ptBalance = useMemo(() => {
     if (pyPositionData?.length) {
@@ -158,11 +161,10 @@ export default function Item({
   const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
 
   const refreshData = async () => {
-    await Promise.all([
-      refetchLpPosition(),
-      refetchPyPosition()
-    ])
+    await Promise.all([refetchLpPosition(), refetchPyPosition()])
   }
+
+  const { data: ptYtData } = useCalculatePtYt(coinConfig)
 
   useEffect(() => {
     if (isConnected) {
@@ -170,20 +172,20 @@ export default function Item({
         itemKey,
         new Decimal(ptBalance)
           .mul(
-            coinConfig.ptPrice && coinConfig.ptPrice !== ""
-              ? coinConfig.ptPrice
+            ptYtData?.ptPrice && new Decimal(ptYtData.ptPrice).gt(0)
+              ? ptYtData.ptPrice
               : 0,
           )
           .add(
             new Decimal(ytBalance).mul(
-              coinConfig.ytPrice && coinConfig.ytPrice !== ""
-                ? coinConfig.ytPrice
+              ptYtData?.ytPrice && new Decimal(ptYtData.ytPrice).gt(0)
+                ? ptYtData.ytPrice
                 : 0,
             ),
           )
           .add(
             new Decimal(lpCoinBalance).mul(
-              coinConfig.lpPrice && coinConfig.lpPrice !== ""
+              coinConfig.lpPrice && new Decimal(coinConfig.lpPrice).gt(0)
                 ? coinConfig.lpPrice
                 : 0,
             ),
@@ -203,8 +205,8 @@ export default function Item({
     isConnected,
     itemKey,
     coinConfig.lpPrice,
-    coinConfig.ptPrice,
-    coinConfig.ytPrice,
+    ptYtData?.ptPrice,
+    ptYtData?.ytPrice,
     coinConfig.underlyingPrice,
   ])
 
@@ -454,10 +456,19 @@ export default function Item({
           <TableCell className="text-center">PT</TableCell>
           <TableCell className="text-center space-x-1">
             <span>
-              {new Decimal(ptBalance).mul(coinConfig?.ptPrice).gt(0) && "≈"}
+              {ptYtData?.ptPrice &&
+                new Decimal(ptBalance)
+                  .mul(new Decimal(ptYtData.ptPrice))
+                  .gt(0) &&
+                "≈"}
             </span>
             <span>
-              ${new Decimal(ptBalance).mul(coinConfig?.ptPrice).toFixed(2)}
+              $
+              {ptYtData?.ptPrice
+                ? new Decimal(ptBalance)
+                    .mul(new Decimal(ptYtData.ptPrice))
+                    .toFixed(2)
+                : "0.00"}
             </span>
           </TableCell>
           <TableCell className="text-center">{ptBalance}</TableCell>
@@ -505,12 +516,18 @@ export default function Item({
           <TableCell className="text-center">YT</TableCell>
           <TableCell className="text-center space-x-1">
             <span>
-              {new Decimal(ytBalance).mul(coinConfig?.ytPrice).gt(0) && "≈"}
+              {ptYtData?.ytPrice &&
+                new Decimal(ytBalance)
+                  .mul(new Decimal(ptYtData.ytPrice))
+                  .gt(0) &&
+                "≈"}
             </span>
             <span>
               $
               {formatDecimalValue(
-                new Decimal(ytBalance).mul(coinConfig?.ytPrice),
+                ptYtData?.ytPrice
+                  ? new Decimal(ytBalance).mul(new Decimal(ptYtData.ytPrice))
+                  : new Decimal(0),
                 Number(coinConfig?.decimal),
               )}
             </span>
@@ -525,8 +542,8 @@ export default function Item({
                 <span className="text-white/50 text-xs">
                   {ytReward
                     ? `$${formatDecimalValue(
-                        new Decimal(ytReward || 0).mul(
-                          coinConfig?.underlyingPrice || 0,
+                        new Decimal(ytReward).mul(
+                          Number(coinConfig?.underlyingPrice),
                         ),
                         Number(coinConfig?.decimal),
                       )}`
@@ -538,7 +555,7 @@ export default function Item({
                 loading={loading}
                 buttonText="Claim"
                 loadingText="Claiming"
-                disabled={!isValidAmount(ytBalance)}
+                disabled={!isValidAmount(ytReward)}
               />
             </div>
           </TableCell>

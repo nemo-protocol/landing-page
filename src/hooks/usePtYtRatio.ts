@@ -1,14 +1,14 @@
 import Decimal from "decimal.js"
 import { useQuery } from "@tanstack/react-query"
-import { CoinInfo } from "@/queries/types/market"
+import { BaseCoinInfo } from "@/queries/types/market"
 import { get_pt_out } from "@/lib/utils"
 import useMarketStateData from "@/hooks/useMarketStateData.ts"
 import useFetchObject from "@/hooks/useFetchObject.ts"
 import { useQueryPriceVoucherWithCoinInfo } from "@/hooks/useQueryPriceVoucher.ts"
 
-export function useCalculatePtYt(coinInfo?: CoinInfo) {
+export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
   const { data: marketState } = useMarketStateData(coinInfo?.marketStateId)
-  const { mutateAsync: exchangeRateFun } = useFetchObject(coinInfo?.pyState)
+  const { mutateAsync: exchangeRateFun } = useFetchObject(coinInfo?.pyStateId)
   const { mutateAsync: priceVoucherFun } =
     useQueryPriceVoucherWithCoinInfo(coinInfo)
 
@@ -22,7 +22,7 @@ export function useCalculatePtYt(coinInfo?: CoinInfo) {
         throw new Error("not found market")
       }
       const exchangeRate = await exchangeRateFun({
-        objectId: coinInfo.pyState,
+        objectId: coinInfo.pyStateId,
         options: { showContent: true },
       })
       const priceVoucher = await priceVoucherFun()

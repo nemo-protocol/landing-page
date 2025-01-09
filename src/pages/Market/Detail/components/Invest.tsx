@@ -44,6 +44,7 @@ import { useLoadingState } from "@/hooks/useLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import { useInvestRatios } from "@/hooks/useInvestRatios"
 import useQueryPtOutBySyInWithVoucher from "@/hooks/useQueryPtOutBySyInWithVoucher"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -152,6 +153,8 @@ export default function Invest() {
 
   const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
   const { mutateAsync: dryRunSwap } = useSwapExactSyForPtDryRun(coinConfig)
+
+  const { data: ptYtData } = useCalculatePtYt(coinConfig)
 
   useEffect(() => {
     async function fetchPtOut() {
@@ -399,8 +402,8 @@ export default function Invest() {
           <div className="flex items-center justify-between mt-6">
             <span>Fixed APY</span>
             <span className="underline">
-              {coinConfig?.ptApy
-                ? `${new Decimal(coinConfig.ptApy).mul(100).toFixed(2)} %`
+              {ptYtData?.ptApy
+                ? `${new Decimal(ptYtData.ptApy).mul(100).toFixed(2)} %`
                 : "--"}
             </span>
           </div>

@@ -36,6 +36,7 @@ import { ContractError } from "@/hooks/types"
 import dayjs from "dayjs"
 import SlippageSetting from "@/components/SlippageSetting"
 import { useLoadingState } from "@/hooks/useLoadingState"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 
 export default function Sell() {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -226,15 +227,15 @@ export default function Sell() {
     [tokenType, coinConfig],
   )
 
+  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+
   const price = useMemo(
-    () => (tokenType === "pt" ? coinConfig?.ptPrice : coinConfig?.ytPrice)?.toString(),
-    [tokenType, coinConfig],
+    () =>
+      (tokenType === "pt" ? ptYtData?.ptPrice : ptYtData?.ytPrice)?.toString(),
+    [tokenType, ptYtData],
   )
 
-  const { isLoading } = useLoadingState(
-    redeemValue,
-    isConfigLoading
-  )
+  const { isLoading } = useLoadingState(redeemValue, isConfigLoading)
 
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">

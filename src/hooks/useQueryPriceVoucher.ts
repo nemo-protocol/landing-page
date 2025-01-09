@@ -2,10 +2,10 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { ContractError } from "./types"
-import type { CoinConfig, CoinInfo } from "@/queries/types/market"
+import type { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "./types"
 import { bcs } from "@mysten/sui/bcs"
-import { getPriceVoucher, getPriceVoucherWithCoinInfo } from "@/lib/txHelper"
+import { getPriceVoucher } from "@/lib/txHelper"
 
 interface MoveCallInfo {
   target: string
@@ -72,13 +72,13 @@ export default function useQueryPriceVoucher(
   })
 }
 
-
 export function useQueryPriceVoucherWithCoinInfo(
-  coinConfig?: CoinInfo,
+  coinConfig?: BaseCoinInfo,
   debug: boolean = false,
 ) {
   const client = useSuiClient()
-  const address  = "0x0000000000000000000000000000000000000000000000000000000000000001"
+  const address =
+    "0x0000000000000000000000000000000000000000000000000000000000000001"
 
   return useMutation({
     mutationFn: async (): Promise<string | [string, DebugInfo]> => {
@@ -89,7 +89,7 @@ export function useQueryPriceVoucherWithCoinInfo(
       const tx = new Transaction()
       tx.setSender(address)
 
-      const [, moveCallInfo] = getPriceVoucherWithCoinInfo(tx, coinConfig)
+      const [, moveCallInfo] = getPriceVoucher(tx, coinConfig)
 
       const debugInfo: DebugInfo = {
         moveCall: moveCallInfo as MoveCallInfo,

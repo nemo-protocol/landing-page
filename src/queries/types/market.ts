@@ -24,22 +24,24 @@ export interface BaseCoinInfo {
   decimal: string | number
   underlyingApy: number | string
   underlyingPrice: number | string
-  /** @deprecated */
-  ptApy: number | string
-  /** @deprecated */
-  ytApy: number | string
-  /** @deprecated */
-  ptPrice: number | string
-  /** @deprecated */
-  ytPrice: number | string
+  pyStateId: string
+  syStateId: string
+  // /** @deprecated */
+  // ptApy: number | string
+  // /** @deprecated */
+  // ytApy: number | string
+  // /** @deprecated */
+  // ptPrice: number | string
+  // /** @deprecated */
+  // ytPrice: number | string
 }
 
 export interface CoinInfo extends BaseCoinInfo {
+  /** @deprecated */
   ptRate: number
+  /** @deprecated */
   ytRate: number
   bgGradient: string
-  syState: string
-  pyState: string
 }
 
 export interface CoinConfig extends BaseCoinInfo {
@@ -48,8 +50,6 @@ export interface CoinConfig extends BaseCoinInfo {
   underlyingProtocol: string
   underlyingProtocolLogo: string
   swapFeeApy: string
-  pyStateId: string
-  syStateId: string
   yieldFactoryConfigId: string
   marketFactoryConfigId: string
   lpPrice: string

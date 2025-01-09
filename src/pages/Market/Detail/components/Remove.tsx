@@ -15,7 +15,7 @@ import PoolSelect from "@/components/PoolSelect"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import { useCoinConfig } from "@/queries"
 import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
-import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
+import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
 import { debounce } from "@/lib/utils"
 import ActionButton from "@/components/ActionButton"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
@@ -48,6 +48,7 @@ export default function Remove() {
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
+  const { mutateAsync: swapExactPtForSyDryRun } = useSwapExactPtForSyDryRun(coinConfig)
 
   const { data: lppMarketPositionData, refetch: refetchLpPosition } =
     useLpMarketPositionData(
@@ -82,9 +83,6 @@ export default function Remove() {
     [lpCoinBalance, lpValue],
   )
 
-  const { mutateAsync: querySyOutFromPtIn } =
-    useQuerySyOutFromPtInWithVoucher(coinConfig)
-
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
       const getSyOut = debounce(async () => {
@@ -95,7 +93,9 @@ export default function Remove() {
           try {
             const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
             let totalSyOut = new Decimal(syAmount)
-            const [ptToSy] = await querySyOutFromPtIn(ptAmount)
+            const [{ syAmount: ptToSy }] = await swapExactPtForSyDryRun({
+              redeemValue: ptAmount,
+            })
             totalSyOut = totalSyOut.add(ptToSy)
             const syOut = totalSyOut.div(10 ** decimal).toString()
             setTargetValue(syOut)
@@ -118,7 +118,7 @@ export default function Remove() {
       getSyOut()
       return getSyOut.cancel
     },
-    [burnLpDryRun, querySyOutFromPtIn, coinConfig?.coinName],
+    [burnLpDryRun, swapExactPtForSyDryRun, coinConfig?.coinName],
   )
 
   useEffect(() => {

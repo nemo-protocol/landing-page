@@ -15,7 +15,7 @@ import {
 import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
 import { CoinConfig } from "@/queries/types/market"
 import { LPMarketPosition, PyPosition } from "@/hooks/types"
-import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
+import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
 
 interface RedeemLpParams {
   lpAmount: string
@@ -29,8 +29,8 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
   const address = account?.address
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
-  const { mutateAsync: swapExactSyForPtDryRun } =
-    useSwapExactSyForPtDryRun(coinConfig)
+  const { mutateAsync: swapExactPtForSyDryRun } =
+    useSwapExactPtForSyDryRun(coinConfig)
 
   const redeemLp = useCallback(
     async ({
@@ -56,19 +56,17 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
       let canSwapPt = false
       if (ptAmount && new Decimal(ptAmount).gt(0)) {
         try {
-          await swapExactSyForPtDryRun({
-            tokenType: 0,
-            swapAmount: ptAmount,
-            coinData: [],
-            coinType: coinConfig.coinType,
-            minPtOut: "0",
+          await swapExactPtForSyDryRun({
+            redeemValue: ptAmount,
           })
+
           canSwapPt = true
         } catch (error) {
           // If swap simulation fails, just continue without PT swap
           canSwapPt = false
         }
       }
+      console.log("canSwapPt", canSwapPt)
 
       const tx = new Transaction()
 
@@ -126,7 +124,7 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
 
       return { digest }
     },
-    [address, burnLpDryRun, signAndExecuteTransaction, swapExactSyForPtDryRun],
+    [address, burnLpDryRun, signAndExecuteTransaction, swapExactPtForSyDryRun],
   )
 
   return useMutation({

@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
 import { Transaction } from "@mysten/sui/transactions"
 import { useCoinConfig } from "@/queries"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import {
   Select,
   SelectContent,
@@ -174,6 +175,9 @@ export default function Trade() {
     }
     fetchYtOut()
   }, [swapValue, decimal, coinConfig, queryYtOut, tokenType, conversionRate])
+
+  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+
   async function swap() {
     if (
       coinType &&
@@ -398,8 +402,8 @@ export default function Trade() {
             <div className="flex items-center justify-between mt-6">
               <span>Leveraged Yield APY</span>
               <span className="underline">
-                {coinConfig?.ytApy
-                  ? `${new Decimal(coinConfig.ytApy).mul(100).toFixed(2)} %`
+                {ptYtData?.ytApy
+                  ? `${new Decimal(ptYtData.ytApy).mul(100).toFixed(2)} %`
                   : "--"}
               </span>
             </div>
