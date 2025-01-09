@@ -78,7 +78,7 @@ const useFetchLpPosition = (
         .map((position: LPMarketPosition) => ({
           ...position,
           lp_amount_display: new Decimal(position.lp_amount)
-            .div(10 ** (coinConfig.decimal || 0))
+            .div(10 ** Number(coinConfig.decimal))
             .toString()
         }))
 

@@ -55,15 +55,11 @@ export default function Trade() {
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { 
-    data: coinConfig, 
+  const {
+    data: coinConfig,
     isLoading: isConfigLoading,
-    refetch: refetchCoinConfig 
-  } = useCoinConfig(
-    coinType,
-    maturity,
-    address,
-  )
+    refetch: refetchCoinConfig,
+  } = useCoinConfig(coinType, maturity, address)
 
   const coinName = useMemo(
     () =>
@@ -79,11 +75,14 @@ export default function Trade() {
 
   const price = useMemo(
     () =>
-      tokenType === 0 ? coinConfig?.underlyingPrice : coinConfig?.coinPrice,
+      (tokenType === 0
+        ? coinConfig?.underlyingPrice
+        : coinConfig?.coinPrice
+      )?.toString(),
     [tokenType, coinConfig],
   )
 
-  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
+  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
   const {
     refetch,
@@ -100,15 +99,13 @@ export default function Trade() {
   //   [swapRatio, tokenType],
   // )
 
-  const { 
-    data: pyPositionData,
-    refetch: refetchPyPosition 
-  } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig?.pyStateId,
+      coinConfig?.maturity,
+      coinConfig?.pyPositionTypeList,
+    )
 
   const { isLoading } = useLoadingState(
     swapValue,
@@ -119,10 +116,10 @@ export default function Trade() {
     isRatioFetching || isConfigLoading,
   )
 
-  const { 
-    data: coinData, 
+  const {
+    data: coinData,
     isLoading: isBalanceLoading,
-    refetch: refetchCoinData 
+    refetch: refetchCoinData,
   } = useCoinData(
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
@@ -150,7 +147,7 @@ export default function Trade() {
     await Promise.all([
       refetchCoinConfig(),
       refetchPyPosition(),
-      refetchCoinData()
+      refetchCoinData(),
     ])
   }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
@@ -161,7 +158,7 @@ export default function Trade() {
           setError(undefined)
           const swapAmount = new Decimal(swapValue)
             .div(tokenType === 0 ? conversionRate : 1)
-            .mul(10 ** coinConfig.decimal)
+            .mul(10 ** decimal)
             .toFixed(0)
           const [ytOut] = await queryYtOut(swapAmount)
           setYtout(ytOut)
@@ -193,7 +190,7 @@ export default function Trade() {
 
         const syCoinAmount = new Decimal(swapValue)
           .div(tokenType === 0 ? conversionRate : 1)
-          .mul(10 ** coinConfig.decimal)
+          .mul(10 ** decimal)
           .toFixed(0)
 
         const [ytOut] = await queryYtOut(syCoinAmount)
@@ -205,7 +202,7 @@ export default function Trade() {
         const [splitCoin] =
           tokenType === 0
             ? mintSCoin(tx, coinConfig, coinData, [
-                new Decimal(swapValue).mul(10 ** coinConfig.decimal).toFixed(0),
+                new Decimal(swapValue).mul(10 ** decimal).toFixed(0),
               ])
             : splitCoinHelper(tx, coinData, [syCoinAmount], coinType)
 
@@ -282,9 +279,8 @@ export default function Trade() {
         setStatus("Success")
         setOpen(true)
         setSwapValue("")
-        
+
         await refreshData()
-        
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -413,7 +409,7 @@ export default function Trade() {
               ytOut && swapValue
                 ? new Decimal(ytOut)
                     .div(swapValue)
-                    .div(10 ** (coinConfig?.decimal || 0))
+                    .div(10 ** decimal)
                     .toString()
                 : new Decimal(0).toString()
             }

@@ -78,7 +78,7 @@ const BalanceInput: React.FC<BalanceInputProps> = ({
               onChange(
                 formatDecimalValue(
                   new Decimal(coinBalance).div(2),
-                  coinConfig?.decimal || 0,
+                  Number(coinConfig?.decimal),
                 ),
               )
             }
@@ -93,7 +93,7 @@ const BalanceInput: React.FC<BalanceInputProps> = ({
               onChange(
                 formatDecimalValue(
                   new Decimal(coinBalance),
-                  coinConfig?.decimal || 0,
+                  Number(coinConfig?.decimal),
                 ),
               )
             }

@@ -143,7 +143,7 @@ export const getPriceVoucherWithCoinInfo = (
   coinInfo: CoinInfo,
 ): [TransactionArgument, MoveCallInfo] => {
   let moveCall: MoveCallInfo
-  switch (coinInfo.coinAddress) {
+  switch (coinInfo.coinType) {
     case "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT": {
       moveCall = {
         target: `${coinInfo.nemoContractId}::oracle::get_price_voucher_from_volo`,

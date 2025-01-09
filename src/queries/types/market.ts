@@ -2,24 +2,11 @@ export interface BaseCoinInfo {
   coinLogo: string
   maturity: string
   coinName: string
-  underlyingPrice: number | string
-  coinAddress?: string
+  coinType: string
   nemoContractId: string
-  underlyingApy: number | string
-  provider?: string
-  providerLogo?: string
+  provider: string
+  providerLogo: string
   cap: string
-  decimal: string | number
-  tvl: number | string
-  /** @deprecated */
-  ptApy: number | string
-  /** @deprecated */
-  ytApy: number | string
-  /** @deprecated */
-  ptPrice: number | string
-  /** @deprecated */
-  ytPrice: number | string
-  poolApy: number | string
   marketStateId: string
   syCoinType: string
   lstInfoId: string
@@ -32,6 +19,19 @@ export interface BaseCoinInfo {
   aftermathSafeId: string
   aftermathStakedSuiVaultId: string
   haedalStakeingId: string
+  tvl: number | string
+  poolApy: number | string
+  decimal: string | number
+  underlyingApy: number | string
+  underlyingPrice: number | string
+  /** @deprecated */
+  ptApy: number | string
+  /** @deprecated */
+  ytApy: number | string
+  /** @deprecated */
+  ptPrice: number | string
+  /** @deprecated */
+  ytPrice: number | string
 }
 
 export interface CoinInfo extends BaseCoinInfo {
@@ -51,7 +51,6 @@ export interface CoinConfig extends BaseCoinInfo {
   pyStateId: string
   syStateId: string
   yieldFactoryConfigId: string
-  coinType: string
   marketFactoryConfigId: string
   lpPrice: string
   coinPrice: string
@@ -69,11 +68,11 @@ export interface CoinConfig extends BaseCoinInfo {
 }
 
 export interface PortfolioItem extends CoinConfig {
-  name: string;
-  icon: string;
-  ptReward: string;
-  ytReward: string;
-  lpReward: string;
+  name: string
+  icon: string
+  ptReward: string
+  ytReward: string
+  lpReward: string
 }
 
 export interface FixedReturnItem {
@@ -89,8 +88,8 @@ export interface FixedReturnItem {
 }
 
 export interface PointItem {
-  rank: number,
-  address: string,
-  pointsPerDay: number,
+  rank: number
+  address: string
+  pointsPerDay: number
   totalPoints: number
 }

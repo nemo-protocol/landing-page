@@ -54,7 +54,7 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
 
       return {
         lpAmount: new Decimal(lpAmount)
-          .div(10 ** coinConfig.decimal)
+          .div(10 ** Number(coinConfig?.decimal))
           .toString(),
         ptValue,
         syValue,

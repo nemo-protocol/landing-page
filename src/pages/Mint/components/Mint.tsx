@@ -35,54 +35,37 @@ export default function Mint({
   const { address, signAndExecuteTransaction } = useWallet()
 
   const isConnected = useMemo(() => !!address, [address])
-  // const { currentWallet, isConnected } = useCurrentWallet()
-  // const { getAccounts, connected: isConnected, signAndExecuteTransaction } = useWallet()
-  // const [currentWallet, setCurrentWallet] = useState<any>([])
   const [mintValue, setMintValue] = useState("")
   const [openConnect, setOpenConnect] = useState(false)
 
-  // const { mutateAsync: signAndExecuteTransaction } =
-  //   useCustomSignAndExecuteTransaction()
-  // console.log(currentWallet);
-
-  // useEffect(() => {
-  //   if (isConnected) {
-  //     setCurrentWallet(getAccounts())
-  //   }
-  // }, [isConnected])
-  // const address = useMemo(
-  //   () => currentWallet.length != 0 && currentWallet?.accounts[0].address,
-  //   [isConnected],
-  // )
-
-  const { 
-    data: coinConfig, 
+  const {
+    data: coinConfig,
     isLoading,
-    refetch: refetchCoinConfig 
+    refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity)
-  const { 
-    data: pyPositionData,
-    refetch: refetchPyPosition 
-  } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig?.pyStateId,
+      coinConfig?.maturity,
+      coinConfig?.pyPositionTypeList,
+    )
 
-  const { 
-    data: coinData,
-    refetch: refetchCoinData 
-  } = useCoinData(address, coinType)
+  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
+
+  const { data: coinData, refetch: refetchCoinData } = useCoinData(
+    address,
+    coinType,
+  )
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
       return coinData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
-        .toFixed(coinConfig?.decimal ?? 0)
+        .div(10 ** decimal)
+        .toFixed(decimal)
     }
-    return 0
-  }, [coinData, coinConfig])
+    return "0"
+  }, [coinData, decimal])
 
   const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
   const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
@@ -97,7 +80,7 @@ export default function Mint({
     await Promise.all([
       refetchCoinConfig(),
       refetchPyPosition(),
-      refetchCoinData()
+      refetchCoinData(),
     ])
   }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
@@ -122,9 +105,7 @@ export default function Mint({
           pyPosition = tx.object(pyPositionData[0].id.id)
         }
 
-        const amount = new Decimal(mintValue)
-          .mul(10 ** coinConfig.decimal)
-          .toString()
+        const amount = new Decimal(mintValue).mul(10 ** decimal).toString()
         const [splitCoin] = splitCoinHelper(tx, coinData, [amount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
@@ -144,9 +125,8 @@ export default function Mint({
         setOpen(true)
         setMintValue("")
         setStatus("Success")
-        
+
         await refreshData()
-        
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)
@@ -271,8 +251,7 @@ export default function Mint({
             disabled
             type="text"
             value={
-              mintValue &&
-              new Decimal(mintValue).div(ptRatio).toFixed(coinConfig?.decimal)
+              mintValue && new Decimal(mintValue).div(ptRatio).toFixed(decimal)
             }
             className="bg-transparent h-full outline-none grow text-right min-w-0"
           />
@@ -300,8 +279,7 @@ export default function Mint({
           disabled
           type="text"
           value={
-            mintValue &&
-            new Decimal(mintValue).div(ytRatio).toFixed(coinConfig?.decimal)
+            mintValue && new Decimal(mintValue).div(ytRatio).toFixed(decimal)
           }
           className="bg-transparent h-full outline-none grow text-right min-w-0"
         />

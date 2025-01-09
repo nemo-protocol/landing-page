@@ -1,9 +1,12 @@
 import Decimal from "decimal.js"
 import { useCoinConfig } from "@/queries"
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import PoolSelect from "@/components/PoolSelect"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import useQueryButton, { QUERY_CONFIGS, QueryInputMap } from "@/hooks/useQueryButton"
+import useQueryButton, {
+  QUERY_CONFIGS,
+  QueryInputMap,
+} from "@/hooks/useQueryButton"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "@/hooks/types"
 import { ContractError } from "@/hooks/types"
@@ -52,16 +55,17 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
 
   const isLoading = status === "pending"
 
+  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
+
   const formatAmount = useCallback(
     (rawAmount: string, operation: "div" | "mul" = "div") => {
-      if (!coinConfig?.decimal) return "0"
       if (operation === "div") {
-        return new Decimal(rawAmount).div(10 ** coinConfig.decimal).toString()
+        return new Decimal(rawAmount).div(10 ** decimal).toString()
       } else {
-        return new Decimal(rawAmount).mul(10 ** coinConfig.decimal).toString()
+        return new Decimal(rawAmount).mul(10 ** decimal).toString()
       }
     },
-    [coinConfig?.decimal],
+    [decimal],
   )
 
   const handleQuery = async (amount: string) => {
@@ -71,13 +75,16 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
     let input: QueryInputMap[T]
     if (config.target === "get_lp_out_from_mint_lp") {
       input = { ptValue: amount, syValue: amount } as QueryInputMap[T]
-    } else if (config.target === "get_price_voucher" || 
-               config.target === "get_lp_market_position" ||
-               config.target === "get_py_position") {
+    } else if (
+      config.target === "get_price_voucher" ||
+      config.target === "get_lp_market_position" ||
+      config.target === "get_py_position"
+    ) {
       input = undefined as QueryInputMap[T]
     } else if (config.target === "get_object") {
       input = {
-        objectId: "0xee465d6ebb7459e81555e6e09917f9821d23c836030a7be0282cd90cf1bf854c",
+        objectId:
+          "0xee465d6ebb7459e81555e6e09917f9821d23c836030a7be0282cd90cf1bf854c",
         options: {
           showContent: true,
           showDisplay: true,
@@ -116,7 +123,10 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
             result: {
               output: null,
               rawOutput: null,
-              coinName: config.target === "get_object" ? undefined : coinConfig?.coinName,
+              coinName:
+                config.target === "get_object"
+                  ? undefined
+                  : coinConfig?.coinName,
               error:
                 error instanceof ContractError ? error.message : String(error),
               debugInfo:
@@ -138,7 +148,10 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
             result: {
               output: formattedOutput,
               rawOutput: JSON.stringify(output),
-              coinName: config.target === "get_object" ? undefined : coinConfig?.coinName,
+              coinName:
+                config.target === "get_object"
+                  ? undefined
+                  : coinConfig?.coinName,
               debugInfo: debugInfo as DebugInfo,
             },
           }
@@ -149,15 +162,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
         }
       }
     }
-  }, [
-    error,
-    data,
-    coinConfig,
-    calls,
-    config.target,
-    formatAmount,
-    onQuery,
-  ])
+  }, [error, data, coinConfig, calls, config.target, formatAmount, onQuery])
 
   return (
     <div className="bg-[#12121B] rounded-xl p-4 border border-white/[0.07]">
@@ -186,9 +191,9 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
 
         {isExpanded && (
           <div className="grid grid-cols-2 gap-3">
-            {config.target === "get_price_voucher" || 
-              config.target === "get_lp_market_position" ||
-              config.target === "get_py_position" ? (
+            {config.target === "get_price_voucher" ||
+            config.target === "get_lp_market_position" ||
+            config.target === "get_py_position" ? (
               <button
                 className="flex items-center justify-center h-10 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] rounded-xl disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm col-span-2"
                 onClick={() => handleQuery("0")}
@@ -223,7 +228,9 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
                     onChange={(e) => setCustomAmount(e.target.value)}
                     className="w-20 px-3 bg-transparent text-white/90 text-sm focus:outline-none disabled:opacity-50"
                     placeholder={
-                      config.target === "get_lp_out_from_mint_lp" ? "1:1" : "Amount"
+                      config.target === "get_lp_out_from_mint_lp"
+                        ? "1:1"
+                        : "Amount"
                     }
                     disabled={!coinConfig || !address}
                   />
@@ -294,8 +301,8 @@ export default function Test() {
       key === "GET_OBJECT"
         ? "0xee465d6ebb7459e81555e6e09917f9821d23c836030a7be0282cd90cf1bf854c"
         : customAmounts[key] === undefined
-        ? "0.002"
-        : customAmounts[key],
+          ? "0.002"
+          : customAmounts[key],
     setCustomAmount: (value: string) =>
       setCustomAmounts((prev) => ({ ...prev, [key]: value })),
     isExpanded: expandedSections[key] || false,
@@ -613,7 +620,9 @@ export default function Test() {
 
                     {/* Result */}
                     <div>
-                      <div className="text-white/90 font-medium mb-2">Result</div>
+                      <div className="text-white/90 font-medium mb-2">
+                        Result
+                      </div>
                       {call.result ? (
                         <div className="text-white/80 space-y-2 animate-fade-in">
                           {call.result.error ? (
@@ -623,7 +632,9 @@ export default function Test() {
                           ) : (
                             <div className="animate-fade-in space-y-2">
                               <div className="flex flex-col">
-                                <span className="text-white/60 mb-2">Output:</span>
+                                <span className="text-white/60 mb-2">
+                                  Output:
+                                </span>
                                 <pre className="font-mono text-xs bg-black/30 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all max-h-[400px] overflow-y-auto">
                                   {call.result.output}
                                 </pre>

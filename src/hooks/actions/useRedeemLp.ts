@@ -4,16 +4,15 @@ import { useWallet } from "@nemoprotocol/wallet-kit"
 import Decimal from "decimal.js"
 import { useMutation } from "@tanstack/react-query"
 import { DEBUG } from "@/config"
-import { 
-  initPyPosition, 
-  mergeLpPositions, 
-  burnLp, 
+import {
+  initPyPosition,
+  mergeLpPositions,
+  burnLp,
   redeemSyCoin,
   getPriceVoucher,
-  swapExactPtForSy 
+  swapExactPtForSy,
 } from "@/lib/txHelper"
 import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
-import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
 import { CoinConfig } from "@/queries/types/market"
 import { LPMarketPosition, PyPosition } from "@/hooks/types"
 import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
@@ -30,14 +29,26 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
   const address = account?.address
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
-  const { mutateAsync: querySyOutFromPtIn } = useQuerySyOutFromPtInWithVoucher(coinConfig)
-  const { mutateAsync: swapExactSyForPtDryRun } = useSwapExactSyForPtDryRun(coinConfig)
+  const { mutateAsync: swapExactSyForPtDryRun } =
+    useSwapExactSyForPtDryRun(coinConfig)
 
   const redeemLp = useCallback(
-    async ({ lpAmount, coinConfig, lpMarketPositionData, pyPositionData = [] }: RedeemLpParams) => {
-      if (!address || !coinConfig?.coinType || !lpAmount || !lpMarketPositionData?.length) {
+    async ({
+      lpAmount,
+      coinConfig,
+      lpMarketPositionData,
+      pyPositionData = [],
+    }: RedeemLpParams) => {
+      if (
+        !address ||
+        !coinConfig?.coinType ||
+        !lpAmount ||
+        !lpMarketPositionData?.length
+      ) {
         throw new Error("Invalid parameters for redeeming LP")
       }
+
+      const decimal = Number(coinConfig?.decimal)
 
       // First check if we can swap PT
       const [{ ptAmount }] = await burnLpDryRun(lpAmount)
@@ -50,7 +61,7 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
             swapAmount: ptAmount,
             coinData: [],
             coinType: coinConfig.coinType,
-            minPtOut: "0"
+            minPtOut: "0",
           })
           canSwapPt = true
         } catch (error) {
@@ -75,7 +86,7 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
         coinConfig,
         lpMarketPositionData,
         lpAmount,
-        coinConfig.decimal
+        decimal,
       )
 
       const syCoin = burnLp(
@@ -84,7 +95,7 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
         lpAmount,
         pyPosition,
         mergedPositionId,
-        coinConfig.decimal
+        decimal,
       )
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
@@ -96,9 +107,9 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
         const swappedSyCoin = swapExactPtForSy(
           tx,
           coinConfig,
-          new Decimal(ptAmount).div(10 ** coinConfig.decimal).toString(),
+          new Decimal(ptAmount).div(10 ** decimal).toString(),
           pyPosition,
-          priceVoucher
+          priceVoucher,
         )
 
         const swappedYieldToken = redeemSyCoin(tx, coinConfig, swappedSyCoin)
@@ -115,7 +126,7 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
 
       return { digest }
     },
-    [address, burnLpDryRun, querySyOutFromPtIn, signAndExecuteTransaction, swapExactSyForPtDryRun]
+    [address, burnLpDryRun, signAndExecuteTransaction, swapExactSyForPtDryRun],
   )
 
   return useMutation({
@@ -124,6 +135,6 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
       if (DEBUG) {
         console.log("Redeem LP error:", error)
       }
-    }
+    },
   })
-} 
+}

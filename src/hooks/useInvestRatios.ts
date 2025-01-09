@@ -12,7 +12,7 @@ export function useInvestRatios(coinConfig?: CoinConfig) {
   return useQuery({
     queryKey: ["investRatio", coinConfig?.marketStateId],
     queryFn: async () => {
-      const decimal = coinConfig!.decimal
+      const decimal = Number(coinConfig?.decimal)
 
       const calculateRatio = async (
         power = lastPowerRef.current,

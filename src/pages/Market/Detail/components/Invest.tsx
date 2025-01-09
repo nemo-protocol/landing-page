@@ -65,15 +65,11 @@ export default function Invest() {
   const { address } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { 
-    data: coinConfig, 
+  const {
+    data: coinConfig,
     isLoading: isConfigLoading,
-    refetch: refetchCoinConfig 
-  } = useCoinConfig(
-    coinType,
-    maturity,
-    address,
-  )
+    refetch: refetchCoinConfig,
+  } = useCoinConfig(coinType, maturity, address)
 
   const coinName = useMemo(
     () =>
@@ -89,11 +85,14 @@ export default function Invest() {
 
   const price = useMemo(
     () =>
-      tokenType === 0 ? coinConfig?.underlyingPrice : coinConfig?.coinPrice,
+      (tokenType === 0
+        ? coinConfig?.underlyingPrice
+        : coinConfig?.coinPrice
+      )?.toString(),
     [tokenType, coinConfig],
   )
 
-  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
+  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
   const {
     refetch,
@@ -110,15 +109,13 @@ export default function Invest() {
   )
   const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
 
-  const { 
-    data: pyPositionData,
-    refetch: refetchPyPosition 
-  } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig?.pyStateId,
+      coinConfig?.maturity,
+      coinConfig?.pyPositionTypeList,
+    )
 
   const { isLoading } = useLoadingState(
     swapValue,
@@ -129,10 +126,10 @@ export default function Invest() {
     isRatioFetching || isConfigLoading,
   )
 
-  const { 
-    data: coinData, 
+  const {
+    data: coinData,
     isLoading: isBalanceLoading,
-    refetch: refetchCoinData 
+    refetch: refetchCoinData,
   } = useCoinData(
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
@@ -163,7 +160,7 @@ export default function Invest() {
           setError(undefined)
           const swapAmount = new Decimal(swapValue)
             .div(tokenType === 0 ? conversionRate : 1)
-            .mul(10 ** coinConfig.decimal)
+            .mul(10 ** decimal)
             .toFixed(0)
           const [ptOut] = await queryPtOut(swapAmount)
           setPtOutAmount(ptOut)
@@ -184,7 +181,7 @@ export default function Invest() {
     await Promise.all([
       refetchCoinConfig(),
       refetchPyPosition(),
-      refetchCoinData()
+      refetchCoinData(),
     ])
   }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
@@ -202,9 +199,7 @@ export default function Invest() {
       try {
         setIsSwapping(true)
         const tx = new Transaction()
-        const swapAmount = new Decimal(swapValue)
-          .mul(10 ** coinConfig.decimal)
-          .toFixed(0)
+        const swapAmount = new Decimal(swapValue).mul(10 ** decimal).toFixed(0)
 
         const [splitCoin] =
           tokenType === 0
@@ -285,9 +280,8 @@ export default function Invest() {
         setStatus("Success")
         setOpen(true)
         setSwapValue("")
-        
+
         await refreshData()
-        
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)

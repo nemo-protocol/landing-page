@@ -92,7 +92,7 @@ export default function useQuerySyOutFromYtInWithVoucher(
       )
 
       const formattedAmount = new Decimal(outputAmount.toString())
-        .div(10 ** coinConfig.decimal)
+        .div(10 ** Number(coinConfig.decimal))
         .toFixed()
 
       debugInfo.parsedOutput = formattedAmount

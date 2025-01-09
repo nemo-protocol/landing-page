@@ -35,19 +35,19 @@ export default function Redeem({
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { 
-    data: coinConfig,
-    refetch: refetchCoinConfig 
-  } = useCoinConfig(coinType, maturity)
-  const { 
-    data: pyPositionData,
-    refetch: refetchPyPosition 
-  } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
+  const { data: coinConfig, refetch: refetchCoinConfig } = useCoinConfig(
+    coinType,
+    maturity,
   )
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig?.pyStateId,
+      coinConfig?.maturity,
+      coinConfig?.pyPositionTypeList,
+    )
+
+  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
   const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
   const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
@@ -57,21 +57,21 @@ export default function Redeem({
     if (pyPositionData?.length) {
       return pyPositionData
         .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
-        .toFixed(coinConfig?.decimal ?? 0)
+        .div(10 ** decimal)
+        .toFixed(decimal)
     }
-    return 0
-  }, [pyPositionData, coinConfig])
+    return "0"
+  }, [pyPositionData, decimal])
 
   const ytBalance = useMemo(() => {
     if (pyPositionData?.length) {
       return pyPositionData
         .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
-        .toFixed(coinConfig?.decimal ?? 0)
+        .div(10 ** decimal)
+        .toFixed(decimal)
     }
-    return 0
-  }, [pyPositionData, coinConfig])
+    return "0"
+  }, [pyPositionData, decimal])
 
   const insufficientBalance = useMemo(() => {
     return (
@@ -81,10 +81,7 @@ export default function Redeem({
   }, [ptBalance, ytBalance, ptRedeemValue, ytRedeemValue])
 
   const refreshData = useCallback(async () => {
-    await Promise.all([
-      refetchCoinConfig(),
-      refetchPyPosition()
-    ])
+    await Promise.all([refetchCoinConfig(), refetchPyPosition()])
   }, [refetchCoinConfig, refetchPyPosition])
 
   async function redeem() {
@@ -136,9 +133,8 @@ export default function Redeem({
         setPTRedeemValue("")
         setYTRedeemValue("")
         setStatus("Success")
-        
+
         await refreshData()
-        
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)
@@ -208,9 +204,7 @@ export default function Redeem({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setPTRedeemValue(
-                new Decimal(ptBalance).div(2).toFixed(coinConfig?.decimal),
-              )
+              setPTRedeemValue(new Decimal(ptBalance).div(2).toFixed(decimal))
             }
           >
             Half
@@ -219,9 +213,7 @@ export default function Redeem({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setPTRedeemValue(
-                new Decimal(ptBalance).toFixed(coinConfig?.decimal),
-              )
+              setPTRedeemValue(new Decimal(ptBalance).toFixed(decimal))
             }
           >
             Max
@@ -272,9 +264,7 @@ export default function Redeem({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setYTRedeemValue(
-                new Decimal(ytBalance).div(2).toFixed(coinConfig?.decimal),
-              )
+              setYTRedeemValue(new Decimal(ytBalance).div(2).toFixed(decimal))
             }
           >
             Half
@@ -283,9 +273,7 @@ export default function Redeem({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setYTRedeemValue(
-                new Decimal(ytBalance).toFixed(coinConfig?.decimal),
-              )
+              setYTRedeemValue(new Decimal(ytBalance).toFixed(decimal))
             }
           >
             Max

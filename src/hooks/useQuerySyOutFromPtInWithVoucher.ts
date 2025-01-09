@@ -92,7 +92,7 @@ export default function useQuerySyOutFromPtInWithVoucher(
       )
 
       const formattedAmount = new Decimal(outputAmount.toString()).toFixed(
-        coinConfig.decimal,
+        Number(coinConfig.decimal),
       )
 
       debugInfo.parsedOutput = formattedAmount

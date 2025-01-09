@@ -41,7 +41,7 @@ export function useAddLiquidityRatio(coinConfig?: CoinConfig) {
         options: { showContent: true },
       })
       const priceVoucher = await priceVoucherFun()
-      const decimal = coinConfig.decimal
+      const decimal = Number(coinConfig.decimal)
       const calculateRatio = async (
         power = lastPowerRef.current,
       ): Promise<{ ratio: string; conversionRate: string }> => {

@@ -34,7 +34,7 @@ export default function PoolSelect({
 
   const selectedPool = useMemo(() => {
     return list?.find(
-      (item) => item.coinAddress === coinType && item.maturity === maturity,
+      (item) => item.coinType === coinType && item.maturity === maturity,
     )
   }, [list, coinType, maturity])
 
@@ -83,8 +83,8 @@ export default function PoolSelect({
             .map((item, index) => (
               <SelectItem
                 className="flex items-center justify-between hover:bg-[#0E0F16] cursor-pointer py-4 rounded-md"
-                key={item.coinAddress + "-" + item.maturity + index}
-                value={item.coinAddress + "-" + item.maturity}
+                key={item.coinType + "-" + item.maturity + index}
+                value={item.coinType + "-" + item.maturity}
               >
                 <div className="flex items-center gap-x-3">
                   <img

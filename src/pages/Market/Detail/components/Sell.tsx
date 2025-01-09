@@ -73,6 +73,8 @@ export default function Sell() {
       coinConfig?.pyPositionTypeList,
     )
 
+  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
+
   const { mutateAsync: querySyOutFromYt } =
     useQuerySyOutFromYtInWithVoucher(coinConfig)
   const { mutateAsync: querySyOutFromPt } =
@@ -109,31 +111,31 @@ export default function Sell() {
   )
 
   useEffect(() => {
-    const cancelFn = debouncedGetSyOut(redeemValue, coinConfig?.decimal ?? 0)
+    const cancelFn = debouncedGetSyOut(redeemValue, decimal)
     return () => {
       cancelFn()
     }
-  }, [redeemValue, coinConfig?.decimal, debouncedGetSyOut])
+  }, [redeemValue, decimal, debouncedGetSyOut])
 
   const ptBalance = useMemo(() => {
     if (pyPositionData?.length) {
       return pyPositionData
         .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
-        .toFixed(coinConfig?.decimal ?? 0)
+        .div(10 ** decimal)
+        .toFixed(decimal)
     }
     return "0"
-  }, [pyPositionData, coinConfig])
+  }, [pyPositionData, decimal])
 
   const ytBalance = useMemo(() => {
     if (pyPositionData?.length) {
       return pyPositionData
         .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
-        .toFixed(coinConfig?.decimal ?? 0)
+        .div(10 ** decimal)
+        .toFixed(decimal)
     }
     return "0"
-  }, [pyPositionData, coinConfig])
+  }, [pyPositionData, decimal])
 
   const insufficientBalance = useMemo(
     () =>
@@ -225,11 +227,9 @@ export default function Sell() {
   )
 
   const price = useMemo(
-    () => (tokenType === "pt" ? coinConfig?.ptPrice : coinConfig?.ytPrice),
+    () => (tokenType === "pt" ? coinConfig?.ptPrice : coinConfig?.ytPrice)?.toString(),
     [tokenType, coinConfig],
   )
-
-  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
 
   const { isLoading } = useLoadingState(
     redeemValue,

@@ -511,7 +511,7 @@ export default function Item({
               $
               {formatDecimalValue(
                 new Decimal(ytBalance).mul(coinConfig?.ytPrice),
-                coinConfig?.decimal,
+                Number(coinConfig?.decimal),
               )}
             </span>
           </TableCell>
@@ -528,7 +528,7 @@ export default function Item({
                         new Decimal(ytReward || 0).mul(
                           coinConfig?.underlyingPrice || 0,
                         ),
-                        coinConfig?.decimal,
+                        Number(coinConfig?.decimal),
                       )}`
                     : "$0"}
                 </span>

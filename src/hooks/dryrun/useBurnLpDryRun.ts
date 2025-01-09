@@ -58,17 +58,19 @@ export default function useBurnLpDryRun(
         pyPosition = tx.object(pyPositions[0].id.id)
       }
 
+      const decimal = Number(effectiveConfig?.decimal)
+
       // Merge LP positions
       const mergedPosition = mergeLpPositions(
         tx,
         effectiveConfig,
         marketPositions,
         lpValue,
-        effectiveConfig.decimal,
+        decimal,
       )
 
       const lpAmount = new Decimal(lpValue)
-        .mul(10 ** effectiveConfig.decimal)
+        .mul(10 ** decimal)
         .toFixed()
 
       console.log("mergedPosition", mergedPosition)

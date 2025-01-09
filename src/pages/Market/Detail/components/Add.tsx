@@ -68,20 +68,25 @@ export default function SingleCoin() {
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: coinConfig, isLoading: isConfigLoading, refetch: refetchCoinConfig } = useCoinConfig(
-    coinType,
-    maturity,
-    address,
-  )
+  const {
+    data: coinConfig,
+    isLoading: isConfigLoading,
+    refetch: refetchCoinConfig,
+  } = useCoinConfig(coinType, maturity, address)
 
-  const { data: pyPositionData, refetch: refetchPyPosition } = usePyPositionData(
-    address,
-    coinConfig?.pyStateId,
-    coinConfig?.maturity,
-    coinConfig?.pyPositionTypeList,
-  )
+  const { data: pyPositionData, refetch: refetchPyPosition } =
+    usePyPositionData(
+      address,
+      coinConfig?.pyStateId,
+      coinConfig?.maturity,
+      coinConfig?.pyPositionTypeList,
+    )
 
-  const { data: coinData, isLoading: isBalanceLoading, refetch: refetchCoinData } = useCoinData(
+  const {
+    data: coinData,
+    isLoading: isBalanceLoading,
+    refetch: refetchCoinData,
+  } = useCoinData(
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
@@ -102,11 +107,14 @@ export default function SingleCoin() {
 
   const price = useMemo(
     () =>
-      tokenType === 0 ? coinConfig?.underlyingPrice : coinConfig?.coinPrice,
+      (tokenType === 0
+        ? coinConfig?.underlyingPrice
+        : coinConfig?.coinPrice
+      )?.toString(),
     [tokenType, coinConfig],
   )
 
-  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
+  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
   const { mutateAsync: calculateLpOut, isPending: isLpAmountOutLoading } =
     useCalculateLpOut(coinConfig)
@@ -118,11 +126,11 @@ export default function SingleCoin() {
     if (coinData?.length) {
       return coinData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
+        .div(10 ** decimal)
         .toFixed(9)
     }
     return "0"
-  }, [coinData, coinConfig])
+  }, [coinData, decimal])
 
   const insufficientBalance = useMemo(
     () => new Decimal(coinBalance).lt(new Decimal(addValue || 0)),
@@ -305,7 +313,12 @@ export default function SingleCoin() {
 
     const yieldToken = redeemSyCoin(tx, coinConfig, remainingSyCoin)
     const [lpPositions] = await fetchLpPositions()
-    const mergedPosition = mergeAllLpPositions(tx, coinConfig, lpPositions, marketPosition)
+    const mergedPosition = mergeAllLpPositions(
+      tx,
+      coinConfig,
+      lpPositions,
+      marketPosition,
+    )
     tx.transferObjects([yieldToken, mergedPosition], address)
   }
 
@@ -411,7 +424,7 @@ export default function SingleCoin() {
     await Promise.all([
       refetchCoinConfig(),
       refetchPyPosition(),
-      refetchCoinData()
+      refetchCoinData(),
     ])
   }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
@@ -431,7 +444,7 @@ export default function SingleCoin() {
         setIsAdding(true)
         const addAmount = new Decimal(addValue)
           .div(tokenType === 0 ? conversionRate : 1)
-          .mul(10 ** coinConfig.decimal)
+          .mul(10 ** decimal)
           .toFixed(0)
 
         const tx = new Transaction()
@@ -501,9 +514,8 @@ export default function SingleCoin() {
         setTxId(res.digest)
         setAddValue("")
         setStatus("Success")
-        
+
         await refreshData()
-        
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)

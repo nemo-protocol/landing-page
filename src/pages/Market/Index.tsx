@@ -62,7 +62,7 @@ export default function Home() {
           >
             {list?.map((item) => (
               <div
-                key={item.coinAddress + "_" + item.maturity}
+                key={item.coinType + "_" + item.maturity}
                 className="border border-white/10 rounded-3xl"
               >
                 <motion.div
@@ -123,7 +123,7 @@ export default function Home() {
                         className="px-2 py-1.5 bg-[#0F60FF] rounded-xl flex items-center justify-between pl-5 pr-3 h-14 cursor-pointer border border-transparent hover:border-white"
                         onClick={() =>
                           navigate(
-                            `/market/detail/${item.coinAddress}/${item.maturity}/swap/yt`,
+                            `/market/detail/${item.coinType}/${item.maturity}/swap/yt`,
                           )
                         }
                       >
@@ -141,7 +141,7 @@ export default function Home() {
                         className="px-4 py-3 bg-[#2DF5DD] rounded-xl flex items-center justify-between text-black pl-5 pr-3 h-14 cursor-pointer border border-transparent hover:border-white"
                         onClick={() =>
                           navigate(
-                            `/market/detail/${item.coinAddress}/${item.maturity}/swap/pt`,
+                            `/market/detail/${item.coinType}/${item.maturity}/swap/pt`,
                           )
                         }
                       >
@@ -163,7 +163,7 @@ export default function Home() {
                       className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer border border-transparent hover:border-white"
                       onClick={() =>
                         navigate(
-                          `/market/detail/${item.coinAddress}/${item.maturity}/add`,
+                          `/market/detail/${item.coinType}/${item.maturity}/add`,
                         )
                       }
                     >

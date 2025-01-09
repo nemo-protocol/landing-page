@@ -45,7 +45,7 @@ export default function Remove() {
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
 
-  const decimal = useMemo(() => coinConfig?.decimal, [coinConfig])
+  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
 
@@ -71,11 +71,11 @@ export default function Remove() {
     if (lppMarketPositionData?.length) {
       return lppMarketPositionData
         .reduce((total, item) => total.add(item.lp_amount), new Decimal(0))
-        .div(10 ** (coinConfig?.decimal ?? 0))
+        .div(10 ** decimal)
         .toFixed(9)
     }
     return "0"
-  }, [coinConfig?.decimal, lppMarketPositionData])
+  }, [decimal, lppMarketPositionData])
 
   const insufficientBalance = useMemo(
     () => new Decimal(lpCoinBalance).lt(new Decimal(lpValue || 0)),
@@ -210,7 +210,7 @@ export default function Remove() {
             warning={warning}
             amount={lpValue}
             price={coinConfig?.lpPrice}
-            decimal={coinConfig?.decimal}
+            decimal={decimal}
             coinName={`LP ${coinConfig?.coinName}`}
             coinLogo={coinConfig?.coinLogo}
             isLoading={isLoading}
