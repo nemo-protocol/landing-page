@@ -85,7 +85,7 @@ export default function Redeem({
     await Promise.all([refetchCoinConfig(), refetchPyPosition()])
   }, [refetchCoinConfig, refetchPyPosition])
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+  const { data: ptYtData, refetch: refetchPtYtData } = useCalculatePtYt(coinConfig)
 
   async function redeem() {
     if (
@@ -137,7 +137,10 @@ export default function Redeem({
         setYTRedeemValue("")
         setStatus("Success")
 
-        await refreshData()
+        await Promise.all([
+          refreshData(),
+          refetchPtYtData()
+        ])
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)

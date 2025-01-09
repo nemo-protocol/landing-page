@@ -48,11 +48,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
               <span className="text-xs">{item.provider}</span>
             </div>
           </div>
-          <img
-            src={item.coinLogo}
-            alt={item.coinName}
-            className="size-14"
-          />
+          <img src={item.coinLogo} alt={item.coinName} className="size-14" />
         </div>
         <div className="mt-6 space-y-2">
           <div className="flex items-center justify-between">
@@ -109,9 +105,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
             >
               <span className="text-sm">PT</span>
               <div className="flex flex-col items-end">
-                <span className="text-base">
-                  {ptYtData?.ptApy || "0.00"}%
-                </span>
+                <span className="text-base">{ptYtData?.ptApy || "0.00"}%</span>
                 <span className="text-xs">
                   ${ptYtData?.ptPrice?.toFixed(2) || "0.00"}
                 </span>
@@ -124,9 +118,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
           <button
             className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer border border-transparent hover:border-white"
             onClick={() =>
-              navigate(
-                `/market/detail/${item.coinType}/${item.maturity}/add`,
-              )
+              navigate(`/market/detail/${item.coinType}/${item.maturity}/add`)
             }
           >
             <span>+ POOL APY</span>
@@ -188,9 +180,9 @@ export default function Home() {
             transition={{ duration: 0.2 }}
           >
             {list?.map((item) => (
-              <MarketItem 
-                key={item.coinType + "_" + item.maturity} 
-                item={item} 
+              <MarketItem
+                key={item.coinType + "_" + item.maturity}
+                item={item}
                 navigate={navigate}
               />
             ))}
