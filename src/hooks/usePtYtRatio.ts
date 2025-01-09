@@ -14,7 +14,7 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
         throw new Error("Please select a pool")
       }
       const [, ptOut] = await priceVoucherFun()
-      const ptPrice = new Decimal(coinInfo.underlyingPrice).mul(1000).div(ptOut)
+      const ptPrice = new Decimal(coinInfo.underlyingPrice).mul(1000000).div(ptOut)
       const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
       const suiPrice = new Decimal(coinInfo.underlyingPrice).div(coinInfo.conversionRate)
       console.log("ptPrice", ptPrice.toFixed(10), "suiPrice", suiPrice.toFixed(10))

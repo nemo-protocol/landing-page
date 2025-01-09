@@ -93,7 +93,7 @@ export function useQueryPriceVoucherWithCoinInfo(
       tx.moveCall({
         target: `${coinConfig.nemoContractId}::router::get_pt_out_for_exact_sy_in_with_price_voucher`,
         arguments: [
-          tx.pure.u64(1000),
+          tx.pure.u64(1000000),
           tx.pure.u64("0"),
           priceVoucher,
           tx.object(coinConfig.pyStateId),
