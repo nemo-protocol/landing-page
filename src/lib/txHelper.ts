@@ -656,7 +656,7 @@ export const swapExactPtForSy = (
     arguments: [
       tx.object(coinConfig.version),
       tx.pure.u64(
-        new Decimal(redeemValue).mul(10 ** coinConfig.decimal).toFixed(0),
+        new Decimal(redeemValue).mul(10 ** Number(coinConfig.decimal)).toFixed(0),
       ),
       pyPosition,
       tx.object(coinConfig.pyStateId),
@@ -683,7 +683,7 @@ export const swapExactYtForSy = (
     arguments: [
       tx.object(coinConfig.version),
       tx.pure.u64(
-        new Decimal(redeemValue).mul(10 ** coinConfig.decimal).toFixed(0),
+        new Decimal(redeemValue).mul(10 ** Number(coinConfig.decimal)).toFixed(0),
       ),
       pyPosition,
       tx.object(coinConfig.pyStateId),
@@ -710,8 +710,8 @@ export const redeemPy = (
     target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
     arguments: [
       coinConfig.version,
-      new Decimal(ytRedeemValue).mul(10 ** coinConfig.decimal).toString(),
-      new Decimal(ptRedeemValue).mul(10 ** coinConfig.decimal).toString(),
+      new Decimal(ytRedeemValue).mul(10 ** Number(coinConfig.decimal)).toString(),
+      new Decimal(ptRedeemValue).mul(10 ** Number(coinConfig.decimal)).toString(),
       "priceVoucher",
       "pyPosition",
       coinConfig.pyStateId,
@@ -726,10 +726,10 @@ export const redeemPy = (
     ptRedeemValue,
     decimal: coinConfig.decimal,
     ytAmount: new Decimal(ytRedeemValue)
-      .mul(10 ** coinConfig.decimal)
+      .mul(10 ** Number(coinConfig.decimal))
       .toString(),
     ptAmount: new Decimal(ptRedeemValue)
-      .mul(10 ** coinConfig.decimal)
+      .mul(10 ** Number(coinConfig.decimal))
       .toString(),
   })
 
@@ -738,10 +738,10 @@ export const redeemPy = (
     arguments: [
       tx.object(coinConfig.version),
       tx.pure.u64(
-        new Decimal(ytRedeemValue).mul(10 ** coinConfig.decimal).toString(),
+        new Decimal(ytRedeemValue).mul(10 ** Number(coinConfig.decimal)).toString(),
       ),
       tx.pure.u64(
-        new Decimal(ptRedeemValue).mul(10 ** coinConfig.decimal).toString(),
+        new Decimal(ptRedeemValue).mul(10 ** Number(coinConfig.decimal)).toString(),
       ),
       priceVoucher,
       pyPosition,

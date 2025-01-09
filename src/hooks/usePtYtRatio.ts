@@ -8,14 +8,9 @@ import { useQueryPriceVoucherWithCoinInfo } from "@/hooks/useQueryPriceVoucher.t
 
 export function useCalculatePtYt(coinInfo?: CoinInfo) {
   const { data: marketState } = useMarketStateData(coinInfo?.marketStateId)
-  const { mutateAsync: exchangeRateFun } = useFetchObject(
-    coinInfo?.pyState,
-    false,
-  )
-  const { mutateAsync: priceVoucherFun } = useQueryPriceVoucherWithCoinInfo(
-    coinInfo,
-    false,
-  )
+  const { mutateAsync: exchangeRateFun } = useFetchObject(coinInfo?.pyState)
+  const { mutateAsync: priceVoucherFun } =
+    useQueryPriceVoucherWithCoinInfo(coinInfo)
 
   return useQuery({
     queryKey: ["useCalculatePtYt", coinInfo?.marketStateId],
@@ -38,48 +33,78 @@ export function useCalculatePtYt(coinInfo?: CoinInfo) {
         Number(parsedData?.content?.fields?.py_index_stored?.fields?.value),
         Number(priceVoucher.toString()),
       )
-      const ptPrice = new Decimal(coinInfo.underlyingPrice).mul(1000).div(ptOut);
-      const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice);
-      const daysToExpiry = new Decimal(Number(coinInfo.maturity) - Date.now() / 1000).div(86400).toNumber();
-      const ptApy = calculatePtAPY(coinInfo.underlyingPrice, Number(ptPrice), daysToExpiry);
-      const yearsToExpiry = new Decimal(Number(coinInfo.maturity) - Date.now() / 1000).div(31536000).toNumber();
-      const ytApy = calcuateYtAPY(coinInfo.underlyingApy, Number(ytPrice), yearsToExpiry);
-      return {ptPrice, ytPrice, ptApy, ytApy }
+      const ptPrice = new Decimal(coinInfo.underlyingPrice).mul(1000).div(ptOut)
+      const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
+      const daysToExpiry = new Decimal(
+        Number(coinInfo.maturity) - Date.now() / 1000,
+      )
+        .div(86400)
+        .toNumber()
+      const ptApy = calculatePtAPY(
+        Number(coinInfo.underlyingPrice),
+        Number(ptPrice),
+        daysToExpiry,
+      )
+      const yearsToExpiry = new Decimal(
+        Number(coinInfo.maturity) - Date.now() / 1000,
+      )
+        .div(31536000)
+        .toNumber()
+      const ytApy = calculateYtAPY(
+        Number(coinInfo.underlyingApy),
+        Number(ytPrice),
+        yearsToExpiry,
+      )
+      return { ptPrice, ytPrice, ptApy, ytApy }
     },
     enabled: !!coinInfo?.decimal && !!coinInfo?.marketStateId,
     refetchInterval: 20000,
   })
 }
 
-function calculatePtAPY(suiPrice: number, ptPrice: number, daysToExpiry: number): string {
-    if (daysToExpiry <= 0) {
-        return "0";
-    }
+function calculatePtAPY(
+  underlyingPrice: number,
+  ptPrice: number,
+  daysToExpiry: number,
+): string {
+  if (daysToExpiry <= 0) {
+    return "0"
+  }
 
-    const ratio = new Decimal(suiPrice).div(ptPrice);
-    const exponent = new Decimal(365).div(daysToExpiry);
-    const apy = ratio.pow(exponent).minus(1);
+  const ratio = new Decimal(underlyingPrice).div(ptPrice)
+  const exponent = new Decimal(365).div(daysToExpiry)
+  const apy = ratio.pow(exponent).minus(1)
 
-    return apy.mul(100).toFixed(2);
+  return apy.mul(100).toFixed(2)
 }
 
-function calcuateYtAPY(underlyingInterestApy: number, ytPrice: number, yearsToExpiry: number): string {
-    if (yearsToExpiry <= 0) {
-        return "0";
-    }
-    const underlyingInterestApyDecimal = new Decimal(underlyingInterestApy);
-    const ytPriceDecimal = new Decimal(ytPrice);
-    const yearsToExpiryDecimal = new Decimal(yearsToExpiry);
+function calculateYtAPY(
+  underlyingInterestApy: number,
+  ytPrice: number,
+  yearsToExpiry: number,
+): string {
+  if (yearsToExpiry <= 0) {
+    return "0"
+  }
+  const underlyingInterestApyDecimal = new Decimal(underlyingInterestApy)
+  const ytPriceDecimal = new Decimal(ytPrice)
+  const yearsToExpiryDecimal = new Decimal(yearsToExpiry)
 
-    const interestReturns = underlyingInterestApyDecimal.plus(1).pow(yearsToExpiryDecimal).minus(1);
+  const interestReturns = underlyingInterestApyDecimal
+    .plus(1)
+    .pow(yearsToExpiryDecimal)
+    .minus(1)
 
-    const rewardsReturns = new Decimal(0);
+  const rewardsReturns = new Decimal(0)
 
-    const ytReturns = interestReturns.plus(rewardsReturns);
+  const ytReturns = interestReturns.plus(rewardsReturns)
 
-    const ytReturnsAfterFee = ytReturns.mul(0.97);
+  const ytReturnsAfterFee = ytReturns.mul(0.97)
 
-    const longYieldApy = ytReturnsAfterFee.div(ytPriceDecimal).pow(new Decimal(1).div(yearsToExpiryDecimal)).minus(1);
+  const longYieldApy = ytReturnsAfterFee
+    .div(ytPriceDecimal)
+    .pow(new Decimal(1).div(yearsToExpiryDecimal))
+    .minus(1)
 
-    return longYieldApy.mul(100).toFixed(2);
+  return longYieldApy.mul(100).toFixed(2)
 }
