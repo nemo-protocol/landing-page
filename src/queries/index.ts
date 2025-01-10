@@ -6,8 +6,11 @@ import {
   FixedReturnItem,
   PortfolioItem,
   PointItem,
+  CoinInfoWithMetrics,
 } from "./types/market"
 import { handleInfinityValues } from "../lib/utils"
+import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
+import useFetchMultiMarketState from "@/hooks/fetch/useFetchMultiMarketState"
 
 interface CoinInfoListParams {
   name?: string
@@ -211,9 +214,79 @@ export function usePortfolioList() {
 
 export function useCoinInfoList(params: CoinInfoListParams = {}) {
   const { name = "", address = "", isShowExpiry = 0 } = params
+  const { mutateAsync: calculateMetrics } = useCalculatePoolMetrics()
+  const { mutateAsync: fetchMarketStates } = useFetchMultiMarketState()
+
   return useQuery({
     queryKey: ["coinInfoList", name, address, isShowExpiry],
-    queryFn: () => getCoinInfoList({ name, address, isShowExpiry }),
+    queryFn: async () => {
+      const coinList = (await getCoinInfoList(params).catch(() => []))
+      if (!coinList.length) return []
+
+      const marketStateIds = [...new Set(coinList.map((coin) => coin.marketStateId))]
+      const marketStates = await fetchMarketStates(marketStateIds).catch(() => [])
+
+      const marketStatesMap = new Map(
+        marketStates.map((state, index) => {
+          if (!state.lpSupply || !state.totalSy || !state.totalPt) {
+            return [marketStateIds[index], {
+              lpSupply: "--",
+              totalSy: "--",
+              totalPt: "--"
+            }]
+          }
+          return [marketStateIds[index], state]
+        })
+      )
+
+      const results = await Promise.all(
+        coinList.map(async (coinInfo) => {
+          const marketState = marketStatesMap.get(coinInfo.marketStateId)
+          if (!marketState || marketState.lpSupply === "--")
+            return {
+              ...coinInfo,
+              ptPrice: "--",
+              ytPrice: "--",
+              ptApy: "--",
+              ytApy: "--",
+              tvl: "--",
+              poolApy: "--",
+              ptTvl: "--",
+              syTvl: "--",
+            }
+
+          try {
+            const metrics = await calculateMetrics({
+              coinInfo,
+              marketState: {
+                lpSupply: marketState.lpSupply,
+                totalPt: marketState.totalPt,
+                totalSy: marketState.totalSy,
+              },
+            })
+
+            return { ...coinInfo, ...metrics, poolApy: metrics.poolApy.toString() }
+          } catch {
+            return {
+              ...coinInfo,
+              ptPrice: "--",
+              ytPrice: "--",
+              ptApy: "--",
+              ytApy: "--",
+              tvl: "--",
+              poolApy: "--",
+              ptTvl: "--",
+              syTvl: "--",
+            }
+          }
+        })
+      )
+
+      return results as CoinInfoWithMetrics[]
+    },
+    staleTime: 10000,
+    gcTime: 30000,
+    retry: 2,
   })
 }
 

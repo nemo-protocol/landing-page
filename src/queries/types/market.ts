@@ -43,6 +43,17 @@ export interface CoinInfo extends BaseCoinInfo {
   bgGradient: string
 }
 
+export interface CoinInfoWithMetrics extends CoinInfo {
+  ptPrice: string
+  ytPrice: string
+  ptApy: string
+  ytApy: string
+  tvl: string
+  poolApy: string
+  ptTvl: string
+  syTvl: string
+}
+
 export interface CoinConfig extends BaseCoinInfo {
   underlyingCoinName: string
   underlyingCoinLogo: string
