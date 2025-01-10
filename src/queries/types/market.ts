@@ -28,7 +28,7 @@ export interface BaseCoinInfo {
   syStateId: string
   conversionRate: number | string
   marketFactoryConfigId: string
-  swapFeeRateForLpHolder: string
+  swapFeeForLpHolder: string
   // /** @deprecated */
   // ptApy: number | string
   // /** @deprecated */

@@ -79,7 +79,7 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
           ptPrice,
           new Decimal(coinInfo.underlyingPrice),
         )
-        const swapFeeForLpHolder = new Decimal(coinInfo.swapFeeRateForLpHolder)
+        const swapFeeForLpHolder = new Decimal(coinInfo.swapFeeForLpHolder)
         const swapFeeRateForLpHolder = swapFeeForLpHolder
           .mul(coinInfo.underlyingPrice)
           .div(poolValue)
