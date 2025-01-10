@@ -153,7 +153,7 @@ export default function Item({
         .div(1e9)
         .toFixed(9)
     }
-    return 0
+    return "0"
   }, [lpMarketPositionData])
 
   const [loading, setLoading] = useState(false)
@@ -387,6 +387,15 @@ export default function Item({
         setLoading(false)
       }
     }
+  }
+
+  // 如果所有余额都为0，则不显示任何内容
+  if (
+    (!ptBalance || ptBalance === "0") &&
+    (!ytBalance || ytBalance === "0") &&
+    (!lpCoinBalance || lpCoinBalance === "0")
+  ) {
+    return null
   }
 
   return (
