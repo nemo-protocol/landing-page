@@ -60,7 +60,7 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
         const swapFeeForLpHolder = new Decimal(coinInfo.swapFeeRateForLpHolder);
         const swapFeeRateForLpHolder = swapFeeForLpHolder.mul(coinInfo.underlyingPrice).div(poolValue);
         const swapFeeApy = (swapFeeRateForLpHolder.add(1)).pow(new Decimal(365).div(daysToExpiry)).minus(1);
-        poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy);
+        poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100));
       }
       console.log("tvl, poolApy",tvl.toFixed(10), poolApy.toFixed(10))
       return { ptPrice, ytPrice, ptApy, ytApy, tvl, poolApy }

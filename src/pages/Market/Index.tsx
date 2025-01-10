@@ -1,5 +1,4 @@
 import dayjs from "dayjs"
-import Decimal from "decimal.js"
 import { motion } from "framer-motion"
 import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
@@ -68,7 +67,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
             <span className="text-[#576682] text-xs">TVL</span>
             <div className="flex items-center gap-x-2">
               <span className="text-white text-xs font-bold">
-                ${item.tvl.toLocaleString()}
+                ${ptYtData?.tvl.toFixed(6) || "--"}
               </span>
               <PieChart marketStateId={item.marketStateId} />
             </div>
@@ -88,10 +87,10 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
               <span className="text-white text-sm">YT</span>
               <div className="flex flex-col items-end">
                 <span className="text-base text-white">
-                  {ptYtData?.ytApy || "0.00"}%
+                  {ptYtData?.ytApy || "--"}%
                 </span>
                 <span className="text-xs text-white">
-                  ${ptYtData?.ytPrice?.toFixed(10) || "0.00"}
+                  ${ptYtData?.ytPrice?.toFixed(10) || "--"}
                 </span>
               </div>
             </div>
@@ -105,9 +104,9 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
             >
               <span className="text-sm">PT</span>
               <div className="flex flex-col items-end">
-                <span className="text-base">{ptYtData?.ptApy || "0.00"}%</span>
+                <span className="text-base">{ptYtData?.ptApy || "--"}%</span>
                 <span className="text-xs">
-                  ${ptYtData?.ptPrice?.toFixed(10) || "0.00"}
+                  ${ptYtData?.ptPrice?.toFixed(10) || "--"}
                 </span>
               </div>
             </div>
@@ -123,7 +122,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
           >
             <span>+ POOL APY</span>
             <span className="text-base">
-              {new Decimal(item.poolApy).toFixed(2)}%
+              {ptYtData?.poolApy.toFixed(6) || "--"}%
             </span>
           </button>
         </div>
