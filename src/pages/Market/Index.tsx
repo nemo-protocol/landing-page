@@ -4,7 +4,7 @@ import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
 import PieChart from "./components/PieChart.tsx"
 import { Link, useNavigate } from "react-router-dom"
-import { formatTimeDiff } from "@/lib/utils"
+import { cn, formatTimeDiff } from "@/lib/utils"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import { CoinInfo } from "@/queries/types/market"
 
@@ -130,9 +130,9 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
   )
 }
 
-const MarketSkeleton = () => {
+const MarketSkeleton = ({ className }: { className?: string }) => {
   return (
-    <div className="border border-white/10 rounded-3xl">
+    <div className={cn("border border-white/10 rounded-3xl", className)}>
       <div className="p-5 rounded-3xl bg-[#0E0F16]">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-y-2.5 items-start">
@@ -191,11 +191,15 @@ export default function Home() {
               Market
             </h3>
             <h6 className="text-white/70 md:mt-8 mt-4">
-              Dive into the yield trading market and maximize your profit potential.
+              Dive into the yield trading market and maximize your profit
+              potential.
             </h6>
             <p className="text-white/70 sm:text-sm space-x-2">
               <span>Learn More</span>
-              <Link to="/learn" className="underline text-white/70 underline-offset-2">
+              <Link
+                to="/learn"
+                className="underline text-white/70 underline-offset-2"
+              >
                 About PT & YT Trading
               </Link>
             </p>
@@ -208,8 +212,16 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {[1, 2, 3].map((item) => (
-              <MarketSkeleton key={item} />
+            {[1, 2].map((item) => (
+              <MarketSkeleton key={item} className="block" />
+            ))}
+            
+            {[3, 4].map((item) => (
+              <MarketSkeleton key={item} className="hidden md:block" />
+            ))}
+            
+            {[5, 6].map((item) => (
+              <MarketSkeleton key={item} className="hidden xl:block" />
             ))}
           </motion.div>
         ) : (
