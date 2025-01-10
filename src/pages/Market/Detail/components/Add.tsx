@@ -142,27 +142,40 @@ export default function SingleCoin() {
     [coinBalance, addValue],
   )
 
+  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+
   const [ptRatio, syRatio] = useMemo(() => {
     if (
-      coinConfig?.ptTvl &&
-      coinConfig?.syTvl &&
-      !new Decimal(coinConfig.ptTvl).isZero() &&
-      !new Decimal(coinConfig.syTvl).isZero()
+      ptYtData?.ptTvl &&
+      ptYtData?.syTvl &&
+      !new Decimal(ptYtData.ptTvl).isZero() &&
+      !new Decimal(ptYtData.syTvl).isZero()
     ) {
-      const totalTvl = new Decimal(coinConfig.ptTvl).add(
-        new Decimal(coinConfig.syTvl),
+      const totalTvl = new Decimal(ptYtData.ptTvl).add(
+        new Decimal(ptYtData.syTvl),
       )
       return [
-        new Decimal(coinConfig.ptTvl).div(totalTvl).mul(100).toFixed(2),
-        new Decimal(coinConfig.syTvl).div(totalTvl).mul(100).toFixed(2),
+        new Decimal(ptYtData.ptTvl).div(totalTvl).mul(100).toFixed(2),
+        new Decimal(ptYtData.syTvl).div(totalTvl).mul(100).toFixed(2),
       ]
     }
     return ["0", "0"]
-  }, [coinConfig])
-
-  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+  }, [ptYtData])
 
   const totalApy = useMemo(() => {
+    console.log(
+      "ptRatio",
+      ptRatio,
+      "syRatio",
+      syRatio,
+      "swapFeeApy",
+      coinConfig?.swapFeeApy,
+      "underlyingApy",
+      coinConfig?.underlyingApy,
+      "ptApy",
+      ptYtData?.ptApy,
+    )
+
     if (
       coinConfig?.underlyingApy &&
       ptYtData?.ptApy &&

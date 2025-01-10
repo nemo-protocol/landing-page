@@ -4,7 +4,6 @@ import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
 import PieChart from "./components/PieChart.tsx"
 import { Link, useNavigate } from "react-router-dom"
-import Loading from "@/components/Loading"
 import { formatTimeDiff } from "@/lib/utils"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import { CoinInfo } from "@/queries/types/market"
@@ -131,6 +130,43 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
   )
 }
 
+const MarketSkeleton = () => {
+  return (
+    <div className="border border-white/10 rounded-3xl">
+      <div className="p-5 rounded-3xl bg-[#0E0F16]">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-y-2.5 items-start">
+            <div className="h-6 w-24 bg-white/5 rounded-md animate-pulse"></div>
+            <div className="h-8 w-32 bg-white/5 rounded-full animate-pulse"></div>
+          </div>
+          <div className="size-14 rounded-full bg-white/5 animate-pulse"></div>
+        </div>
+        <div className="mt-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-16 bg-white/5 rounded animate-pulse"></div>
+            <div className="h-4 w-32 bg-white/5 rounded animate-pulse"></div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-12 bg-white/5 rounded animate-pulse"></div>
+            <div className="h-4 w-24 bg-white/5 rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="mt-3.5">
+          <div className="h-4 w-16 bg-white/5 rounded mb-2.5 animate-pulse"></div>
+          <div className="grid grid-cols-2 gap-x-4">
+            <div className="h-14 bg-white/5 rounded-xl animate-pulse"></div>
+            <div className="h-14 bg-white/5 rounded-xl animate-pulse"></div>
+          </div>
+        </div>
+        <div className="mt-3.5">
+          <div className="h-4 w-12 bg-white/5 rounded mb-2.5 animate-pulse"></div>
+          <div className="h-14 bg-white/5 rounded-xl animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   const navigate = useNavigate()
   const { data: list, isLoading } = useCoinInfoList()
@@ -155,22 +191,27 @@ export default function Home() {
               Market
             </h3>
             <h6 className="text-white/70 md:mt-8 mt-4">
-              Dive into the yield trading market and maximize your profit
-              potential.
+              Dive into the yield trading market and maximize your profit potential.
             </h6>
             <p className="text-white/70 sm:text-sm space-x-2">
               <span>Learn More</span>
-              <Link
-                to="/learn"
-                className="underline text-white/70 underline-offset-2"
-              >
+              <Link to="/learn" className="underline text-white/70 underline-offset-2">
                 About PT & YT Trading
               </Link>
             </p>
           </motion.div>
         </div>
         {isLoading ? (
-          <Loading className="mt-[30px] min-h-[200px]" />
+          <motion.div
+            className="mt-[30px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {[1, 2, 3].map((item) => (
+              <MarketSkeleton key={item} />
+            ))}
+          </motion.div>
         ) : (
           <motion.div
             className="mt-[30px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 transition-all duration-200 ease-in-out"
