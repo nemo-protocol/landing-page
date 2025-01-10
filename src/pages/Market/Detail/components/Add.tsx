@@ -789,8 +789,8 @@ export default function SingleCoin() {
           <div className="grid grid-cols-3 mb-4 lg:mb-5">
             <div className="text-center">
               <p className="text-lg lg:text-xl font-normal">
-                {coinConfig?.tvl
-                  ? `$${formatDecimalValue(coinConfig?.tvl || 0, 2)}`
+                {ptYtData?.tvl
+                  ? `$${formatDecimalValue(ptYtData?.tvl || 0, 2)}`
                   : "--"}
               </p>
               <p className="text-xs lg:text-sm text-white/60">TVL</p>

@@ -199,7 +199,7 @@ export const formatTimeDiff = (timestamp: number): string => {
   const diffSeconds = maturityTime.diff(now, "second")
   
   if (diffSeconds <= 0) {
-    return "END"
+    return "Pool Expired"
   }
   
   const diffDays = maturityTime.diff(now, "day")

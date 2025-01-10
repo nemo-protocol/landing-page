@@ -19,8 +19,8 @@ export interface BaseCoinInfo {
   aftermathSafeId: string
   aftermathStakedSuiVaultId: string
   haedalStakeingId: string
-  tvl: number | string
-  poolApy: number | string
+  // tvl: number | string
+  // poolApy: number | string
   decimal: string | number
   underlyingApy: number | string
   underlyingPrice: number | string
@@ -40,10 +40,6 @@ export interface BaseCoinInfo {
 }
 
 export interface CoinInfo extends BaseCoinInfo {
-  /** @deprecated */
-  ptRate: number
-  /** @deprecated */
-  ytRate: number
   bgGradient: string
 }
 

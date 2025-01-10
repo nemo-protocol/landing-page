@@ -86,7 +86,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
             >
               <span className="text-white text-sm">YT</span>
               <div className="flex flex-col items-end">
-                <span className="text-base text-white">
+                <span className="text-sm text-white">
                   {ptYtData?.ytApy || "--"}%
                 </span>
                 <span className="text-xs text-white">
@@ -104,7 +104,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => {
             >
               <span className="text-sm">PT</span>
               <div className="flex flex-col items-end">
-                <span className="text-base">{ptYtData?.ptApy || "--"}%</span>
+                <span className="text-sm">{ptYtData?.ptApy || "--"}%</span>
                 <span className="text-xs">
                   ${ptYtData?.ptPrice?.toFixed(10) || "--"}
                 </span>
