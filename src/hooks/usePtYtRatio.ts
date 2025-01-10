@@ -25,6 +25,9 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
       let poolApy = new Decimal(0)
       let tvl = new Decimal(0)
 
+      let ptTvl = new Decimal(0)
+      let syTvl = new Decimal(0)
+
       console.log("ptPrice", ptPrice.toFixed(10), "suiPrice", suiPrice.toFixed(10))
       const daysToExpiry = new Decimal(
         (Number(coinInfo.maturity) - Date.now()) / 1000,
@@ -50,7 +53,9 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
       if (marketState.lpSupply != "0") {
         const totalPt  = new Decimal(marketState.totalPt);
         const totalSy  = new Decimal(marketState.totalSy);
-        tvl = totalSy.mul(coinInfo.underlyingPrice).div(new Decimal(10).pow(coinInfo.decimal)).add(totalPt.mul(ptPrice).div(new Decimal(10).pow(coinInfo.decimal)));
+        ptTvl = totalPt.mul(ptPrice).div(new Decimal(10).pow(coinInfo.decimal));
+        syTvl = totalSy.mul(coinInfo.underlyingPrice).div(new Decimal(10).pow(coinInfo.decimal));
+        tvl = syTvl.add(ptTvl);
         const rSy  = totalSy.div(totalSy.add(totalPt));
         const rPt  = totalPt.div(totalSy.add(totalPt));
         const apySy = rSy.mul(coinInfo.underlyingApy);
@@ -63,7 +68,7 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
         poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100));
       }
       console.log("tvl, poolApy",tvl.toFixed(10), poolApy.toFixed(10))
-      return { ptPrice, ytPrice, ptApy, ytApy, tvl, poolApy }
+      return { ptPrice, ytPrice, ptApy, ytApy, tvl, poolApy, ptTvl, syTvl }
     },
     enabled: !!coinInfo?.decimal && !!coinInfo?.marketStateId,
     refetchInterval: 20000,
