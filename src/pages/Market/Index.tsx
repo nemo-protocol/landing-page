@@ -82,9 +82,13 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => (
           >
             <span className="text-white text-sm">YT</span>
             <div className="flex flex-col items-end">
-              <span className="text-sm text-white">{item.ytApy || "--"}%</span>
+              <span className="text-sm text-white">
+                {item.ytApy ? `${formatDecimalValue(item.ytApy, 6)}%` : "--"}
+              </span>
               <span className="text-xs text-white">
-                ${formatDecimalValue(item.ytPrice, 6) || "--"}
+                {item.ytPrice
+                  ? `$${formatDecimalValue(item.ytPrice, 6)}`
+                  : "--"}
               </span>
             </div>
           </div>
@@ -98,9 +102,13 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => (
           >
             <span className="text-sm">PT</span>
             <div className="flex flex-col items-end">
-              <span className="text-sm">{item.ptApy || "--"}%</span>
+              <span className="text-sm">
+                {item.ptApy ? `${formatDecimalValue(item.ptApy, 6)}%` : "--"}
+              </span>
               <span className="text-xs">
-                ${formatDecimalValue(item.ptPrice, 6) || "--"}
+                {item.ptPrice
+                  ? `$${formatDecimalValue(item.ptPrice, 6)}`
+                  : "--"}
               </span>
             </div>
           </div>
@@ -115,7 +123,9 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => (
           }
         >
           <span>+ POOL APY</span>
-          <span className="text-base">{formatDecimalValue(item.poolApy, 6) || "--"}%</span>
+          <span className="text-base">
+            {item.poolApy ? `${formatDecimalValue(item.poolApy, 6)}%` : "--"}
+          </span>
         </button>
       </div>
     </motion.div>
