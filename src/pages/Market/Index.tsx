@@ -4,7 +4,7 @@ import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
 import PieChart from "./components/PieChart.tsx"
 import { Link, useNavigate } from "react-router-dom"
-import { cn, formatTimeDiff } from "@/lib/utils"
+import { cn, formatDecimalValue, formatTimeDiff } from "@/lib/utils"
 import { CoinInfoWithMetrics } from "@/queries/types/market"
 
 const textVariants = {
@@ -82,11 +82,9 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => (
           >
             <span className="text-white text-sm">YT</span>
             <div className="flex flex-col items-end">
-              <span className="text-sm text-white">
-                {item.ytApy || "--"}%
-              </span>
+              <span className="text-sm text-white">{item.ytApy || "--"}%</span>
               <span className="text-xs text-white">
-                ${item.ytPrice || "--"}
+                ${formatDecimalValue(item.ytPrice, 6) || "--"}
               </span>
             </div>
           </div>
@@ -102,7 +100,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => (
             <div className="flex flex-col items-end">
               <span className="text-sm">{item.ptApy || "--"}%</span>
               <span className="text-xs">
-                ${item.ptPrice || "--"}
+                ${formatDecimalValue(item.ptPrice, 6) || "--"}
               </span>
             </div>
           </div>
@@ -117,9 +115,7 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => (
           }
         >
           <span>+ POOL APY</span>
-          <span className="text-base">
-            {item.poolApy || "--"}%
-          </span>
+          <span className="text-base">{formatDecimalValue(item.poolApy, 6) || "--"}%</span>
         </button>
       </div>
     </motion.div>
@@ -211,11 +207,11 @@ export default function Home() {
             {[1, 2].map((item) => (
               <MarketSkeleton key={item} className="block" />
             ))}
-            
+
             {[3, 4].map((item) => (
               <MarketSkeleton key={item} className="hidden md:block" />
             ))}
-            
+
             {[5, 6].map((item) => (
               <MarketSkeleton key={item} className="hidden xl:block" />
             ))}

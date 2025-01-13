@@ -220,39 +220,47 @@ export function useCoinInfoList(params: CoinInfoListParams = {}) {
   return useQuery({
     queryKey: ["coinInfoList", name, address, isShowExpiry],
     queryFn: async () => {
-      const coinList = (await getCoinInfoList(params).catch(() => []))
+      const coinList = (await getCoinInfoList(params).catch(() => [])).filter(
+        ({ marketStateId }) => !!marketStateId,
+      )
       if (!coinList.length) return []
 
-      const marketStateIds = [...new Set(coinList.map((coin) => coin.marketStateId))]
-      const marketStates = await fetchMarketStates(marketStateIds).catch(() => [])
-
+      const marketStateIds = [
+        ...new Set(coinList.map((coin) => coin.marketStateId)),
+      ]
+      const marketStates = await fetchMarketStates(marketStateIds).catch(
+        () => [],
+      )
       const marketStatesMap = new Map(
         marketStates.map((state, index) => {
           if (!state.lpSupply || !state.totalSy || !state.totalPt) {
-            return [marketStateIds[index], {
-              lpSupply: "--",
-              totalSy: "--",
-              totalPt: "--"
-            }]
+            return [
+              marketStateIds[index],
+              {
+                lpSupply: "",
+                totalSy: "",
+                totalPt: "",
+              },
+            ]
           }
           return [marketStateIds[index], state]
-        })
+        }),
       )
 
       const results = await Promise.all(
         coinList.map(async (coinInfo) => {
           const marketState = marketStatesMap.get(coinInfo.marketStateId)
-          if (!marketState || marketState.lpSupply === "--")
+          if (!marketState || marketState.lpSupply === "")
             return {
               ...coinInfo,
-              ptPrice: "--",
-              ytPrice: "--",
-              ptApy: "--",
-              ytApy: "--",
-              tvl: "--",
-              poolApy: "--",
-              ptTvl: "--",
-              syTvl: "--",
+              ptPrice: "",
+              ytPrice: "",
+              ptApy: "",
+              ytApy: "",
+              tvl: "",
+              poolApy: "",
+              ptTvl: "",
+              syTvl: "",
             }
 
           try {
@@ -265,21 +273,25 @@ export function useCoinInfoList(params: CoinInfoListParams = {}) {
               },
             })
 
-            return { ...coinInfo, ...metrics, poolApy: metrics.poolApy.toString() }
+            return {
+              ...coinInfo,
+              ...metrics,
+              poolApy: metrics.poolApy.toString(),
+            }
           } catch {
             return {
               ...coinInfo,
-              ptPrice: "--",
-              ytPrice: "--",
-              ptApy: "--",
-              ytApy: "--",
-              tvl: "--",
-              poolApy: "--",
-              ptTvl: "--",
-              syTvl: "--",
+              ptPrice: "",
+              ytPrice: "",
+              ptApy: "",
+              ytApy: "",
+              tvl: "",
+              poolApy: "",
+              ptTvl: "",
+              syTvl: "",
             }
           }
-        })
+        }),
       )
 
       return results as CoinInfoWithMetrics[]
