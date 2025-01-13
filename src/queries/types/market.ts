@@ -1,3 +1,5 @@
+import { MarketState } from "@/hooks/types"
+
 export interface BaseCoinInfo {
   coinLogo: string
   maturity: string
@@ -52,6 +54,7 @@ export interface CoinInfoWithMetrics extends CoinInfo {
   poolApy: string
   ptTvl: string
   syTvl: string
+  marketState: MarketState
 }
 
 export interface CoinConfig extends BaseCoinInfo {

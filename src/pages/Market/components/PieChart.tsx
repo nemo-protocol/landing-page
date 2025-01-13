@@ -1,25 +1,24 @@
 import { useMemo } from "react"
 import Decimal from "decimal.js"
+import { MarketState } from "@/hooks/types"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
-import useMarketStateData from "@/hooks/useMarketStateData"
 
 const COLORS = ["#2DF4DD", "#0E0F16"]
 
 interface PChartProps {
-  marketStateId?: string
+  marketState: MarketState
 }
 
-const PChart = ({ marketStateId }: PChartProps) => {
-  const { data: marketStateData } = useMarketStateData(marketStateId)
+const PChart = ({ marketState }: PChartProps) => {
 
   const ratio = useMemo(() => {
-    if (marketStateData?.totalSy && marketStateData?.marketCap) {
-      return new Decimal(marketStateData.totalSy)
-        .div(new Decimal(marketStateData.marketCap))
+    if (marketState?.totalSy && marketState?.marketCap) {
+      return new Decimal(marketState.totalSy)
+        .div(new Decimal(marketState.marketCap))
         .toNumber()
     }
     return 0
-  }, [marketStateData])
+  }, [marketState])
 
   const data = useMemo(
     () => [

@@ -63,9 +63,9 @@ const MarketItem = ({ item, navigate }: MarketItemProps) => (
           <span className="text-[#576682] text-xs">TVL</span>
           <div className="flex items-center gap-x-2">
             <span className="text-white text-xs font-bold">
-              ${item.tvl || "--"}
+              {item.tvl ? `$${formatDecimalValue(item.tvl, 6)}` : "--"}
             </span>
-            <PieChart marketStateId={item.marketStateId} />
+            <PieChart marketState={item.marketState} />
           </div>
         </div>
       </div>

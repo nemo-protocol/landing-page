@@ -3,6 +3,7 @@ import { DEBUG } from "@/config"
 import { useMutation } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
 import useQueryPtOutDryRun from "@/hooks/dryrun/useQueryPtOutDryRun"
+import { MarketState } from "../types"
 
 function calculatePtAPY(
   underlyingPrice: number,
@@ -65,11 +66,7 @@ function calculatePoolValue(
 
 interface CalculatePoolMetricsParams {
   coinInfo: BaseCoinInfo
-  marketState: {
-    lpSupply: string
-    totalPt: string
-    totalSy: string
-  }
+  marketState: MarketState
 }
 
 export default function useCalculatePoolMetrics() {

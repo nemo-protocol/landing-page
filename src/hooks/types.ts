@@ -45,3 +45,10 @@ export interface PyPosition {
   description: string
   py_state_id: string
 }
+
+export interface MarketState {
+  lpSupply: string
+  totalSy: string
+  totalPt: string
+  marketCap: string
+}
