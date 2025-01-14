@@ -1,7 +1,7 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { useMemo, useState, useEffect, useCallback } from "react"
-import useCoinData, { CoinData } from "@/hooks/useCoinData"
+import useCoinData from "@/hooks/useCoinData"
 import TradeInfo from "@/components/TradeInfo"
 import PoolSelect from "@/components/PoolSelect"
 import { ChevronsDown, Info } from "lucide-react"
@@ -17,12 +17,12 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig } from "@/queries"
-import useMarketStateData from "@/hooks/useMarketStateData"
-import { formatDecimalValue, debounce } from "@/lib/utils"
+import { formatDecimalValue, debounce, isValidAmount } from "@/lib/utils"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import { CoinConfig } from "@/queries/types/market"
 import { useCalculateLpOut } from "@/hooks/useCalculateLpOut"
+import useMarketStateData from "@/hooks/useMarketStateData"
 import {
   mintSCoin,
   initPyPosition,
@@ -50,7 +50,10 @@ import {
 import { useAddLiquidityRatio } from "@/hooks/useAddLiquidityRatio"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
 import useMintLpDryRun from "@/hooks/dryrun/useMintLpDryRun"
+import useAddLiquiditySingleSyDryRun from "@/hooks/dryrun/useAddLiquiditySingleSyDryRun"
+import useSeedLiquidityDryRun from "@/hooks/dryrun/useSeedLiquidityDryRun"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
+import type { CoinData } from "@/hooks/useCoinData"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -122,7 +125,12 @@ export default function SingleCoin() {
 
   const { mutateAsync: calculateLpOut, isPending: isLpAmountOutLoading } =
     useCalculateLpOut(coinConfig)
+
   const { mutateAsync: mintLpDryRun } = useMintLpDryRun(coinConfig)
+  const { mutateAsync: addLiquiditySingleSyDryRun } =
+    useAddLiquiditySingleSyDryRun(coinConfig)
+  const { mutateAsync: seedLiquidityDryRun } =
+    useSeedLiquidityDryRun(coinConfig)
 
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
@@ -144,6 +152,10 @@ export default function SingleCoin() {
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig)
 
+  useEffect(() => {
+    console.log(ptYtData)
+  }, [ptYtData])
+
   const [ptRatio, syRatio] = useMemo(() => {
     if (
       ptYtData?.ptTvl &&
@@ -151,6 +163,8 @@ export default function SingleCoin() {
       !new Decimal(ptYtData.ptTvl).isZero() &&
       !new Decimal(ptYtData.syTvl).isZero()
     ) {
+      console.log("ptYtData.ptTvl", ptYtData.ptTvl)
+      console.log("ptYtData.syTvl", ptYtData.syTvl)
       const totalTvl = new Decimal(ptYtData.ptTvl).add(
         new Decimal(ptYtData.syTvl),
       )
@@ -403,11 +417,10 @@ export default function SingleCoin() {
     (value: string, decimal: number, config: CoinConfig | undefined) => {
       const getLpPosition = debounce(async () => {
         if (
-          value &&
-          value !== "0" &&
-          decimal &&
           config &&
+          decimal &&
           conversionRate &&
+          isValidAmount(value) &&
           coinData?.length
         ) {
           setPositionLoading(true)
@@ -418,12 +431,26 @@ export default function SingleCoin() {
                 ? new Decimal(amount).div(conversionRate).toFixed(0)
                 : amount
 
+            // 检查是否需要执行seed_liquidity
+            if (marketStateData?.lpSupply === "0") {
+              const [{ lpAmount }] = await seedLiquidityDryRun({
+                addAmount: convertedAmount,
+                tokenType,
+                slippage,
+                coinData,
+                pyPositions: pyPositionData,
+              })
+              setLpPosition(
+                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
+              )
+              setYtAmount(undefined)
+            }
             // 检查是否需要执行mint_lp
-            if (
+            else if (
               marketStateData &&
               new Decimal(marketStateData.totalSy).mul(0.4).lt(convertedAmount)
             ) {
-              const [{ lpAmount, ytAmount }] = await mintLpDryRun({
+              const [{ lpAmount }] = await mintLpDryRun({
                 addAmount: convertedAmount,
                 tokenType,
                 slippage,
@@ -434,12 +461,19 @@ export default function SingleCoin() {
               setLpPosition(
                 new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
               )
-              setYtAmount(
-                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
-              )
+              setYtAmount(undefined)
             } else {
-              const lpOut = await calculateLpOut(convertedAmount)
-              setLpPosition(lpOut.lpAmount)
+              // 执行add_liquidity_single_sy
+              const [{ lpAmount }] = await addLiquiditySingleSyDryRun({
+                addAmount: convertedAmount,
+                tokenType,
+                slippage,
+                coinData,
+                pyPositions: pyPositionData,
+              })
+              setLpPosition(
+                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
+              )
               setYtAmount(undefined)
             }
           } catch (error) {
@@ -458,8 +492,9 @@ export default function SingleCoin() {
       return getLpPosition.cancel
     },
     [
-      calculateLpOut,
       mintLpDryRun,
+      addLiquiditySingleSyDryRun,
+      seedLiquidityDryRun,
       tokenType,
       slippage,
       coinData,
@@ -600,7 +635,7 @@ export default function SingleCoin() {
       <div className="grid grid-cols-1 lg:grid-cols-[500px_1fr] gap-8">
         {/* Left Panel */}
         <div className="space-y-4">
-          <PoolSelect
+          {/* <PoolSelect
             coinType={coinType}
             maturity={maturity}
             onChange={(coinAddress, maturity) => {
@@ -608,7 +643,7 @@ export default function SingleCoin() {
                 replace: true,
               })
             }}
-          />
+          /> */}
 
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07]">

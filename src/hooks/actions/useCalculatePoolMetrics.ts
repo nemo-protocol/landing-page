@@ -90,7 +90,7 @@ export default function useCalculatePoolMetrics() {
       .div(ptOut)
     const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
     const suiPrice = new Decimal(coinInfo.underlyingPrice).div(
-      coinInfo.conversionRate,
+      "1.0532260332",
     )
     let poolApy = new Decimal(0)
     let tvl = new Decimal(0)
