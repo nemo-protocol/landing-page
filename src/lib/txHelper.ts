@@ -585,47 +585,32 @@ export const swapExactYtForSy = (
   return syCoin
 }
 
-export const redeemPy = (
+export const redeemPy = <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
   ytRedeemValue: string,
   ptRedeemValue: string,
   priceVoucher: TransactionArgument,
   pyPosition: TransactionArgument,
-) => {
-  const moveCall = {
+  returnDebugInfo?: T,
+): T extends true ? [TransactionResult, MoveCallInfo] : TransactionResult => {
+  const debugInfo: MoveCallInfo = {
     target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
     arguments: [
-      coinConfig.version,
-      new Decimal(ytRedeemValue)
-        .mul(10 ** Number(coinConfig.decimal))
-        .toString(),
-      new Decimal(ptRedeemValue)
-        .mul(10 ** Number(coinConfig.decimal))
-        .toString(),
-      "priceVoucher",
-      "pyPosition",
-      coinConfig.pyStateId,
-      coinConfig.yieldFactoryConfigId,
-      "0x6",
+      { name: "version", value: coinConfig.version },
+      { name: "yt_amount", value: ytRedeemValue },
+      { name: "pt_amount", value: ptRedeemValue },
+      { name: "price_voucher", value: "priceVoucher" },
+      { name: "py_position", value: "pyPosition" },
+      { name: "py_state", value: coinConfig.pyStateId },
+      { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
+      { name: "clock", value: "0x6" },
     ],
     typeArguments: [coinConfig.syCoinType],
   }
-  debugLog("redeem_py move call:", {
-    moveCall,
-    ytRedeemValue,
-    ptRedeemValue,
-    decimal: coinConfig.decimal,
-    ytAmount: new Decimal(ytRedeemValue)
-      .mul(10 ** Number(coinConfig.decimal))
-      .toString(),
-    ptAmount: new Decimal(ptRedeemValue)
-      .mul(10 ** Number(coinConfig.decimal))
-      .toString(),
-  })
 
-  const [sy] = tx.moveCall({
-    target: moveCall.target,
+  const txMoveCall = {
+    target: debugInfo.target,
     arguments: [
       tx.object(coinConfig.version),
       tx.pure.u64(
@@ -644,9 +629,16 @@ export const redeemPy = (
       tx.object(coinConfig.yieldFactoryConfigId),
       tx.object("0x6"),
     ],
-    typeArguments: moveCall.typeArguments,
-  })
-  return sy
+    typeArguments: debugInfo.typeArguments,
+  }
+
+  debugLog("redeem_py move call:", txMoveCall)
+
+  const result = tx.moveCall(txMoveCall)
+
+  return (returnDebugInfo ? [result, debugInfo] : result) as T extends true 
+    ? [TransactionResult, MoveCallInfo] 
+    : TransactionResult
 }
 
 export const getPrice = (

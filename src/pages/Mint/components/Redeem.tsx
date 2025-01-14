@@ -1,10 +1,10 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useState, useCallback, useEffect } from "react"
 import { Transaction } from "@mysten/sui/transactions"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
-import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
+import { useCoinConfig } from "@/queries"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import {
@@ -16,6 +16,9 @@ import {
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import ActionButton from "@/components/ActionButton"
+import useRedeemPYDryRun from "@/hooks/dryrun/useRedeemPYDryRun"
+import { debounce } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Redeem({
   maturity,
@@ -29,9 +32,10 @@ export default function Redeem({
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [openConnect, setOpenConnect] = useState(false)
-  const [ptRedeemValue, setPTRedeemValue] = useState("")
-  const [ytRedeemValue, setYTRedeemValue] = useState("")
+  const [redeemValue, setRedeemValue] = useState("")
   const [isRedeeming, setIsRedeeming] = useState(false)
+  const [isInputLoading, setIsInputLoading] = useState(false)
+  const [syAmount, setSyAmount] = useState("")
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -49,10 +53,6 @@ export default function Redeem({
     )
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
-
-  const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
-  const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
-  const ytRatio = useMemo(() => mintPYRatio?.syYtRate ?? 1, [mintPYRatio])
 
   const ptBalance = useMemo(() => {
     if (pyPositionData?.length) {
@@ -76,16 +76,55 @@ export default function Redeem({
 
   const insufficientBalance = useMemo(() => {
     return (
-      new Decimal(ptBalance).lt(ptRedeemValue || 0) ||
-      new Decimal(ytBalance).lt(ytRedeemValue || 0)
+      new Decimal(ptBalance).lt(redeemValue || 0) ||
+      new Decimal(ytBalance).lt(redeemValue || 0)
     )
-  }, [ptBalance, ytBalance, ptRedeemValue, ytRedeemValue])
+  }, [ptBalance, ytBalance, redeemValue])
 
   const refreshData = useCallback(async () => {
     await Promise.all([refetchCoinConfig(), refetchPyPosition()])
   }, [refetchCoinConfig, refetchPyPosition])
 
-  const { data: ptYtData, refetch: refetchPtYtData } = useCalculatePtYt(coinConfig)
+  const { data: ptYtData, refetch: refetchPtYtData } =
+    useCalculatePtYt(coinConfig)
+
+  const { mutateAsync: redeemDryRun } = useRedeemPYDryRun(coinConfig)
+
+  const debouncedGetRedeemOut = useCallback(
+    (value: string, decimal: number) => {
+      const getRedeemOut = debounce(async () => {
+        if (value && value !== "0" && decimal) {
+          setIsInputLoading(true)
+          try {
+            const [syAmount] = await redeemDryRun({
+              ptRedeemValue: value,
+              ytRedeemValue: value,
+              pyPositions: pyPositionData,
+            })
+            setSyAmount(syAmount)
+          } catch (error) {
+            console.error("Dry run error:", error)
+            setSyAmount("")
+          } finally {
+            setIsInputLoading(false)
+          }
+        } else {
+          setSyAmount("")
+        }
+      }, 500)
+
+      getRedeemOut()
+      return getRedeemOut.cancel
+    },
+    [redeemDryRun, pyPositionData],
+  )
+
+  useEffect(() => {
+    const cancelFn = debouncedGetRedeemOut(redeemValue, decimal)
+    return () => {
+      cancelFn()
+    }
+  }, [redeemValue, decimal, debouncedGetRedeemOut])
 
   async function redeem() {
     if (
@@ -93,8 +132,7 @@ export default function Redeem({
       coinConfig &&
       coinType &&
       address &&
-      ptRedeemValue &&
-      ytRedeemValue
+      redeemValue
     ) {
       try {
         setIsRedeeming(true)
@@ -114,8 +152,8 @@ export default function Redeem({
         const syCoin = redeemPy(
           tx,
           coinConfig,
-          ytRedeemValue,
-          ptRedeemValue,
+          redeemValue,
+          redeemValue,
           priceVoucher,
           pyPosition,
         )
@@ -133,14 +171,10 @@ export default function Redeem({
         })
         setTxId(res.digest)
         setOpen(true)
-        setPTRedeemValue("")
-        setYTRedeemValue("")
+        setRedeemValue("")
         setStatus("Success")
 
-        await Promise.all([
-          refreshData(),
-          refetchPtYtData()
-        ])
+        await Promise.all([refreshData(), refetchPtYtData()])
       } catch (error) {
         console.log("tx error", error)
         setOpen(true)
@@ -189,9 +223,9 @@ export default function Redeem({
             <input
               min={0}
               type="number"
-              value={ptRedeemValue}
+              value={redeemValue}
               disabled={!isConnected}
-              onChange={(e) => setPTRedeemValue(e.target.value)}
+              onChange={(e) => setRedeemValue(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
@@ -200,7 +234,7 @@ export default function Redeem({
                 $
                 {ptYtData?.ptPrice
                   ? new Decimal(ptYtData.ptPrice)
-                      .mul(ptRedeemValue || 0)
+                      .mul(redeemValue || 0)
                       .toFixed(2)
                   : "0.00"}
               </span>
@@ -212,7 +246,7 @@ export default function Redeem({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setPTRedeemValue(new Decimal(ptBalance).div(2).toFixed(decimal))
+              setRedeemValue(new Decimal(ptBalance).div(2).toFixed(decimal))
             }
           >
             Half
@@ -221,7 +255,7 @@ export default function Redeem({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setPTRedeemValue(new Decimal(ptBalance).toFixed(decimal))
+              setRedeemValue(new Decimal(ptBalance).toFixed(decimal))
             }
           >
             Max
@@ -251,9 +285,9 @@ export default function Redeem({
             <input
               min={0}
               type="number"
-              value={ytRedeemValue}
+              value={redeemValue}
               disabled={!isConnected}
-              onChange={(e) => setYTRedeemValue(e.target.value)}
+              onChange={(e) => setRedeemValue(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
@@ -262,7 +296,7 @@ export default function Redeem({
                 $
                 {ptYtData?.ytPrice
                   ? new Decimal(ptYtData.ytPrice)
-                      .mul(ytRedeemValue || 0)
+                      .mul(redeemValue || 0)
                       .toFixed(2)
                   : "0.00"}
               </span>
@@ -274,7 +308,7 @@ export default function Redeem({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setYTRedeemValue(new Decimal(ytBalance).div(2).toFixed(decimal))
+              setRedeemValue(new Decimal(ytBalance).div(2).toFixed(decimal))
             }
           >
             Half
@@ -283,7 +317,7 @@ export default function Redeem({
             className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
             disabled={!isConnected}
             onClick={() =>
-              setYTRedeemValue(new Decimal(ytBalance).toFixed(decimal))
+              setRedeemValue(new Decimal(ytBalance).toFixed(decimal))
             }
           >
             Max
@@ -302,20 +336,18 @@ export default function Redeem({
                 coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
               }
             />
-            <span>{coinConfig?.coinName}</span>
+            <span>SY {coinConfig?.coinName}</span>
           </div>
-          <input
-            disabled
-            type="text"
-            value={
-              (ptRedeemValue || ytRedeemValue) &&
-              Math.min(
-                new Decimal(ptRedeemValue || 0).div(ptRatio).toNumber(),
-                new Decimal(ytRedeemValue || 0).div(ytRatio).toNumber(),
-              ).toFixed(9)
-            }
-            className="bg-transparent h-full outline-none grow text-right min-w-0"
-          />
+          <div className="text-right grow">
+            {isInputLoading ? (
+              <div className="flex justify-end">
+                <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+              </div>
+            ) : (
+              syAmount &&
+              new Decimal(syAmount).div(10 ** decimal).toFixed(decimal)
+            )}
+          </div>
         </div>
       </div>
       <div className="mt-7.5 w-full">
@@ -326,7 +358,7 @@ export default function Redeem({
           openConnect={openConnect}
           setOpenConnect={setOpenConnect}
           insufficientBalance={insufficientBalance}
-          disabled={ptRedeemValue === "" || ytRedeemValue === ""}
+          disabled={redeemValue === ""}
         />
       </div>
     </div>
