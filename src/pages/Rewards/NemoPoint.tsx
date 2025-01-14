@@ -58,7 +58,7 @@ export default function NemoPoint({ userPoint }: { userPoint?: PointItem[] }) {
               <div className="flex items-center gap-x-2">
                 <span className="text-white text-2xl">
                   {userPoint?.[0]?.pointsPerDay
-                    ? parseFloat(userPoint[0].pointsPerDay.toFixed(2))
+                    ? Number(userPoint[0].pointsPerDay).toFixed(2)
                     : 0}
                 </span>
               </div>

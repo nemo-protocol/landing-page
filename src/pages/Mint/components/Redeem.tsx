@@ -318,7 +318,7 @@ export default function Redeem({
           />
         </div>
       </div>
-      <div className="mt-7.5">
+      <div className="mt-7.5 w-full">
         <ActionButton
           btnText="Redeem"
           onClick={redeem}

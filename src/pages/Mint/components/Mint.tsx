@@ -1,10 +1,10 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useState, useCallback, useEffect } from "react"
 import useCoinData from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
-import { useCoinConfig, useQueryMintPYRatio } from "@/queries"
+import { useCoinConfig } from "@/queries"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { LoaderCircle } from "lucide-react"
@@ -18,6 +18,9 @@ import {
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import ActionButton from "@/components/ActionButton"
+import useMintPYDryRun from "@/hooks/dryrun/useMintPYDryRun"
+import { debounce } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Mint({
   maturity,
@@ -70,10 +73,6 @@ export default function Mint({
     return "0"
   }, [coinData, decimal])
 
-  const { data: mintPYRatio } = useQueryMintPYRatio(coinConfig?.marketStateId)
-  const ptRatio = useMemo(() => mintPYRatio?.syPtRate ?? 1, [mintPYRatio])
-  const ytRatio = useMemo(() => mintPYRatio?.syYtRate ?? 1, [mintPYRatio])
-
   const insufficientBalance = useMemo(
     () => new Decimal(coinBalance).lt(mintValue || 0),
     [coinBalance, mintValue],
@@ -86,6 +85,56 @@ export default function Mint({
       refetchCoinData(),
     ])
   }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
+
+  const { mutateAsync: mintDryRun } = useMintPYDryRun(coinConfig)
+
+  const [ptAmount, setPtAmount] = useState("")
+  const [ytAmount, setYtAmount] = useState("")
+
+  const [isInputLoading, setIsInputLoading] = useState(false)
+
+  const debouncedGetPyOut = useCallback(
+    (value: string, decimal: number) => {
+      const getPyOut = debounce(async () => {
+        if (value && value !== "0" && decimal && coinData?.length) {
+          setIsInputLoading(true)
+          try {
+            const [result] = await mintDryRun({
+              mintValue: value,
+              coinData,
+              pyPositions: pyPositionData,
+            })
+            setPtAmount(result.ptAmount)
+            setYtAmount(result.ytAmount)
+          } catch (error) {
+            console.error("Dry run error:", error)
+            setPtAmount("")
+            setYtAmount("")
+          } finally {
+            setIsInputLoading(false)
+          }
+        } else {
+          setPtAmount("")
+          setYtAmount("")
+        }
+      }, 500)
+
+      getPyOut()
+      return getPyOut.cancel
+    },
+    [coinData, mintDryRun, pyPositionData],
+  )
+
+  useEffect(() => {
+    const cancelFn = debouncedGetPyOut(mintValue, decimal)
+    return () => {
+      cancelFn()
+    }
+  }, [mintValue, decimal, debouncedGetPyOut])
+
+  const handleInputChange = useCallback((value: string) => {
+    setMintValue(value)
+  }, [])
 
   async function mint() {
     if (
@@ -142,10 +191,6 @@ export default function Mint({
     }
   }
 
-  // const debouncedSetMintValue = debounce((value: string) => {
-  //   setMintValue(value)
-  // }, 300)
-
   return (
     <div className="flex flex-col items-center">
       <TransactionStatusDialog
@@ -194,10 +239,7 @@ export default function Mint({
               type="number"
               value={mintValue}
               disabled={!isConnected}
-              onChange={
-                (e) => setMintValue(e.target.value)
-                // debouncedSetMintValue(new Decimal(e.target.value).toString())
-              }
+              onChange={(e) => handleInputChange(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
               className={`bg-transparent h-full outline-none grow text-right min-w-0`}
             />
@@ -250,14 +292,16 @@ export default function Mint({
               </>
             )}
           </div>
-          <input
-            disabled
-            type="text"
-            value={
-              mintValue && new Decimal(mintValue).div(ptRatio).toFixed(decimal)
-            }
-            className="bg-transparent h-full outline-none grow text-right min-w-0"
-          />
+          <div className="text-right grow">
+            {isInputLoading ? (
+              <div className="flex justify-end">
+                <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+              </div>
+            ) : (
+              ptAmount &&
+              new Decimal(ptAmount).div(10 ** decimal).toFixed(decimal)
+            )}
+          </div>
         </div>
       </div>
       <Plus className="mx-auto mt-5" />
@@ -278,16 +322,18 @@ export default function Mint({
             </>
           )}
         </div>
-        <input
-          disabled
-          type="text"
-          value={
-            mintValue && new Decimal(mintValue).div(ytRatio).toFixed(decimal)
-          }
-          className="bg-transparent h-full outline-none grow text-right min-w-0"
-        />
+        <div className="text-right grow">
+          {isInputLoading ? (
+            <div className="flex justify-end">
+              <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+            </div>
+          ) : (
+            ytAmount &&
+            new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal)
+          )}
+        </div>
       </div>
-      <div className="mt-7.5">
+      <div className="mt-7.5 w-full">
         <ActionButton
           btnText="Mint"
           onClick={mint}

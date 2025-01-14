@@ -13,7 +13,19 @@ const variants = {
 export default function Rewards() {
   const { address, } = useWallet()
   const { data: list } = useRewardList()
+  const convertedList = list?.map(item => ({
+    ...item,
+    rank: Number(item.rank),
+    pointsPerDay: Number(item.pointsPerDay),
+    totalPoints: Number(item.totalPoints)
+  }))
   const { data: userPoint } = useRewardWithAddress(address)
+  const convertedUserPoint = userPoint?.map(item => ({
+    ...item,
+    rank: Number(item.rank),
+    pointsPerDay: Number(item.pointsPerDay),
+    totalPoints: Number(item.totalPoints)
+  }))
 
   return (
     <div
@@ -33,7 +45,7 @@ export default function Rewards() {
               variants={variants}
               transition={{ duration: 0.3 }}
             >
-              <NemoPoint userPoint={userPoint} />
+              <NemoPoint userPoint={convertedUserPoint} />
             </motion.div>
             <motion.div
               key="yield-tokenization"
@@ -43,7 +55,7 @@ export default function Rewards() {
               variants={variants}
               transition={{ duration: 0.3 }}
             >
-              <CustomTable list={list} />
+              <CustomTable list={convertedList} />
             </motion.div>
           </AnimatePresence>
         </div>

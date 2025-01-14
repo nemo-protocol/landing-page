@@ -3,18 +3,14 @@ import { debugLog } from "@/config"
 import { CoinData } from "@/hooks/useCoinData"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
 import { LPMarketPosition } from "@/hooks/types"
-import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
+import {
+  Transaction,
+  TransactionArgument,
+  TransactionResult,
+} from "@mysten/sui/transactions"
+import { DebugInfo } from "@/hooks/types"
 
-interface MoveCallArgument {
-  name: string
-  value: string
-}
-
-interface MoveCallInfo {
-  target: string
-  arguments: MoveCallArgument[]
-  typeArguments: string[]
-}
+type MoveCallInfo = DebugInfo["moveCall"]
 
 export const getPriceVoucher = (
   tx: Transaction,
@@ -425,40 +421,49 @@ export function depositSyCoin(
   return syCoin
 }
 
-export const mintPy = (
+export const mintPy = <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
-  pyCoin: TransactionArgument,
+  syCoin: TransactionArgument,
   priceVoucher: TransactionArgument,
   pyPosition: TransactionArgument,
-) => {
-  const mintPyMoveCall = {
+  returnDebugInfo?: T,
+): T extends true ? [TransactionResult, MoveCallInfo] : TransactionResult => {
+  const debugInfo: MoveCallInfo = {
     target: `${coinConfig.nemoContractId}::yield_factory::mint_py`,
     arguments: [
-      coinConfig.version,
-      pyCoin,
-      priceVoucher,
-      pyPosition,
-      coinConfig.pyStateId,
-      coinConfig.yieldFactoryConfigId,
-      "0x6",
+      { name: "version", value: coinConfig.version },
+      { name: "sy_coin", value: "syCoin" },
+      { name: "price_voucher", value: "priceVoucher" },
+      { name: "py_position", value: "pyPosition" },
+      { name: "py_state", value: coinConfig.pyStateId },
+      { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
+      { name: "clock", value: "0x6" },
     ],
     typeArguments: [coinConfig.syCoinType],
   }
-  debugLog("mint_py move call:", mintPyMoveCall)
 
-  return tx.moveCall({
-    ...mintPyMoveCall,
+  const txMoveCall = {
+    target: debugInfo.target,
     arguments: [
       tx.object(coinConfig.version),
-      pyCoin,
+      syCoin,
       priceVoucher,
       pyPosition,
       tx.object(coinConfig.pyStateId),
       tx.object(coinConfig.yieldFactoryConfigId),
       tx.object("0x6"),
     ],
-  })
+    typeArguments: debugInfo.typeArguments,
+  }
+
+  debugLog("mint_py move call:", txMoveCall)
+
+  const result = tx.moveCall(txMoveCall)
+
+  return (returnDebugInfo ? [result, debugInfo] : result) as T extends true 
+    ? [TransactionResult, MoveCallInfo] 
+    : TransactionResult
 }
 
 export const redeemSyCoin = (

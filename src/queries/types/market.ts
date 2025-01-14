@@ -21,24 +21,16 @@ export interface BaseCoinInfo {
   aftermathSafeId: string
   aftermathStakedSuiVaultId: string
   haedalStakeingId: string
-  // tvl: number | string
-  // poolApy: number | string
   decimal: string | number
-  underlyingApy: number | string
-  underlyingPrice: number | string
+  underlyingApy: string
+  underlyingPrice: string
   pyStateId: string
   syStateId: string
-  conversionRate: number | string
+  conversionRate: string
   marketFactoryConfigId: string
-  swapFeeForLpHolder: string | number
-  // /** @deprecated */
-  // ptApy: number | string
-  // /** @deprecated */
-  // ytApy: number | string
-  // /** @deprecated */
-  // ptPrice: number | string
-  // /** @deprecated */
-  // ytPrice: number | string
+  swapFeeForLpHolder: string
+  underlyingCoinName: string
+  version: string
 }
 
 export interface CoinInfo extends BaseCoinInfo {
@@ -58,6 +50,19 @@ export interface CoinInfoWithMetrics extends CoinInfo {
 }
 
 export interface CoinConfig extends BaseCoinInfo {
+  pyStoreId: string
+  pyPosition: string
+  pyPositionType: string
+  pyPositionTypeList: string[]
+  marketPosition: string
+  marketPositionType: string
+  marketPositionTypeList: string[]
+  nemoContractIdList: string[]
+  lpPrice: string
+  coinPrice: string
+  sevenAvgUnderlyingPtApy: string
+  sevenAvgUnderlyingYtApy: string
+  sevenAvgUnderlyingApy: string
   underlyingCoinName: string
   underlyingCoinLogo: string
   underlyingProtocol: string
@@ -65,18 +70,25 @@ export interface CoinConfig extends BaseCoinInfo {
   swapFeeApy: string
   yieldFactoryConfigId: string
   marketFactoryConfigId: string
-  lpPrice: string
-  coinPrice: string
-  version: string
   sCoinTreasure: string
-  pyPositionType: string
-  pyPositionTypeList: string[]
-  marketPositionType: string
-  marketPositionTypeList: string[]
   tradeFee: string
   feeRate: string
-  sevenAvgUnderlyingApy: string
+
+  /** @deprecated */
+  ptPrice: string
+  /** @deprecated */
+  ytPrice: string
+  /** @deprecated */
+  ptApy: string
+  /** @deprecated */
+  ytApy: string
+  /** @deprecated */
+  poolApy: string
+  /** @deprecated */
+  tvl: string
+  /** @deprecated */
   ptTvl: string
+  /** @deprecated */
   syTvl: string
 }
 
@@ -90,19 +102,19 @@ export interface PortfolioItem extends CoinConfig {
 
 export interface FixedReturnItem {
   name: string
-  youPay: number
-  expiry: number
-  redeem: number
-  fixedReturn: number
-  fixedApy: number
+  youPay: string
+  expiry: string
+  redeem: string
+  fixedReturn: string
+  fixedApy: string
   coinLogo: string
   coinType: string
   maturity: string
 }
 
 export interface PointItem {
-  rank: number
+  rank: string
   address: string
-  pointsPerDay: number
-  totalPoints: number
+  pointsPerDay: string
+  totalPoints: string
 }
