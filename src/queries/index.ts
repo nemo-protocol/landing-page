@@ -1,5 +1,5 @@
 import { nemoApi } from "./request"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, UseQueryResult } from "@tanstack/react-query"
 import {
   CoinInfo,
   CoinConfig,
@@ -16,6 +16,7 @@ interface CoinInfoListParams {
   name?: string
   address?: string
   isShowExpiry?: number
+  isCalc?: boolean
 }
 
 function getCoinInfoList({
@@ -212,18 +213,27 @@ export function usePortfolioList() {
   })
 }
 
-export function useCoinInfoList(params: CoinInfoListParams = {}) {
-  const { name = "", address = "", isShowExpiry = 0 } = params
+export function useCoinInfoList<T extends boolean = true>(
+  params: CoinInfoListParams & { isCalc?: T } = {},
+): UseQueryResult<T extends true ? CoinInfoWithMetrics[] : CoinInfo[], Error> {
+  const {
+    name = "",
+    address = "",
+    isShowExpiry = 0,
+    isCalc = true as T,
+  } = params
   const { mutateAsync: calculateMetrics } = useCalculatePoolMetrics()
   const { mutateAsync: fetchMarketStates } = useFetchMultiMarketState()
 
-  return useQuery<CoinInfoWithMetrics[]>({
+  return useQuery({
     queryKey: ["coinInfoList", name, address, isShowExpiry],
     queryFn: async () => {
       const coinList = (await getCoinInfoList(params).catch(() => [])).filter(
         ({ marketStateId }) => !!marketStateId,
       )
       if (!coinList.length) return []
+
+      if (!isCalc) return coinList
 
       const marketStateIds = coinList.map((coin) => coin.marketStateId)
 

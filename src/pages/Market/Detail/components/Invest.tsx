@@ -326,6 +326,9 @@ export default function Invest() {
             setOpen(false)
           }}
         />
+        <div>
+          {swapValue && new Decimal(swapValue).mul(10 ** decimal).toFixed()}
+        </div>
         <AmountInput
           price={price}
           decimal={decimal}
@@ -518,7 +521,7 @@ export default function Invest() {
           openConnect={openConnect}
           setOpenConnect={setOpenConnect}
           insufficientBalance={insufficientBalance}
-          disabled={["", undefined, "0"].includes(swapValue) || !!error}
+          disabled={["", undefined, "0"].includes(swapValue)}
         />
       </div>
     </div>

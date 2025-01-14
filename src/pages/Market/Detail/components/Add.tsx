@@ -635,7 +635,7 @@ export default function SingleCoin() {
       <div className="grid grid-cols-1 lg:grid-cols-[500px_1fr] gap-8">
         {/* Left Panel */}
         <div className="space-y-4">
-          {/* <PoolSelect
+          <PoolSelect
             coinType={coinType}
             maturity={maturity}
             onChange={(coinAddress, maturity) => {
@@ -643,7 +643,7 @@ export default function SingleCoin() {
                 replace: true,
               })
             }}
-          /> */}
+          />
 
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07]">
