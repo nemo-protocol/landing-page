@@ -171,14 +171,29 @@ export default function Sell() {
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        const swapFn = tokenType === "pt" ? swapExactPtForSy : swapExactYtForSy
-        const syCoin = swapFn(
-          tx,
-          coinConfig,
-          redeemValue,
-          pyPosition,
-          priceVoucher,
-        )
+        const minSyOut = new Decimal(targetValue)
+          .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
+          .mul(10 ** decimal)
+          .toFixed(0)
+
+        const syCoin =
+          tokenType === "pt"
+            ? swapExactPtForSy(
+                tx,
+                coinConfig,
+                redeemValue,
+                pyPosition,
+                priceVoucher,
+              )
+            : swapExactYtForSy(
+                tx,
+                coinConfig,
+                redeemValue,
+                pyPosition,
+                priceVoucher,
+                minSyOut,
+              )
+
         const sCoin = redeemSyCoin(tx, coinConfig, syCoin)
 
         // tx.transferObjects([sCoin], address)
