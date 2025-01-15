@@ -543,7 +543,7 @@ export default function SingleCoin() {
       try {
         setIsAdding(true)
         const addAmount = new Decimal(addValue)
-          .div(tokenType === 0 ? conversionRate : 1)
+          // .div(tokenType === 0 ? 1 : conversionRate)
           .mul(10 ** decimal)
           .toFixed(0)
 

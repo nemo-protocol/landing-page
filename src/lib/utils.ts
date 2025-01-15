@@ -76,7 +76,7 @@ export const splitSyAmount = (
   const syForPtValue = result?.syForPt.toFixed(0) || "1"
   const syValue = result?.syDesired.toFixed(0) || "1"
   const ptValue = result?.pt.toFixed(0) || "1"
-  console.log("ptValue syValue", syForPtValue, ptValue, syValue)
+  console.log("syForPtValue ptValue syValue syAmount", syForPtValue, ptValue, syValue, syAmount)
   return { syForPtValue, syValue, ptValue }
 }
 
