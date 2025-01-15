@@ -55,6 +55,8 @@ export default function useQueryPtOutDryRun<T extends boolean = false>(
         },
       }
 
+      console.log("debugInfo", debugInfo)
+
       const tx = new Transaction()
       tx.setSender(address)
 
