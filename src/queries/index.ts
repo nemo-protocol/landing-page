@@ -269,7 +269,15 @@ export function useCoinInfoList<T extends boolean = true>(
               ...metrics,
               marketState,
             }
-          } catch {
+          } catch (error) {
+            console.log(
+              "catch error",
+              index,
+              marketStateIds[index],
+              marketState,
+              error,
+            )
+
             return {
               ...coinInfo,
               ptPrice: "",
