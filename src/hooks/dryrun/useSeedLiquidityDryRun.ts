@@ -1,22 +1,34 @@
-import { useMutation } from "@tanstack/react-query"
-import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "../types"
+import { DEBUG } from "@/config"
 import { ContractError } from "../types"
-import { depositSyCoin, getPriceVoucher, initPyPosition, mintSCoin, splitCoinHelper } from "@/lib/txHelper"
-import { DEBUG, debugLog } from "@/config"
+import type { DebugInfo } from "../types"
+import { useMutation } from "@tanstack/react-query"
 import type { CoinData } from "@/hooks/useCoinData"
-import Decimal from "decimal.js"
+import { Transaction } from "@mysten/sui/transactions"
+import type { CoinConfig } from "@/queries/types/market"
+import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
+import {
+  mintSCoin,
+  depositSyCoin,
+  getPriceVoucher,
+  initPyPosition,
+  splitCoinHelper,
+} from "@/lib/txHelper"
 
-type SeedLiquidityResult = {
-  lpAmount: string
+interface SeedLiquidityParams {
+  addAmount: string
+  tokenType: number
+  coinData: CoinData[]
+  pyPositions?: PyPosition[]
 }
 
-export default function useSeedLiquidityDryRun(
+type DryRunResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useSeedLiquidityDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
-  debug: boolean = false,
+  debug: T = false as T,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
@@ -24,18 +36,11 @@ export default function useSeedLiquidityDryRun(
 
   return useMutation({
     mutationFn: async ({
+      coinData,
       addAmount,
       tokenType,
-      slippage,
-      coinData,
       pyPositions: inputPyPositions,
-    }: {
-      addAmount: string
-      tokenType: number
-      slippage: string
-      coinData: CoinData[]
-      pyPositions?: PyPosition[]
-    }): Promise<[SeedLiquidityResult] | [SeedLiquidityResult, DebugInfo]> => {
+    }: SeedLiquidityParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -46,20 +51,13 @@ export default function useSeedLiquidityDryRun(
         throw new Error("No available coins")
       }
 
-      let pyPositions = inputPyPositions
-      if (!pyPositions) {
-        [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
-      }
-
-      if (DEBUG) {
-        console.log("pyPositions in dry run:", pyPositions)
-        console.log("coinData in dry run:", coinData)
-      }
+      const [pyPositions] = (
+        inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
+      ) as [PyPosition[]]
 
       const tx = new Transaction()
       tx.setSender(address)
 
-      // Handle py position creation
       let pyPosition
       let created = false
       if (!pyPositions?.length) {
@@ -69,10 +67,19 @@ export default function useSeedLiquidityDryRun(
         pyPosition = tx.object(pyPositions[0].id.id)
       }
 
-      // Calculate min LP amount based on slippage
-      const minLpAmount = new Decimal(addAmount)
-        .mul(1 - new Decimal(slippage).div(100).toNumber())
-        .toFixed(0)
+      const [splitCoin] =
+        tokenType === 0
+          ? mintSCoin(tx, coinConfig, coinData, [addAmount])
+          : splitCoinHelper(tx, coinData, [addAmount], coinConfig.coinType)
+
+      const syCoin = depositSyCoin(
+        tx,
+        coinConfig,
+        splitCoin,
+        coinConfig.coinType,
+      )
+
+      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
       const debugInfo: DebugInfo = {
         moveCall: {
@@ -80,14 +87,17 @@ export default function useSeedLiquidityDryRun(
           arguments: [
             { name: "version", value: coinConfig.version },
             { name: "sy_coin", value: "syCoin" },
-            { name: "min_lp_amount", value: minLpAmount },
+            { name: "min_lp_amount", value: "0" },
             { name: "price_voucher", value: "priceVoucher" },
             {
               name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id.id,
+              value: pyPositions?.length ? pyPositions[0].id.id : "pyPosition",
             },
             { name: "py_state", value: coinConfig.pyStateId },
-            { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
+            {
+              name: "yield_factory_config",
+              value: coinConfig.yieldFactoryConfigId,
+            },
             { name: "market_state", value: coinConfig.marketStateId },
             { name: "clock", value: "0x6" },
           ],
@@ -95,34 +105,12 @@ export default function useSeedLiquidityDryRun(
         },
       }
 
-      // Split coins and deposit
-      const [splitCoin] =
-        tokenType === 0
-          ? mintSCoin(tx, coinConfig, coinData, [addAmount])
-          : splitCoinHelper(
-              tx,
-              coinData,
-              [addAmount],
-              tokenType === 0
-                ? coinConfig.underlyingCoinType
-                : coinConfig.coinType,
-            )
-
-      const syCoin = depositSyCoin(
-        tx,
-        coinConfig,
-        splitCoin,
-        tokenType === 0 ? coinConfig.underlyingCoinType : coinConfig.coinType,
-      )
-
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-
-      const seedLiquidityMoveCall = {
-        target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
+      const [lp] = tx.moveCall({
+        target: debugInfo.moveCall.target,
         arguments: [
           tx.object(coinConfig.version),
           syCoin,
-          tx.pure.u64(minLpAmount),
+          tx.pure.u64(0),
           priceVoucher,
           pyPosition,
           tx.object(coinConfig.pyStateId),
@@ -131,11 +119,7 @@ export default function useSeedLiquidityDryRun(
           tx.object("0x6"),
         ],
         typeArguments: [coinConfig.syCoinType],
-      }
-      debugLog("seed_liquidity dry run move call:", seedLiquidityMoveCall)
-
-      // Mock seed liquidity
-      const [lp] = tx.moveCall(seedLiquidityMoveCall)
+      })
 
       if (created) {
         tx.transferObjects([pyPosition], address)
@@ -151,33 +135,30 @@ export default function useSeedLiquidityDryRun(
         }),
       })
 
-      if (DEBUG) {
-        console.log("seed_liquidity dry run result:", result)
-      }
-
-      // Record raw result
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
       }
 
       if (result?.error) {
+        if (DEBUG) {
+          console.log("debugInfo", debugInfo, coinConfig)
+        }
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.events?.[1]?.parsedJson) {
+      if (!result?.events?.[result.events.length - 1]?.parsedJson) {
         const message = "Failed to get seed liquidity data"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const lpAmount = result.events[1].parsedJson.lp_amount as string
+      const lpAmount = result.events[result.events.length - 1].parsedJson
+        .lp_amount as string
 
-      debugInfo.parsedOutput = JSON.stringify({ lpAmount })
+      debugInfo.parsedOutput = lpAmount
 
-      const returnValue = { lpAmount }
-
-      return debug ? [returnValue, debugInfo] : [returnValue]
+      return (debug ? [lpAmount, debugInfo] : lpAmount) as DryRunResult<T>
     },
   })
-} 
+}

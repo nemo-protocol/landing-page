@@ -421,7 +421,7 @@ export function depositSyCoin(
   return syCoin
 }
 
-export const mintPy = <T extends boolean = false>(
+export const mintPY = <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
   syCoin: TransactionArgument,

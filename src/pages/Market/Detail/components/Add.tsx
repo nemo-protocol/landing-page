@@ -29,7 +29,7 @@ import {
   getPriceVoucher,
   splitCoinHelper,
   depositSyCoin,
-  mintPy,
+  mintPY,
   redeemSyCoin,
   mergeAllLpPositions,
 } from "@/lib/txHelper"
@@ -67,10 +67,10 @@ export default function SingleCoin() {
   const [openConnect, setOpenConnect] = useState(false)
   const [lpPosition, setLpPosition] = useState<string>()
   const [ytAmount, setYtAmount] = useState<string>()
-  const [positionLoading, setPositionLoading] = useState(false)
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [isAdding, setIsAdding] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
+  const [isCalcLpLoading, setIsCalcLpLoading] = useState(false)
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -152,10 +152,6 @@ export default function SingleCoin() {
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig)
 
-  useEffect(() => {
-    console.log(ptYtData)
-  }, [ptYtData])
-
   const [ptRatio, syRatio] = useMemo(() => {
     if (
       ptYtData?.ptTvl &&
@@ -163,8 +159,6 @@ export default function SingleCoin() {
       !new Decimal(ptYtData.ptTvl).isZero() &&
       !new Decimal(ptYtData.syTvl).isZero()
     ) {
-      console.log("ptYtData.ptTvl", ptYtData.ptTvl)
-      console.log("ptYtData.syTvl", ptYtData.syTvl)
       const totalTvl = new Decimal(ptYtData.ptTvl).add(
         new Decimal(ptYtData.syTvl),
       )
@@ -177,19 +171,6 @@ export default function SingleCoin() {
   }, [ptYtData])
 
   const totalApy = useMemo(() => {
-    console.log(
-      "ptRatio",
-      ptRatio,
-      "syRatio",
-      syRatio,
-      "swapFeeApy",
-      coinConfig?.swapFeeApy,
-      "underlyingApy",
-      coinConfig?.underlyingApy,
-      "ptApy",
-      ptYtData?.ptApy,
-    )
-
     if (
       coinConfig?.underlyingApy &&
       ptYtData?.ptApy &&
@@ -309,7 +290,7 @@ export default function SingleCoin() {
 
     const pyCoin = depositSyCoin(tx, coinConfig, splitCoinForPt, coinType)
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-    const [pt_amount] = mintPy(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
+    const [pt_amount] = mintPY(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
 
     const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
 
@@ -391,7 +372,12 @@ export default function SingleCoin() {
       ],
       typeArguments: [coinConfig.syCoinType],
     }
-    debugLog("add_liquidity_single_sy move call:", addLiquidityMoveCall)
+    debugLog(
+      "add_liquidity_single_sy move call:",
+      addLiquidityMoveCall,
+      "minLpAmount",
+      minLpAmount,
+    )
 
     const [mp] = tx.moveCall({
       ...addLiquidityMoveCall,
@@ -423,7 +409,7 @@ export default function SingleCoin() {
           isValidAmount(value) &&
           coinData?.length
         ) {
-          setPositionLoading(true)
+          setIsCalcLpLoading(true)
           try {
             const amount = new Decimal(value).mul(10 ** decimal).toString()
             const convertedAmount =
@@ -433,10 +419,9 @@ export default function SingleCoin() {
 
             // 检查是否需要执行seed_liquidity
             if (marketStateData?.lpSupply === "0") {
-              const [{ lpAmount }] = await seedLiquidityDryRun({
+              const lpAmount = await seedLiquidityDryRun({
                 addAmount: convertedAmount,
                 tokenType,
-                slippage,
                 coinData,
                 pyPositions: pyPositionData,
               })
@@ -450,10 +435,9 @@ export default function SingleCoin() {
               marketStateData &&
               new Decimal(marketStateData.totalSy).mul(0.4).lt(convertedAmount)
             ) {
-              const [{ lpAmount }] = await mintLpDryRun({
+              const lpAmount = await mintLpDryRun({
                 addAmount: convertedAmount,
                 tokenType,
-                slippage,
                 coinData,
                 pyPositions: pyPositionData,
               })
@@ -463,11 +447,9 @@ export default function SingleCoin() {
               )
               setYtAmount(undefined)
             } else {
-              // 执行add_liquidity_single_sy
-              const [{ lpAmount }] = await addLiquiditySingleSyDryRun({
+              const lpAmount = await addLiquiditySingleSyDryRun({
                 addAmount: convertedAmount,
                 tokenType,
-                slippage,
                 coinData,
                 pyPositions: pyPositionData,
               })
@@ -481,7 +463,7 @@ export default function SingleCoin() {
             setLpPosition(undefined)
             setYtAmount(undefined)
           } finally {
-            setPositionLoading(false)
+            setIsCalcLpLoading(false)
           }
         } else {
           setLpPosition(undefined)
@@ -564,7 +546,10 @@ export default function SingleCoin() {
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
+        console.log("minLpAmount", minLpAmount)
+
         if (marketStateData.lpSupply === "0") {
+          console.log("handleSeedLiquidity")
           await handleSeedLiquidity(
             tx,
             addAmount,
@@ -579,6 +564,7 @@ export default function SingleCoin() {
         } else if (
           new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
         ) {
+          console.log("handleMintLp")
           await handleMintLp(
             tx,
             addAmount,
@@ -591,6 +577,7 @@ export default function SingleCoin() {
             minLpAmount,
           )
         } else {
+          console.log("handleAddLiquiditySingleSy")
           await handleAddLiquiditySingleSy(
             tx,
             addAmount,
@@ -716,7 +703,7 @@ export default function SingleCoin() {
                     <span className="flex items-center gap-x-1.5">
                       {!addValue ? (
                         "--"
-                      ) : positionLoading ? (
+                      ) : isCalcLpLoading ? (
                         <Skeleton className="h-7 w-48 bg-[#2D2D48]" />
                       ) : !decimal ? (
                         "--"
@@ -736,7 +723,7 @@ export default function SingleCoin() {
                     </span>
                   </div>
                   {(ytAmount ||
-                    (positionLoading &&
+                    (isCalcLpLoading &&
                       marketStateData &&
                       new Decimal(marketStateData.totalSy)
                         .mul(0.4)
@@ -750,7 +737,7 @@ export default function SingleCoin() {
                       <span className="flex items-center gap-x-1.5">
                         {!addValue ? (
                           "--"
-                        ) : positionLoading ? (
+                        ) : isCalcLpLoading ? (
                           <Skeleton className="h-5 w-32 bg-[#2D2D48]" />
                         ) : !decimal ? (
                           "--"
@@ -816,16 +803,13 @@ export default function SingleCoin() {
               />
 
               <ActionButton
-                btnText={"Add"}
                 onClick={add}
-                loading={isAdding}
+                btnText={"Add"}
                 openConnect={openConnect}
                 setOpenConnect={setOpenConnect}
+                loading={isAdding || isCalcLpLoading}
                 insufficientBalance={insufficientBalance}
-                disabled={
-                  ["", undefined, "0"].includes(addValue) ||
-                  new Decimal(addValue).toNumber() === 0
-                }
+                disabled={!isValidAmount(addValue) || isCalcLpLoading}
               />
             </div>
           </div>
@@ -862,59 +846,61 @@ export default function SingleCoin() {
           <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07]">
             <div className="space-y-3 lg:space-y-4">
               {/* Pool Capacity */}
-              <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-4 lg:p-6 relative">
-                <h3 className="text-lg lg:text-xl font-normal mb-6 lg:mb-8">
-                  Pool Capacity
-                </h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      {isMarketStateDataLoading ? (
-                        <Skeleton className="h-2 w-full bg-[#2D2D48]" />
-                      ) : marketStateData ? (
-                        <Progress
-                          className="h-2 bg-[#2DF4DD] cursor-pointer"
-                          indicatorClassName="bg-[#2C62D8]"
-                          value={new Decimal(marketStateData.totalSy)
-                            .div(marketStateData.marketCap)
-                            .mul(100)
-                            .toNumber()}
-                        />
-                      ) : (
-                        <span>No data</span>
-                      )}
-                    </TooltipTrigger>
+              {isValidAmount(marketStateData?.marketCap) && (
+                <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-4 lg:p-6 relative">
+                  <h3 className="text-lg lg:text-xl font-normal mb-6 lg:mb-8">
+                    Pool Capacity
+                  </h3>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {isMarketStateDataLoading ? (
+                          <Skeleton className="h-2 w-full bg-[#2D2D48]" />
+                        ) : marketStateData ? (
+                          <Progress
+                            className="h-2 bg-[#2DF4DD] cursor-pointer"
+                            indicatorClassName="bg-[#2C62D8]"
+                            value={new Decimal(marketStateData.totalSy)
+                              .div(marketStateData.marketCap)
+                              .mul(100)
+                              .toNumber()}
+                          />
+                        ) : (
+                          <span>No data</span>
+                        )}
+                      </TooltipTrigger>
 
-                    {/* Tooltip with bottom alignment and arrow */}
-                    <TooltipContent
-                      className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-3 text-sm relative mb-2"
-                      side="top"
-                      align="end"
-                      sideOffset={5}
-                    >
-                      <div className="text-white space-y-1">
-                        <div>
-                          Total Capacity:{" "}
-                          {marketStateData?.marketCap && decimal
-                            ? `${new Decimal(marketStateData.marketCap)
-                                .div(10 ** decimal)
-                                .toFixed(2)} ${coinConfig?.coinName}`
-                            : "--"}
+                      {/* Tooltip with bottom alignment and arrow */}
+                      <TooltipContent
+                        className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-3 text-sm relative mb-2"
+                        side="top"
+                        align="end"
+                        sideOffset={5}
+                      >
+                        <div className="text-white space-y-1">
+                          <div>
+                            Total Capacity:{" "}
+                            {marketStateData?.marketCap && decimal
+                              ? `${new Decimal(marketStateData.marketCap)
+                                  .div(10 ** decimal)
+                                  .toFixed(2)} ${coinConfig?.coinName}`
+                              : "--"}
+                          </div>
+                          <div>
+                            Filled:{" "}
+                            {marketStateData
+                              ? `${new Decimal(marketStateData.totalSy)
+                                  .div(new Decimal(marketStateData.marketCap))
+                                  .mul(100)
+                                  .toFixed(2)}%`
+                              : "--"}
+                          </div>
                         </div>
-                        <div>
-                          Filled:{" "}
-                          {marketStateData
-                            ? `${new Decimal(marketStateData.totalSy)
-                                .div(new Decimal(marketStateData.marketCap))
-                                .mul(100)
-                                .toFixed(2)}%`
-                            : "--"}
-                        </div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
 
               {/* Pool Ratio */}
               <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-4 lg:p-6">
@@ -961,8 +947,8 @@ export default function SingleCoin() {
                               PT {coinConfig?.coinName}:
                             </span>
                             <span>
-                              {coinConfig?.ptTvl
-                                ? `$${formatDecimalValue(coinConfig.ptTvl, 2)}`
+                              {ptYtData?.ptTvl
+                                ? `$${formatDecimalValue(ptYtData.ptTvl, 2)}`
                                 : "--"}
                             </span>
                           </div>
@@ -979,8 +965,8 @@ export default function SingleCoin() {
                               {coinConfig?.coinName}:
                             </span>
                             <span>
-                              {coinConfig?.syTvl
-                                ? `$${formatDecimalValue(coinConfig.syTvl, 2)}`
+                              {ptYtData?.syTvl
+                                ? `$${formatDecimalValue(ptYtData.syTvl, 2)}`
                                 : "--"}
                             </span>
                           </div>

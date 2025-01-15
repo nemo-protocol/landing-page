@@ -73,23 +73,6 @@ export interface CoinConfig extends BaseCoinInfo {
   sCoinTreasure: string
   tradeFee: string
   feeRate: string
-
-  /** @deprecated */
-  ptPrice: string
-  /** @deprecated */
-  ytPrice: string
-  /** @deprecated */
-  ptApy: string
-  /** @deprecated */
-  ytApy: string
-  /** @deprecated */
-  poolApy: string
-  /** @deprecated */
-  tvl: string
-  /** @deprecated */
-  ptTvl: string
-  /** @deprecated */
-  syTvl: string
 }
 
 export interface PortfolioItem extends CoinConfig {

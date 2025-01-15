@@ -76,7 +76,7 @@ export const splitSyAmount = (
   const syForPtValue = result?.syForPt.toFixed(0) || "1"
   const syValue = result?.syDesired.toFixed(0) || "1"
   const ptValue = result?.pt.toFixed(0) || "1"
-  console.log("syForPtValue ptValue syValue syAmount", syForPtValue, ptValue, syValue, syAmount)
+  // console.log("ptValue syValue", syForPtValue, ptValue, syValue)
   return { syForPtValue, syValue, ptValue }
 }
 
@@ -197,11 +197,11 @@ export const formatTimeDiff = (timestamp: number): string => {
   const maturityTime = dayjs(timestamp)
   const now = dayjs()
   const diffSeconds = maturityTime.diff(now, "second")
-  
+
   if (diffSeconds <= 0) {
     return "Pool Expired"
   }
-  
+
   const diffDays = maturityTime.diff(now, "day")
   if (diffDays > 0) {
     return `${diffDays} DAYS`

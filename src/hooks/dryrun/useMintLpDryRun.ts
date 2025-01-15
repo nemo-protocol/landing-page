@@ -1,32 +1,37 @@
-import { useMutation } from "@tanstack/react-query"
-import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "../types"
+import { DEBUG } from "@/config"
 import { ContractError } from "../types"
+import type { DebugInfo } from "../types"
+import { useMutation } from "@tanstack/react-query"
+import type { CoinData } from "@/hooks/useCoinData"
+import { Transaction } from "@mysten/sui/transactions"
+import type { CoinConfig } from "@/queries/types/market"
+import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
 import { useCalculateLpOut } from "../useCalculateLpOut"
 import {
+  mintSCoin,
   depositSyCoin,
   getPriceVoucher,
   initPyPosition,
-  mintPy,
-  mintSCoin,
+  mintPY,
   splitCoinHelper,
 } from "@/lib/txHelper"
-import { DEBUG, debugLog } from "@/config"
 import Decimal from "decimal.js"
-import type { CoinData } from "@/hooks/useCoinData"
 
-type MintLpResult = {
-  lpAmount: string
-  ptAmount: string
-  ytAmount: string
+interface MintLpParams {
+  addAmount: string
+  tokenType: number
+  coinData: CoinData[]
+  pyPositions?: PyPosition[]
 }
 
-export default function useMintLpDryRun(
+type DryRunResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useMintLpDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
-  debug: boolean = false,
+  debug: T = false as T,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
@@ -35,18 +40,11 @@ export default function useMintLpDryRun(
 
   return useMutation({
     mutationFn: async ({
+      coinData,
       addAmount,
       tokenType,
-      slippage,
-      coinData,
       pyPositions: inputPyPositions,
-    }: {
-      addAmount: string
-      tokenType: number
-      slippage: string
-      coinData: CoinData[]
-      pyPositions?: PyPosition[]
-    }): Promise<[MintLpResult] | [MintLpResult, DebugInfo]> => {
+    }: MintLpParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -57,20 +55,13 @@ export default function useMintLpDryRun(
         throw new Error("No available coins")
       }
 
-      let pyPositions = inputPyPositions
-      if (!pyPositions) {
-        [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
-      }
-
-      if (DEBUG) {
-        console.log("pyPositions in dry run:", pyPositions)
-        console.log("coinData in dry run:", coinData)
-      }
+      const [pyPositions] = (
+        inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
+      ) as [PyPosition[]]
 
       const tx = new Transaction()
       tx.setSender(address)
 
-      // Handle py position creation
       let pyPosition
       let created = false
       if (!pyPositions?.length) {
@@ -87,16 +78,41 @@ export default function useMintLpDryRun(
         sy: new Decimal(lpOut.syValue).toFixed(0),
       }
 
-      // Get price voucher for minting PT
+      // Split coins and deposit
+      const [splitCoinForSy, splitCoinForPt] =
+        tokenType === 0
+          ? mintSCoin(tx, coinConfig, coinData, [amounts.sy, amounts.syForPt])
+          : splitCoinHelper(
+              tx,
+              coinData,
+              [amounts.sy, amounts.syForPt],
+              coinConfig.coinType,
+            )
+
+      const syCoin = depositSyCoin(
+        tx,
+        coinConfig,
+        splitCoinForSy,
+        coinConfig.coinType,
+      )
+
+      const pyCoin = depositSyCoin(
+        tx,
+        coinConfig,
+        splitCoinForPt,
+        coinConfig.coinType,
+      )
+
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [pt_amount] = mintPY(
+        tx,
+        coinConfig,
+        pyCoin,
+        priceVoucher,
+        pyPosition,
+      )
 
-      // Get price voucher for minting LP
       const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
-
-      // Calculate min LP amount based on slippage
-      const minLpAmount = new Decimal(lpOut.lpAmount)
-        .mul(1 - new Decimal(slippage).div(100).toNumber())
-        .toFixed(0)
 
       const debugInfo: DebugInfo = {
         moveCall: {
@@ -105,11 +121,11 @@ export default function useMintLpDryRun(
             { name: "version", value: coinConfig.version },
             { name: "sy_coin", value: "syCoin" },
             { name: "pt_amount", value: "pt_amount" },
-            { name: "min_lp_amount", value: minLpAmount },
+            { name: "min_lp_amount", value: "0" },
             { name: "price_voucher", value: "priceVoucherForMintLp" },
             {
               name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id.id,
+              value: pyPositions?.length ? pyPositions[0].id.id : "pyPosition",
             },
             { name: "py_state", value: coinConfig.pyStateId },
             { name: "market_state", value: coinConfig.marketStateId },
@@ -119,50 +135,13 @@ export default function useMintLpDryRun(
         },
       }
 
-      // Split coins and deposit
-      const [splitCoinForSy, splitCoinForPt] =
-        tokenType === 0
-          ? mintSCoin(tx, coinConfig, coinData, [amounts.sy, amounts.syForPt])
-          : splitCoinHelper(
-              tx,
-              coinData,
-              [amounts.sy, amounts.syForPt],
-              tokenType === 0
-                ? coinConfig.underlyingCoinType
-                : coinConfig.coinType,
-            )
-
-      const syCoin = depositSyCoin(
-        tx,
-        coinConfig,
-        splitCoinForSy,
-        tokenType === 0 ? coinConfig.underlyingCoinType : coinConfig.coinType,
-      )
-
-      // Mock PT minting
-      const pyCoin = depositSyCoin(
-        tx,
-        coinConfig,
-        splitCoinForPt,
-        tokenType === 0 ? coinConfig.underlyingCoinType : coinConfig.coinType,
-      )
-
-      //   tx.transferObjects([syCoin, pyCoin], address)
-      const [pt_amount] = mintPy(
-        tx,
-        coinConfig,
-        pyCoin,
-        priceVoucher,
-        pyPosition,
-      )
-
-      const mintLpMoveCall = {
-        target: `${coinConfig.nemoContractId}::market::mint_lp`,
+      tx.moveCall({
+        target: debugInfo.moveCall.target,
         arguments: [
           tx.object(coinConfig.version),
           syCoin,
           pt_amount,
-          tx.pure.u64(minLpAmount),
+          tx.pure.u64(0),
           priceVoucherForMintLp,
           pyPosition,
           tx.object(coinConfig.pyStateId),
@@ -170,11 +149,7 @@ export default function useMintLpDryRun(
           tx.object("0x6"),
         ],
         typeArguments: [coinConfig.syCoinType],
-      }
-      debugLog("mint_lp dry run move call:", mintLpMoveCall)
-
-      // Mock mint LP
-      tx.moveCall(mintLpMoveCall)
+      })
 
       if (created) {
         tx.transferObjects([pyPosition], address)
@@ -188,43 +163,30 @@ export default function useMintLpDryRun(
         }),
       })
 
-      if (DEBUG) {
-        console.log("mint_lp dry run result:", result)
-      }
-
-      // Record raw result
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
       }
 
       if (result?.error) {
+        if (DEBUG) {
+          console.log("debugInfo", debugInfo, coinConfig)
+        }
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.events?.[2]?.parsedJson) {
-        const message = "Failed to get mint PY data"
-        debugInfo.rawResult.error = message
-        throw new ContractError(message, debugInfo)
-      }
-
-      if (!result?.events?.[3]?.parsedJson) {
+      if (!result?.events?.[result.events.length - 1]?.parsedJson) {
         const message = "Failed to get mint LP data"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      console.log("result events", result.events)
+      const lpAmount = result.events[result.events.length - 1].parsedJson
+        .lp_amount as string
 
-      const ptAmount = result.events[2].parsedJson.amount_pt as string
-      const ytAmount = result.events[2].parsedJson.amount_yt as string
-      const lpAmount = result.events[3].parsedJson.lp_amount as string
+      debugInfo.parsedOutput = lpAmount
 
-      debugInfo.parsedOutput = JSON.stringify({ lpAmount, ptAmount, ytAmount })
-
-      const returnValue = { lpAmount, ptAmount, ytAmount }
-
-      return debug ? [returnValue, debugInfo] : [returnValue]
+      return (debug ? [lpAmount, debugInfo] : lpAmount) as DryRunResult<T>
     },
   })
 }

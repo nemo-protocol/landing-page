@@ -1,41 +1,45 @@
-import Decimal from "decimal.js"
+import { DEBUG } from "@/config"
 import { ContractError } from "../types"
 import type { DebugInfo } from "../types"
-import { DEBUG, debugLog } from "@/config"
 import { useMutation } from "@tanstack/react-query"
+import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import type { CoinData } from "@/hooks/useCoinData"
 import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
-import { depositSyCoin, getPriceVoucher, initPyPosition, mintSCoin, splitCoinHelper } from "@/lib/txHelper"
+import {
+  mintSCoin,
+  depositSyCoin,
+  getPriceVoucher,
+  initPyPosition,
+  splitCoinHelper,
+} from "@/lib/txHelper"
 
-type AddLiquiditySingleSyResult = {
-  lpAmount: string
+interface AddLiquiditySingleSyParams {
+  addAmount: string
+  tokenType: number
+  coinData: CoinData[]
+  pyPositions?: PyPosition[]
 }
 
-export default function useAddLiquiditySingleSyDryRun(
-  coinConfig?: CoinConfig,
-  debug: boolean = false,
-) {
+type DryRunResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useAddLiquiditySingleSyDryRun<
+  T extends boolean = false,
+>(coinConfig?: CoinConfig, debug: T = false as T) {
   const client = useSuiClient()
   const { address } = useWallet()
   const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
 
   return useMutation({
     mutationFn: async ({
+      coinData,
       addAmount,
       tokenType,
-      slippage,
-      coinData,
       pyPositions: inputPyPositions,
-    }: {
-      addAmount: string
-      tokenType: number
-      slippage: string
-      coinData: CoinData[]
-      pyPositions?: PyPosition[]
-    }): Promise<[AddLiquiditySingleSyResult] | [AddLiquiditySingleSyResult, DebugInfo]> => {
+    }: AddLiquiditySingleSyParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -46,20 +50,13 @@ export default function useAddLiquiditySingleSyDryRun(
         throw new Error("No available coins")
       }
 
-      let pyPositions = inputPyPositions
-      if (!pyPositions) {
-        [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
-      }
-
-      if (DEBUG) {
-        console.log("pyPositions in dry run:", pyPositions)
-        console.log("coinData in dry run:", coinData)
-      }
+      const [pyPositions] = (
+        inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
+      ) as [PyPosition[]]
 
       const tx = new Transaction()
       tx.setSender(address)
 
-      // Handle py position creation
       let pyPosition
       let created = false
       if (!pyPositions?.length) {
@@ -69,10 +66,19 @@ export default function useAddLiquiditySingleSyDryRun(
         pyPosition = tx.object(pyPositions[0].id.id)
       }
 
-      // Calculate min LP amount based on slippage
-      const minLpAmount = new Decimal(addAmount)
-        .mul(1 - new Decimal(slippage).div(100).toNumber())
-        .toFixed(0)
+      const [splitCoin] =
+        tokenType === 0
+          ? mintSCoin(tx, coinConfig, coinData, [addAmount])
+          : splitCoinHelper(tx, coinData, [addAmount], coinConfig.coinType)
+
+      const syCoin = depositSyCoin(
+        tx,
+        coinConfig,
+        splitCoin,
+        coinConfig.coinType,
+      )
+
+      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
       const debugInfo: DebugInfo = {
         moveCall: {
@@ -80,14 +86,17 @@ export default function useAddLiquiditySingleSyDryRun(
           arguments: [
             { name: "version", value: coinConfig.version },
             { name: "sy_coin", value: "syCoin" },
-            { name: "min_lp_amount", value: minLpAmount },
+            { name: "min_lp_amount", value: "0" },
             { name: "price_voucher", value: "priceVoucher" },
             {
               name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id.id,
+              value: pyPositions?.length ? pyPositions[0].id.id : "pyPosition",
             },
             { name: "py_state", value: coinConfig.pyStateId },
-            { name: "market_factory_config", value: coinConfig.marketFactoryConfigId },
+            {
+              name: "market_factory_config",
+              value: coinConfig.marketFactoryConfigId,
+            },
             { name: "market_state", value: coinConfig.marketStateId },
             { name: "clock", value: "0x6" },
           ],
@@ -95,34 +104,12 @@ export default function useAddLiquiditySingleSyDryRun(
         },
       }
 
-      // Split coins and deposit
-      const [splitCoin] =
-        tokenType === 0
-          ? mintSCoin(tx, coinConfig, coinData, [addAmount])
-          : splitCoinHelper(
-              tx,
-              coinData,
-              [addAmount],
-              tokenType === 0
-                ? coinConfig.underlyingCoinType
-                : coinConfig.coinType,
-            )
-
-      const syCoin = depositSyCoin(
-        tx,
-        coinConfig,
-        splitCoin,
-        tokenType === 0 ? coinConfig.underlyingCoinType : coinConfig.coinType,
-      )
-
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-
-      const addLiquidityMoveCall = {
-        target: `${coinConfig.nemoContractId}::router::add_liquidity_single_sy`,
+      tx.moveCall({
+        target: debugInfo.moveCall.target,
         arguments: [
           tx.object(coinConfig.version),
           syCoin,
-          tx.pure.u64(minLpAmount),
+          tx.pure.u64(0),
           priceVoucher,
           pyPosition,
           tx.object(coinConfig.pyStateId),
@@ -131,11 +118,7 @@ export default function useAddLiquiditySingleSyDryRun(
           tx.object("0x6"),
         ],
         typeArguments: [coinConfig.syCoinType],
-      }
-      debugLog("add_liquidity_single_sy dry run move call:", addLiquidityMoveCall)
-
-      // Mock add liquidity
-      tx.moveCall(addLiquidityMoveCall)
+      })
 
       if (created) {
         tx.transferObjects([pyPosition], address)
@@ -149,33 +132,30 @@ export default function useAddLiquiditySingleSyDryRun(
         }),
       })
 
-      if (DEBUG) {
-        console.log("add_liquidity_single_sy dry run result:", result)
-      }
-
-      // Record raw result
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
       }
 
       if (result?.error) {
+        if (DEBUG) {
+          console.log("debugInfo", debugInfo, coinConfig)
+        }
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.events?.[1]?.parsedJson) {
+      if (!result?.events?.[result?.events?.length - 1]?.parsedJson) {
         const message = "Failed to get add liquidity data"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const lpAmount = result.events[1].parsedJson.lp_amount as string
+      const lpAmount = result.events[result.events.length - 1].parsedJson
+        .lp_amount as string
 
-      debugInfo.parsedOutput = JSON.stringify({ lpAmount })
+      debugInfo.parsedOutput = lpAmount
 
-      const returnValue = { lpAmount }
-
-      return debug ? [returnValue, debugInfo] : [returnValue]
+      return (debug ? [lpAmount, debugInfo] : lpAmount) as DryRunResult<T>
     },
   })
-} 
+}
