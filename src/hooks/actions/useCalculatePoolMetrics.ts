@@ -1,5 +1,4 @@
 import Decimal from "decimal.js"
-import { DEBUG } from "@/config"
 import { MarketState } from "../types"
 import { useMutation } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
@@ -155,6 +154,7 @@ export default function useCalculatePoolMetrics() {
         .add(1)
         .pow(new Decimal(365).div(daysToExpiry))
         .minus(1)
+
       poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100))
     }
 
@@ -172,10 +172,10 @@ export default function useCalculatePoolMetrics() {
 
   return useMutation({
     mutationFn: calculateMetrics,
-    onError: (error) => {
-      if (DEBUG) {
-        console.log("Calculate pool metrics error:", error)
-      }
-    },
+    // onError: (error) => {
+    //   if (DEBUG) {
+    //     console.log("Calculate pool metrics error:", error)
+    //   }
+    // },
   })
 }

@@ -6,6 +6,7 @@ import type { BaseCoinInfo } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { bcs } from "@mysten/sui/bcs"
 import { getPriceVoucher } from "@/lib/txHelper"
+import { DEBUG } from "@/config"
 
 interface PtOutParams {
   syIn: string
@@ -55,8 +56,6 @@ export default function useQueryPtOutDryRun<T extends boolean = false>(
         },
       }
 
-      console.log("debugInfo", debugInfo)
-
       const tx = new Transaction()
       tx.setSender(address)
 
@@ -90,6 +89,9 @@ export default function useQueryPtOutDryRun<T extends boolean = false>(
       }
 
       if (result?.error) {
+        if (DEBUG) {
+          console.log("debugInfo", debugInfo, coinInfo)
+        }
         throw new ContractError(result.error, debugInfo)
       }
 
