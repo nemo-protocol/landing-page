@@ -11,7 +11,7 @@ import { LoaderCircle } from "lucide-react"
 import {
   getPriceVoucher,
   initPyPosition,
-  mintPy,
+  mintPY,
   splitCoinHelper,
   depositSyCoin,
 } from "@/lib/txHelper"
@@ -164,7 +164,7 @@ export default function Mint({
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        mintPy(tx, coinConfig, syCoin, priceVoucher, pyPosition)
+        mintPY(tx, coinConfig, syCoin, priceVoucher, pyPosition)
 
         if (created) {
           tx.transferObjects([pyPosition], address)

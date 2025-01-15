@@ -13,7 +13,7 @@ import {
   depositSyCoin,
   getPriceVoucher,
   initPyPosition,
-  mintPy,
+  mintPY,
   splitCoinHelper,
 } from "@/lib/txHelper"
 
@@ -93,7 +93,7 @@ export default function useMintPYDryRun(
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-      const [, debugInfo] = mintPy(
+      const [, debugInfo] = mintPY(
         tx,
         coinConfig,
         syCoin,
