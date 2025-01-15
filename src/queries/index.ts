@@ -228,9 +228,9 @@ export function useCoinInfoList<T extends boolean = true>(
   return useQuery({
     queryKey: ["coinInfoList", name, address, isShowExpiry],
     queryFn: async () => {
-      const coinList = (await getCoinInfoList(params).catch(() => [])).filter(
-        ({ marketStateId }) => !!marketStateId,
-      )
+      const coinList = (await getCoinInfoList(params).catch(() => []))
+        .filter(({ marketStateId }) => !!marketStateId)
+        // .slice(0, 1)
       if (!coinList.length) return []
 
       if (!isCalc) return coinList
@@ -270,14 +270,7 @@ export function useCoinInfoList<T extends boolean = true>(
               marketState,
             }
           } catch (error) {
-            console.log(
-              "catch error",
-              index,
-              marketStateIds[index],
-              marketState,
-              error,
-            )
-
+            // console.log("error", index, marketStateIds[index], marketState)
             return {
               ...coinInfo,
               ptPrice: "",

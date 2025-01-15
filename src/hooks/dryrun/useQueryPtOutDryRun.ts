@@ -7,15 +7,27 @@ import type { DebugInfo } from "../types"
 import { bcs } from "@mysten/sui/bcs"
 import { getPriceVoucher } from "@/lib/txHelper"
 
-export default function useQueryPtOutDryRun(debug: boolean = false) {
+interface PtOutParams {
+  syIn: string
+  coinInfo: BaseCoinInfo
+}
+
+type QueryPtOutResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useQueryPtOutDryRun<T extends boolean = false>(
+  debug: T = false as T,
+) {
   const client = useSuiClient()
   const address =
     "0x0000000000000000000000000000000000000000000000000000000000000001"
 
   return useMutation({
-    mutationFn: async (
-      coinInfo: BaseCoinInfo,
-    ): Promise<[string, DebugInfo] | [string]> => {
+    mutationFn: async ({
+      syIn,
+      coinInfo,
+    }: PtOutParams): Promise<QueryPtOutResult<T>> => {
       if (!coinInfo) {
         throw new Error("Please select a pool")
       }
@@ -28,7 +40,7 @@ export default function useQueryPtOutDryRun(debug: boolean = false) {
         moveCall: {
           target: `${coinInfo.nemoContractId}::router::get_pt_out_for_exact_sy_in_with_price_voucher`,
           arguments: [
-            { name: "net_sy_in", value: "1000000" },
+            { name: "net_sy_in", value: syIn },
             { name: "min_pt_out", value: "0" },
             { name: "price_voucher", value: "priceVoucher" },
             { name: "py_state_id", value: coinInfo.pyStateId },
@@ -50,7 +62,7 @@ export default function useQueryPtOutDryRun(debug: boolean = false) {
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
-          tx.pure.u64(1000000),
+          tx.pure.u64(syIn),
           tx.pure.u64("0"),
           priceVoucher,
           tx.object(coinInfo.pyStateId),
@@ -90,7 +102,7 @@ export default function useQueryPtOutDryRun(debug: boolean = false) {
 
       debugInfo.parsedOutput = ptOut
 
-      return debug ? [ptOut, debugInfo] : [ptOut]
+      return (debug ? [ptOut, debugInfo] : ptOut) as QueryPtOutResult<T>
     },
   })
 }

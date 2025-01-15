@@ -1,9 +1,9 @@
 import Decimal from "decimal.js"
 import { DEBUG } from "@/config"
+import { MarketState } from "../types"
 import { useMutation } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
 import useQueryPtOutDryRun from "@/hooks/dryrun/useQueryPtOutDryRun"
-import { MarketState } from "../types"
 
 function calculatePtAPY(
   underlyingPrice: number,
@@ -81,16 +81,24 @@ export default function useCalculatePoolMetrics() {
     }
 
     if (!marketState) {
-      throw new Error("Failed get market state")
+      throw new Error("Please provide market state")
     }
 
-    const [ptOut] = await priceVoucherFn(coinInfo)
-    const ptPrice = new Decimal(coinInfo.underlyingPrice)
-      .mul(1000000)
-      .div(ptOut)
+    let syIn = "1000000"
+    let ptOut: string
+
+    try {
+      ptOut = await priceVoucherFn({ syIn, coinInfo })
+    } catch (error) {
+      // If initial call fails, try with reduced syIn
+      syIn = "100"
+      ptOut = await priceVoucherFn({ syIn, coinInfo })
+    }
+
+    const ptPrice = new Decimal(coinInfo.underlyingPrice).mul(syIn).div(ptOut)
     const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
     const suiPrice = new Decimal(coinInfo.underlyingPrice).div(
-      "1.0532260332",
+      coinInfo.conversionRate,
     )
     let poolApy = new Decimal(0)
     let tvl = new Decimal(0)
@@ -139,8 +147,8 @@ export default function useCalculatePoolMetrics() {
         ptPrice,
         new Decimal(coinInfo.underlyingPrice),
       )
-      const swapFeeForLpHolder = new Decimal(coinInfo.swapFeeForLpHolder)
-      const swapFeeRateForLpHolder = swapFeeForLpHolder
+
+      const swapFeeRateForLpHolder = new Decimal(coinInfo.swapFeeForLpHolder)
         .mul(coinInfo.underlyingPrice)
         .div(poolValue)
       const swapFeeApy = swapFeeRateForLpHolder
@@ -151,14 +159,14 @@ export default function useCalculatePoolMetrics() {
     }
 
     return {
-      ptPrice: ptPrice.toString(),
-      ytPrice: ytPrice.toString(),
       ptApy,
       ytApy,
       tvl: tvl.toString(),
-      poolApy: poolApy.toString(),
       ptTvl: ptTvl.toString(),
       syTvl: syTvl.toString(),
+      ptPrice: ptPrice.toString(),
+      ytPrice: ytPrice.toString(),
+      poolApy: poolApy.toString(),
     }
   }
 
