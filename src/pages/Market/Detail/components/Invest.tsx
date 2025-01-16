@@ -38,7 +38,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import TradeInfo from "@/components/TradeInfo"
-import { debugLog } from "@/config"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLoadingState } from "@/hooks/useLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
@@ -235,6 +234,7 @@ export default function Invest() {
           coinData,
           coinType,
           minPtOut,
+          pyPositions: pyPositionData,
         })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
@@ -255,21 +255,21 @@ export default function Invest() {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        debugLog("swap_exact_sy_for_pt move call:", {
-          target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
-          arguments: [
-            coinConfig.version,
-            minPtOut,
-            "syCoin",
-            "priceVoucher",
-            "pyPosition",
-            coinConfig.pyStateId,
-            coinConfig.marketFactoryConfigId,
-            coinConfig.marketStateId,
-            "0x6",
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        })
+        // debugLog("swap_exact_sy_for_pt move call:", {
+        //   target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
+        //   arguments: [
+        //     coinConfig.version,
+        //     minPtOut,
+        //     "syCoin",
+        //     "priceVoucher",
+        //     "pyPosition",
+        //     coinConfig.pyStateId,
+        //     coinConfig.marketFactoryConfigId,
+        //     coinConfig.marketStateId,
+        //     "0x6",
+        //   ],
+        //   typeArguments: [coinConfig.syCoinType],
+        // })
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -326,9 +326,6 @@ export default function Invest() {
             setOpen(false)
           }}
         />
-        <div>
-          {swapValue && new Decimal(swapValue).mul(10 ** decimal).toFixed()}
-        </div>
         <AmountInput
           price={price}
           decimal={decimal}

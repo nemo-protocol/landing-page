@@ -4,14 +4,19 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
-import { depositSyCoin, getPriceVoucher, mintSCoin, splitCoinHelper } from "@/lib/txHelper"
+import { depositSyCoin, getPriceVoucher, initPyPosition, mintSCoin, splitCoinHelper } from "@/lib/txHelper"
+import useFetchPyPosition from "../useFetchPyPosition"
+import type { PyPosition } from "../useFetchPyPosition"
+import { DEBUG } from "@/config"
+import type { CoinData } from "@/hooks/useCoinData"
 
 interface SwapParams {
   tokenType: number
   swapAmount: string
-  coinData: any[]
+  coinData: CoinData[]
   coinType: string
   minPtOut: string
+  pyPositions?: PyPosition[]
 }
 
 export default function useSwapExactSyForPtDryRun(
@@ -20,6 +25,7 @@ export default function useSwapExactSyForPtDryRun(
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
+  const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
 
   return useMutation({
     mutationFn: async ({
@@ -28,6 +34,7 @@ export default function useSwapExactSyForPtDryRun(
       coinData,
       coinType,
       minPtOut,
+      pyPositions: inputPyPositions,
     }: SwapParams): Promise<[boolean] | [boolean, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
@@ -36,8 +43,28 @@ export default function useSwapExactSyForPtDryRun(
         throw new Error("Please select a pool")
       }
 
+      let pyPositions = inputPyPositions
+      if (!pyPositions) {
+        [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
+      }
+
+      if (DEBUG) {
+        console.log("pyPositions in dry run:", pyPositions)
+        console.log("coinData in dry run:", coinData)
+      }
+
       const tx = new Transaction()
       tx.setSender(address)
+
+      // Handle py position creation
+      let pyPosition
+      let created = false
+      if (!pyPositions?.length) {
+        created = true
+        pyPosition = initPyPosition(tx, coinConfig)
+      } else {
+        pyPosition = tx.object(pyPositions[0].id.id)
+      }
 
       // Split coin and deposit to get syCoin
       const [splitCoin] = tokenType === 0
@@ -71,6 +98,7 @@ export default function useSwapExactSyForPtDryRun(
           tx.pure.u64(minPtOut),
           syCoin,
           priceVoucher,
+          pyPosition,
           tx.object(coinConfig.pyStateId),
           tx.object(coinConfig.marketFactoryConfigId),
           tx.object(coinConfig.marketStateId),
@@ -79,6 +107,10 @@ export default function useSwapExactSyForPtDryRun(
         typeArguments: debugInfo.moveCall.typeArguments,
       })
 
+      if (created) {
+        tx.transferObjects([pyPosition], address)
+      }
+
       const result = await client.devInspectTransactionBlock({
         sender: address,
         transactionBlock: await tx.build({
@@ -86,6 +118,12 @@ export default function useSwapExactSyForPtDryRun(
           onlyTransactionKind: true,
         }),
       })
+
+      console.log("swap_exact_sy_for_pt dry run result:", result)
+
+      if (DEBUG) {
+        console.log("swap_exact_sy_for_pt dry run result:", result)
+      }
 
       debugInfo.rawResult = {
         error: result?.error,
