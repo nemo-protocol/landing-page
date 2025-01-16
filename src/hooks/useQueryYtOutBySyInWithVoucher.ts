@@ -44,6 +44,8 @@ export default function useQueryYtOutBySyInWithVoucher(
         },
       }
 
+      console.log("debugInfo", debugInfo)
+
       const tx = new Transaction()
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
       tx.setSender(address)
