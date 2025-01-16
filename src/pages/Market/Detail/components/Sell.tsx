@@ -184,7 +184,6 @@ export default function Sell() {
                 redeemValue,
                 pyPosition,
                 priceVoucher,
-                minSyOut,
               )
             : swapExactYtForSy(
                 tx,
