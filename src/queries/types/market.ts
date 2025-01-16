@@ -58,7 +58,7 @@ export interface CoinConfig extends BaseCoinInfo {
   marketPositionType: string
   marketPositionTypeList: string[]
   nemoContractIdList: string[]
-  lpPrice: string
+  // lpPrice: string
   coinPrice: string
   sevenAvgUnderlyingPtApy: string
   sevenAvgUnderlyingYtApy: string

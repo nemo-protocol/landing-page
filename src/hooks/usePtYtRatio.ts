@@ -140,7 +140,19 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
       //   syTvl,
       // })
 
-      return { ptPrice, ytPrice, ptApy, ytApy, tvl, poolApy, ptTvl, syTvl, apySy, apyPt, swapFeeApy }
+      return {
+        ptPrice,
+        ytPrice,
+        ptApy,
+        ytApy,
+        tvl,
+        poolApy,
+        ptTvl,
+        syTvl,
+        apySy,
+        apyPt,
+        swapFeeApy,
+      }
     },
     enabled: !!coinInfo?.decimal && !!coinInfo?.marketStateId,
     // refetchInterval: 20000,

@@ -190,8 +190,12 @@ export default function Item({
           )
           .add(
             new Decimal(lpCoinBalance).mul(
-              coinConfig.lpPrice && new Decimal(coinConfig.lpPrice).gt(0)
-                ? coinConfig.lpPrice
+              coinConfig.coinPrice &&
+                ptYtData?.ptPrice &&
+                new Decimal(coinConfig.coinPrice).add(ptYtData.ptPrice).gt(0)
+                ? new Decimal(coinConfig.coinPrice)
+                    .add(ptYtData.ptPrice)
+                    .toNumber()
                 : 0,
             ),
           )
@@ -209,10 +213,10 @@ export default function Item({
     lpReward,
     isConnected,
     itemKey,
-    coinConfig.lpPrice,
     ptYtData?.ptPrice,
     ptYtData?.ytPrice,
     coinConfig.underlyingPrice,
+    coinConfig.coinPrice,
   ])
 
   async function claim() {
@@ -481,9 +485,10 @@ export default function Item({
             <span>
               $
               {ptYtData?.ptPrice
-                ? new Decimal(ptBalance)
-                    .mul(new Decimal(ptYtData.ptPrice))
-                    .toFixed(2)
+                ? formatDecimalValue(
+                    new Decimal(ptBalance).mul(new Decimal(ptYtData.ptPrice)),
+                    Number(coinConfig?.decimal),
+                  )
                 : "0.00"}
             </span>
           </TableCell>
@@ -613,10 +618,18 @@ export default function Item({
           <TableCell className="text-center">LP</TableCell>
           <TableCell className="text-center space-x-1">
             <span>
-              {new Decimal(lpCoinBalance).mul(coinConfig?.lpPrice).gt(0) && "≈"}
+              {ptYtData?.tvl &&
+                new Decimal(lpCoinBalance).mul(ptYtData.tvl).gt(0) &&
+                "≈"}
             </span>
             <span>
-              ${new Decimal(lpCoinBalance).mul(coinConfig?.lpPrice).toFixed(2)}
+              $
+              {formatDecimalValue(
+                ptYtData?.tvl
+                  ? new Decimal(lpCoinBalance).mul(ptYtData.tvl)
+                  : new Decimal(0),
+                2,
+              )}
             </span>
           </TableCell>
           <TableCell className="text-center">{lpCoinBalance}</TableCell>

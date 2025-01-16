@@ -19,6 +19,7 @@ import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
 import { debounce } from "@/lib/utils"
 import ActionButton from "@/components/ActionButton"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 
 export default function Remove() {
   const [txId, setTxId] = useState("")
@@ -47,8 +48,11 @@ export default function Remove() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
+  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
-  const { mutateAsync: swapExactPtForSyDryRun } = useSwapExactPtForSyDryRun(coinConfig)
+  const { mutateAsync: swapExactPtForSyDryRun } =
+    useSwapExactPtForSyDryRun(coinConfig)
 
   const { data: lppMarketPositionData, refetch: refetchLpPosition } =
     useLpMarketPositionData(
@@ -82,6 +86,13 @@ export default function Remove() {
     () => new Decimal(lpCoinBalance).lt(new Decimal(lpValue || 0)),
     [lpCoinBalance, lpValue],
   )
+
+  const lpPrice = useMemo(() => {
+    if (coinConfig?.coinPrice && ptYtData?.ptPrice) {
+      return new Decimal(coinConfig.coinPrice).add(ptYtData.ptPrice).toNumber()
+    }
+    return 0
+  }, [coinConfig?.coinPrice, ptYtData?.ptPrice])
 
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
@@ -209,7 +220,7 @@ export default function Remove() {
             error={error}
             warning={warning}
             amount={lpValue}
-            price={coinConfig?.lpPrice}
+            price={lpPrice}
             decimal={decimal}
             coinName={`LP ${coinConfig?.coinName}`}
             coinLogo={coinConfig?.coinLogo}
