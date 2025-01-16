@@ -39,6 +39,12 @@ export const debounce = <T extends (...args: Parameters<T>) => ReturnType<T>>(
   return debounced as T & { cancel: () => void }
 }
 
+/**
+ * Formats a number with optional decimal places and unit suffixes
+ * @param value The number to format
+ * @param decimal Number of decimal places (default: 2)
+ * @returns Formatted string
+ */
 export const formatDecimalValue = (
   _value?: string | number | Decimal,
   decimal = 0,
@@ -47,14 +53,6 @@ export const formatDecimalValue = (
   return value.decimalPlaces() > decimal
     ? value.toFixed(Number(decimal))
     : value.toFixed(value.decimalPlaces())
-}
-
-export const safeDivide = (str?: string | number): number => {
-  const num = Number(str)
-  if (isNaN(num) || num === 0) {
-    return 1
-  }
-  return num
 }
 
 export const splitSyAmount = (
@@ -79,12 +77,6 @@ export const splitSyAmount = (
   // console.log("ptValue syValue", syForPtValue, ptValue, syValue)
   return { syForPtValue, syValue, ptValue }
 }
-
-// export const splitSyAmount = (syAmount: string) => {
-//   const ptValue = new Decimal(syAmount).div(2).toFixed(0)
-//   const syValue = ptValue
-//   return { ptValue, syValue }
-// }
 
 function getMintLpParameter(
   syAmount: string,
@@ -182,8 +174,17 @@ export function handleInfinityValues<T>(data: T): T {
  * @param amount The amount string to check
  * @returns boolean indicating if the amount is valid
  */
-export const isValidAmount = (amount?: string | null): boolean => {
-  if (!amount || amount === "" || amount === "0") return false
+export const isValidAmount = (
+  amount?: string | number | Decimal | null,
+): boolean => {
+  if (
+    !amount ||
+    amount === 0 ||
+    amount === "" ||
+    amount === "0" ||
+    new Decimal(amount).isZero()
+  )
+    return false
   const num = Number(amount)
   return !isNaN(num) && num > 0
 }
@@ -215,4 +216,81 @@ export const formatTimeDiff = (timestamp: number): string => {
     return `${diffMinutes} MINS`
   }
   return `${diffSeconds} SECS`
+}
+
+type DivideReturnType<T> = T extends "string"
+  ? string
+  : T extends "number"
+    ? number
+    : Decimal
+
+export const safeDivide = <T extends "string" | "number" | "decimal">(
+  numerator?: string | number | Decimal,
+  denominator?: string | number | Decimal,
+  returnType: T = "string" as T,
+): DivideReturnType<T> => {
+  try {
+    const num = new Decimal(numerator || 0)
+    const den = new Decimal(denominator || 0)
+
+    if (!isValidAmount(denominator)) {
+      return (
+        returnType === "string"
+          ? ""
+          : returnType === "number"
+            ? 0
+            : new Decimal(0)
+      ) as DivideReturnType<T>
+    }
+
+    const result = num.div(den)
+
+    return (
+      returnType === "number"
+        ? result.toNumber()
+        : returnType === "decimal"
+          ? result
+          : result.toString()
+    ) as DivideReturnType<T>
+  } catch {
+    return (
+      returnType === "string"
+        ? ""
+        : returnType === "number"
+          ? 0
+          : new Decimal(0)
+    ) as DivideReturnType<T>
+  }
+}
+
+/**
+ * Formats a number to a human readable string with K, M, B, T suffixes
+ * @param value The number to format
+ * @param decimals Number of decimal places (default: 2)
+ * @returns Formatted string like "1.23K" or "1.23M"
+ */
+export const formatLargeNumber = (
+  value?: string | number | Decimal,
+  decimals = 2
+): string => {
+  try {
+    if (!value) return "0"
+    
+    const num = new Decimal(value)
+    const abs = num.abs()
+    
+    if (abs.lessThan(1000)) {
+      return formatDecimalValue(num, decimals)
+    }
+    
+    const suffixes = ["", "K", "M", "B", "T"]
+    const magnitude = Math.min(Math.floor(abs.log(1000).toNumber()), 4)
+    
+    return formatDecimalValue(
+      num.div(new Decimal(1000).pow(magnitude)),
+      decimals
+    ).concat(suffixes[magnitude])
+  } catch {
+    return "0"
+  }
 }

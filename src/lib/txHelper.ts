@@ -533,6 +533,7 @@ export const swapExactPtForSy = (
   redeemValue: string,
   pyPosition: TransactionArgument,
   priceVoucher: TransactionArgument,
+  minSyOut: string,
 ) => {
   const [syCoin] = tx.moveCall({
     target: `${coinConfig.nemoContractId}::market::swap_exact_pt_for_sy`,
@@ -543,6 +544,7 @@ export const swapExactPtForSy = (
           .mul(10 ** Number(coinConfig.decimal))
           .toFixed(0),
       ),
+      tx.pure.u64(minSyOut),
       pyPosition,
       tx.object(coinConfig.pyStateId),
       priceVoucher,

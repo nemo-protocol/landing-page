@@ -1,5 +1,6 @@
 import Decimal from "decimal.js"
 import { MarketState } from "../types"
+import { safeDivide } from "@/lib/utils"
 import { useMutation } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
 import useQueryPtOutDryRun from "@/hooks/dryrun/useQueryPtOutDryRun"
@@ -13,7 +14,7 @@ function calculatePtAPY(
     return "0"
   }
 
-  const ratio = new Decimal(underlyingPrice).div(ptPrice)
+  const ratio = safeDivide(underlyingPrice, ptPrice, "decimal")
   const exponent = new Decimal(365).div(daysToExpiry)
   const apy = ratio.pow(exponent).minus(1)
   return apy.mul(100).toFixed(6)
@@ -27,8 +28,8 @@ function calculateYtAPY(
   if (yearsToExpiry <= 0) {
     return "0"
   }
+
   const underlyingInterestApyDecimal = new Decimal(underlyingInterestApy)
-  const ytPriceDecimal = new Decimal(ytPrice)
   const yearsToExpiryDecimal = new Decimal(yearsToExpiry)
 
   const interestReturns = underlyingInterestApyDecimal
@@ -42,8 +43,7 @@ function calculateYtAPY(
 
   const ytReturnsAfterFee = ytReturns.mul(0.97)
 
-  const longYieldApy = ytReturnsAfterFee
-    .div(ytPriceDecimal)
+  const longYieldApy = safeDivide(ytReturnsAfterFee, ytPrice, "decimal")
     .pow(new Decimal(1).div(yearsToExpiryDecimal))
     .minus(1)
 
@@ -58,8 +58,8 @@ function calculatePoolValue(
   syPrice: Decimal,
 ) {
   const lpAmount = new Decimal(1)
-  const netSy = lpAmount.mul(totalSy).div(lpSupply)
-  const netPt = lpAmount.mul(totalPt).div(lpSupply)
+  const netSy = safeDivide(lpAmount.mul(totalSy), lpSupply, "decimal")
+  const netPt = safeDivide(lpAmount.mul(totalPt), lpSupply, "decimal")
   return netSy.mul(ptPrice).add(netPt.mul(syPrice))
 }
 
@@ -94,10 +94,12 @@ export default function useCalculatePoolMetrics() {
       ptOut = await priceVoucherFn({ syIn, coinInfo })
     }
 
-    const ptPrice = new Decimal(coinInfo.underlyingPrice).mul(syIn).div(ptOut)
+    const ptPrice = safeDivide(coinInfo.underlyingPrice, ptOut, "decimal")
     const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
-    const suiPrice = new Decimal(coinInfo.underlyingPrice).div(
+    const syCoinPrice = safeDivide(
+      coinInfo.underlyingPrice,
       coinInfo.conversionRate,
+      "decimal",
     )
     let poolApy = new Decimal(0)
     let tvl = new Decimal(0)
@@ -110,16 +112,19 @@ export default function useCalculatePoolMetrics() {
     )
       .div(86400)
       .toNumber()
+
     const ptApy = calculatePtAPY(
-      Number(suiPrice),
+      Number(syCoinPrice),
       Number(ptPrice),
       daysToExpiry,
     )
+
     const yearsToExpiry = new Decimal(
       (Number(coinInfo.maturity) - Date.now()) / 1000,
     )
       .div(31536000)
       .toNumber()
+
     const ytApy = calculateYtAPY(
       Number(coinInfo.underlyingApy),
       Number(ytPrice),
@@ -147,13 +152,17 @@ export default function useCalculatePoolMetrics() {
         new Decimal(coinInfo.underlyingPrice),
       )
 
-      const swapFeeRateForLpHolder = new Decimal(coinInfo.swapFeeForLpHolder)
-        .mul(coinInfo.underlyingPrice)
-        .div(poolValue)
-      const swapFeeApy = swapFeeRateForLpHolder
-        .add(1)
-        .pow(new Decimal(365).div(daysToExpiry))
-        .minus(1)
+      const swapFeeRateForLpHolder = safeDivide(
+        new Decimal(coinInfo.swapFeeForLpHolder).mul(coinInfo.underlyingPrice),
+        poolValue,
+        "decimal",
+      )
+
+      const swapFeeApy = safeDivide(
+        swapFeeRateForLpHolder.add(1).pow(new Decimal(365)),
+        daysToExpiry,
+        "decimal",
+      ).minus(1)
 
       poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100))
     }
@@ -172,10 +181,5 @@ export default function useCalculatePoolMetrics() {
 
   return useMutation({
     mutationFn: calculateMetrics,
-    // onError: (error) => {
-    //   if (DEBUG) {
-    //     console.log("Calculate pool metrics error:", error)
-    //   }
-    // },
   })
 }
