@@ -336,7 +336,7 @@ export default function Redeem({
                 coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
               }
             />
-            <span>SY {coinConfig?.coinName}</span>
+            <span>{coinConfig?.coinName}</span>
           </div>
           <div className="text-right grow">
             {isInputLoading ? (

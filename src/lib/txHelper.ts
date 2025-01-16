@@ -272,9 +272,11 @@ export const burnSCoin = (
       return underlyingCoin
     }
     default:
-      throw new Error(
-        "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
-      )
+      console.error("Unsupported underlying protocol: " + coinConfig.underlyingProtocol)
+      return sCoin
+      // throw new Error(
+      //   "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+      // )
   }
 }
 

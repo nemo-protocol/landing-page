@@ -21,7 +21,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import { getPriceVoucher, redeemSyCoin, redeemPy } from "@/lib/txHelper"
+import {
+  getPriceVoucher,
+  redeemSyCoin,
+  redeemPy,
+  burnSCoin,
+} from "@/lib/txHelper"
 import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
 
@@ -329,7 +334,9 @@ export default function Item({
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
-        tx.transferObjects([yieldToken], address)
+        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+
+        tx.transferObjects([underlyingCoin], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)

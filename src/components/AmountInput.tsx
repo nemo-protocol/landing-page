@@ -1,5 +1,5 @@
 import React from "react"
-import { cn } from "@/lib/utils"
+import { cn, formatDecimalValue } from "@/lib/utils"
 import Decimal from "decimal.js"
 import { Wallet } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -22,12 +22,6 @@ interface AmountInputProps {
   onChange: (value: string) => void
 }
 
-const formatDecimalValue = (value: Decimal, decimalPlaces: number): string => {
-  return value.decimalPlaces() > decimalPlaces
-    ? value.toFixed(decimalPlaces)
-    : value.toString()
-}
-
 export default function AmountInput({
   price,
   error,
@@ -47,10 +41,12 @@ export default function AmountInput({
 }: AmountInputProps) {
   return (
     <div className="w-full">
-      <div className={cn(
-        "rounded-lg border border-[#2D2D48] px-3 py-4",
-        className
-      )}>
+      <div
+        className={cn(
+          "rounded-lg border border-[#2D2D48] px-3 py-4",
+          className,
+        )}
+      >
         <div className="flex items-center justify-between h-12">
           <div className="flex items-center rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
             <div className="flex items-center gap-x-4">
@@ -75,18 +71,18 @@ export default function AmountInput({
                     <div
                       className="flex items-center gap-x-1 hover:cursor-pointer hover:underline"
                       onClick={() => {
-                          if (isConnected && coinBalance ) {
+                        if (isConnected && coinBalance) {
                           let adjustedBalance = new Decimal(coinBalance)
                           if (coinName === "SUI") {
                             adjustedBalance = adjustedBalance.minus(0.1)
                           }
-                            onChange(formatDecimalValue(adjustedBalance, decimal))
+                          onChange(formatDecimalValue(adjustedBalance, decimal))
                         }
                       }}
                     >
                       <Wallet className="size-3.5" />
                       {isConnected
-                        ? `${Number(coinBalance).toFixed(decimal)} ${coinName}`
+                        ? `${formatDecimalValue(coinBalance, decimal)} ${coinName}`
                         : "--"}
                     </div>
                   )}
@@ -102,7 +98,9 @@ export default function AmountInput({
               value={amount}
               placeholder={"0"}
               onChange={(e) => onChange && onChange(e.target.value)}
-              onWheel={(e) => e.target instanceof HTMLElement && e.target.blur()}
+              onWheel={(e) =>
+                e.target instanceof HTMLElement && e.target.blur()
+              }
               className="bg-transparent outline-none grow text-right min-w-0 placeholder:text-3xl p-0 text-3xl font-bold w-full"
             />
             <div className="flex items-end">
@@ -111,8 +109,8 @@ export default function AmountInput({
                   <Skeleton className="h-4 w-20 ml-auto bg-[#2D2D48]" />
                 ) : (
                   <span className="text-xs text-white/80 ml-auto">
-                      $
-                      {formatDecimalValue(new Decimal(price || 0).mul(amount), 2)}
+                    $
+                    {formatDecimalValue(new Decimal(price || 0).mul(amount), 2)}
                   </span>
                 )
               ) : (
@@ -126,7 +124,9 @@ export default function AmountInput({
         <div className="mt-2 text-sm text-red-500 break-words">{error}</div>
       )}
       {warning && (
-        <div className="mt-2 text-sm text-yellow-500 break-words">{warning}</div>
+        <div className="mt-2 text-sm text-yellow-500 break-words">
+          {warning}
+        </div>
       )}
     </div>
   )

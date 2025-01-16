@@ -478,7 +478,6 @@ export default function SingleCoin() {
       addLiquiditySingleSyDryRun,
       seedLiquidityDryRun,
       tokenType,
-      slippage,
       coinData,
       pyPositionData,
       marketStateData,

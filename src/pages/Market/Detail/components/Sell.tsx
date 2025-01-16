@@ -51,6 +51,7 @@ export default function Sell() {
   const [openConnect, setOpenConnect] = useState(false)
   const [isRedeeming, setIsRedeeming] = useState(false)
   const [slippage, setSlippage] = useState("0.5")
+  const [receivingType, setReceivingType] = useState("underlying")
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -84,16 +85,16 @@ export default function Sell() {
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
       const getSyOut = debounce(async () => {
-        if (value && value !== "0" && decimal) {
+        if (value && value !== "0" && decimal && coinConfig?.conversionRate) {
           try {
             const amount = new Decimal(value).mul(10 ** decimal).toString()
-            console.log("Input amount:", amount)
-            const syOut = await (
+            const [syOut] = await (
               tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
             )(amount)
-            console.log("Raw syOut:", syOut)
-            const syAmount = new Decimal(syOut[0]).div(10 ** decimal).toString()
-            console.log("Formatted syAmount:", syAmount)
+            const syAmount = new Decimal(syOut)
+              .div(10 ** decimal)
+              .mul(receivingType === "underlying" ? coinConfig.conversionRate : 1)
+              .toString()
             setTargetValue(syAmount)
             setError(undefined)
           } catch (error) {
@@ -108,7 +109,7 @@ export default function Sell() {
       getSyOut()
       return getSyOut.cancel
     },
-    [querySyOutFromYt, querySyOutFromPt, tokenType],
+    [querySyOutFromYt, querySyOutFromPt, tokenType, receivingType, coinConfig?.conversionRate],
   )
 
   useEffect(() => {
@@ -194,18 +195,12 @@ export default function Sell() {
                 minSyOut,
               )
 
-        const sCoin = redeemSyCoin(tx, coinConfig, syCoin)
-
-        // tx.transferObjects([sCoin], address)
-
-        try {
-          // Try to burn sCoin first
-          const underlyingCoin = burnSCoin(tx, coinConfig, sCoin)
+        const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
+        if (receivingType === "underlying") {
+          const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
           tx.transferObjects([underlyingCoin], address)
-        } catch (burnError) {
-          console.warn("Failed to burn sCoin:", burnError)
-          // Fallback: directly transfer sCoin if burn fails
-          tx.transferObjects([sCoin], address)
+        } else {
+          tx.transferObjects([yieldToken], address)
         }
 
         if (created) {
@@ -251,6 +246,22 @@ export default function Sell() {
   )
 
   const { isLoading } = useLoadingState(redeemValue, isConfigLoading)
+
+  const convertReceivingValue = useCallback(
+    (value: string, fromType: string, toType: string) => {
+      if (!value || !decimal || !coinConfig?.conversionRate) return ""
+
+      const conversionRate = new Decimal(coinConfig.conversionRate)
+
+      if (fromType === "underlying" && toType === "sy") {
+        return new Decimal(value).div(conversionRate).toString()
+      } else if (fromType === "sy" && toType === "underlying") {
+        return new Decimal(value).mul(conversionRate).toString()
+      }
+      return value
+    },
+    [decimal, coinConfig],
+  )
 
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
@@ -313,9 +324,7 @@ export default function Sell() {
             <div className="flex items-center justify-between w-full h-[28px]">
               <span>Receiving</span>
               <span>
-                {!redeemValue ? (
-                  "--"
-                ) : isLoading ? (
+                {isLoading ? (
                   <Skeleton className="h-7 w-48 bg-[#2D2D48]" />
                 ) : !decimal || !isValidAmount(targetValue) ? (
                   "--"
@@ -324,19 +333,81 @@ export default function Sell() {
                     <span>
                       ≈ {formatDecimalValue(new Decimal(targetValue), decimal)}
                     </span>
-                    <span>{coinConfig?.coinName}</span>
-                    {coinConfig?.coinLogo && (
-                      <img
-                        src={coinConfig.coinLogo}
-                        alt={coinConfig.coinName}
-                        className="size-[28px] inline-block align-middle"
-                        onError={(e) => {
-                          console.error("Logo load error:", e)
-                          const img = e.target as HTMLImageElement
-                          img.style.display = "none"
-                        }}
-                      />
-                    )}
+                    <Select
+                      value={receivingType}
+                      onValueChange={(value) => {
+                        const newTargetValue = convertReceivingValue(
+                          targetValue,
+                          receivingType,
+                          value,
+                        )
+                        setReceivingType(value)
+                        setTargetValue(newTargetValue)
+                      }}
+                    >
+                      <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-base w-fit">
+                        <SelectValue>
+                          <div className="flex items-center gap-x-1">
+                            <span>
+                              {receivingType === "underlying"
+                                ? coinConfig?.underlyingCoinName
+                                : coinConfig?.coinName}
+                            </span>
+                            {(receivingType === "underlying"
+                              ? coinConfig?.underlyingCoinLogo
+                              : coinConfig?.coinLogo) && (
+                              <img
+                                src={
+                                  receivingType === "underlying"
+                                    ? coinConfig?.underlyingCoinLogo
+                                    : coinConfig?.coinLogo
+                                }
+                                alt={
+                                  receivingType === "underlying"
+                                    ? coinConfig?.underlyingCoinName
+                                    : coinConfig?.coinName
+                                }
+                                className="size-5"
+                              />
+                            )}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="border-none outline-none bg-[#0E0F16]">
+                        <SelectGroup>
+                          <SelectItem
+                            value="underlying"
+                            className="cursor-pointer text-white"
+                          >
+                            <div className="flex items-center gap-x-1">
+                              <span>{coinConfig?.underlyingCoinName}</span>
+                              {coinConfig?.underlyingCoinLogo && (
+                                <img
+                                  src={coinConfig.underlyingCoinLogo}
+                                  alt={coinConfig.underlyingCoinName}
+                                  className="size-5"
+                                />
+                              )}
+                            </div>
+                          </SelectItem>
+                          <SelectItem
+                            value="sy"
+                            className="cursor-pointer text-white"
+                          >
+                            <div className="flex items-center gap-x-1">
+                              <span>{coinConfig?.coinName}</span>
+                              {coinConfig?.coinLogo && (
+                                <img
+                                  src={coinConfig.coinLogo}
+                                  alt={coinConfig.coinName}
+                                  className="size-5"
+                                />
+                              )}
+                            </div>
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </span>
