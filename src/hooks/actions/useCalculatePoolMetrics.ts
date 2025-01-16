@@ -156,13 +156,9 @@ export default function useCalculatePoolMetrics() {
         poolValue,
         "decimal",
       )
-
-      const swapFeeApy = safeDivide(
-        swapFeeRateForLpHolder.add(1).pow(new Decimal(365)),
-        daysToExpiry,
-        "decimal",
-      ).minus(1)
-
+      const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
+      const swapFeeApy =
+        swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1)
       poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100))
     }
 

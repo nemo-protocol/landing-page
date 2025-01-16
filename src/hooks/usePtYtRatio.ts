@@ -28,7 +28,7 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
           ptApy: "0",
           ytApy: "0",
           tvl: "0",
-          poolApy: "0",
+          poolApy: new Decimal(0),
         }
       }
       const [, ptOut] = await priceVoucherFun()
@@ -76,6 +76,10 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
         Number(ytPrice),
         yearsToExpiry,
       )
+
+      let apySy = new Decimal(0)
+      let apyPt = new Decimal(0)
+      let swapFeeApy = new Decimal(0)
       // console.log("ytApy", ytApy)
       if (marketState.lpSupply != "0") {
         const totalPt = new Decimal(marketState.totalPt)
@@ -94,9 +98,9 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
         // console.log("rSy", rSy.toString())
         const rPt = totalPt.div(totalSy.add(totalPt))
         // console.log("rPt", rPt.toString())
-        const apySy = rSy.mul(coinInfo.underlyingApy)
+        apySy = rSy.mul(coinInfo.underlyingApy)
         // console.log("apySy", apySy.toString())
-        const apyPt = rPt.mul(ptApy)
+        apyPt = rPt.mul(ptApy)
         // console.log("apyPt", apyPt.toString())
         const apyIncentive = new Decimal(0)
         // console.log("apyIncentive", apyIncentive.toString())
@@ -109,18 +113,19 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
         )
         // console.log("poolValue", poolValue.toString())
         // console.log("coinInfo", coinInfo)
-        const swapFeeForLpHolder = new Decimal("0.0003284469")
+        const swapFeeForLpHolder = new Decimal(coinInfo.swapFeeForLpHolder)
         // console.log("swapFeeForLpHolder", swapFeeForLpHolder.toString())
         const swapFeeRateForLpHolder = swapFeeForLpHolder
           .mul(coinInfo.underlyingPrice)
           .div(poolValue)
         // console.log("swapFeeRateForLpHolder", swapFeeRateForLpHolder.toString())
-        const swapFeeApy = swapFeeRateForLpHolder
+        swapFeeApy = swapFeeRateForLpHolder
           .add(1)
           .pow(new Decimal(365).div(daysToExpiry))
           .minus(1)
+          .mul(100)
         // console.log("swapFeeApy", swapFeeApy.toString())
-        poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100))
+        poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy)
         // console.log("poolApy", poolApy.toString())
       }
       // console.log("tvl, poolApy", tvl.toFixed(10), poolApy.toFixed(10))
@@ -135,7 +140,7 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
       //   syTvl,
       // })
 
-      return { ptPrice, ytPrice, ptApy, ytApy, tvl, poolApy, ptTvl, syTvl }
+      return { ptPrice, ytPrice, ptApy, ytApy, tvl, poolApy, ptTvl, syTvl, apySy, apyPt, swapFeeApy }
     },
     enabled: !!coinInfo?.decimal && !!coinInfo?.marketStateId,
     // refetchInterval: 20000,

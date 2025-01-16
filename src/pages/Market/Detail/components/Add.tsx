@@ -170,26 +170,6 @@ export default function SingleCoin() {
     return ["0", "0"]
   }, [ptYtData])
 
-  const totalApy = useMemo(() => {
-    if (
-      coinConfig?.underlyingApy &&
-      ptYtData?.ptApy &&
-      coinConfig?.swapFeeApy &&
-      !isNaN(Number(syRatio)) &&
-      !isNaN(Number(ptRatio))
-    ) {
-      const underlyingApyValue = new Decimal(coinConfig.underlyingApy).mul(
-        syRatio,
-      )
-      const ptApyValue = new Decimal(ptYtData.ptApy).mul(ptRatio)
-      const swapFeeApyValue = new Decimal(coinConfig.swapFeeApy).mul(100)
-
-      const total = underlyingApyValue.add(ptApyValue).add(swapFeeApyValue)
-
-      return total.isNaN() ? "--" : total.toFixed(2)
-    }
-    return "--"
-  }, [coinConfig, ptYtData, syRatio, ptRatio])
 
   const {
     data: ratioData,
@@ -770,7 +750,7 @@ export default function SingleCoin() {
                     </TooltipProvider>
                   </span>
                   <span className="underline">
-                    {totalApy !== "--" ? `${totalApy} %` : "--"}
+                    {ptYtData?.poolApy ? `${ptYtData?.poolApy.toFixed(6)} %` : "--"}
                   </span>
                 </div>
               </div>
@@ -836,7 +816,7 @@ export default function SingleCoin() {
             </div>
             <div className="text-center">
               <p className="text-lg lg:text-xl font-normal">
-                {totalApy !== "--" ? `${totalApy}%` : "--"}
+                {ptYtData?.poolApy ? `${ptYtData?.poolApy.toFixed(6)}%` : "--"}
               </p>
               <p className="text-xs lg:text-sm text-white/60">Total APY</p>
             </div>
@@ -982,7 +962,7 @@ export default function SingleCoin() {
                   <div className="flex justify-between items-center">
                     <span className="text-xl">Total APY</span>
                     <span className="text-xl text-white">
-                      {totalApy !== "--" ? `${totalApy} %` : "--"}
+                      {ptYtData?.poolApy ? `${ptYtData?.poolApy.toFixed(6)} %` : "--"}
                     </span>
                   </div>
                   <div className="h-[1px] bg-[#2D2D48]" />
@@ -990,24 +970,24 @@ export default function SingleCoin() {
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled Underlying APY</span>
                       <span>
-                        {coinConfig?.underlyingApy
-                          ? `${new Decimal(coinConfig.underlyingApy).mul(syRatio).toFixed(2)} %`
+                        {ptYtData?.apySy
+                          ? `${new Decimal(ptYtData?.apySy).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled PT APY</span>
                       <span>
-                        {ptYtData?.ptApy
-                          ? `${new Decimal(ptYtData.ptApy).mul(ptRatio).toFixed(2)} %`
+                        {ptYtData?.apyPt
+                          ? `${new Decimal(ptYtData.apyPt).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-white/60">
                       <span>Swap Fee APY</span>
                       <span>
-                        {coinConfig?.swapFeeApy
-                          ? `${new Decimal(coinConfig.swapFeeApy).mul(100).toFixed(2)} %`
+                        {ptYtData?.swapFeeApy
+                          ? `${new Decimal(ptYtData.swapFeeApy).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>
