@@ -1,11 +1,40 @@
 import Decimal from "decimal.js"
+import { MarketState } from "./types"
 import { useQuery } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
 import { useQueryPriceVoucherWithCoinInfo } from "@/hooks/useQueryPriceVoucher.ts"
-import useMarketStateData from "@/hooks/useMarketStateData.ts"
 
-export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
-  const { data: marketState } = useMarketStateData(coinInfo?.marketStateId)
+function validateCoinInfo(coinInfo: BaseCoinInfo) {
+  const requiredFields = [
+    "decimal",
+    "maturity",
+    "marketStateId",
+    "underlyingApy",
+    "conversionRate",
+    "underlyingPrice",
+    "swapFeeForLpHolder",
+  ] as const
+
+  for (const field of requiredFields) {
+    if (coinInfo[field] === undefined || coinInfo[field] === null) {
+      console.error(
+        `Missing required field: ${field}, coinName: ${coinInfo.coinName}, maturity: ${new Date(
+          Number(coinInfo.maturity),
+        ).toLocaleString()}`,
+      )
+      throw new Error(
+        `Missing required field: ${field}, coinName: ${coinInfo.coinName}, maturity: ${new Date(
+          Number(coinInfo.maturity),
+        ).toLocaleString()}`,
+      )
+    }
+  }
+}
+
+export function useCalculatePtYt(
+  coinInfo?: BaseCoinInfo,
+  marketState?: MarketState,
+) {
   const { mutateAsync: priceVoucherFun } =
     useQueryPriceVoucherWithCoinInfo(coinInfo)
 
@@ -19,7 +48,7 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
         throw new Error("Failed get market state")
       }
 
-      // console.log("marketState", marketState)
+      validateCoinInfo(coinInfo)
 
       if (marketState.lpSupply == "0") {
         return {
@@ -28,49 +57,45 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
           ptApy: "0",
           ytApy: "0",
           tvl: "0",
-          poolApy: new Decimal(0),
+          poolApy: "0",
         }
       }
+
       const [, ptOut] = await priceVoucherFun()
-      // console.log("ptOut", ptOut)
+
       const ptPrice = new Decimal(coinInfo.underlyingPrice)
         .mul(1000000)
         .div(ptOut)
-      // console.log("underlyingPrice", coinInfo.underlyingPrice.toString())
+
       const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
+
       const suiPrice = new Decimal(coinInfo.underlyingPrice).div(
         coinInfo.conversionRate,
       )
+
       let poolApy = new Decimal(0)
       let tvl = new Decimal(0)
-
       let ptTvl = new Decimal(0)
       let syTvl = new Decimal(0)
 
-      // console.log(
-      //   "ptPrice",
-      //   ptPrice.toFixed(10),
-      //   "suiPrice",
-      //   suiPrice.toFixed(10),
-      // )
       const daysToExpiry = new Decimal(
         (Number(coinInfo.maturity) - Date.now()) / 1000,
       )
         .div(86400)
         .toNumber()
-      // console.log("daysToExpiry", daysToExpiry)
+
       const ptApy = calculatePtAPY(
         Number(suiPrice),
         Number(ptPrice),
         daysToExpiry,
       )
-      // console.log("ptApy", ptApy)
+
       const yearsToExpiry = new Decimal(
         (Number(coinInfo.maturity) - Date.now()) / 1000,
       )
         .div(31536000)
         .toNumber()
-      // console.log("yearsToExpiry", yearsToExpiry)
+
       const ytApy = calculateYtAPY(
         Number(coinInfo.underlyingApy),
         Number(ytPrice),
@@ -80,30 +105,20 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
       let apySy = new Decimal(0)
       let apyPt = new Decimal(0)
       let swapFeeApy = new Decimal(0)
-      // console.log("ytApy", ytApy)
+
       if (marketState.lpSupply != "0") {
         const totalPt = new Decimal(marketState.totalPt)
-        // console.log("totalPt", totalPt.toString())
         const totalSy = new Decimal(marketState.totalSy)
-        // console.log("totalSy", totalSy.toString())
         ptTvl = totalPt.mul(ptPrice).div(new Decimal(10).pow(coinInfo.decimal))
-        // console.log("ptTvl", ptTvl.toString())
         syTvl = totalSy
           .mul(coinInfo.underlyingPrice)
           .div(new Decimal(10).pow(coinInfo.decimal))
-        // console.log("syTvl", syTvl.toString())
         tvl = syTvl.add(ptTvl)
-        // console.log("tvl", tvl.toString())
         const rSy = totalSy.div(totalSy.add(totalPt))
-        // console.log("rSy", rSy.toString())
         const rPt = totalPt.div(totalSy.add(totalPt))
-        // console.log("rPt", rPt.toString())
         apySy = rSy.mul(coinInfo.underlyingApy)
-        // console.log("apySy", apySy.toString())
         apyPt = rPt.mul(ptApy)
-        // console.log("apyPt", apyPt.toString())
         const apyIncentive = new Decimal(0)
-        // console.log("apyIncentive", apyIncentive.toString())
         const poolValue = calculatePoolValue(
           totalPt,
           totalSy,
@@ -111,51 +126,33 @@ export function useCalculatePtYt(coinInfo?: BaseCoinInfo) {
           ptPrice,
           new Decimal(coinInfo.underlyingPrice),
         )
-        // console.log("poolValue", poolValue.toString())
-        // console.log("coinInfo", coinInfo)
         const swapFeeForLpHolder = new Decimal(coinInfo.swapFeeForLpHolder)
-        // console.log("swapFeeForLpHolder", swapFeeForLpHolder.toString())
         const swapFeeRateForLpHolder = swapFeeForLpHolder
           .mul(coinInfo.underlyingPrice)
           .div(poolValue)
-        // console.log("swapFeeRateForLpHolder", swapFeeRateForLpHolder.toString())
         swapFeeApy = swapFeeRateForLpHolder
           .add(1)
           .pow(new Decimal(365).div(daysToExpiry))
           .minus(1)
           .mul(100)
-        // console.log("swapFeeApy", swapFeeApy.toString())
         poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy)
-        // console.log("poolApy", poolApy.toString())
       }
-      // console.log("tvl, poolApy", tvl.toFixed(10), poolApy.toFixed(10))
-      // console.log({
-      //   ptPrice,
-      //   ytPrice,
-      //   ptApy,
-      //   ytApy,
-      //   tvl,
-      //   poolApy,
-      //   ptTvl,
-      //   syTvl,
-      // })
 
       return {
-        ptPrice,
-        ytPrice,
         ptApy,
         ytApy,
-        tvl,
-        poolApy,
-        ptTvl,
-        syTvl,
-        apySy,
-        apyPt,
-        swapFeeApy,
+        tvl: tvl.toString(),
+        ptTvl: ptTvl.toString(),
+        syTvl: syTvl.toString(),
+        apySy: apySy.toString(),
+        apyPt: apyPt.toString(),
+        ptPrice: ptPrice.toString(),
+        ytPrice: ytPrice.toString(),
+        poolApy: poolApy.toString(),
+        swapFeeApy: swapFeeApy.toString(),
       }
     },
-    enabled: !!coinInfo?.decimal && !!coinInfo?.marketStateId,
-    // refetchInterval: 20000,
+    enabled: !!coinInfo?.decimal && !!marketState,
   })
 }
 

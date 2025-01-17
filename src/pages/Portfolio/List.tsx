@@ -2,8 +2,12 @@ import Item from "./Item"
 import { motion } from "framer-motion"
 import { useMemo, useState } from "react"
 import Loading from "@/components/Loading"
+import { isValidAmount } from "@/lib/utils"
 import { PortfolioItem } from "@/queries/types/market"
+import useAllLpPositions from "@/hooks/useAllLpPositions"
+import useAllPyPositions from "@/hooks/useAllPyPositions"
 import SlippageSetting from "@/components/SlippageSetting"
+import useMultiMarketState from "@/hooks/useMultiMarketState"
 import { Link, useParams, useNavigate } from "react-router-dom"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 import {
@@ -20,12 +24,24 @@ interface ListProps {
 }
 
 export default function List({ list, isLoading }: ListProps) {
-  const { address } = useWallet()
-  const navigate = useNavigate()
   const { type } = useParams()
+  const navigate = useNavigate()
+  const { address } = useWallet()
   const [slippage, setSlippage] = useState("0.5")
-  const isConnected = useMemo(() => !!address, [address])
   const [openConnect, setOpenConnect] = useState(false)
+  const isConnected = useMemo(() => !!address, [address])
+  const { data: positions = [], isLoading: isPositionsLoading } =
+    useAllPyPositions(list)
+  const { data: lpPositions = [], isLoading: isLpPositionsLoading } =
+    useAllLpPositions(list)
+
+  const marketStateIds = useMemo(
+    () => list?.map((item) => item.marketStateId).filter(Boolean) || [],
+    [list],
+  )
+
+  const { data: marketStates = [], isLoading: isMarketStatesLoading } =
+    useMultiMarketState(marketStateIds)
 
   const selectType = useMemo(() => {
     if (type && ["pt", "yt", "lp"].includes(type)) {
@@ -37,6 +53,29 @@ export default function List({ list, isLoading }: ListProps) {
   const handleTypeChange = (newType: "pt" | "yt" | "lp") => {
     navigate(`/portfolio/${newType}`)
   }
+
+  const isDataLoading =
+    isLoading ||
+    isPositionsLoading ||
+    isMarketStatesLoading ||
+    isLpPositionsLoading
+
+  const filteredList = useMemo(() => {
+    if (!list?.length) return []
+
+    return list.filter((_, index) => {
+      if (selectType === "pt") {
+        return isValidAmount(positions?.[index]?.ptBalance)
+      }
+      if (selectType === "yt") {
+        return isValidAmount(positions?.[index]?.ytBalance)
+      }
+      if (selectType === "lp") {
+        return isValidAmount(lpPositions?.[index]?.lpBalance)
+      }
+      return true // for "all" type
+    })
+  }, [list, selectType, positions, lpPositions])
 
   return (
     <motion.div
@@ -88,7 +127,7 @@ export default function List({ list, isLoading }: ListProps) {
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          {isConnected && isLoading ? (
+          {isConnected && isDataLoading ? (
             <TableBody>
               <TableRow>
                 <td colSpan={selectType === "yt" ? 6 : 5} className="py-[60px]">
@@ -98,26 +137,20 @@ export default function List({ list, isLoading }: ListProps) {
             </TableBody>
           ) : (
             <>
-              {isConnected && list?.length ? (
+              {isConnected && filteredList?.length ? (
                 <TableBody>
-                  {list.map((item) => (
+                  {filteredList.map((item, index) => (
                     <Item
                       {...item}
+                      id={item.id}
+                      key={item.id}
                       selectType={selectType}
-                      key={
-                        item.underlyingProtocol +
-                        "_" +
-                        item.name +
-                        "_" +
-                        item.maturity
-                      }
-                      itemKey={
-                        item.underlyingProtocol +
-                        "_" +
-                        item.name +
-                        "_" +
-                        item.maturity
-                      }
+                      marketState={marketStates[index]}
+                      ptBalance={positions?.[index]?.ptBalance}
+                      ytBalance={positions?.[index]?.ytBalance}
+                      lpBalance={lpPositions?.[index]?.lpBalance}
+                      pyPositions={positions?.[index]?.pyPositions}
+                      lpPositions={lpPositions?.[index]?.lpPositions}
                     />
                   ))}
                 </TableBody>
@@ -146,7 +179,7 @@ export default function List({ list, isLoading }: ListProps) {
             />
           </div>
         )}
-        {!isLoading && !list?.length && isConnected && (
+        {!isDataLoading && !filteredList?.length && isConnected && (
           <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px] py-[30px]">
             <img
               src="/images/png/empty.png"

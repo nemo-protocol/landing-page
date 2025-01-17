@@ -163,8 +163,8 @@ export default function Remove() {
         const { digest } = await redeemLp({
           lpAmount: lpValue,
           coinConfig,
-          lpMarketPositionData: lppMarketPositionData,
-          pyPositionData: pyPositionData || [],
+          lpPositions: lppMarketPositionData,
+          pyPositions: pyPositionData || [],
         })
 
         setTxId(digest)

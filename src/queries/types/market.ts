@@ -1,6 +1,7 @@
 import { MarketState } from "@/hooks/types"
 
 export interface BaseCoinInfo {
+  id: string
   coinLogo: string
   maturity: string
   coinName: string

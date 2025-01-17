@@ -750,7 +750,7 @@ export default function SingleCoin() {
                     </TooltipProvider>
                   </span>
                   <span className="underline">
-                    {ptYtData?.poolApy ? `${ptYtData?.poolApy.toFixed(6)} %` : "--"}
+                    {ptYtData?.poolApy ? `${Number(ptYtData.poolApy).toFixed(6)}%` : "--"}
                   </span>
                 </div>
               </div>
@@ -816,7 +816,7 @@ export default function SingleCoin() {
             </div>
             <div className="text-center">
               <p className="text-lg lg:text-xl font-normal">
-                {ptYtData?.poolApy ? `${ptYtData?.poolApy.toFixed(6)}%` : "--"}
+                {ptYtData?.poolApy ? `${Number(ptYtData.poolApy).toFixed(6)}%` : "--"}
               </p>
               <p className="text-xs lg:text-sm text-white/60">Total APY</p>
             </div>
@@ -962,7 +962,7 @@ export default function SingleCoin() {
                   <div className="flex justify-between items-center">
                     <span className="text-xl">Total APY</span>
                     <span className="text-xl text-white">
-                      {ptYtData?.poolApy ? `${ptYtData?.poolApy.toFixed(6)} %` : "--"}
+                      {ptYtData?.poolApy ? `${Number(ptYtData.poolApy).toFixed(6)}%` : "--"}
                     </span>
                   </div>
                   <div className="h-[1px] bg-[#2D2D48]" />

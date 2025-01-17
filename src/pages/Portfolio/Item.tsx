@@ -1,59 +1,35 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { Link } from "react-router-dom"
+import Loading from "@/components/Loading"
 import usePortfolio from "@/hooks/usePortfolio"
+import { Skeleton } from "@/components/ui/skeleton"
 import { network, debugLog, DEBUG } from "@/config"
 import { useEffect, useMemo, useState } from "react"
+import { useWallet } from "@nemoprotocol/wallet-kit"
+import useRedeemLp from "@/hooks/actions/useRedeemLp"
 import { Transaction } from "@mysten/sui/transactions"
 import { PortfolioItem } from "@/queries/types/market"
-import usePyPositionData from "@/hooks/usePyPositionData"
-import { TableRow, TableCell } from "@/components/ui/table"
-import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
-import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
-// TODO: 封装全局的提示框
+import { TableRow, TableCell } from "@/components/ui/table"
+import { formatDecimalValue, isValidAmount } from "@/lib/utils"
+import { PyPosition, MarketState, LpPosition } from "@/hooks/types"
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { useWallet } from "@nemoprotocol/wallet-kit"
-import {
-  getPriceVoucher,
-  redeemSyCoin,
   redeemPy,
   burnSCoin,
+  redeemSyCoin,
+  getPriceVoucher,
 } from "@/lib/txHelper"
-import { formatDecimalValue, isValidAmount } from "@/lib/utils"
-import useRedeemLp from "@/hooks/actions/useRedeemLp"
+import {
+  AlertDialog,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog"
 
-const LoadingSpinner = () => (
-  <svg viewBox="0 0 50 50" className="animate-spin h-4 w-4 text-white">
-    <circle
-      cx="25"
-      cy="25"
-      r="20"
-      fill="none"
-      className="stroke-current opacity-25"
-      strokeWidth="4"
-    />
-    <circle
-      cx="25"
-      cy="25"
-      r="20"
-      fill="none"
-      className="stroke-current"
-      strokeWidth="4"
-      strokeDasharray="80"
-      strokeDashoffset="60"
-    />
-  </svg>
-)
-
-// 首先定义一个统一的 LoadingButton 组件
 const LoadingButton = ({
   loading,
   disabled,
@@ -79,7 +55,7 @@ const LoadingButton = ({
   >
     {loading ? (
       <div className="flex items-center justify-center gap-1">
-        <LoadingSpinner />
+        <Loading className="h-4 w-4 border-b border-white" />
         <span className="text-sm whitespace-nowrap">{loadingText}</span>
       </div>
     ) : (
@@ -89,16 +65,26 @@ const LoadingButton = ({
 )
 
 export default function Item({
-  itemKey,
   name,
   icon,
   ytReward,
   lpReward,
   selectType,
+  ptBalance,
+  ytBalance,
+  pyPositions,
+  lpBalance,
+  lpPositions,
+  marketState,
   ...coinConfig
 }: PortfolioItem & {
+  ptBalance: string
+  ytBalance: string
+  lpBalance: string
+  pyPositions: PyPosition[]
+  lpPositions: LpPosition[]
+  marketState?: MarketState
   selectType: "pt" | "yt" | "lp" | "all"
-  itemKey: string
 }) {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
@@ -111,70 +97,19 @@ export default function Item({
   const { address } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-  const { data: lpMarketPositionData, refetch: refetchLpPosition } =
-    useLpMarketPositionData(
-      address,
-      coinConfig.marketStateId,
-      coinConfig.maturity,
-      coinConfig?.marketPositionTypeList
-        ? coinConfig?.marketPositionTypeList
-        : [coinConfig.marketPositionType],
-    )
-
-  const { data: pyPositionData, refetch: refetchPyPosition } =
-    usePyPositionData(
-      address,
-      coinConfig.pyStateId,
-      coinConfig.maturity,
-      coinConfig?.pyPositionTypeList
-        ? coinConfig?.pyPositionTypeList
-        : [coinConfig?.pyPositionType],
-    )
-
-  const ptBalance = useMemo(() => {
-    if (pyPositionData?.length) {
-      return pyPositionData
-        .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
-        .div(1e9)
-        .toString()
-    }
-    return "0"
-  }, [pyPositionData])
-
-  const ytBalance = useMemo(() => {
-    if (pyPositionData?.length) {
-      return pyPositionData
-        .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
-        .div(1e9)
-        .toString()
-    }
-    return "0"
-  }, [pyPositionData])
-
-  const lpCoinBalance = useMemo(() => {
-    if (lpMarketPositionData?.length) {
-      return lpMarketPositionData
-        .reduce((total, item) => total.add(item.lp_amount), new Decimal(0))
-        .div(1e9)
-        .toFixed(9)
-    }
-    return "0"
-  }, [lpMarketPositionData])
-
   const [loading, setLoading] = useState(false)
 
   const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
 
-  const refreshData = async () => {
-    await Promise.all([refetchLpPosition(), refetchPyPosition()])
-  }
-
-  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+  const { data: ptYtData, isLoading: isPtYtLoading } = useCalculatePtYt(
+    coinConfig,
+    marketState,
+  )
 
   useEffect(() => {
     if (isConnected) {
       updatePortfolio(
-        itemKey,
+        coinConfig.id,
         new Decimal(ptBalance)
           .mul(
             ptYtData?.ptPrice && new Decimal(ptYtData.ptPrice).gt(0)
@@ -189,7 +124,7 @@ export default function Item({
             ),
           )
           .add(
-            new Decimal(lpCoinBalance).mul(
+            new Decimal(lpBalance).mul(
               coinConfig.coinPrice &&
                 ptYtData?.ptPrice &&
                 new Decimal(coinConfig.coinPrice).add(ptYtData.ptPrice).gt(0)
@@ -206,17 +141,17 @@ export default function Item({
       )
     }
   }, [
-    updatePortfolio,
+    coinConfig.id,
+    lpReward,
     ptBalance,
     ytBalance,
-    lpCoinBalance,
-    lpReward,
     isConnected,
-    itemKey,
+    lpBalance,
+    updatePortfolio,
     ptYtData?.ptPrice,
     ptYtData?.ytPrice,
-    coinConfig.underlyingPrice,
     coinConfig.coinPrice,
+    coinConfig.underlyingPrice,
   ])
 
   async function claim() {
@@ -227,7 +162,7 @@ export default function Item({
 
         let pyPosition
         let created = false
-        if (!pyPositionData?.length) {
+        if (!pyPositions?.length) {
           created = true
           const moveCall = {
             target: `${coinConfig?.nemoContractId}::py::init_py_position`,
@@ -241,7 +176,7 @@ export default function Item({
             arguments: moveCall.arguments.map((arg) => tx.object(arg)),
           })[0]
         } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
+          pyPosition = tx.object(pyPositions[0].id.id)
         }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
@@ -287,7 +222,7 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
-        await refreshData()
+        // await refreshData()
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -309,7 +244,7 @@ export default function Item({
 
         let pyPosition
         let created = false
-        if (!pyPositionData?.length) {
+        if (!pyPositions?.length) {
           created = true
           const moveCall = {
             target: `${coinConfig?.nemoContractId}::py::init_py_position`,
@@ -323,7 +258,7 @@ export default function Item({
             arguments: moveCall.arguments.map((arg) => tx.object(arg)),
           })[0]
         } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
+          pyPosition = tx.object(pyPositions[0].id.id)
         }
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
@@ -353,7 +288,7 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
-        await refreshData()
+        // await refreshData()
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -370,23 +305,23 @@ export default function Item({
   async function redeemLP() {
     if (
       address &&
-      lpCoinBalance &&
+      lpBalance &&
       coinConfig?.coinType &&
-      pyPositionData?.length &&
-      lpMarketPositionData?.length
+      pyPositions?.length &&
+      lpPositions?.length
     ) {
       try {
         setLoading(true)
         const { digest } = await redeemLp({
-          lpAmount: lpCoinBalance,
+          lpAmount: lpBalance,
           coinConfig,
-          lpMarketPositionData,
-          pyPositionData,
+          lpPositions,
+          pyPositions,
         })
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
-        await refreshData()
+        // await refreshData()
       } catch (error) {
         if (DEBUG) {
           console.log("tx error", error)
@@ -398,15 +333,6 @@ export default function Item({
         setLoading(false)
       }
     }
-  }
-
-  // 如果所有余额都为0，则不显示任何内容
-  if (
-    (!ptBalance || ptBalance === "0") &&
-    (!ytBalance || ytBalance === "0") &&
-    (!lpCoinBalance || lpCoinBalance === "0")
-  ) {
-    return null
   }
 
   return (
@@ -475,22 +401,34 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">PT</TableCell>
           <TableCell className="text-center space-x-1">
-            <span>
-              {ptYtData?.ptPrice &&
-                new Decimal(ptBalance)
-                  .mul(new Decimal(ptYtData.ptPrice))
-                  .gt(0) &&
-                "≈"}
-            </span>
-            <span>
-              $
-              {ptYtData?.ptPrice
-                ? formatDecimalValue(
-                    new Decimal(ptBalance).mul(new Decimal(ptYtData.ptPrice)),
-                    Number(coinConfig?.decimal),
-                  )
-                : "0.00"}
-            </span>
+            <div>
+              <div>
+                {isPtYtLoading ? (
+                  <Skeleton className="h-6 w-20 mx-auto" />
+                ) : (
+                  <>
+                    <span>
+                      {ptYtData?.ptPrice &&
+                        new Decimal(ptBalance)
+                          .mul(new Decimal(ptYtData.ptPrice))
+                          .gt(0) &&
+                        "≈"}
+                    </span>
+                    <span>
+                      $
+                      {ptYtData?.ptPrice
+                        ? formatDecimalValue(
+                            new Decimal(ptBalance).mul(
+                              new Decimal(ptYtData.ptPrice),
+                            ),
+                            Number(coinConfig?.decimal),
+                          )
+                        : "0.00"}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
           </TableCell>
           <TableCell className="text-center">{ptBalance}</TableCell>
           <TableCell align="center" className="text-white">
@@ -536,22 +474,30 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">YT</TableCell>
           <TableCell className="text-center space-x-1">
-            <span>
-              {ptYtData?.ytPrice &&
-                new Decimal(ytBalance)
-                  .mul(new Decimal(ptYtData.ytPrice))
-                  .gt(0) &&
-                "≈"}
-            </span>
-            <span>
-              $
-              {formatDecimalValue(
-                ptYtData?.ytPrice
-                  ? new Decimal(ytBalance).mul(new Decimal(ptYtData.ytPrice))
-                  : new Decimal(0),
-                Number(coinConfig?.decimal),
-              )}
-            </span>
+            {isPtYtLoading ? (
+              <Skeleton className="h-6 w-20 mx-auto" />
+            ) : (
+              <>
+                <span>
+                  {ptYtData?.ytPrice &&
+                    new Decimal(ytBalance)
+                      .mul(new Decimal(ptYtData.ytPrice))
+                      .gt(0) &&
+                    "≈"}
+                </span>
+                <span>
+                  $
+                  {formatDecimalValue(
+                    ptYtData?.ytPrice
+                      ? new Decimal(ytBalance).mul(
+                          new Decimal(ptYtData.ytPrice),
+                        )
+                      : new Decimal(0),
+                    Number(coinConfig?.decimal),
+                  )}
+                </span>
+              </>
+            )}
           </TableCell>
           <TableCell className="text-center">{ytBalance}</TableCell>
           <TableCell className="text-center">
@@ -617,22 +563,28 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">LP</TableCell>
           <TableCell className="text-center space-x-1">
-            <span>
-              {ptYtData?.tvl &&
-                new Decimal(lpCoinBalance).mul(ptYtData.tvl).gt(0) &&
-                "≈"}
-            </span>
-            <span>
-              $
-              {formatDecimalValue(
-                ptYtData?.tvl
-                  ? new Decimal(lpCoinBalance).mul(ptYtData.tvl)
-                  : new Decimal(0),
-                2,
-              )}
-            </span>
+            {isPtYtLoading ? (
+              <Skeleton className="h-6 w-20 mx-auto" />
+            ) : (
+              <>
+                <span>
+                  {ptYtData?.tvl &&
+                    new Decimal(lpBalance).mul(ptYtData.tvl).gt(0) &&
+                    "≈"}
+                </span>
+                <span>
+                  $
+                  {formatDecimalValue(
+                    ptYtData?.tvl
+                      ? new Decimal(lpBalance).mul(ptYtData.tvl)
+                      : new Decimal(0),
+                    2,
+                  )}
+                </span>
+              </>
+            )}
           </TableCell>
-          <TableCell className="text-center">{lpCoinBalance}</TableCell>
+          <TableCell className="text-center">{lpBalance}</TableCell>
           <TableCell align="center" className="text-white">
             {dayjs(parseInt(coinConfig?.maturity)).diff(dayjs(), "day") > 0 ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
@@ -654,7 +606,7 @@ export default function Item({
             ) : (
               <LoadingButton
                 loading={loading}
-                disabled={!lpCoinBalance || lpCoinBalance === "0"}
+                disabled={!lpBalance || lpBalance === "0"}
                 onClick={redeemLP}
                 loadingText="Redeeming"
                 buttonText="Redeem"

@@ -1,6 +1,6 @@
+import { PyPosition } from "./types"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 import { UseQueryResult } from "@tanstack/react-query"
-import { PyPosition } from "./types"
 
 const usePyPositionData = (
   address?: string,

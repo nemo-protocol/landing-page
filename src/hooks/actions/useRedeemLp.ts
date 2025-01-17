@@ -14,14 +14,14 @@ import {
 } from "@/lib/txHelper"
 import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
 import { CoinConfig } from "@/queries/types/market"
-import { LPMarketPosition, PyPosition } from "@/hooks/types"
+import { LpPosition, PyPosition } from "@/hooks/types"
 import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
 
 interface RedeemLpParams {
   lpAmount: string
   coinConfig: CoinConfig
-  lpMarketPositionData: LPMarketPosition[]
-  pyPositionData: PyPosition[]
+  lpPositions: LpPosition[]
+  pyPositions: PyPosition[]
 }
 
 export default function useRedeemLp(coinConfig?: CoinConfig) {
@@ -36,14 +36,14 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
     async ({
       lpAmount,
       coinConfig,
-      lpMarketPositionData,
-      pyPositionData = [],
+      lpPositions,
+      pyPositions = [],
     }: RedeemLpParams) => {
       if (
         !address ||
         !coinConfig?.coinType ||
         !lpAmount ||
-        !lpMarketPositionData?.length
+        !lpPositions?.length
       ) {
         throw new Error("Invalid parameters for redeeming LP")
       }
@@ -72,17 +72,17 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
 
       let pyPosition
       let created = false
-      if (!pyPositionData?.length) {
+      if (!pyPositions?.length) {
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositionData[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id.id)
       }
 
       const mergedPositionId = mergeLpPositions(
         tx,
         coinConfig,
-        lpMarketPositionData,
+        lpPositions,
         lpAmount,
         decimal,
       )

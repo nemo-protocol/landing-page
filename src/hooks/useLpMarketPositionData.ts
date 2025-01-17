@@ -1,14 +1,14 @@
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 import { UseQueryResult } from "@tanstack/react-query"
 import { Decimal } from "decimal.js"
-import { LPMarketPosition } from "./types"
+import { LpPosition } from "./types"
 
 const useLpMarketPositionData = (
   address?: string,
   marketStateId?: string,
   maturity?: string,
   positionTypes?: string[],
-): UseQueryResult<LPMarketPosition[], Error> => {
+): UseQueryResult<LpPosition[], Error> => {
   return useSuiClientQuery(
     "getOwnedObjects",
     {
@@ -29,7 +29,7 @@ const useLpMarketPositionData = (
         !!marketStateId &&
         !!positionTypes &&
         positionTypes.length > 0,
-      select: (data): LPMarketPosition[] => {
+      select: (data): LpPosition[] => {
         return data.data
           .map(
             (item) =>
@@ -46,7 +46,7 @@ const useLpMarketPositionData = (
                 }
               )?.fields,
           )
-          .filter((item): item is LPMarketPosition => !!item)
+          .filter((item): item is LpPosition => !!item)
           .filter(
             (item) =>
               (!maturity || item.expiry === maturity.toString()) &&

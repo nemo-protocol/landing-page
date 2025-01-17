@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo, LPMarketPosition } from "../types"
+import type { DebugInfo, LpPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchLpPosition from "../useFetchLpPosition"
 import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
@@ -26,7 +26,7 @@ export default function useBurnLpDryRun(
   return useMutation({
     mutationFn: async (
       lpValue: string,
-      config?: CoinConfig
+      config?: CoinConfig,
     ): Promise<[BurnLpResult] | [BurnLpResult, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
@@ -36,9 +36,7 @@ export default function useBurnLpDryRun(
         throw new Error("Please select a pool")
       }
 
-      const [marketPositions] = (await fetchLpPositionAsync()) as [
-        LPMarketPosition[],
-      ]
+      const [marketPositions] = (await fetchLpPositionAsync()) as [LpPosition[]]
       const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
 
       if (!marketPositions?.length) {
@@ -69,9 +67,7 @@ export default function useBurnLpDryRun(
         decimal,
       )
 
-      const lpAmount = new Decimal(lpValue)
-        .mul(10 ** decimal)
-        .toFixed()
+      const lpAmount = new Decimal(lpValue).mul(10 ** decimal).toFixed()
 
       console.log("mergedPosition", mergedPosition)
 

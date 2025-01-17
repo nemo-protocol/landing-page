@@ -1,6 +1,6 @@
-import { MarketState } from "../types"
+import { MarketState } from "./types"
 import { useSuiClient } from "@mysten/dapp-kit"
-import { useMutation } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 
 interface RawMarketState {
   total_sy: string
@@ -9,11 +9,14 @@ interface RawMarketState {
   market_cap: string
 }
 
-const useFetchMultiMarketState = () => {
+const useMultiMarketState = (marketStateIds?: string[]) => {
   const suiClient = useSuiClient()
 
-  return useMutation<MarketState[], Error, string[]>({
-    mutationFn: async (marketStateIds: string[]) => {
+  return useQuery({
+    queryKey: ["multiMarketState", marketStateIds],
+    queryFn: async () => {
+      if (!marketStateIds?.length) return []
+
       const marketStates = await suiClient.multiGetObjects({
         ids: marketStateIds,
         options: { showContent: true },
@@ -38,7 +41,8 @@ const useFetchMultiMarketState = () => {
       // Return results in the same order as input marketStateIds
       return marketStateIds.map((id) => stateMap.get(id)!)
     },
+    enabled: !!marketStateIds?.length,
   })
 }
 
-export default useFetchMultiMarketState
+export default useMultiMarketState 

@@ -1,14 +1,14 @@
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
+import { DebugInfo } from "@/hooks/types"
+import { LpPosition } from "@/hooks/types"
 import { CoinData } from "@/hooks/useCoinData"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
-import { LPMarketPosition } from "@/hooks/types"
 import {
   Transaction,
   TransactionArgument,
   TransactionResult,
 } from "@mysten/sui/transactions"
-import { DebugInfo } from "@/hooks/types"
 
 type MoveCallInfo = DebugInfo["moveCall"]
 
@@ -272,11 +272,13 @@ export const burnSCoin = (
       return underlyingCoin
     }
     default:
-      console.error("Unsupported underlying protocol: " + coinConfig.underlyingProtocol)
+      console.error(
+        "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+      )
       return sCoin
-      // throw new Error(
-      //   "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
-      // )
+    // throw new Error(
+    //   "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+    // )
   }
 }
 
@@ -345,7 +347,7 @@ export function splitCoinHelper(
 export const mergeLpPositions = (
   tx: Transaction,
   coinConfig: CoinConfig,
-  lpPositions: LPMarketPosition[],
+  lpPositions: LpPosition[],
   lpValue: string,
   decimal: number,
 ) => {
@@ -360,7 +362,7 @@ export const mergeLpPositions = (
   )
 
   let accumulatedAmount = new Decimal(0)
-  const positionsToMerge: LPMarketPosition[] = []
+  const positionsToMerge: LpPosition[] = []
   const targetAmount = new Decimal(lpValue).mul(10 ** decimal)
   for (const position of sortedPositions) {
     accumulatedAmount = accumulatedAmount.add(position.lp_amount)
@@ -463,8 +465,8 @@ export const mintPY = <T extends boolean = false>(
 
   const result = tx.moveCall(txMoveCall)
 
-  return (returnDebugInfo ? [result, debugInfo] : result) as T extends true 
-    ? [TransactionResult, MoveCallInfo] 
+  return (returnDebugInfo ? [result, debugInfo] : result) as T extends true
+    ? [TransactionResult, MoveCallInfo]
     : TransactionResult
 }
 
@@ -640,8 +642,8 @@ export const redeemPy = <T extends boolean = false>(
 
   const result = tx.moveCall(txMoveCall)
 
-  return (returnDebugInfo ? [result, debugInfo] : result) as T extends true 
-    ? [TransactionResult, MoveCallInfo] 
+  return (returnDebugInfo ? [result, debugInfo] : result) as T extends true
+    ? [TransactionResult, MoveCallInfo]
     : TransactionResult
 }
 
@@ -668,7 +670,7 @@ export const getPrice = (
 export const mergeAllLpPositions = (
   tx: Transaction,
   coinConfig: CoinConfig,
-  lpPositions: LPMarketPosition[],
+  lpPositions: LpPosition[],
   marketPosition: TransactionArgument,
 ) => {
   debugLog("mergeAllLpPositions params:", {
