@@ -42,6 +42,7 @@ export default function Sell() {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [warning, setWarning] = useState("")
   const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState("pt")
   const [redeemValue, setRedeemValue] = useState("")
@@ -293,6 +294,8 @@ export default function Sell() {
           isConnected={isConnected}
           isConfigLoading={isConfigLoading}
           onChange={handleInputChange}
+          warning={warning}
+          setWarning={setWarning}
           coinNameComponent={
             <Select
               value={tokenType}

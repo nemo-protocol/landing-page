@@ -48,6 +48,7 @@ import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 export default function Invest() {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
@@ -338,6 +339,8 @@ export default function Invest() {
           isConfigLoading={isConfigLoading}
           isBalanceLoading={isBalanceLoading}
           error={error}
+          setWarning={setWarning}
+          warning={warning}
           onChange={(value) => setSwapValue(value)}
           coinNameComponent={
             <Select

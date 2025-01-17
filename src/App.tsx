@@ -30,7 +30,7 @@ function App() {
                 path="/market/detail/:coinType/:maturity/:operation?/:tokenType?"
               />
               <Route path="/learn" element={<Learn />} />
-              <Route path="/Rewards" element={<Rewards />} />
+              <Route path="/points" element={<Rewards />} />
               <Route path="/portfolio/:type?" element={<Portfolio />} />
               <Route path="/wallet-kit" element={<WalletKit />} />
               <Route path="/test" element={<Test />} />

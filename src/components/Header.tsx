@@ -102,15 +102,15 @@ export default function Header({ className }: { className?: string }) {
           </li>
           <li className={["w-24 h-full text-center"].join(" ")}>
             <Link
-              to="/rewards"
+              to="/points"
               className={[
-                location.pathname === "/rewards"
+                location.pathname === "/points"
                   ? "text-white bg-[#12121B] border-b border-b-white"
                   : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
                 "flex items-center justify-center h-full cursor-pointer",
               ].join(" ")}
             >
-              Rewards
+              Points
             </Link>
           </li>
         </ul>
@@ -241,10 +241,10 @@ export default function Header({ className }: { className?: string }) {
             Learn
           </Link>
           <Link
-            to="/rewards"
+            to="/points"
             className="py-3 text-white/90 hover:text-white text-base"
           >
-            Rewards
+            Points
           </Link>
           <Link
             to="/mint"

@@ -41,6 +41,7 @@ import useSwapExactSyForYtDryRun from "@/hooks/dryrun/useSwapExactSyForYtDryRun"
 export default function Trade() {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
   // const currentAccount = useCurrentAccount()
   const [swapValue, setSwapValue] = useState("")
@@ -328,6 +329,8 @@ export default function Trade() {
             isConfigLoading={isConfigLoading}
             isBalanceLoading={isBalanceLoading}
             error={error}
+            warning={warning}
+            setWarning={setWarning}
             onChange={(value) => {
               setSwapValue(value)
             }}
@@ -335,6 +338,8 @@ export default function Trade() {
               <Select
                 value={tokenType.toString()}
                 onValueChange={(value) => {
+                  setWarning("")
+                  setError(undefined)
                   setSwapValue("")
                   setTokenType(Number(value))
                 }}

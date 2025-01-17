@@ -59,6 +59,7 @@ export default function SingleCoin() {
   const navigate = useNavigate()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
@@ -637,6 +638,8 @@ export default function SingleCoin() {
                 isLoading={isLoading}
                 coinBalance={coinBalance}
                 isConnected={isConnected}
+                warning={warning}
+                setWarning={setWarning}
                 isConfigLoading={isConfigLoading}
                 isBalanceLoading={isBalanceLoading}
                 onChange={(value) => {

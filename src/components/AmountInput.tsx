@@ -18,8 +18,9 @@ interface AmountInputProps {
   isConnected?: boolean
   isConfigLoading?: boolean
   isBalanceLoading?: boolean
-  coinNameComponent?: React.ReactNode
   onChange: (value: string) => void
+  setWarning: (value: string) => void
+  coinNameComponent?: React.ReactNode
 }
 
 export default function AmountInput({
@@ -38,6 +39,7 @@ export default function AmountInput({
   isBalanceLoading,
   className,
   onChange,
+  setWarning,
 }: AmountInputProps) {
   return (
     <div className="w-full">
@@ -74,6 +76,12 @@ export default function AmountInput({
                         if (isConnected && coinBalance) {
                           let adjustedBalance = new Decimal(coinBalance)
                           if (coinName === "SUI") {
+                            if (adjustedBalance.lt(0.1)) {
+                              setWarning(
+                                "Insufficient SUI for gas fee. Minimum required: 0.1 SUI",
+                              )
+                              return
+                            }
                             adjustedBalance = adjustedBalance.minus(0.1)
                           }
                           onChange(formatDecimalValue(adjustedBalance, decimal))

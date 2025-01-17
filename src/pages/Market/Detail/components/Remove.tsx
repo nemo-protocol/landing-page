@@ -219,6 +219,7 @@ export default function Remove() {
           <AmountInput
             error={error}
             warning={warning}
+            setWarning={setWarning}
             amount={lpValue}
             price={lpPrice}
             decimal={decimal}
