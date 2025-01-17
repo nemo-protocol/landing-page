@@ -432,7 +432,7 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">{ptBalance}</TableCell>
           <TableCell align="center" className="text-white">
-            {parseInt(coinConfig?.maturity) > Date.now() ? (
+            {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
                   to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/pt`}
@@ -527,7 +527,7 @@ export default function Item({
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">
-            {parseInt(coinConfig?.maturity) > Date.now() ? (
+            {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
                   to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/yt`}
@@ -586,7 +586,7 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">{lpBalance}</TableCell>
           <TableCell align="center" className="text-white">
-            {dayjs(parseInt(coinConfig?.maturity)).diff(dayjs(), "day") > 0 ? (
+            {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
                 <Link
                   to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/add`}

@@ -808,7 +808,7 @@ export default function SingleCoin() {
             </div>
             <div className="text-center">
               <p className="text-lg lg:text-xl font-normal">
-                {dayjs(parseInt(coinConfig?.maturity || "0")).format(
+                {dayjs(Number(coinConfig?.maturity ?? 0)).format(
                   "MMM DD YYYY",
                 )}
               </p>
