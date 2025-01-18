@@ -17,7 +17,7 @@ import { useWallet } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import ActionButton from "@/components/ActionButton"
 import useRedeemPYDryRun from "@/hooks/dryrun/useRedeemPYDryRun"
-import { debounce } from "@/lib/utils"
+import { debounce, formatDecimalValue } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Redeem({
@@ -55,30 +55,35 @@ export default function Redeem({
 
   const ptBalance = useMemo(() => {
     if (pyPositionData?.length) {
-      return pyPositionData
-        .reduce((total, coin) => total.add(coin.ptBalance), new Decimal(0))
-        .div(10 ** decimal)
-        .toFixed(decimal)
+      return formatDecimalValue(
+        pyPositionData
+          .reduce((total, coin) => total.add(coin.ptBalance), new Decimal(0))
+          .div(10 ** decimal),
+        decimal,
+      )
     }
     return "0"
   }, [pyPositionData, decimal])
 
   const ytBalance = useMemo(() => {
     if (pyPositionData?.length) {
-      return pyPositionData
-        .reduce((total, coin) => total.add(coin.ytBalance), new Decimal(0))
-        .div(10 ** decimal)
-        .toFixed(decimal)
+      return formatDecimalValue(
+        pyPositionData
+          .reduce((total, coin) => total.add(coin.ytBalance), new Decimal(0))
+          .div(10 ** decimal),
+        decimal,
+      )
     }
     return "0"
   }, [pyPositionData, decimal])
 
-  const insufficientBalance = useMemo(() => {
-    return (
-      new Decimal(ptBalance).lt(redeemValue || 0) ||
-      new Decimal(ytBalance).lt(redeemValue || 0)
-    )
-  }, [ptBalance, ytBalance, redeemValue])
+  const insufficientPtBalance = useMemo(() => {
+    return new Decimal(ptBalance).lt(redeemValue || 0)
+  }, [ptBalance, redeemValue])
+
+  const insufficientYtBalance = useMemo(() => {
+    return new Decimal(ytBalance).lt(redeemValue || 0)
+  }, [ytBalance, redeemValue])
 
   const refreshData = useCallback(async () => {
     await Promise.all([refetchCoinConfig(), refetchPyPosition()])
@@ -127,7 +132,8 @@ export default function Redeem({
 
   async function redeem() {
     if (
-      !insufficientBalance &&
+      !insufficientPtBalance &&
+      !insufficientYtBalance &&
       coinConfig &&
       coinType &&
       address &&
@@ -242,7 +248,7 @@ export default function Redeem({
         </div>
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer disabled:opacity-50"
             disabled={!isConnected}
             onClick={() =>
               setRedeemValue(new Decimal(ptBalance).div(2).toFixed(decimal))
@@ -251,7 +257,7 @@ export default function Redeem({
             Half
           </button>
           <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer disabled:opacity-50"
             disabled={!isConnected}
             onClick={() =>
               setRedeemValue(new Decimal(ptBalance).toFixed(decimal))
@@ -304,7 +310,7 @@ export default function Redeem({
         </div>
         <div className="flex items-center gap-x-2 justify-end mt-3.5 w-full">
           <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer disabled:opacity-50"
             disabled={!isConnected}
             onClick={() =>
               setRedeemValue(new Decimal(ytBalance).div(2).toFixed(decimal))
@@ -313,7 +319,7 @@ export default function Redeem({
             Half
           </button>
           <button
-            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer"
+            className="bg-[#1E212B] py-1 px-2 rounded-[20px] text-xs cursor-pointer disabled:opacity-50"
             disabled={!isConnected}
             onClick={() =>
               setRedeemValue(new Decimal(ytBalance).toFixed(decimal))
@@ -351,10 +357,18 @@ export default function Redeem({
       </div>
       <div className="mt-7.5 w-full">
         <ActionButton
-          btnText="Redeem"
+          btnText={
+            insufficientPtBalance
+              ? "Insufficient PT Balance"
+              : insufficientYtBalance
+                ? "Insufficient YT Balance"
+                : "Redeem"
+          }
           onClick={redeem}
           loading={isRedeeming}
-          disabled={redeemValue === ""}
+          disabled={
+            redeemValue === "" || insufficientPtBalance || insufficientYtBalance
+          }
         />
       </div>
     </div>
