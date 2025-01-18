@@ -153,7 +153,7 @@ export default function Mint({
           created = true
           pyPosition = initPyPosition(tx, coinConfig)
         } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
+          pyPosition = tx.object(pyPositionData[0].id)
         }
 
         const amount = new Decimal(mintValue).mul(10 ** decimal).toString()

@@ -176,7 +176,7 @@ export default function Item({
             arguments: moveCall.arguments.map((arg) => tx.object(arg)),
           })[0]
         } else {
-          pyPosition = tx.object(pyPositions[0].id.id)
+          pyPosition = tx.object(pyPositions[0].id)
         }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
@@ -258,7 +258,7 @@ export default function Item({
             arguments: moveCall.arguments.map((arg) => tx.object(arg)),
           })[0]
         } else {
-          pyPosition = tx.object(pyPositions[0].id.id)
+          pyPosition = tx.object(pyPositions[0].id)
         }
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 

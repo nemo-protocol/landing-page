@@ -2,10 +2,10 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo, LpPosition } from "../types"
+import type { DebugInfo, LpPosition, PyPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchLpPosition from "../useFetchLpPosition"
-import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
+import useFetchPyPosition from "../useFetchPyPosition"
 import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 
@@ -53,7 +53,7 @@ export default function useBurnLpDryRun(
         created = true
         pyPosition = initPyPosition(tx, effectiveConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id)
       }
 
       const decimal = Number(effectiveConfig?.decimal)
@@ -78,7 +78,7 @@ export default function useBurnLpDryRun(
             { name: "lp_amount", value: lpAmount },
             {
               name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id.id,
+              value: created ? "pyPosition" : pyPositions[0].id,
             },
             { name: "market", value: "market" },
             { name: "market_position", value: marketPositions[0].id.id },

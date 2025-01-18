@@ -5,7 +5,7 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
 import { DEBUG } from "@/config"
-import type { PyPosition } from "../useFetchPyPosition"
+import type { PyPosition } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
   getPriceVoucher,
@@ -58,7 +58,7 @@ export default function useRedeemPYDryRun(
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id)
       }
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
@@ -104,7 +104,7 @@ export default function useRedeemPYDryRun(
             { name: "price_voucher", value: "priceVoucher" },
             {
               name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id.id,
+              value: created ? "pyPosition" : pyPositions[0].id,
             },
             { name: "py_state", value: coinConfig.pyStateId },
             {

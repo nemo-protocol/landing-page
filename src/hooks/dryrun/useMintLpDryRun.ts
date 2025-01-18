@@ -6,7 +6,8 @@ import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
+import useFetchPyPosition from "../useFetchPyPosition"
+import type { PyPosition } from "../types"
 import { useCalculateLpOut } from "../useCalculateLpOut"
 import {
   mintSCoin,
@@ -68,7 +69,7 @@ export default function useMintLpDryRun<T extends boolean = false>(
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id)
       }
 
       // Calculate LP output
@@ -125,7 +126,7 @@ export default function useMintLpDryRun<T extends boolean = false>(
             { name: "price_voucher", value: "priceVoucherForMintLp" },
             {
               name: "py_position",
-              value: pyPositions?.length ? pyPositions[0].id.id : "pyPosition",
+              value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
             },
             { name: "py_state", value: coinConfig.pyStateId },
             { name: "market_state", value: coinConfig.marketStateId },

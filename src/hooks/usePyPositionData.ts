@@ -37,12 +37,10 @@ const usePyPositionData = (
               (
                 item.data?.content as {
                   fields?: {
-                    name: string
                     expiry: string
                     id: { id: string }
                     pt_balance: string
                     yt_balance: string
-                    description: string
                     py_state_id: string
                   }
                 }
@@ -54,6 +52,13 @@ const usePyPositionData = (
               (!maturity || item.expiry === maturity.toString()) &&
               (!pyStateId || item.py_state_id === pyStateId),
           )
+          .map(({ expiry, id, pt_balance, yt_balance, py_state_id }) => ({
+            id: id.id,
+            maturity: expiry,
+            ptBalance: pt_balance,
+            ytBalance: yt_balance,
+            pyStateId: py_state_id,
+          }))
       },
     },
   )

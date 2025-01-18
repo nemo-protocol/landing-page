@@ -3,6 +3,9 @@ import Decimal from "decimal.js"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { PortfolioItem } from "@/queries/types/market"
+import { PyPosition } from "../types"
+
+
 
 const useAllPyPositions = (items?: PortfolioItem[]) => {
   const { address } = useWallet()
@@ -42,45 +45,68 @@ const useAllPyPositions = (items?: PortfolioItem[]) => {
               (
                 item.data?.content as {
                   fields?: {
-                    name: string
                     expiry: string
                     id: { id: string }
                     pt_balance: string
                     yt_balance: string
-                    description: string
                     py_state_id: string
                   }
                 }
               )?.fields,
           )
           .filter((item) => !!item)
+          .map(({ expiry, id, pt_balance, yt_balance, py_state_id }) => ({
+            id: id.id,
+            maturity: expiry,
+            ptBalance: pt_balance,
+            ytBalance: yt_balance,
+            pyStateId: py_state_id,
+          }))
 
-        if (!items) return []
+        if (!items) return {}
 
-        return items.map((item) => {
-          const pyPositions = positions.filter(
-            (position) =>
-              (!item.maturity ||
-                position.expiry === item.maturity.toString()) &&
-              (!item.pyStateId || position.py_state_id === item.pyStateId),
-          )
+        return items.reduce(
+          (acc, item) => {
+            const pyPositions = positions.filter(
+              (position) =>
+                (!item.maturity ||
+                  position.maturity === item.maturity.toString()) &&
+                (!item.pyStateId || position.pyStateId === item.pyStateId),
+            )
 
-          const ptBalance = pyPositions
-            .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
-            .div(1e9)
-            .toString()
+            const ptBalance = pyPositions
+              .reduce(
+                (total, coin) => total.add(coin.ptBalance),
+                new Decimal(0),
+              )
+              .div(1e9)
+              .toString()
 
-          const ytBalance = pyPositions
-            .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
-            .div(1e9)
-            .toString()
+            const ytBalance = pyPositions
+              .reduce(
+                (total, coin) => total.add(coin.ytBalance),
+                new Decimal(0),
+              )
+              .div(1e9)
+              .toString()
 
-          return {
-            ptBalance,
-            ytBalance,
-            pyPositions,
-          }
-        })
+            acc[item.id] = {
+              ptBalance,
+              ytBalance,
+              pyPositions,
+            }
+
+            return acc
+          },
+          {} as Record<
+            string,
+            {
+              ptBalance: string
+              ytBalance: string
+              pyPositions: PyPosition[]
+            }
+          >,
+        )
       },
     },
   )

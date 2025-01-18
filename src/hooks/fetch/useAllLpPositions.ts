@@ -3,7 +3,7 @@ import Decimal from "decimal.js"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 import { PortfolioItem } from "@/queries/types/market"
-import { LpPosition } from "./types"
+import { LpPosition } from "../types"
 
 const useAllLpPositions = (items?: PortfolioItem[]) => {
   const { address } = useWallet()
@@ -50,9 +50,9 @@ const useAllLpPositions = (items?: PortfolioItem[]) => {
           )
           .filter((item) => !!item)
 
-        if (!items) return []
+        if (!items) return {}
 
-        return items.map((item) => {
+        return items.reduce((acc, item) => {
           const lpPositions = positions.filter(
             (position) =>
               (!item.maturity || position.expiry === item.maturity.toString()) &&
@@ -64,11 +64,13 @@ const useAllLpPositions = (items?: PortfolioItem[]) => {
             .div(1e9)
             .toFixed(9)
 
-          return {
+          acc[item.id] = {
             lpBalance,
             lpPositions,
           }
-        })
+          
+          return acc
+        }, {} as Record<string, { lpBalance: string; lpPositions: LpPosition[] }>)
       },
     },
   )

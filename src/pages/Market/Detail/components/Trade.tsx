@@ -286,7 +286,7 @@ export default function Trade() {
           created = true
           pyPosition = initPyPosition(tx, coinConfig)
         } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
+          pyPosition = tx.object(pyPositionData[0].id)
         }
 
         await dryRunSwap({

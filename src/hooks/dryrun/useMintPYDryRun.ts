@@ -7,7 +7,7 @@ import { ContractError } from "../types"
 import { DEBUG } from "@/config"
 import Decimal from "decimal.js"
 import type { CoinData } from "@/hooks/useCoinData"
-import type { PyPosition } from "../useFetchPyPosition"
+import type { PyPosition } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
   depositSyCoin,
@@ -70,7 +70,7 @@ export default function useMintPYDryRun(
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id)
       }
 
       const amount = new Decimal(mintValue)

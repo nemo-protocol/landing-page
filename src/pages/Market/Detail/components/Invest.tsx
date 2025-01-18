@@ -248,7 +248,7 @@ export default function Invest() {
           created = true
           pyPosition = initPyPosition(tx, coinConfig)
         } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
+          pyPosition = tx.object(pyPositionData[0].id)
         }
 
         const [ptOut] = await queryPtOut(

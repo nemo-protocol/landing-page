@@ -10,7 +10,7 @@ import {
 } from "./types/market"
 import { handleInfinityValues, isValidAmount } from "../lib/utils"
 import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
-import useFetchMultiMarketState from "@/hooks/fetch/useFetchMultiMarketState"
+import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
 
 interface CoinInfoListParams {
   name?: string

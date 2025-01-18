@@ -2,9 +2,9 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "../types"
+import type { DebugInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
-import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
+import useFetchPyPosition from "../useFetchPyPosition"
 import { initPyPosition, getPriceVoucher, mintSCoin, splitCoinHelper, depositSyCoin } from "@/lib/txHelper"
 import { CoinData } from "../useCoinData"
 
@@ -60,7 +60,7 @@ export default function useSwapExactSyForYtDryRun(
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id)
       }
 
       // Get price voucher
@@ -76,7 +76,7 @@ export default function useSwapExactSyForYtDryRun(
             { name: "price_voucher", value: "priceVoucher" },
             {
               name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id.id,
+              value: created ? "pyPosition" : pyPositions[0].id,
             },
             { name: "py_state", value: coinConfig.pyStateId },
             { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },

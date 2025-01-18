@@ -56,7 +56,7 @@ export default function Redeem({
   const ptBalance = useMemo(() => {
     if (pyPositionData?.length) {
       return pyPositionData
-        .reduce((total, coin) => total.add(coin.pt_balance), new Decimal(0))
+        .reduce((total, coin) => total.add(coin.ptBalance), new Decimal(0))
         .div(10 ** decimal)
         .toFixed(decimal)
     }
@@ -66,7 +66,7 @@ export default function Redeem({
   const ytBalance = useMemo(() => {
     if (pyPositionData?.length) {
       return pyPositionData
-        .reduce((total, coin) => total.add(coin.yt_balance), new Decimal(0))
+        .reduce((total, coin) => total.add(coin.ytBalance), new Decimal(0))
         .div(10 ** decimal)
         .toFixed(decimal)
     }
@@ -143,7 +143,7 @@ export default function Redeem({
           created = true
           pyPosition = initPyPosition(tx, coinConfig)
         } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
+          pyPosition = tx.object(pyPositionData[0].id)
         }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)

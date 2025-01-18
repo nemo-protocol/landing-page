@@ -6,7 +6,7 @@ import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
 import { depositSyCoin, getPriceVoucher, initPyPosition, mintSCoin, splitCoinHelper } from "@/lib/txHelper"
 import useFetchPyPosition from "../useFetchPyPosition"
-import type { PyPosition } from "../useFetchPyPosition"
+import type { PyPosition } from "../types"
 import { DEBUG } from "@/config"
 import type { CoinData } from "@/hooks/useCoinData"
 
@@ -63,7 +63,7 @@ export default function useSwapExactSyForPtDryRun(
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id)
       }
 
       // Split coin and deposit to get syCoin

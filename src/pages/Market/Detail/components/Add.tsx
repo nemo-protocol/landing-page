@@ -516,7 +516,7 @@ export default function SingleCoin() {
           created = true
           pyPosition = initPyPosition(tx, coinConfig)
         } else {
-          pyPosition = tx.object(pyPositionData[0].id.id)
+          pyPosition = tx.object(pyPositionData[0].id)
         }
 
         const calculatedLpOut = await calculateLpOut(addAmount)

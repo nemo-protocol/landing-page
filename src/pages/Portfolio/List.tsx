@@ -4,10 +4,10 @@ import { useMemo, useState } from "react"
 import Loading from "@/components/Loading"
 import { isValidAmount } from "@/lib/utils"
 import { PortfolioItem } from "@/queries/types/market"
-import useAllLpPositions from "@/hooks/useAllLpPositions"
-import useAllPyPositions from "@/hooks/useAllPyPositions"
 import SlippageSetting from "@/components/SlippageSetting"
 import useMultiMarketState from "@/hooks/useMultiMarketState"
+import useAllLpPositions from "@/hooks/fetch/useAllLpPositions"
+import useAllPyPositions from "@/hooks/fetch/useAllPyPositions"
 import { Link, useParams, useNavigate } from "react-router-dom"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
 import {
@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/table"
 
 interface ListProps {
-  list?: PortfolioItem[]
   isLoading?: boolean
+  list?: PortfolioItem[]
 }
 
 export default function List({ list, isLoading }: ListProps) {
@@ -30,9 +30,10 @@ export default function List({ list, isLoading }: ListProps) {
   const [slippage, setSlippage] = useState("0.5")
   const [openConnect, setOpenConnect] = useState(false)
   const isConnected = useMemo(() => !!address, [address])
-  const { data: positions = [], isLoading: isPositionsLoading } =
+  const { data: pyPositionsMap = {}, isLoading: isPositionsLoading } =
     useAllPyPositions(list)
-  const { data: lpPositions = [], isLoading: isLpPositionsLoading } =
+
+  const { data: lpPositionsMap = {}, isLoading: isLpPositionsLoading } =
     useAllLpPositions(list)
 
   const marketStateIds = useMemo(
@@ -63,19 +64,19 @@ export default function List({ list, isLoading }: ListProps) {
   const filteredList = useMemo(() => {
     if (!list?.length) return []
 
-    return list.filter((_, index) => {
+    return list.filter((item) => {
       if (selectType === "pt") {
-        return isValidAmount(positions?.[index]?.ptBalance)
+        return isValidAmount(pyPositionsMap[item.id]?.ptBalance)
       }
       if (selectType === "yt") {
-        return isValidAmount(positions?.[index]?.ytBalance)
+        return isValidAmount(pyPositionsMap[item.id]?.ytBalance)
       }
       if (selectType === "lp") {
-        return isValidAmount(lpPositions?.[index]?.lpBalance)
+        return isValidAmount(lpPositionsMap[item.id]?.lpBalance)
       }
       return true // for "all" type
     })
-  }, [list, selectType, positions, lpPositions])
+  }, [list, selectType, pyPositionsMap, lpPositionsMap])
 
   return (
     <motion.div
@@ -146,11 +147,11 @@ export default function List({ list, isLoading }: ListProps) {
                       key={item.id}
                       selectType={selectType}
                       marketState={marketStates[index]}
-                      ptBalance={positions?.[index]?.ptBalance}
-                      ytBalance={positions?.[index]?.ytBalance}
-                      lpBalance={lpPositions?.[index]?.lpBalance}
-                      pyPositions={positions?.[index]?.pyPositions}
-                      lpPositions={lpPositions?.[index]?.lpPositions}
+                      ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
+                      ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
+                      lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
+                      pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
+                      lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
                     />
                   ))}
                 </TableBody>

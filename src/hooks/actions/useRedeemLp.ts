@@ -76,7 +76,7 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id)
       }
 
       const mergedPositionId = mergeLpPositions(

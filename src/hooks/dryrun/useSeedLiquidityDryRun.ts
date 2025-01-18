@@ -1,12 +1,12 @@
 import { DEBUG } from "@/config"
 import { ContractError } from "../types"
-import type { DebugInfo } from "../types"
+import type { DebugInfo, PyPosition } from "../types"
 import { useMutation } from "@tanstack/react-query"
 import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import useFetchPyPosition, { type PyPosition } from "../useFetchPyPosition"
+import useFetchPyPosition from "../useFetchPyPosition"
 import {
   mintSCoin,
   depositSyCoin,
@@ -64,7 +64,7 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id.id)
+        pyPosition = tx.object(pyPositions[0].id)
       }
 
       const [splitCoin] =
@@ -91,7 +91,7 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
             { name: "price_voucher", value: "priceVoucher" },
             {
               name: "py_position",
-              value: pyPositions?.length ? pyPositions[0].id.id : "pyPosition",
+              value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
             },
             { name: "py_state", value: coinConfig.pyStateId },
             {

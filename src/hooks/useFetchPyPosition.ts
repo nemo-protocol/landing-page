@@ -3,17 +3,7 @@ import { useMutation } from "@tanstack/react-query"
 import { type SuiObjectResponse } from "@mysten/sui/client"
 import { type CoinConfig } from "@/queries/types/market"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import type { DebugInfo } from "./types"
-
-export interface PyPosition {
-  name: string
-  expiry: string
-  id: { id: string }
-  pt_balance: string
-  yt_balance: string
-  description: string
-  py_state_id: string
-}
+import type { DebugInfo, PyPosition } from "./types"
 
 const useFetchPyPosition = (
   coinConfig?: CoinConfig,
@@ -43,7 +33,9 @@ const useFetchPyPosition = (
       const response = await suiClient.getOwnedObjects({
         owner: address,
         filter: {
-          MatchAny: coinConfig.pyPositionTypeList.map((type: string) => ({ StructType: type })),
+          MatchAny: coinConfig.pyPositionTypeList.map((type: string) => ({
+            StructType: type,
+          })),
         },
         options: {
           showContent: true,
@@ -60,27 +52,30 @@ const useFetchPyPosition = (
             (
               item.data?.content as {
                 fields?: {
-                  name: string
                   expiry: string
                   id: { id: string }
                   pt_balance: string
                   yt_balance: string
-                  description: string
                   py_state_id: string
                 }
               }
             )?.fields,
         )
-        .filter((item: unknown): item is PyPosition => {
-          return !!item && 
-            typeof item === 'object' && 
-            'expiry' in item && 
-            'py_state_id' in item
-        })
+        .filter((item) => !!item)
+        .map(
+          ({ expiry, id, pt_balance, yt_balance, py_state_id }) =>
+            ({
+              id: id.id,
+              maturity: expiry,
+              ptBalance: pt_balance,
+              ytBalance: yt_balance,
+              pyStateId: py_state_id,
+            }) as PyPosition,
+        )
         .filter(
-          (item: PyPosition) =>
-            item.expiry === coinConfig.maturity &&
-            item.py_state_id === coinConfig.pyStateId,
+          (item) =>
+            item.maturity === coinConfig.maturity &&
+            item.pyStateId === coinConfig.pyStateId,
         )
 
       return debug ? [positions, debugInfo] : [positions]
@@ -88,4 +83,4 @@ const useFetchPyPosition = (
   })
 }
 
-export default useFetchPyPosition 
+export default useFetchPyPosition

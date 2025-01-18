@@ -37,18 +37,16 @@ export interface LpPosition {
 }
 
 export interface PyPosition {
-  name: string
-  expiry: string
-  id: { id: string }
-  pt_balance: string
-  yt_balance: string
-  description: string
-  py_state_id: string
+  id: string
+  maturity: string
+  ptBalance: string
+  ytBalance: string
+  pyStateId: string
 }
 
 export interface MarketState {
-  lpSupply: string
   totalSy: string
   totalPt: string
+  lpSupply: string
   marketCap: string
 }
