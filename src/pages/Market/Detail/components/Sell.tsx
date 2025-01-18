@@ -32,11 +32,13 @@ import useQuerySyOutFromYtInWithVoucher from "@/hooks/useQuerySyOutFromYtInWithV
 import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ContractError } from "@/hooks/types"
+// import { ContractError } from "@/hooks/types"
 import dayjs from "dayjs"
 import SlippageSetting from "@/components/SlippageSetting"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
+import useSellPtDryRun from "@/hooks/dryrun/useSellPtDryRun"
+import useSellYtDryRun from "@/hooks/dryrun/useSellYtDryRun"
 
 export default function Sell() {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -51,7 +53,9 @@ export default function Sell() {
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [isRedeeming, setIsRedeeming] = useState(false)
   const [slippage, setSlippage] = useState("0.5")
-  const [receivingType, setReceivingType] = useState("underlying")
+  const [receivingType, setReceivingType] = useState<"underlying" | "sy">(
+    "underlying",
+  )
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -82,10 +86,13 @@ export default function Sell() {
   const { mutateAsync: querySyOutFromPt } =
     useQuerySyOutFromPtInWithVoucher(coinConfig)
 
+  const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
+  const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)
+
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
       const getSyOut = debounce(async () => {
-        if (value && value !== "0" && decimal && coinConfig?.conversionRate) {
+        if (isValidAmount(value) && decimal && coinConfig?.conversionRate) {
           try {
             const amount = new Decimal(value).mul(10 ** decimal).toString()
             const [syOut] = await (
@@ -96,9 +103,28 @@ export default function Sell() {
               .mul(receivingType === "underlying" ? coinConfig.conversionRate : 1)
               .toString()
             setTargetValue(syAmount)
+
+            const [result] = await (tokenType === "yt"
+              ? sellYtDryRun({
+                  slippage,
+                  receivingType,
+                  sellValue: value,
+                  pyPositions: pyPositionData,
+                })
+              : sellPtDryRun({
+                  sellValue: value,
+                  receivingType,
+                  pyPositions: pyPositionData,
+                }))
+
+            setTargetValue(
+              receivingType === "underlying"
+                ? result.underlyingAmount
+                : result.syAmount,
+            )
             setError(undefined)
           } catch (error) {
-            setError((error as ContractError)?.message)
+            // setError((error as ContractError)?.message)
             console.error("Failed to get SY out:", error)
             setTargetValue("")
           }
@@ -109,7 +135,17 @@ export default function Sell() {
       getSyOut()
       return getSyOut.cancel
     },
-    [querySyOutFromYt, querySyOutFromPt, tokenType, receivingType, coinConfig?.conversionRate],
+    [
+      querySyOutFromYt,
+      querySyOutFromPt,
+      tokenType,
+      receivingType,
+      coinConfig?.conversionRate,
+      pyPositionData,
+      sellPtDryRun,
+      sellYtDryRun,
+      slippage,
+    ],
   )
 
   useEffect(() => {
@@ -176,6 +212,9 @@ export default function Sell() {
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .mul(10 ** decimal)
           .toFixed(0)
+
+        console.log("targetValue", targetValue)
+        console.log("minSyOut", minSyOut)
 
         const syCoin =
           tokenType === "pt"
@@ -343,7 +382,7 @@ export default function Sell() {
                           receivingType,
                           value,
                         )
-                        setReceivingType(value)
+                        setReceivingType(value as "underlying" | "sy")
                         setTargetValue(newTargetValue)
                       }}
                     >

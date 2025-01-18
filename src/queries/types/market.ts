@@ -22,7 +22,7 @@ export interface BaseCoinInfo {
   aftermathSafeId: string
   aftermathStakedSuiVaultId: string
   haedalStakeingId: string
-  decimal: string | number
+  decimal: string
   underlyingApy: string
   underlyingPrice: string
   pyStateId: string

@@ -522,7 +522,7 @@ export default function Item({
                 loading={loading}
                 buttonText="Claim"
                 loadingText="Claiming"
-                disabled={!isValidAmount(ytReward)}
+                disabled={!isValidAmount(ytBalance)}
               />
             </div>
           </TableCell>
