@@ -39,6 +39,7 @@ import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import useSellPtDryRun from "@/hooks/dryrun/useSellPtDryRun"
 import useSellYtDryRun from "@/hooks/dryrun/useSellYtDryRun"
+import { ContractError } from "@/hooks/types"
 
 export default function Sell() {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -124,7 +125,7 @@ export default function Sell() {
             )
             setError(undefined)
           } catch (error) {
-            // setError((error as ContractError)?.message)
+            setError((error as ContractError)?.message)
             console.error("Failed to get SY out:", error)
             setTargetValue("")
           }
