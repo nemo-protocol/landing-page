@@ -31,7 +31,6 @@ export default function Redeem({
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const [openConnect, setOpenConnect] = useState(false)
   const [redeemValue, setRedeemValue] = useState("")
   const [isRedeeming, setIsRedeeming] = useState(false)
   const [isInputLoading, setIsInputLoading] = useState(false)
@@ -355,9 +354,6 @@ export default function Redeem({
           btnText="Redeem"
           onClick={redeem}
           loading={isRedeeming}
-          openConnect={openConnect}
-          setOpenConnect={setOpenConnect}
-          insufficientBalance={insufficientBalance}
           disabled={redeemValue === ""}
         />
       </div>

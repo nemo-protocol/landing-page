@@ -1,41 +1,40 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
+import { debounce } from "@/lib/utils"
+import { useCoinConfig } from "@/queries"
 import { network, DEBUG } from "@/config"
-import { useMemo, useState, useEffect, useCallback } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import usePyPositionData from "@/hooks/usePyPositionData"
-import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
-import { parseErrorMessage } from "@/lib/errorMapping"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import { useWallet } from "@nemoprotocol/wallet-kit"
 import { ChevronsDown } from "lucide-react"
+import PoolSelect from "@/components/PoolSelect"
 import AmountInput from "@/components/AmountInput"
 import { Skeleton } from "@/components/ui/skeleton"
-import PoolSelect from "@/components/PoolSelect"
-import { useLoadingState } from "@/hooks/useLoadingState"
-import { useCoinConfig } from "@/queries"
-import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
-import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
-import { debounce } from "@/lib/utils"
 import ActionButton from "@/components/ActionButton"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
+import { parseErrorMessage } from "@/lib/errorMapping"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
+import usePyPositionData from "@/hooks/usePyPositionData"
+import useInputLoadingState from "@/hooks/useInputLoadingState"
+import { useParams, useNavigate } from "react-router-dom"
+import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
+import { useMemo, useState, useEffect, useCallback } from "react"
+import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
 
 export default function Remove() {
+  const navigate = useNavigate()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const { coinType, maturity } = useParams()
   const [lpValue, setLpValue] = useState("")
-  const [targetValue, setTargetValue] = useState("")
-  const [message, setMessage] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
-  const [openConnect, setOpenConnect] = useState(false)
   const [error, setError] = useState<string>()
-  const [warning, setWarning] = useState<string>()
-  const [isRemoving, setIsRemoving] = useState(false)
   const { account: currentAccount } = useWallet()
+  const [warning, setWarning] = useState<string>()
+  const [message, setMessage] = useState<string>()
+  const [targetValue, setTargetValue] = useState("")
+  const [isRemoving, setIsRemoving] = useState(false)
   const [isInputLoading, setIsInputLoading] = useState(false)
-  const navigate = useNavigate()
+  const [status, setStatus] = useState<"Success" | "Failed">()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -70,7 +69,7 @@ export default function Remove() {
       coinConfig?.pyPositionTypeList,
     )
 
-  const { isLoading } = useLoadingState(lpValue, isConfigLoading)
+  const { isLoading } = useInputLoadingState(lpValue, isConfigLoading)
 
   const lpCoinBalance = useMemo(() => {
     if (lppMarketPositionData?.length) {
@@ -218,19 +217,19 @@ export default function Remove() {
 
           <AmountInput
             error={error}
-            warning={warning}
-            setWarning={setWarning}
-            amount={lpValue}
             price={lpPrice}
+            amount={lpValue}
             decimal={decimal}
-            coinName={`LP ${coinConfig?.coinName}`}
-            coinLogo={coinConfig?.coinLogo}
+            warning={warning}
             isLoading={isLoading}
+            onChange={setLpValue}
+            setWarning={setWarning}
+            isBalanceLoading={false}
             isConnected={isConnected}
             coinBalance={lpCoinBalance}
-            onChange={setLpValue}
+            coinLogo={coinConfig?.coinLogo}
             isConfigLoading={isConfigLoading}
-            isBalanceLoading={false}
+            coinName={`LP ${coinConfig?.coinName}`}
             coinNameComponent={
               <span className="text-base">LP {coinConfig?.coinName}</span>
             }
@@ -274,9 +273,6 @@ export default function Remove() {
             btnText="Remove Liquidity"
             onClick={remove}
             loading={isRemoving}
-            openConnect={openConnect}
-            setOpenConnect={setOpenConnect}
-            insufficientBalance={insufficientBalance}
             disabled={
               lpValue === "" ||
               lpValue === "0" ||

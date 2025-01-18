@@ -14,7 +14,7 @@ import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { useParams, useNavigate } from "react-router-dom"
-import { useLoadingState } from "@/hooks/useLoadingState"
+import useInputLoadingState from "@/hooks/useInputLoadingState"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig } from "@/queries"
 import { formatDecimalValue, debounce, isValidAmount } from "@/lib/utils"
@@ -65,7 +65,6 @@ export default function SingleCoin() {
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(1)
-  const [openConnect, setOpenConnect] = useState(false)
   const [lpPosition, setLpPosition] = useState<string>()
   const [ytAmount, setYtAmount] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
@@ -185,7 +184,7 @@ export default function SingleCoin() {
     isConfigLoading || isRatioFetching,
   )
 
-  const { isLoading } = useLoadingState(
+  const { isLoading } = useInputLoadingState(
     addValue,
     isConfigLoading || isLpAmountOutLoading,
   )
@@ -787,10 +786,7 @@ export default function SingleCoin() {
               <ActionButton
                 onClick={add}
                 btnText={"Add"}
-                openConnect={openConnect}
-                setOpenConnect={setOpenConnect}
                 loading={isAdding || isCalcLpLoading}
-                insufficientBalance={insufficientBalance}
                 disabled={!isValidAmount(addValue) || isCalcLpLoading}
               />
             </div>

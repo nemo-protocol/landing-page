@@ -32,9 +32,9 @@ import { useWallet } from "@nemoprotocol/wallet-kit"
 import dayjs from "dayjs"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useLoadingState } from "@/hooks/useLoadingState"
+import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
-import { useTradeRatios } from "@/hooks/useTradeRatios"
+// import useTradeRatio from "@/hooks/actions/useTradeRatio"
 import useQueryYtOutBySyInWithVoucher from "@/hooks/useQueryYtOutBySyInWithVoucher"
 import useSwapExactSyForYtDryRun from "@/hooks/dryrun/useSwapExactSyForYtDryRun"
 
@@ -46,8 +46,7 @@ export default function Trade() {
   // const currentAccount = useCurrentAccount()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
-  const [message, setMessage] = useState<string>()
-  const [openConnect, setOpenConnect] = useState(false)
+  const [message, setMessage] = useState<string>()  
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [ytOut, setYtout] = useState<string>()
@@ -86,13 +85,13 @@ export default function Trade() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
-  const {
-    refetch,
-    data: swapRatio,
-    isFetching: isRatioFetching,
-  } = useTradeRatios(coinConfig)
+  // const {
+  //   refetch,
+  //   data: swapRatio,
+  //   isFetching: isRatioFetching,
+  // } = useTradeRatios(coinConfig)
 
-  const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
+  const conversionRate = useMemo(() => coinConfig?.conversionRate, [coinConfig])
   // const ratio = useMemo(
   //   () =>
   //     tokenType === 0 && swapRatio
@@ -109,14 +108,9 @@ export default function Trade() {
       coinConfig?.pyPositionTypeList,
     )
 
-  const { isLoading } = useLoadingState(
-    swapValue,
-    isRatioFetching || isConfigLoading,
-  )
+  const { isLoading } = useInputLoadingState(swapValue, isConfigLoading)
 
-  const { isLoading: isRatioLoading } = useRatioLoadingState(
-    isRatioFetching || isConfigLoading,
-  )
+  const { isLoading: isRatioLoading } = useRatioLoadingState(isConfigLoading)
 
   const {
     data: coinData,
@@ -426,7 +420,7 @@ export default function Trade() {
             slippage={slippage}
             isLoading={isLoading}
             setSlippage={setSlippage}
-            onRefresh={refetch}
+            onRefresh={()=>{}}
             isRatioLoading={isRatioLoading}
             tradeFee={
               !!swapValue &&
@@ -449,9 +443,6 @@ export default function Trade() {
             btnText="Buy"
             onClick={swap}
             loading={isSwapping}
-            openConnect={openConnect}
-            setOpenConnect={setOpenConnect}
-            insufficientBalance={insufficientBalance}
             disabled={["", undefined, "0"].includes(swapValue) || !!error}
           />
         </div>

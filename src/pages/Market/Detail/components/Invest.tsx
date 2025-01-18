@@ -11,9 +11,17 @@ import { Transaction } from "@mysten/sui/transactions"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { Info, ChevronsDown } from "lucide-react"
-import { formatDecimalValue } from "@/lib/utils"
+import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { useCoinConfig } from "@/queries"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import TradeInfo from "@/components/TradeInfo"
+import { Skeleton } from "@/components/ui/skeleton"
+import useInputLoadingState from "@/hooks/useInputLoadingState"
+import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
+import useQueryPtOutBySyInWithVoucher from "@/hooks/useQueryPtOutBySyInWithVoucher"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
+import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
+import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   getPriceVoucher,
   initPyPosition,
@@ -21,8 +29,6 @@ import {
   mintSCoin,
   depositSyCoin,
 } from "@/lib/txHelper"
-import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
-import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
 import {
   Select,
   SelectContent,
@@ -37,28 +43,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import TradeInfo from "@/components/TradeInfo"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useLoadingState } from "@/hooks/useLoadingState"
-import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
-import { useInvestRatios } from "@/hooks/useInvestRatios"
-import useQueryPtOutBySyInWithVoucher from "@/hooks/useQueryPtOutBySyInWithVoucher"
-import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
+import useMarketStateData from "@/hooks/useMarketStateData"
+import useInvestRatio from "@/hooks/actions/useInvestRatio"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
+  const [ratio, setRatio] = useState<string>()
+  const [error, setError] = useState<string>()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
-  const [openConnect, setOpenConnect] = useState(false)
-  const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
-  const [status, setStatus] = useState<"Success" | "Failed">()
-  const [ptOutAmount, setPtOutAmount] = useState<string>()
-  const [error, setError] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
+  const [tokenType, setTokenType] = useState<number>(0)
+  const [ptOutAmount, setPtOutAmount] = useState<string>()
+  const [status, setStatus] = useState<"Success" | "Failed">()
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -71,6 +72,10 @@ export default function Invest() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
+
+  const { data: marketStateData } = useMarketStateData(
+    coinConfig?.marketStateId,
+  )
 
   const coinName = useMemo(
     () =>
@@ -95,20 +100,7 @@ export default function Invest() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
-  const {
-    refetch,
-    data: swapRatio,
-    isFetching: isRatioFetching,
-  } = useInvestRatios(coinConfig)
-
-  const ratio = useMemo(
-    () =>
-      tokenType === 0 && swapRatio?.ratio && swapRatio?.conversionRate
-        ? new Decimal(swapRatio.ratio).div(swapRatio.conversionRate).toFixed()
-        : swapRatio?.ratio,
-    [swapRatio, tokenType],
-  )
-  const conversionRate = useMemo(() => swapRatio?.conversionRate, [swapRatio])
+  const conversionRate = useMemo(() => coinConfig?.conversionRate, [coinConfig])
 
   const { data: pyPositionData, refetch: refetchPyPosition } =
     usePyPositionData(
@@ -118,14 +110,9 @@ export default function Invest() {
       coinConfig?.pyPositionTypeList,
     )
 
-  const { isLoading } = useLoadingState(
-    swapValue,
-    isRatioFetching || isConfigLoading,
-  )
+  const { isLoading } = useInputLoadingState(swapValue, isConfigLoading)
 
-  const { isLoading: isRatioLoading } = useRatioLoadingState(
-    isRatioFetching || isConfigLoading,
-  )
+  const { isLoading: isRatioLoading } = useRatioLoadingState(isConfigLoading)
 
   const {
     data: coinData,
@@ -151,21 +138,46 @@ export default function Invest() {
     [coinBalance, swapValue],
   )
 
-  const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
   const { mutateAsync: dryRunSwap } = useSwapExactSyForPtDryRun(coinConfig)
+  const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
+
+  const { mutateAsync: calculateRatio } = useInvestRatio(coinConfig)
 
   useEffect(() => {
-    async function fetchPtOut() {
-      if (swapValue && decimal && coinConfig && conversionRate) {
+    async function initRatio() {
+      if (conversionRate) {
         try {
-          setError(undefined)
+          const initialRatio = await calculateRatio(
+            tokenType === 0 ? conversionRate : "1",
+          )
+          setRatio(initialRatio)
+        } catch (error) {
+          console.error("Failed to calculate initial ratio:", error)
+        }
+      }
+    }
+    initRatio()
+  }, [calculateRatio, conversionRate, tokenType])
+
+  // TODO: swap dry run and debounce
+  useEffect(() => {
+    async function fetchPtOut() {
+      setError(undefined)
+      if (isValidAmount(swapValue) && decimal && conversionRate) {
+        try {
           const swapAmount = new Decimal(swapValue)
             .div(tokenType === 0 ? conversionRate : 1)
             .mul(10 ** decimal)
             .toFixed(0)
           const [ptOut] = await queryPtOut(swapAmount)
+          setRatio(
+            new Decimal(ptOut)
+              .div(10 ** decimal)
+              .div(swapValue)
+              .toFixed(4),
+          )
           setPtOutAmount(ptOut)
         } catch (error) {
           console.error("Failed to fetch PT out amount:", error)
@@ -178,7 +190,7 @@ export default function Invest() {
       }
     }
     fetchPtOut()
-  }, [swapValue, decimal, coinConfig, queryPtOut, tokenType, conversionRate])
+  }, [swapValue, decimal, queryPtOut, tokenType, conversionRate])
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -190,7 +202,6 @@ export default function Invest() {
 
   async function swap() {
     if (
-      ratio &&
       address &&
       coinType &&
       swapValue &&
@@ -256,22 +267,6 @@ export default function Invest() {
           typeArguments: [coinConfig.syCoinType],
         })
 
-        // debugLog("swap_exact_sy_for_pt move call:", {
-        //   target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
-        //   arguments: [
-        //     coinConfig.version,
-        //     minPtOut,
-        //     "syCoin",
-        //     "priceVoucher",
-        //     "pyPosition",
-        //     coinConfig.pyStateId,
-        //     coinConfig.marketFactoryConfigId,
-        //     coinConfig.marketStateId,
-        //     "0x6",
-        //   ],
-        //   typeArguments: [coinConfig.syCoinType],
-        // })
-
         if (created) {
           tx.transferObjects([pyPosition], address)
         }
@@ -311,6 +306,33 @@ export default function Invest() {
     }
   }
 
+  const refetch = useCallback(() => {
+    refetchCoinConfig()
+    refetchPyPosition()
+    refetchCoinData()
+  }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
+
+  const hasLiquidity = useMemo(() => {
+    return isValidAmount(marketStateData?.lpSupply)
+  }, [marketStateData])
+
+  const btnDisabled = useMemo(() => {
+    return !hasLiquidity || insufficientBalance || !isValidAmount(swapValue)
+  }, [swapValue, insufficientBalance, hasLiquidity])
+
+  const btnText = useMemo(() => {
+    if (!hasLiquidity) {
+      return "No liquidity available"
+    }
+    if (insufficientBalance) {
+      return `Insufficient ${coinName} balance`
+    }
+    if (swapValue === "") {
+      return "Please enter an amount"
+    }
+    return "Invest"
+  }, [hasLiquidity, insufficientBalance, swapValue, coinName])
+
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
@@ -339,6 +361,7 @@ export default function Invest() {
           isConfigLoading={isConfigLoading}
           isBalanceLoading={isBalanceLoading}
           error={error}
+          disabled={!hasLiquidity}
           setWarning={setWarning}
           warning={warning}
           onChange={(value) => setSwapValue(value)}
@@ -406,7 +429,7 @@ export default function Invest() {
             <span>Fixed APY</span>
             <span className="underline">
               {ptYtData?.ptApy
-                ? `${new Decimal(ptYtData.ptApy).mul(100).toFixed(2)} %`
+                ? `${new Decimal(ptYtData.ptApy).toFixed(6)} %`
                 : "--"}
             </span>
           </div>
@@ -432,20 +455,22 @@ export default function Invest() {
               "--"
             ) : isLoading ? (
               <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
-            ) : ratio && decimal && swapValue && conversionRate ? (
+            ) : decimal && swapValue && conversionRate ? (
               <div className="flex items-center gap-x-1.5">
                 <span>
                   + $
-                  {formatDecimalValue(
-                    new Decimal(swapValue)
-                      .mul(ratio)
-                      .minus(
-                        tokenType === 0
-                          ? new Decimal(swapValue)
-                          : new Decimal(swapValue).mul(conversionRate),
-                      ),
-                    decimal,
-                  )}
+                  {ratio
+                    ? formatDecimalValue(
+                        new Decimal(swapValue)
+                          .mul(ratio)
+                          .minus(
+                            tokenType === 0
+                              ? new Decimal(swapValue)
+                              : new Decimal(swapValue).mul(conversionRate),
+                          ),
+                        decimal,
+                      )
+                    : "--"}
                 </span>
                 <span>{coinConfig?.underlyingCoinName}</span>
                 <img
@@ -471,10 +496,11 @@ export default function Invest() {
                 "--"
               ) : isLoading ? (
                 <Skeleton className="h-4 w-20 bg-[#2D2D48]" />
-              ) : decimal && ratio && coinConfig?.underlyingPrice ? (
+              ) : decimal && coinConfig?.underlyingPrice ? (
                 `≈ $${formatDecimalValue(
                   new Decimal(swapValue)
-                    .mul(ratio)
+                    // ratio
+                    .mul(1)
                     .minus(
                       tokenType === 0
                         ? new Decimal(swapValue)
@@ -516,12 +542,9 @@ export default function Invest() {
         />
         <ActionButton
           onClick={swap}
-          btnText="Invest"
+          btnText={btnText}
           loading={isSwapping}
-          openConnect={openConnect}
-          setOpenConnect={setOpenConnect}
-          insufficientBalance={insufficientBalance}
-          disabled={["", undefined, "0"].includes(swapValue)}
+          disabled={btnDisabled}
         />
       </div>
     </div>

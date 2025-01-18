@@ -90,23 +90,6 @@ async function getMintLpAmount(
   return amount
 }
 
-export async function getSwapRatio(
-  marketStateId: string,
-  tokenType: string,
-  swapType = "buy",
-) {
-  const response = await nemoApi<{
-    fixReturn: string
-    exchangeRate: string
-    conversionRate: string
-  }>("/api/v1/market/swap/exchangeRateDetail").get({
-    marketStateId,
-    tokenType,
-    swapType,
-  })
-  return handleInfinityValues(response)
-}
-
 interface MintPYResult {
   syPtRate: number
   syYtRate: number
@@ -161,20 +144,6 @@ export function useQueryMintLpAmount(
     queryKey: ["coinInfoList", marketStateId, syCoinAmount, ptCoinAmount],
     queryFn: () => getMintLpAmount(marketStateId, syCoinAmount, ptCoinAmount),
     enabled,
-  })
-}
-
-export function useQuerySwapRatio(
-  marketStateId?: string,
-  tokenType?: string,
-  swapType?: "buy" | "sell",
-) {
-  return useQuery({
-    // FIXME： queryKey dose not work
-    queryKey: ["swapRatio", marketStateId, tokenType, swapType],
-    queryFn: () => getSwapRatio(marketStateId!, tokenType!, swapType),
-    refetchInterval: 1000 * 20,
-    enabled: !!marketStateId && !!tokenType,
   })
 }
 

@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ContractError } from "@/hooks/types"
 import dayjs from "dayjs"
 import SlippageSetting from "@/components/SlippageSetting"
-import { useLoadingState } from "@/hooks/useLoadingState"
+import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 
 export default function Sell() {
@@ -49,7 +49,6 @@ export default function Sell() {
   const [targetValue, setTargetValue] = useState("")
   const [error, setError] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const [openConnect, setOpenConnect] = useState(false)
   const [isRedeeming, setIsRedeeming] = useState(false)
   const [slippage, setSlippage] = useState("0.5")
   const [receivingType, setReceivingType] = useState("underlying")
@@ -246,7 +245,7 @@ export default function Sell() {
     [tokenType, ptYtData],
   )
 
-  const { isLoading } = useLoadingState(redeemValue, isConfigLoading)
+  const { isLoading } = useInputLoadingState(redeemValue, isConfigLoading)
 
   const convertReceivingValue = useCallback(
     (value: string, fromType: string, toType: string) => {
@@ -426,9 +425,6 @@ export default function Sell() {
           btnText="Sell"
           onClick={redeem}
           loading={isRedeeming}
-          openConnect={openConnect}
-          setOpenConnect={setOpenConnect}
-          insufficientBalance={insufficientBalance}
           disabled={["", undefined].includes(redeemValue)}
         />
       </div>

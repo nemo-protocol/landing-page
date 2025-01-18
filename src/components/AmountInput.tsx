@@ -21,6 +21,7 @@ interface AmountInputProps {
   onChange: (value: string) => void
   setWarning: (value: string) => void
   coinNameComponent?: React.ReactNode
+  disabled?: boolean
 }
 
 export default function AmountInput({
@@ -40,6 +41,7 @@ export default function AmountInput({
   className,
   onChange,
   setWarning,
+  disabled,
 }: AmountInputProps) {
   return (
     <div className="w-full">
@@ -70,11 +72,18 @@ export default function AmountInput({
                   {isBalanceLoading || isConfigLoading ? (
                     <Skeleton className="h-4 w-40 bg-[#2D2D48]" />
                   ) : (
-                    <div
-                      className="flex items-center gap-x-1 hover:cursor-pointer hover:underline"
+                    <button
+                      disabled={disabled}
+                      className={cn(
+                        "flex items-center gap-x-1",
+                        disabled
+                          ? "cursor-not-allowed "
+                          : " cursor-pointer hover:underline",
+                      )}
                       onClick={() => {
                         if (isConnected && coinBalance) {
                           let adjustedBalance = new Decimal(coinBalance)
+                          // TODO: better way to handle this
                           if (coinName === "SUI") {
                             if (adjustedBalance.lt(0.1)) {
                               setWarning(
@@ -92,7 +101,7 @@ export default function AmountInput({
                       {isConnected
                         ? `${formatDecimalValue(coinBalance, decimal)} ${coinName}`
                         : "--"}
-                    </div>
+                    </button>
                   )}
                 </div>
               </div>
@@ -105,11 +114,15 @@ export default function AmountInput({
               type="number"
               value={amount}
               placeholder={"0"}
+              disabled={disabled}
               onChange={(e) => onChange && onChange(e.target.value)}
               onWheel={(e) =>
                 e.target instanceof HTMLElement && e.target.blur()
               }
-              className="bg-transparent outline-none grow text-right min-w-0 placeholder:text-3xl p-0 text-3xl font-bold w-full"
+              className={cn(
+                "bg-transparent outline-none grow text-right min-w-0 placeholder:text-3xl p-0 text-3xl font-bold w-full",
+                disabled && "cursor-not-allowed",
+              )}
             />
             <div className="flex items-end">
               {amount ? (

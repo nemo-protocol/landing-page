@@ -39,7 +39,6 @@ export default function Mint({
 
   const isConnected = useMemo(() => !!address, [address])
   const [mintValue, setMintValue] = useState("")
-  const [openConnect, setOpenConnect] = useState(false)
 
   const {
     data: coinConfig,
@@ -338,9 +337,6 @@ export default function Mint({
           btnText="Mint"
           onClick={mint}
           loading={isMinting}
-          openConnect={openConnect}
-          setOpenConnect={setOpenConnect}
-          insufficientBalance={insufficientBalance}
           disabled={mintValue === ""}
         />
       </div>

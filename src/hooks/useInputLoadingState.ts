@@ -5,7 +5,7 @@ interface LoadingState {
   setIsLoading: (value: boolean) => void
 }
 
-export function useLoadingState(
+export default function useLoadingState(
   value: string,
   isFetching: boolean,
 ): LoadingState {

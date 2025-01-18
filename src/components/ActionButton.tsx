@@ -3,21 +3,15 @@ import { ConnectModal, useWallet } from "@nemoprotocol/wallet-kit"
 
 interface ActionButtonProps {
   btnText: string
+  loading?: boolean
   disabled: boolean
   onClick: () => void
-  openConnect: boolean
-  insufficientBalance: boolean
-  setOpenConnect: (isOpen: boolean) => void
-  loading?: boolean
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({
   onClick,
   btnText,
   disabled,
-  openConnect,
-  setOpenConnect,
-  insufficientBalance,
   loading = false,
 }) => {
   const { address } = useWallet()
@@ -27,17 +21,15 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     <>
       {!isConnected ? (
         <ConnectModal
-          open={openConnect}
-          onOpenChange={(isOpen) => setOpenConnect(isOpen)}
           children={
             <button className="mt-7.5 px-8 py-2.5 bg-[#0F60FF] text-white rounded-full w-full h-14 cursor-pointer">
               Connect Wallet
             </button>
           }
         />
-      ) : insufficientBalance ? (
+      ) : disabled ? (
         <div className="mt-7.5 px-8 py-2.5 bg-[#0F60FF]/50 text-white/50 rounded-full w-full h-14 cursor-pointer flex items-center justify-center">
-          Insufficient Balance
+          {btnText}
         </div>
       ) : (
         <button
