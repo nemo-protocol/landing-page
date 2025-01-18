@@ -59,7 +59,7 @@ const errorMapping: { [key: number]: string } = {
   835: "Swap exact yt amount mismatch", // 0x0000343
   836: "Insufficient lp output", // 0x0000344
   837: "Price fluctuation too large", // 0x0000345
-  1031: "Slippage too low", // 0x0000407
+  1031: "Slippage is too low.", // 0x0000407
   1025: "Acl invalid permission", // 0x0000401
   1026: "Acl role already exists", // 0x0000402
   1027: "Acl role not exists", // 0x0000403

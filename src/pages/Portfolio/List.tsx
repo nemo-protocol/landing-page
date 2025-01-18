@@ -41,7 +41,7 @@ export default function List({ list, isLoading }: ListProps) {
     [list],
   )
 
-  const { data: marketStates = [], isLoading: isMarketStatesLoading } =
+  const { data: marketStates = {}, isLoading: isMarketStatesLoading } =
     useMultiMarketState(marketStateIds)
 
   const selectType = useMemo(() => {
@@ -140,13 +140,13 @@ export default function List({ list, isLoading }: ListProps) {
             <>
               {isConnected && filteredList?.length ? (
                 <TableBody>
-                  {filteredList.map((item, index) => (
+                  {filteredList.map((item) => (
                     <Item
                       {...item}
                       id={item.id}
                       key={item.id}
                       selectType={selectType}
-                      marketState={marketStates[index]}
+                      marketState={marketStates?.[item.marketStateId]}
                       ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
                       ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
                       lpBalance={lpPositionsMap?.[item.id]?.lpBalance}

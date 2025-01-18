@@ -9,37 +9,37 @@ interface RawMarketState {
   market_cap: string
 }
 
+type MarketStateMap = { [key: string]: MarketState }
+
 const useMultiMarketState = (marketStateIds?: string[]) => {
   const suiClient = useSuiClient()
 
-  return useQuery({
+  return useQuery<MarketStateMap>({
     queryKey: ["multiMarketState", marketStateIds],
-    queryFn: async () => {
-      if (!marketStateIds?.length) return []
+    queryFn: async (): Promise<MarketStateMap> => {
+      if (!marketStateIds?.length) return {}
 
       const marketStates = await suiClient.multiGetObjects({
         ids: marketStateIds,
         options: { showContent: true },
       })
 
-      // Create a map to store id -> MarketState mapping
-      const stateMap = new Map(
-        marketStates.map((item) => {
-          const { fields } = item.data?.content as unknown as {
-            fields: RawMarketState
-          }
-          const state: MarketState = {
-            totalSy: fields?.total_sy,
-            totalPt: fields?.total_pt,
-            lpSupply: fields?.lp_supply,
-            marketCap: fields?.market_cap,
-          }
-          return [item.data?.objectId, state]
-        }),
-      )
+      return marketStateIds.reduce((acc, marketStateId, index) => {
+        const item = marketStates[index]
+        const { fields } = item.data?.content as unknown as {
+          fields: RawMarketState
+        }
+        
+        const state: MarketState = {
+          totalSy: fields?.total_sy,
+          totalPt: fields?.total_pt,
+          lpSupply: fields?.lp_supply,
+          marketCap: fields?.market_cap,
+        }
 
-      // Return results in the same order as input marketStateIds
-      return marketStateIds.map((id) => stateMap.get(id)!)
+        acc[marketStateId] = state
+        return acc
+      }, {} as MarketStateMap)
     },
     enabled: !!marketStateIds?.length,
   })

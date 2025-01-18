@@ -11,6 +11,7 @@ import {
 import { handleInfinityValues, isValidAmount } from "../lib/utils"
 import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
 import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
+import { MarketState } from "@/hooks/types"
 
 interface CoinInfoListParams {
   name?: string
@@ -207,13 +208,13 @@ export function useCoinInfoList<T extends boolean = true>(
 
       const marketStateIds = coinList.map((coin) => coin.marketStateId)
 
-      const marketStates = await fetchMarketStates(marketStateIds).catch(
-        () => [],
-      )
+      const marketStates = (await fetchMarketStates(marketStateIds).catch(
+        () => ({} as { [key: string]: MarketState })
+      ))
 
       const results = await Promise.all(
-        coinList.map(async (coinInfo, index) => {
-          const marketState = marketStates[index]
+        coinList.map(async (coinInfo) => {
+          const marketState = marketStates?.[coinInfo.marketStateId]
           if (!isValidAmount(marketState?.lpSupply))
             return {
               ...coinInfo,
