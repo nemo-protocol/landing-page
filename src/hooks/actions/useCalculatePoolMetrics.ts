@@ -95,11 +95,12 @@ export default function useCalculatePoolMetrics() {
     }
     const ptPrice = safeDivide(new Decimal(coinInfo.underlyingPrice).mul(Number(syIn)), ptOut, "decimal")
     const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
-    const syCoinPrice = safeDivide(
+    const suiCoinPrice = safeDivide(
       coinInfo.underlyingPrice,
       coinInfo.conversionRate,
       "decimal",
     )
+    console.log("price",ptOut, syIn, suiCoinPrice.toFixed(5), ptPrice.toFixed(5), ytPrice.toFixed(5))
     let poolApy = new Decimal(0)
     let tvl = new Decimal(0)
 
@@ -113,7 +114,7 @@ export default function useCalculatePoolMetrics() {
       .toNumber()
 
     const ptApy = calculatePtAPY(
-      Number(syCoinPrice),
+      Number(suiCoinPrice),
       Number(ptPrice),
       daysToExpiry,
     )

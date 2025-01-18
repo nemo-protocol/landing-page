@@ -150,8 +150,7 @@ export default function SingleCoin() {
     [coinBalance, addValue],
   )
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig)
-
+  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
   const [ptRatio, syRatio] = useMemo(() => {
     if (
       ptYtData?.ptTvl &&
