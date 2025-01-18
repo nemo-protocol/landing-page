@@ -1,14 +1,46 @@
-import { useQuery } from "@tanstack/react-query"
+import { useRef } from "react"
+import Decimal from "decimal.js"
+import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
+import useQueryYtOutBySyInWithVoucher from "../useQueryYtOutBySyInWithVoucher"
 
 export default function useTradeRatio(coinConfig?: CoinConfig) {
-  return useQuery({
-    queryKey: ["tradeRatio", coinConfig?.marketStateId],
-    queryFn: async () => {
-      // const decimal = coinConfig!.decimal
-      return await "1"
+  const lastPowerRef = useRef(0)
+  const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
+
+  return useMutation({
+    mutationFn: async (conversionRate: string) => {
+      if (!coinConfig?.decimal) {
+        throw new Error("Missing required configuration")
+      }
+
+      const decimal = Number(coinConfig.decimal)
+
+      const calculateRatio = async (
+        power = lastPowerRef.current,
+      ): Promise<string> => {
+        if (power >= decimal) return ""
+
+        const safeDecimal = Math.max(decimal - power, 0)
+        try {
+          const amount = new Decimal(10).pow(safeDecimal).toString()
+          const [ytOut] = await queryYtOut(amount)
+          const ytRatio = new Decimal(ytOut)
+            .div(amount)
+            .div(conversionRate)
+            .toString()
+
+          lastPowerRef.current = power
+          return ytRatio
+        } catch (error) {
+          if (power < decimal) {
+            return calculateRatio(power + 1)
+          }
+          throw error
+        }
+      }
+
+      return calculateRatio()
     },
-    enabled: !!coinConfig?.decimal && !!coinConfig?.marketStateId,
-    refetchInterval: 20000,
   })
 }

@@ -3,7 +3,7 @@ import { motion } from "framer-motion"
 import PieChart from "./PieChart"
 import { useNavigate } from "react-router-dom"
 import { CoinInfoWithMetrics } from "@/queries/types/market"
-import { formatLargeNumber, formatTimeDiff } from "@/lib/utils"
+import { formatLargeNumber, formatTimeDiff, isValidAmount } from "@/lib/utils"
 
 interface MarketItemProps {
   item: CoinInfoWithMetrics
@@ -60,7 +60,9 @@ const MarketItem = ({ item }: MarketItemProps) => {
               <span className="text-white text-xs font-bold">
                 {item.tvl ? `$${formatLargeNumber(item.tvl, 6)}` : "--"}
               </span>
-              <PieChart marketState={item.marketState} />
+              {isValidAmount(item.marketState.marketCap) && (
+                <PieChart marketState={item.marketState} />
+              )}
             </div>
           </div>
         </div>

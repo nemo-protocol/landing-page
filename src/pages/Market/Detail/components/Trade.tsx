@@ -16,9 +16,9 @@ import {
 } from "@/components/ui/select"
 import useCoinData from "@/hooks/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
-import { parseErrorMessage } from "@/lib/errorMapping"
+import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import { formatDecimalValue } from "@/lib/utils"
+import { formatDecimalValue, isValidAmount, debounce } from "@/lib/utils"
 import {
   depositSyCoin,
   getPriceVoucher,
@@ -34,9 +34,11 @@ import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
-// import useTradeRatio from "@/hooks/actions/useTradeRatio"
+import useTradeRatio from "@/hooks/actions/useTradeRatio"
 import useQueryYtOutBySyInWithVoucher from "@/hooks/useQueryYtOutBySyInWithVoucher"
 import useSwapExactSyForYtDryRun from "@/hooks/dryrun/useSwapExactSyForYtDryRun"
+import useMarketStateData from "@/hooks/useMarketStateData"
+import { CoinConfig } from "@/queries/types/market"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -46,12 +48,15 @@ export default function Trade() {
   // const currentAccount = useCurrentAccount()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
-  const [message, setMessage] = useState<string>()  
+  const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const [ytOut, setYtout] = useState<string>()
+  const [ytOut, setYtOut] = useState<string>()
   const [error, setError] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
+  const [ratio, setRatio] = useState<string>("")
+  const [isCalcYtLoading, setIsCalcYtLoading] = useState(false)
+  const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -85,20 +90,11 @@ export default function Trade() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
-  // const {
-  //   refetch,
-  //   data: swapRatio,
-  //   isFetching: isRatioFetching,
-  // } = useTradeRatios(coinConfig)
+  const { data: marketStateData } = useMarketStateData(
+    coinConfig?.marketStateId,
+  )
 
   const conversionRate = useMemo(() => coinConfig?.conversionRate, [coinConfig])
-  // const ratio = useMemo(
-  //   () =>
-  //     tokenType === 0 && swapRatio
-  //       ? new Decimal(swapRatio.ratio).div(swapRatio.conversionRate).toFixed()
-  //       : swapRatio?.ratio,
-  //   [swapRatio, tokenType],
-  // )
 
   const { data: pyPositionData, refetch: refetchPyPosition } =
     usePyPositionData(
@@ -110,7 +106,9 @@ export default function Trade() {
 
   const { isLoading } = useInputLoadingState(swapValue, isConfigLoading)
 
-  const { isLoading: isRatioLoading } = useRatioLoadingState(isConfigLoading)
+  const { isLoading: isRatioLoading } = useRatioLoadingState(
+    isConfigLoading || isCalcYtLoading || isInitRatioLoading,
+  )
 
   const {
     data: coinData,
@@ -138,6 +136,7 @@ export default function Trade() {
 
   const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
   const { mutateAsync: dryRunSwap } = useSwapExactSyForYtDryRun(coinConfig)
+  const { mutateAsync: calculateRatio } = useTradeRatio(coinConfig)
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -148,30 +147,98 @@ export default function Trade() {
   }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
   useEffect(() => {
-    async function fetchYtOut() {
-      if (swapValue && decimal && coinConfig && conversionRate) {
+    async function initRatio() {
+      if (conversionRate) {
         try {
-          setError(undefined)
-          const swapAmount = new Decimal(swapValue)
-            .div(tokenType === 0 ? conversionRate : 1)
-            .mul(10 ** decimal)
-            .toFixed(0)
-          const [ytOut] = await queryYtOut(swapAmount)
-          setYtout(ytOut)
+          setIsInitRatioLoading(true)
+          const initialRatio = await calculateRatio(
+            tokenType === 0 ? conversionRate : "1",
+          )
+          setRatio(initialRatio)
         } catch (error) {
-          console.error("Failed to fetch YT out amount:", error)
-          setError((error as Error).message || "Failed to fetch YT amount")
-          setYtout(undefined)
+          console.error("Failed to calculate initial ratio:", error)
+        } finally {
+          setIsInitRatioLoading(false)
         }
-      } else {
-        setYtout(undefined)
-        setError(undefined)
       }
     }
-    fetchYtOut()
-  }, [swapValue, decimal, coinConfig, queryYtOut, tokenType, conversionRate])
+    initRatio()
+  }, [calculateRatio, conversionRate, tokenType])
+
+  const debouncedGetYtOut = useCallback(
+    (value: string, decimal: number, config?: CoinConfig) => {
+      const getYtOut = debounce(async () => {
+        if (value && decimal && config && conversionRate) {
+          setIsCalcYtLoading(true)
+          try {
+            setError(undefined)
+            const swapAmount = new Decimal(value)
+              .div(tokenType === 0 ? conversionRate : 1)
+              .mul(10 ** decimal)
+              .toFixed(0)
+            const [ytOut] = await queryYtOut(swapAmount)
+            setYtOut(ytOut)
+
+            console.log("ytOut", ytOut)
+            const ytRatio = new Decimal(ytOut)
+              .div(10 ** decimal)
+              .div(value)
+              .toFixed(4)
+            setRatio(ytRatio)
+          } catch (error) {
+            console.error("Failed to fetch YT out amount:", error)
+            setError((error as Error).message || "Failed to fetch YT amount")
+            setYtOut(undefined)
+            setRatio("")
+          } finally {
+            setIsCalcYtLoading(false)
+          }
+        } else {
+          setYtOut(undefined)
+          setRatio("")
+          setError(undefined)
+        }
+      }, 500)
+      getYtOut()
+      return getYtOut.cancel
+    },
+    [queryYtOut, tokenType, conversionRate],
+  )
+
+  useEffect(() => {
+    const cancelFn = debouncedGetYtOut(swapValue, decimal ?? 0, coinConfig)
+    return () => {
+      cancelFn()
+    }
+  }, [swapValue, decimal, coinConfig, debouncedGetYtOut])
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig)
+
+  const hasLiquidity = useMemo(() => {
+    return isValidAmount(marketStateData?.lpSupply)
+  }, [marketStateData])
+
+  const btnDisabled = useMemo(() => {
+    return (
+      !hasLiquidity ||
+      insufficientBalance ||
+      !isValidAmount(swapValue) ||
+      !!error
+    )
+  }, [swapValue, insufficientBalance, hasLiquidity, error])
+
+  const btnText = useMemo(() => {
+    if (!hasLiquidity) {
+      return "No liquidity available"
+    }
+    if (insufficientBalance) {
+      return `Insufficient ${coinName} balance`
+    }
+    if (swapValue === "") {
+      return "Please enter an amount"
+    }
+    return "Buy"
+  }, [hasLiquidity, insufficientBalance, swapValue, coinName])
 
   async function swap() {
     if (
@@ -193,7 +260,7 @@ export default function Trade() {
           .toFixed(0)
 
         const [ytOut] = await queryYtOut(syCoinAmount)
-        setYtout(ytOut)
+        setYtOut(ytOut)
         const minYtOut = new Decimal(ytOut)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
@@ -287,7 +354,18 @@ export default function Trade() {
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
-        setMessage(parseErrorMessage(msg || ""))
+        const gasMsg = parseGasErrorMessage(msg)
+        if (gasMsg) {
+          setMessage(gasMsg)
+        } else if (
+          msg.includes(
+            "Transaction failed with the following error. Dry run failed, could not automatically determine a budget: InsufficientGas in command 5",
+          )
+        ) {
+          setMessage("Insufficient YT in the pool.")
+        } else {
+          setMessage(parseErrorMessage(msg || ""))
+        }
       } finally {
         setIsSwapping(false)
       }
@@ -323,11 +401,10 @@ export default function Trade() {
             isConfigLoading={isConfigLoading}
             isBalanceLoading={isBalanceLoading}
             error={error}
+            disabled={!hasLiquidity}
             warning={warning}
             setWarning={setWarning}
-            onChange={(value) => {
-              setSwapValue(value)
-            }}
+            onChange={(value) => setSwapValue(value)}
             coinNameComponent={
               <Select
                 value={tokenType.toString()}
@@ -368,7 +445,7 @@ export default function Trade() {
                 <span>
                   {!swapValue ? (
                     "--"
-                  ) : isLoading ? (
+                  ) : isCalcYtLoading ? (
                     <Skeleton className="h-7 w-60 bg-[#2D2D48]" />
                   ) : !decimal || !ytOut ? (
                     "--"
@@ -402,25 +479,34 @@ export default function Trade() {
               <span>Leveraged Yield APY</span>
               <span className="underline">
                 {ptYtData?.ytApy
-                  ? `${new Decimal(ptYtData.ytApy).mul(100).toFixed(2)} %`
+                  ? `${new Decimal(ptYtData.ytApy).toFixed(6)} %`
                   : "--"}
               </span>
             </div>
           </div>
           <TradeInfo
-            ratio={
-              ytOut && swapValue
-                ? new Decimal(ytOut)
-                    .div(swapValue)
-                    .div(10 ** decimal)
-                    .toString()
-                : new Decimal(0).toString()
-            }
+            ratio={ratio}
             coinName={coinName}
             slippage={slippage}
             isLoading={isLoading}
             setSlippage={setSlippage}
-            onRefresh={()=>{}}
+            // FIXME: need to optimize
+            onRefresh={async () => {
+              if (conversionRate) {
+                try {
+                  setIsCalcYtLoading(true)
+                  const newRatio = await calculateRatio(
+                    tokenType === 0 ? conversionRate : "1",
+                  )
+                  setRatio(newRatio)
+                } catch (error) {
+                  console.error("Failed to refresh ratio:", error)
+                  setRatio("")
+                } finally {
+                  setIsCalcYtLoading(false)
+                }
+              }
+            }}
             isRatioLoading={isRatioLoading}
             tradeFee={
               !!swapValue &&
@@ -440,10 +526,10 @@ export default function Trade() {
             targetCoinName={`YT ${coinConfig?.coinName}`}
           />
           <ActionButton
-            btnText="Buy"
             onClick={swap}
+            btnText={btnText}
             loading={isSwapping}
-            disabled={["", undefined, "0"].includes(swapValue) || !!error}
+            disabled={btnDisabled}
           />
         </div>
       </div>

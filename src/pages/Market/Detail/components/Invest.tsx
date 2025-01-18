@@ -11,7 +11,7 @@ import { Transaction } from "@mysten/sui/transactions"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { Info, ChevronsDown } from "lucide-react"
-import { formatDecimalValue, isValidAmount } from "@/lib/utils"
+import { formatDecimalValue, isValidAmount, debounce } from "@/lib/utils"
 import { useCoinConfig } from "@/queries"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import TradeInfo from "@/components/TradeInfo"
@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/tooltip"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import useInvestRatio from "@/hooks/actions/useInvestRatio"
+import { CoinConfig } from "@/queries/types/market"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -60,6 +61,8 @@ export default function Invest() {
   const [tokenType, setTokenType] = useState<number>(0)
   const [ptOutAmount, setPtOutAmount] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [isCalcPtLoading, setIsCalcPtLoading] = useState(false)
+  const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -112,7 +115,9 @@ export default function Invest() {
 
   const { isLoading } = useInputLoadingState(swapValue, isConfigLoading)
 
-  const { isLoading: isRatioLoading } = useRatioLoadingState(isConfigLoading)
+  const { isLoading: isRatioLoading } = useRatioLoadingState(
+    isConfigLoading || isCalcPtLoading || isInitRatioLoading,
+  )
 
   const {
     data: coinData,
@@ -145,52 +150,67 @@ export default function Invest() {
 
   const { mutateAsync: calculateRatio } = useInvestRatio(coinConfig)
 
+  const debouncedGetPtOut = useCallback(
+    (value: string, decimal: number, config?: CoinConfig) => {
+      const getPtOut = debounce(async () => {
+        setError(undefined)
+        if (isValidAmount(value) && decimal && config && conversionRate) {
+          setIsCalcPtLoading(true)
+          try {
+            const swapAmount = new Decimal(value)
+              .div(tokenType === 0 ? conversionRate : 1)
+              .mul(10 ** decimal)
+              .toFixed(0)
+            const [ptOut] = await queryPtOut(swapAmount)
+            const ptRatio = new Decimal(ptOut)
+              .div(10 ** decimal)
+              .div(value)
+              .toFixed(4)
+            setRatio(ptRatio)
+            setPtOutAmount(ptOut)
+          } catch (error) {
+            console.error("Failed to fetch PT out amount:", error)
+            setError((error as Error).message || "Failed to fetch PT amount")
+            setPtOutAmount(undefined)
+          } finally {
+            setIsCalcPtLoading(false)
+          }
+        } else {
+          setPtOutAmount(undefined)
+          setError(undefined)
+        }
+      }, 500)
+      getPtOut()
+      return getPtOut.cancel
+    },
+    [queryPtOut, tokenType, conversionRate],
+  )
+
+  useEffect(() => {
+    const cancelFn = debouncedGetPtOut(swapValue, decimal ?? 0, coinConfig)
+    return () => {
+      cancelFn()
+    }
+  }, [swapValue, decimal, coinConfig, debouncedGetPtOut])
+
   useEffect(() => {
     async function initRatio() {
       if (conversionRate) {
         try {
+          setIsInitRatioLoading(true)
           const initialRatio = await calculateRatio(
             tokenType === 0 ? conversionRate : "1",
           )
           setRatio(initialRatio)
         } catch (error) {
           console.error("Failed to calculate initial ratio:", error)
+        } finally {
+          setIsInitRatioLoading(false)
         }
       }
     }
     initRatio()
   }, [calculateRatio, conversionRate, tokenType])
-
-  // TODO: swap dry run and debounce
-  useEffect(() => {
-    async function fetchPtOut() {
-      setError(undefined)
-      if (isValidAmount(swapValue) && decimal && conversionRate) {
-        try {
-          const swapAmount = new Decimal(swapValue)
-            .div(tokenType === 0 ? conversionRate : 1)
-            .mul(10 ** decimal)
-            .toFixed(0)
-          const [ptOut] = await queryPtOut(swapAmount)
-          setRatio(
-            new Decimal(ptOut)
-              .div(10 ** decimal)
-              .div(swapValue)
-              .toFixed(4),
-          )
-          setPtOutAmount(ptOut)
-        } catch (error) {
-          console.error("Failed to fetch PT out amount:", error)
-          setError((error as Error).message || "Failed to fetch PT amount")
-          setPtOutAmount(undefined)
-        }
-      } else {
-        setPtOutAmount(undefined)
-        setError(undefined)
-      }
-    }
-    fetchPtOut()
-  }, [swapValue, decimal, queryPtOut, tokenType, conversionRate])
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -306,11 +326,11 @@ export default function Invest() {
     }
   }
 
-  const refetch = useCallback(() => {
-    refetchCoinConfig()
-    refetchPyPosition()
-    refetchCoinData()
-  }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
+  // const refetch = useCallback(() => {
+  //   refetchCoinConfig()
+  //   refetchPyPosition()
+  //   refetchCoinData()
+  // }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
   const hasLiquidity = useMemo(() => {
     return isValidAmount(marketStateData?.lpSupply)
@@ -397,8 +417,8 @@ export default function Invest() {
               <span className="h-[28px]">
                 {!swapValue ? (
                   "--"
-                ) : isLoading ? (
-                  <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+                ) : isCalcPtLoading ? (
+                  <Skeleton className="h-7 w-60 bg-[#2D2D48]" />
                 ) : !decimal || !ptOutAmount ? (
                   "--"
                 ) : (
@@ -453,7 +473,7 @@ export default function Invest() {
 
             {!swapValue ? (
               "--"
-            ) : isLoading ? (
+            ) : isCalcPtLoading ? (
               <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
             ) : decimal && swapValue && conversionRate ? (
               <div className="flex items-center gap-x-1.5">
@@ -494,7 +514,7 @@ export default function Invest() {
             <span>
               {!swapValue ? (
                 "--"
-              ) : isLoading ? (
+              ) : isCalcPtLoading ? (
                 <Skeleton className="h-4 w-20 bg-[#2D2D48]" />
               ) : decimal && coinConfig?.underlyingPrice ? (
                 `≈ $${formatDecimalValue(
@@ -519,11 +539,26 @@ export default function Invest() {
           ratio={ratio}
           coinName={coinName}
           slippage={slippage}
-          onRefresh={refetch}
           isLoading={isLoading}
           setSlippage={setSlippage}
+          // FIXME: need to optimize
+          onRefresh={async () => {
+            if (conversionRate) {
+              try {
+                setIsCalcPtLoading(true)
+                const newRatio = await calculateRatio(
+                  tokenType === 0 ? conversionRate : "1",
+                )
+                setRatio(newRatio)
+              } catch (error) {
+                console.error("Failed to refresh ratio:", error)
+                setRatio("")
+              } finally {
+                setIsCalcPtLoading(false)
+              }
+            }
+          }}
           isRatioLoading={isRatioLoading}
-          targetCoinName={`PT ${coinConfig?.coinName}`}
           tradeFee={
             !!swapValue &&
             !!conversionRate &&
@@ -539,6 +574,7 @@ export default function Invest() {
                   .toString()
               : undefined
           }
+          targetCoinName={`PT ${coinConfig?.coinName}`}
         />
         <ActionButton
           onClick={swap}
