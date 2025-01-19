@@ -3,7 +3,7 @@ import { MarketState } from "../types"
 import { safeDivide } from "@/lib/utils"
 import { useMutation } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
-import useQueryPtOutDryRun from "@/hooks/dryrun/useQueryPtOutDryRun"
+import useQuerySyOutDryRun from "@/hooks/dryrun/useQuerySyOutDryRun.ts"
 
 function calculatePtAPY(
   underlyingPrice: number,
@@ -69,7 +69,7 @@ interface CalculatePoolMetricsParams {
 }
 
 export default function useCalculatePoolMetrics() {
-  const { mutateAsync: priceVoucherFn } = useQueryPtOutDryRun()
+  const { mutateAsync: priceVoucherFn } = useQuerySyOutDryRun()
 
   const calculateMetrics = async ({
     coinInfo,
@@ -83,24 +83,24 @@ export default function useCalculatePoolMetrics() {
       throw new Error("Please provide market state")
     }
 
-    let syIn = "1000000"
-    let ptOut: string
+    let ptIn = "1000000"
+    let syOut: string
 
     try {
-      ptOut = await priceVoucherFn({ syIn, coinInfo })
+      syOut = await priceVoucherFn({ ptIn, coinInfo })
     } catch (error) {
       // If initial call fails, try with reduced syIn
-      syIn = "100"
-      ptOut = await priceVoucherFn({ syIn, coinInfo })
+      ptIn = "100"
+      syOut = await priceVoucherFn({ ptIn, coinInfo })
     }
-    const ptPrice = safeDivide(new Decimal(coinInfo.underlyingPrice).mul(Number(syIn)), ptOut, "decimal")
+    const ptPrice = safeDivide(new Decimal(coinInfo.underlyingPrice).mul(Number(syOut)), ptIn, "decimal")
     const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
     const suiCoinPrice = safeDivide(
       coinInfo.underlyingPrice,
       coinInfo.conversionRate,
       "decimal",
     )
-    console.log("price",ptOut, syIn, suiCoinPrice.toFixed(5), ptPrice.toFixed(5), ytPrice.toFixed(5))
+
     let poolApy = new Decimal(0)
     let tvl = new Decimal(0)
 

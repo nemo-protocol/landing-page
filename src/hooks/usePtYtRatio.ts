@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { MarketState } from "./types"
 import { useQuery } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
-import { useQueryPriceVoucherWithCoinInfo } from "@/hooks/useQueryPriceVoucher.ts"
+import useQuerySyOutDryRun from "@/hooks/dryrun/useQuerySyOutDryRun.ts"
 
 function validateCoinInfo(coinInfo: BaseCoinInfo) {
   const requiredFields = [
@@ -36,7 +36,7 @@ export function useCalculatePtYt(
   marketState?: MarketState,
 ) {
   const { mutateAsync: priceVoucherFun } =
-    useQueryPriceVoucherWithCoinInfo(coinInfo)
+    useQuerySyOutDryRun()
 
   return useQuery({
     queryKey: ["useCalculatePtYt", coinInfo?.marketStateId],
@@ -61,11 +61,20 @@ export function useCalculatePtYt(
         }
       }
 
-      const [, ptOut] = await priceVoucherFun()
+        let ptIn = "1000000"
+        let syOut: string
+
+        try {
+          syOut = await priceVoucherFun({ ptIn, coinInfo })
+        } catch (error) {
+          // If initial call fails, try with reduced syIn
+          ptIn = "100"
+          syOut = await priceVoucherFun({ ptIn, coinInfo })
+        }
 
       const ptPrice = new Decimal(coinInfo.underlyingPrice)
-        .mul(1000000)
-        .div(ptOut)
+        .mul(syOut)
+        .div(ptIn)
 
       const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
 
