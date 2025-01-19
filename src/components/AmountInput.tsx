@@ -131,7 +131,7 @@ export default function AmountInput({
                 ) : (
                   <span className="text-xs text-white/80 ml-auto">
                     $
-                    {formatDecimalValue(new Decimal(price || 0).mul(amount), 2)}
+                    {formatDecimalValue(new Decimal(price || 0).mul(amount), 6)}
                   </span>
                 )
               ) : (

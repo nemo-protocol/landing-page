@@ -212,7 +212,8 @@ export default function Trade() {
     }
   }, [swapValue, decimal, coinConfig, debouncedGetYtOut])
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+
+  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
 
   const hasLiquidity = useMemo(() => {
     return isValidAmount(marketStateData?.lpSupply)

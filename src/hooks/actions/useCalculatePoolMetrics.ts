@@ -93,8 +93,16 @@ export default function useCalculatePoolMetrics() {
       ptIn = "100"
       syOut = await priceVoucherFn({ ptIn, coinInfo })
     }
-    const ptPrice = safeDivide(new Decimal(coinInfo.underlyingPrice).mul(Number(syOut)), ptIn, "decimal")
-    const ytPrice = safeDivide(new Decimal(coinInfo.underlyingPrice), coinInfo.conversionRate, "decimal").sub(ptPrice)
+    const ptPrice = safeDivide(
+      new Decimal(coinInfo.underlyingPrice).mul(Number(syOut)),
+      ptIn,
+      "decimal",
+    )
+    const ytPrice = safeDivide(
+      new Decimal(coinInfo.underlyingPrice),
+      coinInfo.conversionRate,
+      "decimal",
+    ).sub(ptPrice)
     const suiCoinPrice = safeDivide(
       coinInfo.underlyingPrice,
       coinInfo.conversionRate,
@@ -158,8 +166,7 @@ export default function useCalculatePoolMetrics() {
         "decimal",
       )
       const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
-      const swapFeeApy =
-        swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1)
+      const swapFeeApy = swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1)
       poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100))
     }
 

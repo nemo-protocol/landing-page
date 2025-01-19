@@ -40,6 +40,7 @@ import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import useSellPtDryRun from "@/hooks/dryrun/useSellPtDryRun"
 import useSellYtDryRun from "@/hooks/dryrun/useSellYtDryRun"
 import { ContractError } from "@/hooks/types"
+import useMarketStateData from "@/hooks/useMarketStateData"
 
 export default function Sell() {
   const { coinType, tokenType: _tokenType, maturity } = useParams()
@@ -107,7 +108,11 @@ export default function Sell() {
               )
               .toString()
             console.log("syAmount", syAmount)
-            setTargetValue(syAmount)
+            setTargetValue(
+              tokenType === "pt"
+                ? new Decimal(syAmount).div(10 ** decimal).toString()
+                : syAmount,
+            )
 
             // const [result] = await (tokenType === "yt"
             //   ? sellYtDryRun({
@@ -214,9 +219,6 @@ export default function Sell() {
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)
 
-        // console.log("targetValue", targetValue)
-        // console.log("minSyOut", minSyOut)
-
         const syCoin =
           tokenType === "pt"
             ? swapExactPtForSy(
@@ -279,7 +281,9 @@ export default function Sell() {
     [tokenType, coinConfig],
   )
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+  const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
+
+  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketState)
 
   const price = useMemo(
     () =>

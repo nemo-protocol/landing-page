@@ -169,7 +169,6 @@ export default function SingleCoin() {
     return ["0", "0"]
   }, [ptYtData])
 
-
   const {
     data: ratioData,
     refetch: refetchRatio,
@@ -751,7 +750,9 @@ export default function SingleCoin() {
                     </TooltipProvider>
                   </span>
                   <span className="underline">
-                    {ptYtData?.poolApy ? `${Number(ptYtData.poolApy).toFixed(6)}%` : "--"}
+                    {ptYtData?.poolApy
+                      ? `${Number(ptYtData.poolApy).toFixed(6)}%`
+                      : "--"}
                   </span>
                 </div>
               </div>
@@ -806,15 +807,15 @@ export default function SingleCoin() {
             </div>
             <div className="text-center">
               <p className="text-lg lg:text-xl font-normal">
-                {dayjs(Number(coinConfig?.maturity ?? 0)).format(
-                  "MMM DD YYYY",
-                )}
+                {dayjs(Number(coinConfig?.maturity ?? 0)).format("MMM DD YYYY")}
               </p>
               <p className="text-xs lg:text-sm text-white/60">Maturity</p>
             </div>
             <div className="text-center">
               <p className="text-lg lg:text-xl font-normal">
-                {ptYtData?.poolApy ? `${Number(ptYtData.poolApy).toFixed(6)}%` : "--"}
+                {ptYtData?.poolApy
+                  ? `${Number(ptYtData.poolApy).toFixed(6)}%`
+                  : "--"}
               </p>
               <p className="text-xs lg:text-sm text-white/60">Total APY</p>
             </div>
@@ -960,7 +961,9 @@ export default function SingleCoin() {
                   <div className="flex justify-between items-center">
                     <span className="text-xl">Total APY</span>
                     <span className="text-xl text-white">
-                      {ptYtData?.poolApy ? `${Number(ptYtData.poolApy).toFixed(6)}%` : "--"}
+                      {ptYtData?.poolApy
+                        ? `${Number(ptYtData.poolApy).toFixed(6)}%`
+                        : "--"}
                     </span>
                   </div>
                   <div className="h-[1px] bg-[#2D2D48]" />
@@ -968,16 +971,16 @@ export default function SingleCoin() {
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled Underlying APY</span>
                       <span>
-                        {ptYtData?.apySy
-                          ? `${new Decimal(ptYtData?.apySy).toFixed(6)} %`
+                        {ptYtData?.poolApy
+                          ? `${new Decimal(ptYtData?.poolApy).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled PT APY</span>
                       <span>
-                        {ptYtData?.apyPt
-                          ? `${new Decimal(ptYtData.apyPt).toFixed(6)} %`
+                        {ptYtData?.ptApy
+                          ? `${new Decimal(ptYtData.ptApy).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>

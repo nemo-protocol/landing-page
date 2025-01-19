@@ -20,6 +20,7 @@ import { useMemo, useState, useEffect, useCallback } from "react"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
+import useMarketStateData from "@/hooks/useMarketStateData"
 
 export default function Remove() {
   const navigate = useNavigate()
@@ -47,7 +48,9 @@ export default function Remove() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig)
+  const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
+
+  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketState)
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
   const { mutateAsync: swapExactPtForSyDryRun } =

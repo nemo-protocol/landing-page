@@ -19,6 +19,7 @@ import ActionButton from "@/components/ActionButton"
 import useRedeemPYDryRun from "@/hooks/dryrun/useRedeemPYDryRun"
 import { debounce, formatDecimalValue } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
+import useMarketStateData from "@/hooks/useMarketStateData"
 
 export default function Redeem({
   maturity,
@@ -89,8 +90,12 @@ export default function Redeem({
     await Promise.all([refetchCoinConfig(), refetchPyPosition()])
   }, [refetchCoinConfig, refetchPyPosition])
 
-  const { data: ptYtData, refetch: refetchPtYtData } =
-    useCalculatePtYt(coinConfig)
+  const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
+
+  const { data: ptYtData, refetch: refetchPtYtData } = useCalculatePtYt(
+    coinConfig,
+    marketState,
+  )
 
   const { mutateAsync: redeemDryRun } = useRedeemPYDryRun(coinConfig)
 
