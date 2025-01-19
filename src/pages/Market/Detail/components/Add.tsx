@@ -60,12 +60,13 @@ export default function SingleCoin() {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
+  const [error, setError] = useState("")
   const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(1)
-  const [lpPosition, setLpPosition] = useState<string>()
+  const [lpAmount, setLpAmount] = useState<string>()
   const [ytAmount, setYtAmount] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [isAdding, setIsAdding] = useState(false)
@@ -186,6 +187,20 @@ export default function SingleCoin() {
     addValue,
     isConfigLoading || isLpAmountOutLoading,
   )
+
+  const btnDisabled = useMemo(() => {
+    return !isValidAmount(addValue) || insufficientBalance || isCalcLpLoading
+  }, [addValue, insufficientBalance, isCalcLpLoading])
+
+  const btnText = useMemo(() => {
+    if (insufficientBalance) {
+      return `Insufficient ${coinName} balance`
+    }
+    if (addValue === "") {
+      return "Please enter an amount"
+    }
+    return "Add"
+  }, [insufficientBalance, addValue, coinName])
 
   async function handleSeedLiquidity(
     tx: Transaction,
@@ -388,22 +403,22 @@ export default function SingleCoin() {
           coinData?.length
         ) {
           setIsCalcLpLoading(true)
+          const amount = new Decimal(value).mul(10 ** decimal).toString()
+          const convertedAmount =
+            tokenType === 0
+              ? new Decimal(amount).div(conversionRate).toFixed(0)
+              : amount
           try {
-            const amount = new Decimal(value).mul(10 ** decimal).toString()
-            const convertedAmount =
-              tokenType === 0
-                ? new Decimal(amount).div(conversionRate).toFixed(0)
-                : amount
-
             // 检查是否需要执行seed_liquidity
             if (marketStateData?.lpSupply === "0") {
+              console.log("seed_liquidity")
               const lpAmount = await seedLiquidityDryRun({
                 addAmount: convertedAmount,
                 tokenType,
                 coinData,
                 pyPositions: pyPositionData,
               })
-              setLpPosition(
+              setLpAmount(
                 new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
               )
               setYtAmount(undefined)
@@ -413,6 +428,7 @@ export default function SingleCoin() {
               marketStateData &&
               new Decimal(marketStateData.totalSy).mul(0.4).lt(convertedAmount)
             ) {
+              console.log("mint_lp")
               const lpAmount = await mintLpDryRun({
                 addAmount: convertedAmount,
                 tokenType,
@@ -420,31 +436,39 @@ export default function SingleCoin() {
                 pyPositions: pyPositionData,
               })
 
-              setLpPosition(
+              setLpAmount(
                 new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
               )
               setYtAmount(undefined)
             } else {
+              console.log("add_liquidity_single_sy")
               const lpAmount = await addLiquiditySingleSyDryRun({
                 addAmount: convertedAmount,
                 tokenType,
                 coinData,
                 pyPositions: pyPositionData,
               })
-              setLpPosition(
+              setLpAmount(
                 new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
               )
               setYtAmount(undefined)
             }
           } catch (error) {
-            console.error("Failed to get LP position:", error)
-            setLpPosition(undefined)
-            setYtAmount(undefined)
+            try {
+              const amount = await calculateLpOut(convertedAmount)
+              setLpAmount(amount.lpAmount)
+              setYtAmount(undefined)
+            } catch (error) {
+              setLpAmount(undefined)
+              setYtAmount(undefined)
+              console.error("Failed to get LP position:", error)
+              setError((error as Error)?.message ?? "Failed to get LP position")
+            }
           } finally {
             setIsCalcLpLoading(false)
           }
         } else {
-          setLpPosition(undefined)
+          setLpAmount(undefined)
           setYtAmount(undefined)
         }
       }, 500)
@@ -460,6 +484,7 @@ export default function SingleCoin() {
       pyPositionData,
       marketStateData,
       conversionRate,
+      calculateLpOut,
     ],
   )
 
@@ -475,7 +500,7 @@ export default function SingleCoin() {
     if (addValue && decimal) {
       const amount = new Decimal(addValue).mul(10 ** decimal).toString()
       const lpOut = await calculateLpOut(amount)
-      setLpPosition(lpOut.lpAmount)
+      setLpAmount(lpOut.lpAmount)
     }
   }, [refetchRatio, addValue, decimal, calculateLpOut])
 
@@ -627,6 +652,7 @@ export default function SingleCoin() {
               />
 
               <AmountInput
+                error={error}
                 price={price}
                 decimal={decimal}
                 amount={addValue}
@@ -688,7 +714,7 @@ export default function SingleCoin() {
                         "--"
                       ) : (
                         <>
-                          {"≈  " + formatDecimalValue(lpPosition, decimal)} LP{" "}
+                          {"≈  " + formatDecimalValue(lpAmount, decimal)} LP{" "}
                           {coinConfig?.coinName}
                           {coinConfig?.coinLogo && (
                             <img
@@ -785,9 +811,9 @@ export default function SingleCoin() {
 
               <ActionButton
                 onClick={add}
-                btnText={"Add"}
+                btnText={btnText}
+                disabled={btnDisabled}
                 loading={isAdding || isCalcLpLoading}
-                disabled={!isValidAmount(addValue) || isCalcLpLoading}
               />
             </div>
           </div>
