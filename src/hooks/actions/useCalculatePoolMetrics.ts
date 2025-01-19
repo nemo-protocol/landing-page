@@ -94,7 +94,7 @@ export default function useCalculatePoolMetrics() {
       syOut = await priceVoucherFn({ ptIn, coinInfo })
     }
     const ptPrice = safeDivide(new Decimal(coinInfo.underlyingPrice).mul(Number(syOut)), ptIn, "decimal")
-    const ytPrice = new Decimal(coinInfo.underlyingPrice).minus(ptPrice)
+    const ytPrice = safeDivide(new Decimal(coinInfo.underlyingPrice), coinInfo.conversionRate, "decimal").sub(ptPrice)
     const suiCoinPrice = safeDivide(
       coinInfo.underlyingPrice,
       coinInfo.conversionRate,
