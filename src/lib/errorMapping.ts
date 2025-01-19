@@ -82,7 +82,8 @@ function getErrorMessage(errorCode: number, errorString: string): string {
 }
 
 export const parseErrorMessage = (errorString: string) => {
-  const errorCodeMatch = errorString.match(/sub_status: Some\((\d+)\)/)
+  const errorCodeMatch = errorString.match(/[^\d]*(\d+)\)/)
+
   const errorCode = errorCodeMatch
     ? parseInt(
         errorCodeMatch[1] || errorCodeMatch[0],

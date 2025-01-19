@@ -51,13 +51,15 @@ export default function useSellYtDryRun(
         throw new Error("Please select a pool")
       }
 
-      console.log("inputPyPositions in dry run:", inputPyPositions)
+      // console.log("inputPyPositions in dry run:", inputPyPositions)
 
-      const pyPositions = inputPyPositions ?? ((await fetchPyPositionAsync()) as [PyPosition[]])[0]
+      const pyPositions =
+        inputPyPositions ??
+        ((await fetchPyPositionAsync()) as [PyPosition[]])[0]
 
-      if (DEBUG) {
-        console.log("pyPositions in dry run:", pyPositions)
-      }
+      // if (DEBUG) {
+      //   console.log("pyPositions in dry run:", pyPositions)
+      // }
 
       const tx = new Transaction()
       tx.setSender(address)
@@ -80,6 +82,8 @@ export default function useSellYtDryRun(
       const redeemAmount = new Decimal(sellValue)
         .mul(10 ** Number(coinConfig.decimal))
         .toString()
+      console.log("redeemAmount", redeemAmount)
+
       const [syOut] = await querySyOutFromYt(redeemAmount)
 
       console.log("syOut", syOut)
@@ -89,7 +93,14 @@ export default function useSellYtDryRun(
         .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
         .toFixed(0)
 
-      console.log("minSyOut", minSyOut)
+      console.log("params", {
+        tx,
+        coinConfig,
+        amount,
+        pyPosition,
+        priceVoucher,
+        minSyOut,
+      })
 
       const syCoin = swapExactYtForSy(
         tx,

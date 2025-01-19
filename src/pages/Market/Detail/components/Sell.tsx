@@ -99,30 +99,34 @@ export default function Sell() {
             const [syOut] = await (
               tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
             )(amount)
+            console.log("syOut", syOut)
             const syAmount = new Decimal(syOut)
-              .div(10 ** decimal)
-              .mul(receivingType === "underlying" ? coinConfig.conversionRate : 1)
+              // .div(10 ** decimal)
+              .mul(
+                receivingType === "underlying" ? coinConfig.conversionRate : 1,
+              )
               .toString()
+            console.log("syAmount", syAmount)
             setTargetValue(syAmount)
 
-            const [result] = await (tokenType === "yt"
-              ? sellYtDryRun({
-                  slippage,
-                  receivingType,
-                  sellValue: value,
-                  pyPositions: pyPositionData,
-                })
-              : sellPtDryRun({
-                  sellValue: value,
-                  receivingType,
-                  pyPositions: pyPositionData,
-                }))
+            // const [result] = await (tokenType === "yt"
+            //   ? sellYtDryRun({
+            //       slippage,
+            //       receivingType,
+            //       sellValue: value,
+            //       pyPositions: pyPositionData,
+            //     })
+            //   : sellPtDryRun({
+            //       sellValue: value,
+            //       receivingType,
+            //       pyPositions: pyPositionData,
+            //     }))
 
-            setTargetValue(
-              receivingType === "underlying"
-                ? result.underlyingAmount
-                : result.syAmount,
-            )
+            // setTargetValue(
+            //   receivingType === "underlying"
+            //     ? result.underlyingAmount
+            //     : result.syAmount,
+            // )
             setError(undefined)
           } catch (error) {
             setError((error as ContractError)?.message)
@@ -142,10 +146,6 @@ export default function Sell() {
       tokenType,
       receivingType,
       coinConfig?.conversionRate,
-      pyPositionData,
-      sellPtDryRun,
-      sellYtDryRun,
-      slippage,
     ],
   )
 
@@ -210,12 +210,12 @@ export default function Sell() {
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
         const minSyOut = new Decimal(targetValue)
-          .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .mul(10 ** decimal)
+          .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)
 
-        console.log("targetValue", targetValue)
-        console.log("minSyOut", minSyOut)
+        // console.log("targetValue", targetValue)
+        // console.log("minSyOut", minSyOut)
 
         const syCoin =
           tokenType === "pt"
@@ -234,6 +234,8 @@ export default function Sell() {
                 priceVoucher,
                 minSyOut,
               )
+
+        // tx.transferObjects([syCoin], address)
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
         if (receivingType === "underlying") {
@@ -303,10 +305,28 @@ export default function Sell() {
     [decimal, coinConfig],
   )
 
+  const handleSell = async () => {
+    const [result] = await (tokenType === "yt"
+      ? sellYtDryRun({
+          slippage,
+          receivingType,
+          sellValue: redeemValue,
+          pyPositions: pyPositionData,
+        })
+      : sellPtDryRun({
+          sellValue: redeemValue,
+          receivingType,
+          pyPositions: pyPositionData,
+        }))
+    console.log("result", result)
+  }
+
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
-        <h2 className="text-center text-xl">Sell</h2>
+        <h2 className="text-center text-xl" onClick={handleSell}>
+          Sell
+        </h2>
         <div className="flex justify-end w-full">
           <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
         </div>
