@@ -1,9 +1,9 @@
 import { useMemo } from "react"
 import Decimal from "decimal.js"
+import { PyPosition } from "../types"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { PortfolioItem } from "@/queries/types/market"
-import { PyPosition } from "../types"
 
 
 
@@ -67,6 +67,7 @@ const useAllPyPositions = (items?: PortfolioItem[]) => {
 
         return items.reduce(
           (acc, item) => {
+            const decimal = Number(item.decimal)
             const pyPositions = positions.filter(
               (position) =>
                 (!item.maturity ||
@@ -79,16 +80,16 @@ const useAllPyPositions = (items?: PortfolioItem[]) => {
                 (total, coin) => total.add(coin.ptBalance),
                 new Decimal(0),
               )
-              .div(1e9)
-              .toString()
+              .div(10 ** decimal)
+              .toFixed(decimal)
 
             const ytBalance = pyPositions
               .reduce(
                 (total, coin) => total.add(coin.ytBalance),
                 new Decimal(0),
               )
-              .div(1e9)
-              .toString()
+              .div(10 ** decimal)
+              .toFixed(decimal)
 
             acc[item.id] = {
               ptBalance,

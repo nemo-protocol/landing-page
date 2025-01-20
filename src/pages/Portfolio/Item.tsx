@@ -11,6 +11,7 @@ import useRedeemLp from "@/hooks/actions/useRedeemLp"
 import { Transaction } from "@mysten/sui/transactions"
 import { PortfolioItem } from "@/queries/types/market"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
+import SmallNumDisplay from "@/components/SmallNumDisplay"
 import { TableRow, TableCell } from "@/components/ui/table"
 import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { PyPosition, MarketState, LpPosition } from "@/hooks/types"
@@ -90,6 +91,7 @@ export default function Item({
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
+  const [ytClaimed, setYtClaimed] = useState(false)
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
 
@@ -222,6 +224,7 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
+        setYtClaimed(true)
         // await refreshData()
       } catch (error) {
         if (DEBUG) {
@@ -416,21 +419,25 @@ export default function Item({
                     </span>
                     <span>
                       $
-                      {ptYtData?.ptPrice
-                        ? formatDecimalValue(
-                            new Decimal(ptBalance).mul(
-                              new Decimal(ptYtData.ptPrice),
-                            ),
-                            Number(coinConfig?.decimal),
-                          )
-                        : "0.00"}
+                      <SmallNumDisplay
+                        value={formatDecimalValue(
+                          ptYtData?.ptPrice
+                            ? new Decimal(ptBalance).mul(
+                                new Decimal(ptYtData.ptPrice),
+                              )
+                            : "0",
+                          Number(coinConfig?.decimal),
+                        )}
+                      />
                     </span>
                   </>
                 )}
               </div>
             </div>
           </TableCell>
-          <TableCell className="text-center">{ptBalance}</TableCell>
+          <TableCell className="text-center">
+            <SmallNumDisplay value={ptBalance} />
+          </TableCell>
           <TableCell align="center" className="text-white">
             {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
@@ -461,7 +468,7 @@ export default function Item({
           </TableCell>
         </TableRow>
       )}
-      {["yt", "all"].includes(selectType) && (
+      {["yt", "all"].includes(selectType) && !ytClaimed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex items-center gap-x-3">
             <img src={icon} alt="" className="size-10" />
@@ -487,34 +494,43 @@ export default function Item({
                 </span>
                 <span>
                   $
-                  {formatDecimalValue(
-                    ptYtData?.ytPrice
-                      ? new Decimal(ytBalance).mul(
-                          new Decimal(ptYtData.ytPrice),
-                        )
-                      : new Decimal(0),
-                    Number(coinConfig?.decimal),
-                  )}
+                  <SmallNumDisplay
+                    value={formatDecimalValue(
+                      ptYtData?.ytPrice
+                        ? new Decimal(ytBalance).mul(
+                            new Decimal(ptYtData.ytPrice),
+                          )
+                        : "0",
+                      Number(coinConfig?.decimal),
+                    )}
+                  />
                 </span>
               </>
             )}
           </TableCell>
-          <TableCell className="text-center">{ytBalance}</TableCell>
+          <TableCell className="text-center">
+            <SmallNumDisplay value={ytBalance} />
+          </TableCell>
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
               <div className="flex flex-col items-center w-24">
                 <span className="text-white text-sm break-all">
-                  {ytReward || 0}
+                  <SmallNumDisplay value={ytReward || 0} />
                 </span>
                 <span className="text-white/50 text-xs">
-                  {ytReward
-                    ? `$${formatDecimalValue(
-                        new Decimal(ytReward).mul(
-                          Number(coinConfig?.underlyingPrice),
-                        ),
-                        Number(coinConfig?.decimal),
-                      )}`
-                    : "$0"}
+                  $
+                  <SmallNumDisplay
+                    value={
+                      ytReward
+                        ? formatDecimalValue(
+                            new Decimal(ytReward).mul(
+                              Number(coinConfig?.underlyingPrice),
+                            ),
+                            Number(coinConfig?.decimal),
+                          )
+                        : "0"
+                    }
+                  />
                 </span>
               </div>
               <LoadingButton
@@ -574,17 +590,21 @@ export default function Item({
                 </span>
                 <span>
                   $
-                  {formatDecimalValue(
-                    ptYtData?.tvl
-                      ? new Decimal(lpBalance).mul(ptYtData.tvl)
-                      : new Decimal(0),
-                    2,
-                  )}
+                  <SmallNumDisplay
+                    value={formatDecimalValue(
+                      ptYtData?.tvl
+                        ? new Decimal(lpBalance).mul(ptYtData.tvl)
+                        : new Decimal(0),
+                      6,
+                    )}
+                  />
                 </span>
               </>
             )}
           </TableCell>
-          <TableCell className="text-center">{lpBalance}</TableCell>
+          <TableCell className="text-center">
+            <SmallNumDisplay value={lpBalance} />
+          </TableCell>
           <TableCell align="center" className="text-white">
             {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">

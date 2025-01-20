@@ -53,6 +53,7 @@ const useAllLpPositions = (items?: PortfolioItem[]) => {
         if (!items) return {}
 
         return items.reduce((acc, item) => {
+          const decimal = Number(item.decimal)
           const lpPositions = positions.filter(
             (position) =>
               (!item.maturity || position.expiry === item.maturity.toString()) &&
@@ -61,8 +62,8 @@ const useAllLpPositions = (items?: PortfolioItem[]) => {
 
           const lpBalance = lpPositions
             .reduce((total, coin) => total.add(coin.lp_amount), new Decimal(0))
-            .div(1e9)
-            .toFixed(9)
+            .div(10 ** decimal)
+            .toFixed(decimal)
 
           acc[item.id] = {
             lpBalance,
