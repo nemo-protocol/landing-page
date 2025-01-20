@@ -99,7 +99,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
                   {item.poolApy
                     ? `${formatLargeNumber(item.poolApy, 6)}%`
                     : "--"}
-                  <img src="/images/png/gift.png" alt="" className="size-4" />
+                  <img src="/images/market/gift.png" alt="" className="size-4" />
                 </div>
               </div>
             </TableCell>
