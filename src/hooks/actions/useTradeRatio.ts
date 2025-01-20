@@ -14,7 +14,7 @@ export default function useTradeRatio(coinConfig?: CoinConfig) {
         throw new Error("Missing required configuration")
       }
 
-      const decimal = Number(coinConfig.decimal)
+      const decimal = 3
 
       const calculateRatio = async (
         power = lastPowerRef.current,

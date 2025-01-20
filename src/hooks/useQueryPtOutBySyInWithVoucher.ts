@@ -44,7 +44,7 @@ export default function useQueryPtOutBySyInWithVoucher(
         },
       }
 
-      console.log("debugInfo", debugInfo)
+
 
       const tx = new Transaction()
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
@@ -79,6 +79,7 @@ export default function useQueryPtOutBySyInWithVoucher(
       }
 
       if (result?.error) {
+        console.log("debugInfo error", result.error)
         throw new ContractError(result.error, debugInfo)
       }
 
