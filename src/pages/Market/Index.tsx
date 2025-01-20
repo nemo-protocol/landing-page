@@ -3,7 +3,11 @@ import { Link } from "react-router-dom"
 import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
 import MarketItem from "./components/MarketItem"
+import MarketTable from "./components/MarketTable"
 import MarketSkeleton from "./components/MarketSkeleton"
+import MarketTableSkeleton from "./components/MarketTableSkeleton"
+import { useState, useEffect } from "react"
+import { TableIcon, LayoutGridIcon } from "lucide-react"
 
 const textVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -12,6 +16,29 @@ const textVariants = {
 
 export default function Home() {
   const { data: list, isLoading } = useCoinInfoList()
+  const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
+    const savedViewMode = localStorage.getItem("marketViewMode")
+    return (savedViewMode === "table" || savedViewMode === "grid") ? savedViewMode : "grid"
+  })
+
+  useEffect(() => {
+    localStorage.setItem("marketViewMode", viewMode)
+  }, [viewMode])
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (mobile && viewMode === "table") {
+        setViewMode("grid")
+      }
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [viewMode])
 
   return (
     <>
@@ -47,38 +74,62 @@ export default function Home() {
             </p>
           </motion.div>
         </div>
+        <div className="hidden md:flex items-center justify-end">
+          <button
+            className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-white/10" : ""}`}
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGridIcon className="size-5 text-white" />
+          </button>
+          <button
+            className={`p-2 rounded-lg ${viewMode === "table" ? "bg-white/10" : ""}`}
+            onClick={() => setViewMode("table")}
+          >
+            <TableIcon className="size-5 text-white" />
+          </button>
+        </div>
         {isLoading ? (
           <motion.div
-            className="mt-[30px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+            className="mt-[30px]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {[1, 2].map((item) => (
-              <MarketSkeleton key={item} className="block" />
-            ))}
-
-            {[3, 4].map((item) => (
-              <MarketSkeleton key={item} className="hidden md:block" />
-            ))}
-
-            {[5, 6].map((item) => (
-              <MarketSkeleton key={item} className="hidden xl:block" />
-            ))}
+            {viewMode === "grid" || isMobile ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {[1, 2].map((item) => (
+                  <MarketSkeleton key={item} className="block" />
+                ))}
+                {[3, 4].map((item) => (
+                  <MarketSkeleton key={item} className="hidden md:block" />
+                ))}
+                {[5, 6].map((item) => (
+                  <MarketSkeleton key={item} className="hidden xl:block" />
+                ))}
+              </div>
+            ) : (
+              <MarketTableSkeleton />
+            )}
           </motion.div>
         ) : (
           <motion.div
-            className="mt-[30px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 transition-all duration-200 ease-in-out"
+            className="mt-[30px]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {list?.map((item) => (
-              <MarketItem
-                key={item.coinType + "_" + item.maturity}
-                item={item}
-              />
-            ))}
+            {viewMode === "grid" || isMobile ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {list?.map((item) => (
+                  <MarketItem
+                    key={item.coinType + "_" + item.maturity}
+                    item={item}
+                  />
+                ))}
+              </div>
+            ) : (
+              <MarketTable list={list || []} />
+            )}
           </motion.div>
         )}
       </div>
