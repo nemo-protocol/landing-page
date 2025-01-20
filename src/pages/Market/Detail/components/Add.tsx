@@ -409,27 +409,8 @@ export default function SingleCoin() {
               ? new Decimal(amount).div(conversionRate).toFixed(0)
               : amount
           try {
-            // 检查是否需要执行seed_liquidity
             if (marketStateData?.lpSupply === "0") {
-              console.log("seed_liquidity")
-              const lpAmount = await seedLiquidityDryRun({
-                addAmount: convertedAmount,
-                tokenType,
-                coinData,
-                pyPositions: pyPositionData,
-              })
-              setLpAmount(
-                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
-              )
-              setYtAmount(undefined)
-            }
-            // 检查是否需要执行mint_lp
-            else if (
-              marketStateData &&
-              new Decimal(marketStateData.totalSy).mul(0.4).lt(convertedAmount)
-            ) {
-              console.log("mint_lp")
-              const lpAmount = await mintLpDryRun({
+              const { lpAmount, ytAmount } = await seedLiquidityDryRun({
                 addAmount: convertedAmount,
                 tokenType,
                 coinData,
@@ -439,9 +420,27 @@ export default function SingleCoin() {
               setLpAmount(
                 new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
               )
-              setYtAmount(undefined)
+              setYtAmount(
+                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
+              )
+            } else if (
+              marketStateData &&
+              new Decimal(marketStateData.totalSy).mul(0.4).lt(convertedAmount)
+            ) {
+              const { lpAmount, ytAmount } = await mintLpDryRun({
+                addAmount: convertedAmount,
+                tokenType,
+                coinData,
+                pyPositions: pyPositionData,
+              })
+
+              setLpAmount(
+                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
+              )
+              setYtAmount(
+                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
+              )
             } else {
-              console.log("add_liquidity_single_sy")
               const lpAmount = await addLiquiditySingleSyDryRun({
                 addAmount: convertedAmount,
                 tokenType,

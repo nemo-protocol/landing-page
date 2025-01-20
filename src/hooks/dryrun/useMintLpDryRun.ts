@@ -27,8 +27,8 @@ interface MintLpParams {
 }
 
 type DryRunResult<T extends boolean> = T extends true
-  ? [string, DebugInfo]
-  : string
+  ? [{ lpAmount: string; ytAmount: string }, DebugInfo]
+  : { lpAmount: string; ytAmount: string }
 
 export default function useMintLpDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
@@ -182,12 +182,16 @@ export default function useMintLpDryRun<T extends boolean = false>(
         throw new ContractError(message, debugInfo)
       }
 
+      const ytAmount = result.events[result.events.length - 2].parsedJson
+        .amount_yt as string
       const lpAmount = result.events[result.events.length - 1].parsedJson
         .lp_amount as string
 
       debugInfo.parsedOutput = lpAmount
 
-      return (debug ? [lpAmount, debugInfo] : lpAmount) as DryRunResult<T>
+      return (
+        debug ? [{ lpAmount, ytAmount }, debugInfo] : { lpAmount, ytAmount }
+      ) as DryRunResult<T>
     },
   })
 }
