@@ -29,7 +29,7 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
         throw new Error("Please connect wallet first")
       }
       if (!marketState) {
-        console.log(marketState)
+        // console.log(marketState)
         throw new Error("not found market")
       }
       const exchangeRate = await exchangeRateFun({
