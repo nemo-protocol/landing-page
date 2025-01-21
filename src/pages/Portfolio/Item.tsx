@@ -605,6 +605,25 @@ export default function Item({
           <TableCell className="text-center">
             <SmallNumDisplay value={lpBalance} />
           </TableCell>
+          <TableCell className="text-center">
+            <div className="flex items-center gap-x-2 justify-center">
+              <div className="flex flex-col items-center w-24">
+                <span className="text-white text-sm break-all">
+                  <SmallNumDisplay value={0} />
+                </span>
+                <span className="text-white/50 text-xs">
+                  $<SmallNumDisplay value={"0"} />
+                </span>
+              </div>
+              <LoadingButton
+                onClick={() => {}}
+                loading={loading}
+                buttonText="Claim"
+                loadingText="Claiming"
+                disabled={true}
+              />
+            </div>
+          </TableCell>
           <TableCell align="center" className="text-white">
             {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">

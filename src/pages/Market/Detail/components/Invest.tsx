@@ -169,8 +169,10 @@ export default function Invest() {
             setRatio(ptRatio)
             setPtOutAmount(ptOut)
           } catch (error) {
-            console.error("Failed to fetch PT out amount:", error)
-            setError((error as Error).message || "Failed to fetch PT amount")
+            setError(
+              parseErrorMessage((error as Error).message) ||
+                "Failed to fetch PT amount",
+            )
             setPtOutAmount(undefined)
           } finally {
             setIsCalcPtLoading(false)

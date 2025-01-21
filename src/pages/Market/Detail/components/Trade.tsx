@@ -179,7 +179,6 @@ export default function Trade() {
             const [ytOut] = await queryYtOut(swapAmount)
             setYtOut(ytOut)
 
-            console.log("ytOut", ytOut)
             const ytRatio = new Decimal(ytOut)
               .div(10 ** decimal)
               .div(value)

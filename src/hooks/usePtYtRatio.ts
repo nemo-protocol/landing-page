@@ -5,6 +5,19 @@ import { BaseCoinInfo } from "@/queries/types/market"
 import useQuerySyOutDryRun from "@/hooks/dryrun/useQuerySyOutDryRun.ts"
 import { safeDivide } from "@/lib/utils"
 
+interface PtYtRatioResult {
+  ptApy: string
+  ytApy: string
+  incentiveApy: string
+  tvl: string
+  ptTvl: string
+  syTvl: string
+  ptPrice: string
+  ytPrice: string
+  poolApy: string
+  swapFeeApy: string
+}
+
 function validateCoinInfo(coinInfo: BaseCoinInfo) {
   const requiredFields = [
     "decimal",
@@ -39,7 +52,7 @@ export function useCalculatePtYt(
 ) {
   const { mutateAsync: priceVoucherFun } = useQuerySyOutDryRun()
 
-  return useQuery({
+  return useQuery<PtYtRatioResult>({
     queryKey: ["useCalculatePtYt", coinInfo?.marketStateId],
     queryFn: async () => {
       if (!coinInfo) {
@@ -59,6 +72,10 @@ export function useCalculatePtYt(
           ytApy: "0",
           tvl: "0",
           poolApy: "0",
+          incentiveApy: "",
+          ptTvl: "0",
+          syTvl: "0",
+          swapFeeApy: "0"
         }
       }
 
@@ -155,6 +172,7 @@ export function useCalculatePtYt(
       return {
         ptApy,
         ytApy,
+        incentiveApy: "",
         tvl: tvl.toString(),
         ptTvl: ptTvl.toString(),
         syTvl: syTvl.toString(),

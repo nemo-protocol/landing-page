@@ -1017,6 +1017,14 @@ export default function SingleCoin() {
                           : "--"}
                       </span>
                     </div>
+                    <div className="flex justify-between items-center text-white/60">
+                      <span>Incentive APY</span>
+                      <span>
+                        {ptYtData?.incentiveApy
+                          ? `${new Decimal(ptYtData.incentiveApy).toFixed(6)} %`
+                          : "--"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
