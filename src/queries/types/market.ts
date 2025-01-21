@@ -24,6 +24,7 @@ export interface BaseCoinInfo {
   haedalStakeingId: string
   decimal: string
   underlyingApy: string
+  coinPrice: string
   underlyingPrice: string
   pyStateId: string
   syStateId: string
@@ -48,6 +49,11 @@ export interface CoinInfoWithMetrics extends CoinInfo {
   ptTvl: string
   syTvl: string
   marketState: MarketState
+  scaledApy: string
+  underlyingApy: string
+  incentiveApy: string
+  incentive: string
+  totalApy: string
 }
 
 export interface CoinConfig extends BaseCoinInfo {

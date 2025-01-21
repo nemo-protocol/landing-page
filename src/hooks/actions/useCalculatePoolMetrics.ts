@@ -6,7 +6,7 @@ import { BaseCoinInfo } from "@/queries/types/market"
 import useQuerySyOutDryRun from "@/hooks/dryrun/useQuerySyOutDryRun.ts"
 
 function calculatePtAPY(
-  underlyingPrice: number,
+  coinPrice: number,
   ptPrice: number,
   daysToExpiry: number,
 ): string {
@@ -14,7 +14,7 @@ function calculatePtAPY(
     return "0"
   }
 
-  const ratio = safeDivide(underlyingPrice, ptPrice, "decimal")
+  const ratio = safeDivide(coinPrice, ptPrice, "decimal")
   const exponent = new Decimal(365).div(daysToExpiry)
   const apy = ratio.pow(exponent).minus(1)
   return apy.mul(100).toFixed(6)
@@ -94,17 +94,17 @@ export default function useCalculatePoolMetrics() {
       syOut = await priceVoucherFn({ ptIn, coinInfo })
     }
     const ptPrice = safeDivide(
-      new Decimal(coinInfo.underlyingPrice).mul(Number(syOut)),
+      new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
       ptIn,
       "decimal",
     )
     const ytPrice = safeDivide(
-      new Decimal(coinInfo.underlyingPrice),
+      new Decimal(coinInfo.coinPrice),
       coinInfo.conversionRate,
       "decimal",
     ).sub(ptPrice)
     const suiCoinPrice = safeDivide(
-      coinInfo.underlyingPrice,
+      coinInfo.coinPrice,
       coinInfo.conversionRate,
       "decimal",
     )
@@ -144,7 +144,7 @@ export default function useCalculatePoolMetrics() {
       const totalSy = new Decimal(marketState.totalSy)
       ptTvl = totalPt.mul(ptPrice).div(new Decimal(10).pow(coinInfo.decimal))
       syTvl = totalSy
-        .mul(coinInfo.underlyingPrice)
+        .mul(coinInfo.coinPrice)
         .div(new Decimal(10).pow(coinInfo.decimal))
       tvl = syTvl.add(ptTvl)
       const rSy = totalSy.div(totalSy.add(totalPt))
@@ -157,11 +157,11 @@ export default function useCalculatePoolMetrics() {
         totalSy,
         new Decimal(marketState.lpSupply),
         ptPrice,
-        new Decimal(coinInfo.underlyingPrice),
+        new Decimal(coinInfo.coinPrice),
       )
 
       const swapFeeRateForLpHolder = safeDivide(
-        new Decimal(coinInfo.swapFeeForLpHolder).mul(coinInfo.underlyingPrice),
+        new Decimal(coinInfo.swapFeeForLpHolder).mul(coinInfo.coinPrice),
         poolValue,
         "decimal",
       )

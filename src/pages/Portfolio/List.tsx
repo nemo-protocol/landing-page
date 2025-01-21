@@ -125,6 +125,9 @@ export default function List({ list, isLoading }: ListProps) {
               {selectType === "yt" && (
                 <TableHead className="text-center">Accrued Yield</TableHead>
               )}
+              {selectType === "lp" && (
+                <TableHead className="text-center">Incentive</TableHead>
+              )}
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>

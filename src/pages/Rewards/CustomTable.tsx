@@ -4,49 +4,56 @@ import {
   TableBody,
   TableHead,
   TableHeader,
+  TableCell,
 } from "@/components/ui/table"
 import Item from "./Item"
 import { PointItem } from "./type"
+import { motion } from "framer-motion"
 
 export default function CustomTable({ list }: { list?: PointItem[] }) {
   return (
-    <div className="rounded-3xl border border-white/5 mt-9 relative">
-      <Table
-        faStyle={{
-          maxHeight: "calc(100vh - 480px)",
-          overflowY: "auto",
-        }}
-      >
-        <TableHeader
-          style={{
-            background: "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
-            position: "sticky",
-            top: 0,
-          }}
-        >
-          <TableRow className="text-white/80 text-xs">
-            <TableHead>Rank</TableHead>
-            <TableHead className="text-center">Address</TableHead>
-            <TableHead className="text-center">Points Per Day</TableHead>
-            <TableHead className="text-center">Total Points</TableHead>
-          </TableRow>
-        </TableHeader>
-        {list?.length && (
+    <motion.div
+      className="rounded-3xl border border-white/5 mt-9 relative bg-[#0A0B0F]/50 backdrop-blur-md"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader
+            className="sticky top-0 z-10"
+            style={{
+              background:
+                "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
+            }}
+          >
+            <TableRow className="text-white/80 text-xs border-b border-white/5">
+              <TableHead className="w-24">Rank</TableHead>
+              <TableHead className="text-center">Address</TableHead>
+              <TableHead className="text-center w-48">Points Per Day</TableHead>
+              <TableHead className="text-center w-48">Total Points</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody className="overflow-y-auto custom-scrollbar">
-            {list.map((item) => (
-              <Item key={item.rank} {...item} />
-            ))}
+            {list?.length ? (
+              list.map((item) => <Item key={item.rank} {...item} />)
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="text-center py-8 text-white/50"
+                >
+                  No data available
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
-        )}
-      </Table>
+        </Table>
+      </div>
       <img
         src="/images/svg/rewards/coin.svg"
-        className="absolute"
-        style={{
-          bottom: -56,
-          right: -24,
-        }}
+        className="absolute hidden md:block -bottom-12 -right-12"
       />
-    </div>
+    </motion.div>
   )
 }

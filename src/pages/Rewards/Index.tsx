@@ -1,25 +1,23 @@
 import Header from "@/components/Header"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import NemoPoint from "./NemoPoint"
 import CustomTable from "./CustomTable"
 import { useRewardList, useRewardWithAddress } from "@/queries"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-
-const variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-}
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Rewards() {
-  const { address, } = useWallet()
-  const { data: list } = useRewardList()
+  const { address } = useWallet()
+  const { data: list, isLoading: isListLoading } = useRewardList()
+  const { data: userPoint, isLoading: isUserPointLoading } = useRewardWithAddress(address)
+
   const convertedList = list?.map(item => ({
     ...item,
     rank: Number(item.rank),
     pointsPerDay: Number(item.pointsPerDay),
     totalPoints: Number(item.totalPoints)
   }))
-  const { data: userPoint } = useRewardWithAddress(address)
+
   const convertedUserPoint = userPoint?.map(item => ({
     ...item,
     rank: Number(item.rank),
@@ -28,36 +26,39 @@ export default function Rewards() {
   }))
 
   return (
-    <div
-      className="h-screen xl:max-w-[1200px] xl:mx-auto w-full flex flex-col overflow-hidden"
-    >
+    <div className="min-h-screen w-full">
       <Header />
-      <div
-        className="py-4 sm:py-10 px-4 xl:px-0 space-y-4 xl:max-w-[1200px] xl:mx-auto h-[calc(100vh-4rem)]"
-      >
-        <div className="grow">
-          <AnimatePresence mode="wait">
+      <div className="w-full max-w-[1200px] mx-auto px-4 xl:px-0">
+        <div className="py-4 sm:py-10">
+          {isUserPointLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-[120px] w-full rounded-3xl" />
+              <Skeleton className="h-[120px] w-full rounded-3xl" />
+              <Skeleton className="h-[120px] w-full rounded-3xl" />
+            </div>
+          ) : (
             <motion.div
-              key="yield-tokenization"
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={variants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
               <NemoPoint userPoint={convertedUserPoint} />
             </motion.div>
+          )}
+
+          {isListLoading ? (
+            <div className="mt-9 space-y-4">
+              <Skeleton className="h-[400px] w-full rounded-3xl" />
+            </div>
+          ) : (
             <motion.div
-              key="yield-tokenization"
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={variants}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
             >
               <CustomTable list={convertedList} />
             </motion.div>
-          </AnimatePresence>
+          )}
         </div>
       </div>
     </div>

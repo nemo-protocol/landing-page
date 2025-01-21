@@ -82,6 +82,9 @@ function getErrorMessage(errorCode: number, errorString: string): string {
 }
 
 export const parseErrorMessage = (errorString: string) => {
+  if (errorString.includes("OUT_OF_GAS")) {
+    return "Insufficient liquidity in the pool."
+  }
   const errorCodeMatch = errorString.match(/[^\d]*(\d+)\)/)
 
   const errorCode = errorCodeMatch

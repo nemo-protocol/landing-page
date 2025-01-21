@@ -89,14 +89,14 @@ export default function Portfolio() {
                 <img src="/images/svg/reward.svg" alt="reward" className="size-[58px]" />
               </motion.div>
             </div>
-            <motion.img
+            {/* <motion.img
               src="/images/portfolio/income.png"
               alt=""
               className="w-[200px] hidden lg:block"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.9 }}
-            />
+            /> */}
           </div>
         </div>
         <List list={list} isLoading={isLoading} />

@@ -88,10 +88,6 @@ export default function NemoPoint({ userPoint }: { userPoint?: PointItem[] }) {
           </motion.div>
         </div>
       </div>
-      <img
-        src="/images/svg/rewards/TopLog.svg"
-        className="flex-grow-0 flex-shrink-0 hidden lg:block"
-      />
     </div>
   )
 }
