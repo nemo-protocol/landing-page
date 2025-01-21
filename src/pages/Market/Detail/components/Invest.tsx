@@ -20,7 +20,6 @@ import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import useQueryPtOutBySyInWithVoucher from "@/hooks/useQueryPtOutBySyInWithVoucher"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
-import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
   getPriceVoucher,
@@ -143,7 +142,6 @@ export default function Invest() {
     [coinBalance, swapValue],
   )
 
-  const { mutateAsync: dryRunSwap } = useSwapExactSyForPtDryRun(coinConfig)
   const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
@@ -262,14 +260,14 @@ export default function Invest() {
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
-        await dryRunSwap({
-          tokenType,
-          swapAmount,
-          coinData,
-          coinType,
-          minPtOut,
-          pyPositions: pyPositionData,
-        })
+        // await dryRunSwap({
+        //   tokenType,
+        //   swapAmount,
+        //   coinData,
+        //   coinType,
+        //   minPtOut,
+        //   pyPositions: pyPositionData,
+        // })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 

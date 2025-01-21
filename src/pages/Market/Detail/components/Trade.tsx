@@ -36,7 +36,6 @@ import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import useTradeRatio from "@/hooks/actions/useTradeRatio"
 import useQueryYtOutBySyInWithVoucher from "@/hooks/useQueryYtOutBySyInWithVoucher"
-import useSwapExactSyForYtDryRun from "@/hooks/dryrun/useSwapExactSyForYtDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { CoinConfig } from "@/queries/types/market"
 
@@ -134,9 +133,8 @@ export default function Trade() {
     [coinBalance, swapValue],
   )
 
-  const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
-  const { mutateAsync: dryRunSwap } = useSwapExactSyForYtDryRun(coinConfig)
   const { mutateAsync: calculateRatio } = useTradeRatio(coinConfig)
+  const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -260,7 +258,6 @@ export default function Trade() {
           .toFixed(0)
 
         const [ytOut] = await queryYtOut(syCoinAmount)
-        setYtOut(ytOut)
         const minYtOut = new Decimal(ytOut)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
@@ -274,12 +271,6 @@ export default function Trade() {
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
-        debugLog("sy::deposit move call:", {
-          target: `${coinConfig.nemoContractId}::sy::deposit`,
-          arguments: [coinConfig.version, "splitCoin", 0, coinConfig.syStateId],
-          typeArguments: [coinType, coinConfig.syCoinType],
-        })
-
         let pyPosition
         let created = false
         if (!pyPositionData?.length) {
@@ -288,14 +279,6 @@ export default function Trade() {
         } else {
           pyPosition = tx.object(pyPositionData[0].id)
         }
-
-        await dryRunSwap({
-          tokenType,
-          swapAmount: syCoinAmount,
-          coinData,
-          coinType,
-          minYtOut,
-        })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
         tx.moveCall({

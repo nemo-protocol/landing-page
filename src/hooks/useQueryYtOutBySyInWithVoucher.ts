@@ -72,6 +72,8 @@ export default function useQueryYtOutBySyInWithVoucher(
         }),
       })
 
+      console.log("result", result)
+
       // Record raw result
       debugInfo.rawResult = {
         error: result?.error,
