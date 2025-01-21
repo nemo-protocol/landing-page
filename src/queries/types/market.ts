@@ -24,6 +24,7 @@ export interface BaseCoinInfo {
   haedalStakeingId: string
   decimal: string
   underlyingApy: string
+  coinPrice: string
   underlyingPrice: string
   pyStateId: string
   syStateId: string
