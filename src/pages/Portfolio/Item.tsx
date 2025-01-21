@@ -30,6 +30,7 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
+import useQueryClaimYtReward from "@/hooks/useQueryClaimYtReward"
 
 const LoadingButton = ({
   loading,
@@ -68,7 +69,6 @@ const LoadingButton = ({
 export default function Item({
   name,
   icon,
-  ytReward,
   lpReward,
   selectType,
   ptBalance,
@@ -92,6 +92,8 @@ export default function Item({
   const [message, setMessage] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [ytClaimed, setYtClaimed] = useState(false)
+  const [ptRedeemed, setPtRedeemed] = useState(false)
+  const [lpRedeemed, setLpRedeemed] = useState(false)
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
 
@@ -106,6 +108,15 @@ export default function Item({
   const { data: ptYtData, isLoading: isPtYtLoading } = useCalculatePtYt(
     coinConfig,
     marketState,
+  )
+
+  const { data: ytReward, isLoading: isClaimLoading } = useQueryClaimYtReward(
+    coinConfig,
+    {
+      ytBalance,
+      pyPositions,
+      tokenType: selectType === "yt" ? 1 : 0,
+    },
   )
 
   useEffect(() => {
@@ -210,8 +221,8 @@ export default function Item({
         })
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-
-        tx.transferObjects([yieldToken], address)
+        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+        tx.transferObjects([underlyingCoin], address)
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -291,6 +302,7 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
+        setPtRedeemed(true)
         // await refreshData()
       } catch (error) {
         if (DEBUG) {
@@ -324,6 +336,7 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
+        setLpRedeemed(true)
         // await refreshData()
       } catch (error) {
         if (DEBUG) {
@@ -391,7 +404,7 @@ export default function Item({
           <AlertDialogFooter></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {["pt", "all"].includes(selectType) && (
+      {["pt", "all"].includes(selectType) && !ptRedeemed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <img src={icon} alt="" className="size-6 sm:size-10" />
@@ -535,7 +548,7 @@ export default function Item({
               </div>
               <LoadingButton
                 onClick={claim}
-                loading={loading}
+                loading={loading || isClaimLoading}
                 buttonText="Claim"
                 loadingText="Claiming"
                 disabled={!isValidAmount(ytBalance)}
@@ -566,7 +579,7 @@ export default function Item({
           </TableCell>
         </TableRow>
       )}
-      {["lp", "all"].includes(selectType) && (
+      {["lp", "all"].includes(selectType) && !lpRedeemed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex items-center gap-x-3">
             <img src={icon} alt="" className="size-10" />
