@@ -120,21 +120,21 @@ export default function Item({
     if (isConnected) {
       updatePortfolio(
         coinConfig.id,
-        new Decimal(ptBalance)
+        new Decimal(ptBalance || 0)
           .mul(
             ptYtData?.ptPrice && new Decimal(ptYtData.ptPrice).gt(0)
               ? ptYtData.ptPrice
               : 0,
           )
           .add(
-            new Decimal(ytBalance).mul(
+            new Decimal(ytBalance || 0).mul(
               ptYtData?.ytPrice && new Decimal(ptYtData.ytPrice).gt(0)
                 ? ptYtData.ytPrice
                 : 0,
             ),
           )
           .add(
-            new Decimal(lpBalance).mul(
+            new Decimal(lpBalance || 0).mul(
               coinConfig.coinPrice &&
                 ptYtData?.ptPrice &&
                 new Decimal(coinConfig.coinPrice).add(ptYtData.ptPrice).gt(0)
@@ -404,7 +404,11 @@ export default function Item({
       {["pt", "all"].includes(selectType) && !ptRedeemed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <img src={coinConfig.underlyingCoinLogo} alt="" className="size-6 sm:size-10" />
+            <img
+              src={coinConfig.underlyingCoinLogo}
+              alt=""
+              className="size-6 sm:size-10"
+            />
             <div className="flex flex-col md:flex-row md:items-center gap-2">
               <span>PT {coinConfig.underlyingCoinName}</span>
               <span className="text-white/50 text-xs">
@@ -481,7 +485,11 @@ export default function Item({
       {["yt", "all"].includes(selectType) && !ytClaimed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex items-center gap-x-3">
-            <img src={coinConfig.underlyingCoinLogo} alt="" className="size-10" />
+            <img
+              src={coinConfig.underlyingCoinLogo}
+              alt=""
+              className="size-10"
+            />
             <div className="flex items-center gap-x-1">
               <span>YT {coinConfig.underlyingCoinName}</span>
               <span className="text-white/50 text-xs">
@@ -579,7 +587,11 @@ export default function Item({
       {["lp", "all"].includes(selectType) && !lpRedeemed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex items-center gap-x-3">
-            <img src={coinConfig.underlyingCoinLogo} alt="" className="size-10" />
+            <img
+              src={coinConfig.underlyingCoinLogo}
+              alt=""
+              className="size-10"
+            />
             <div className="flex items-center gap-x-1">
               <span>LP {coinConfig.underlyingCoinName}</span>
               <span className="text-white/50 text-xs">
