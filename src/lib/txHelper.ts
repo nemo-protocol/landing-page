@@ -9,8 +9,9 @@ import {
   TransactionArgument,
   TransactionResult,
 } from "@mysten/sui/transactions"
+import { SCALLOP, AFTERMATH, VALIDATORS } from "./constants"
 
-type MoveCallInfo = DebugInfo["moveCall"]
+export type MoveCallInfo = DebugInfo["moveCall"]
 
 export const getPriceVoucher = (
   tx: Transaction,
@@ -150,12 +151,17 @@ export const initPyPosition = (tx: Transaction, coinConfig: CoinConfig) => {
   return pyPosition
 }
 
-export const mintSCoin = (
+type MintSCoinResult<T extends boolean> = T extends true
+  ? [TransactionArgument[], MoveCallInfo]
+  : TransactionArgument[]
+
+export const mintSCoin = <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
   coinData: CoinData[],
   amounts: string[],
-) => {
+  debug: T = false as T,
+): MintSCoinResult<T> => {
   const splitCoins = splitCoinHelper(
     tx,
     coinData,
@@ -163,54 +169,85 @@ export const mintSCoin = (
     coinConfig.underlyingCoinType,
   )
 
+  let moveCall: MoveCallInfo
+  const results: TransactionArgument[] = []
+
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
-      const SCALLOP_MARKET_OBJECT =
-        "0xa757975255146dc9686aa823b7838b507f315d704f428cbadad2f4ea061939d9"
-      const SCALLOP_VERSION_OBJECT =
-        "0x07871c4b3c847a0f674510d4978d5cf6f960452795e8ff6f189fd2088a3f6ac7"
-
-      const results = []
-
-      for (let i = 0; i < amounts.length; i++) {
-        const mintMoveCall = {
-          target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
-          arguments: [
-            SCALLOP_VERSION_OBJECT,
-            SCALLOP_MARKET_OBJECT,
-            amounts[i],
-            "0x6",
-          ],
-          typeArguments: [coinConfig.underlyingCoinType],
-        }
-        debugLog(`scallop mint move call ${i}:`, mintMoveCall)
-
-        const marketCoin = tx.moveCall({
-          ...mintMoveCall,
-          arguments: [
-            tx.object(SCALLOP_VERSION_OBJECT),
-            tx.object(SCALLOP_MARKET_OBJECT),
-            splitCoins[i],
-            tx.object("0x6"),
-          ],
-        })
-
-        const mintSCoinMoveCall = {
-          target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
-          arguments: [coinConfig.sCoinTreasure, "marketCoin"],
-          typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
-        }
-        debugLog(`mint_s_coin move call ${i}:`, mintSCoinMoveCall)
-
-        const result = tx.moveCall({
-          ...mintSCoinMoveCall,
-          arguments: [tx.object(coinConfig.sCoinTreasure), marketCoin],
-        })
-
-        results.push(result)
+      moveCall = {
+        target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
+        arguments: [
+          { name: "version", value: SCALLOP.VERSION_OBJECT },
+          { name: "market", value: SCALLOP.MARKET_OBJECT },
+          { name: "amount", value: amounts[0] },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.underlyingCoinType],
       }
+      debugLog(`scallop mint move call:`, moveCall)
 
-      return results
+      const [marketCoin] = tx.moveCall({
+        target: moveCall.target,
+        arguments: [
+          tx.object(SCALLOP.VERSION_OBJECT),
+          tx.object(SCALLOP.MARKET_OBJECT),
+          splitCoins[0],
+          tx.object("0x6"),
+        ],
+        typeArguments: moveCall.typeArguments,
+      })
+
+      const mintSCoinMoveCall: MoveCallInfo = {
+        target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
+        arguments: [
+          { name: "treasury", value: coinConfig.sCoinTreasure },
+          { name: "market_coin", value: "marketCoin" },
+        ],
+        typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
+      }
+      debugLog(`mint_s_coin move call:`, mintSCoinMoveCall)
+
+      const [sCoin] = tx.moveCall({
+        target: mintSCoinMoveCall.target,
+        arguments: [tx.object(coinConfig.sCoinTreasure), marketCoin],
+        typeArguments: mintSCoinMoveCall.typeArguments,
+      })
+
+      results.push(sCoin)
+      return (debug ? [results, mintSCoinMoveCall] : results) as unknown as MintSCoinResult<T>
+    }
+    case "Aftermath": {
+      moveCall = {
+        target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_stake`,
+        arguments: [
+          { name: "staked_sui_vault", value: AFTERMATH.STAKED_SUI_VAULT },
+          { name: "safe", value: AFTERMATH.SAFE },
+          { name: "system_state", value: AFTERMATH.SYSTEM_STATE },
+          { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
+          { name: "coin", value: amounts[0] },
+          { name: "validator", value: VALIDATORS.MYSTEN_2 },
+          { name: "clock", value: AFTERMATH.CLOCK },
+        ],
+        typeArguments: [],
+      }
+      debugLog(`aftermath request_stake move call:`, moveCall)
+
+      const [sCoin] = tx.moveCall({
+        target: moveCall.target,
+        arguments: [
+          tx.object(AFTERMATH.STAKED_SUI_VAULT),
+          tx.object(AFTERMATH.SAFE),
+          tx.object(AFTERMATH.SYSTEM_STATE),
+          tx.object(AFTERMATH.REFERRAL_VAULT),
+          splitCoins[0],
+          tx.pure.address(VALIDATORS.MYSTEN_2),
+          tx.object(AFTERMATH.CLOCK),
+        ],
+        typeArguments: moveCall.typeArguments,
+      })
+
+      results.push(sCoin)
+      return (debug ? [results, moveCall] : results) as unknown as MintSCoinResult<T>
     }
     default:
       throw new Error(
@@ -242,16 +279,11 @@ export const burnSCoin = (
       // return marketCoin
 
       // 2. Then call redeem to get underlying coin
-      const SCALLOP_MARKET_OBJECT =
-        "0xa757975255146dc9686aa823b7838b507f315d704f428cbadad2f4ea061939d9"
-      const SCALLOP_VERSION_OBJECT =
-        "0x07871c4b3c847a0f674510d4978d5cf6f960452795e8ff6f189fd2088a3f6ac7"
-
       const redeemMoveCall = {
         target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::redeem::redeem`,
         arguments: [
-          SCALLOP_VERSION_OBJECT,
-          SCALLOP_MARKET_OBJECT,
+          SCALLOP.VERSION_OBJECT,
+          SCALLOP.MARKET_OBJECT,
           marketCoin,
           "0x6",
         ],
@@ -262,8 +294,8 @@ export const burnSCoin = (
       const [underlyingCoin] = tx.moveCall({
         ...redeemMoveCall,
         arguments: [
-          tx.object(SCALLOP_VERSION_OBJECT),
-          tx.object(SCALLOP_MARKET_OBJECT),
+          tx.object(SCALLOP.VERSION_OBJECT),
+          tx.object(SCALLOP.MARKET_OBJECT),
           marketCoin,
           tx.object("0x6"),
         ],

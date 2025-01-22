@@ -39,13 +39,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
         </TableHeader>
         <TableBody>
           {list?.map((item) => (
-            <TableRow
-              key={item.coinType + "_" + item.maturity}
-              className="cursor-pointer"
-              onClick={() =>
-                navigate(`/market/detail/${item.coinType}/${item.maturity}`)
-              }
-            >
+            <TableRow key={item.coinType + "_" + item.maturity}>
               <TableCell className="!px-0">
                 <div className="flex items-center">
                   <img

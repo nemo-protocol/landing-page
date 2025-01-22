@@ -83,11 +83,7 @@ export interface CoinConfig extends BaseCoinInfo {
 }
 
 export interface PortfolioItem extends CoinConfig {
-  name: string
-  icon: string
-  ptReward: string
-  ytReward: string
-  lpReward: string
+  pyPositionTypeList: string[]
 }
 
 export interface FixedReturnItem {

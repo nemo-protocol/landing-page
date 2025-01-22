@@ -1,7 +1,7 @@
+import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { twMerge } from "tailwind-merge"
 import { type ClassValue, clsx } from "clsx"
-import dayjs from "dayjs"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -271,24 +271,24 @@ export const safeDivide = <T extends "string" | "number" | "decimal">(
  */
 export const formatLargeNumber = (
   value?: string | number | Decimal,
-  decimals = 2
+  decimals = 2,
 ): string => {
   try {
     if (!value) return "0"
-    
+
     const num = new Decimal(value)
     const abs = num.abs()
-    
+
     if (abs.lessThan(1000)) {
       return formatDecimalValue(num, decimals)
     }
-    
+
     const suffixes = ["", "K", "M", "B", "T"]
     const magnitude = Math.min(Math.floor(abs.log(1000).toNumber()), 4)
-    
+
     return formatDecimalValue(
       num.div(new Decimal(1000).pow(magnitude)),
-      decimals
+      decimals,
     ).concat(suffixes[magnitude])
   } catch {
     return "0"

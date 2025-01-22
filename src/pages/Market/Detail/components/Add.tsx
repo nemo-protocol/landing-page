@@ -47,7 +47,7 @@ import {
   SelectTrigger,
   SelectContent,
 } from "@/components/ui/select"
-import { useAddLiquidityRatio } from "@/hooks/useAddLiquidityRatio"
+import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
 import useMintLpDryRun from "@/hooks/dryrun/useMintLpDryRun"
 import useAddLiquiditySingleSyDryRun from "@/hooks/dryrun/useAddLiquiditySingleSyDryRun"
@@ -72,6 +72,8 @@ export default function SingleCoin() {
   const [isAdding, setIsAdding] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isCalcLpLoading, setIsCalcLpLoading] = useState(false)
+  const [ratio, setRatio] = useState<string>()
+  const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -122,7 +124,7 @@ export default function SingleCoin() {
     [tokenType, coinConfig],
   )
 
-  const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
+  const decimal = useMemo(() => Number(coinConfig?.decimal || 0), [coinConfig])
 
   const { mutateAsync: calculateLpOut, isPending: isLpAmountOutLoading } =
     useCalculateLpOut(coinConfig)
@@ -141,7 +143,7 @@ export default function SingleCoin() {
       return coinData
         .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
         .div(10 ** decimal)
-        .toFixed(9)
+        .toFixed(decimal)
     }
     return "0"
   }, [coinData, decimal])
@@ -170,18 +172,7 @@ export default function SingleCoin() {
     return ["0", "0"]
   }, [ptYtData])
 
-  const {
-    data: ratioData,
-    refetch: refetchRatio,
-    isFetching: isRatioFetching,
-  } = useAddLiquidityRatio(coinConfig)
-
-  const ratio = useMemo(() => ratioData?.ratio, [ratioData])
-  const conversionRate = useMemo(() => ratioData?.conversionRate, [ratioData])
-
-  const { isLoading: isRatioLoading } = useRatioLoadingState(
-    isConfigLoading || isRatioFetching,
-  )
+  const conversionRate = useMemo(() => coinConfig?.conversionRate, [coinConfig])
 
   const { isLoading } = useInputLoadingState(
     addValue,
@@ -201,6 +192,53 @@ export default function SingleCoin() {
     }
     return "Add"
   }, [insufficientBalance, addValue, coinName])
+
+  const { mutateAsync: calculateRatio } = useAddLiquidityRatio(
+    coinConfig,
+    marketStateData,
+  )
+
+  const { isLoading: isRatioLoading } = useRatioLoadingState(
+    isConfigLoading || isInitRatioLoading,
+  )
+
+  useEffect(() => {
+    async function initRatio() {
+      try {
+        setIsInitRatioLoading(true)
+        const initialRatio = await calculateRatio()
+        setRatio(initialRatio)
+      } catch (error) {
+        console.error("Failed to calculate initial ratio:", error)
+      } finally {
+        setIsInitRatioLoading(false)
+      }
+    }
+    if (coinConfig && marketStateData) {
+      initRatio()
+    }
+  }, [calculateRatio, coinConfig, marketStateData])
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      setIsCalcLpLoading(true)
+      const newRatio = await calculateRatio()
+      setRatio(newRatio)
+    } catch (error) {
+      console.error("Failed to refresh ratio:", error)
+      setRatio("")
+    } finally {
+      setIsCalcLpLoading(false)
+    }
+  }, [calculateRatio])
+
+  const refreshData = useCallback(async () => {
+    await Promise.all([
+      refetchCoinConfig(),
+      refetchPyPosition(),
+      refetchCoinData(),
+    ])
+  }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
   async function handleSeedLiquidity(
     tx: Transaction,
@@ -410,6 +448,8 @@ export default function SingleCoin() {
               : amount
           try {
             if (marketStateData?.lpSupply === "0") {
+              console.log(1111);
+              
               const { lpAmount, ytAmount } = await seedLiquidityDryRun({
                 addAmount: convertedAmount,
                 tokenType,
@@ -494,24 +534,16 @@ export default function SingleCoin() {
     }
   }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
 
-  const handleRefresh = useCallback(async () => {
-    refetchRatio()
-    if (addValue && decimal) {
-      const amount = new Decimal(addValue).mul(10 ** decimal).toString()
-      const lpOut = await calculateLpOut(amount)
-      setLpAmount(lpOut.lpAmount)
-    }
-  }, [refetchRatio, addValue, decimal, calculateLpOut])
-
-  const refreshData = useCallback(async () => {
-    await Promise.all([
-      refetchCoinConfig(),
-      refetchPyPosition(),
-      refetchCoinData(),
-    ])
-  }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
-
   async function add() {
+    console.log("decimal", decimal)
+    console.log("address", address)
+    console.log("coinType", coinType)
+    console.log("slippage", slippage)
+    console.log("coinConfig", coinConfig)
+    console.log("conversionRate", conversionRate)
+    console.log("marketStateData", marketStateData)
+    console.log("coinData", coinData)
+    console.log("insufficientBalance", insufficientBalance)
     if (
       decimal &&
       address &&

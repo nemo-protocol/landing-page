@@ -1,11 +1,9 @@
 import { useMemo } from "react"
 import Decimal from "decimal.js"
 import { PyPosition } from "../types"
+import { PortfolioItem } from "@/queries/types/market"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import { PortfolioItem } from "@/queries/types/market"
-
-
 
 const useAllPyPositions = (items?: PortfolioItem[]) => {
   const { address } = useWallet()

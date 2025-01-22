@@ -11,6 +11,8 @@ import useFetchLpPosition from "./useFetchLpPosition"
 import useFetchPyPosition from "./useFetchPyPosition"
 import type { DebugInfo } from "./types"
 import useFetchObject from "./useFetchObject"
+import useMintSCoin from "./actions/useMintSCoin"
+import { CoinData } from "./useCoinData"
 
 export interface GetObjectParams {
   objectId: string
@@ -26,6 +28,11 @@ export interface GetObjectParams {
   typeArguments?: string[]
 }
 
+export interface MintSCoinParams {
+  coinData: CoinData[]
+  amounts: string[]
+}
+
 export type QueryInputMap = {
   PT_OUT_BY_SY_IN: string
   YT_OUT_BY_SY_IN: string
@@ -38,9 +45,14 @@ export type QueryInputMap = {
   LP_MARKET_POSITION: void
   PY_POSITION: void
   BURN_LP_DRY_RUN: string
+  MINT_SCOIN: MintSCoinParams
 }
 
 export const QUERY_CONFIGS = {
+  MINT_SCOIN: {
+    target: "mint_scoin",
+    hook: useMintSCoin,
+  },
   GET_OBJECT: {
     target: "get_object",
     hook: useFetchObject,

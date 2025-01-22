@@ -3,13 +3,13 @@ import Decimal from "decimal.js"
 import { Link } from "react-router-dom"
 import Loading from "@/components/Loading"
 import usePortfolio from "@/hooks/usePortfolio"
+import { CoinConfig } from "@/queries/types/market"
 import { Skeleton } from "@/components/ui/skeleton"
 import { network, debugLog, DEBUG } from "@/config"
 import { useEffect, useMemo, useState } from "react"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
 import { Transaction } from "@mysten/sui/transactions"
-import { PortfolioItem } from "@/queries/types/market"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import SmallNumDisplay from "@/components/SmallNumDisplay"
 import { TableRow, TableCell } from "@/components/ui/table"
@@ -67,9 +67,6 @@ const LoadingButton = ({
 )
 
 export default function Item({
-  name,
-  icon,
-  lpReward,
   selectType,
   ptBalance,
   ytBalance,
@@ -78,7 +75,7 @@ export default function Item({
   lpPositions,
   marketState,
   ...coinConfig
-}: PortfolioItem & {
+}: CoinConfig & {
   ptBalance: string
   ytBalance: string
   lpBalance: string
@@ -148,14 +145,13 @@ export default function Item({
             ),
           )
           .toNumber(),
-        new Decimal(lpReward && lpReward !== "" ? lpReward : 0)
-          .mul(coinConfig?.underlyingPrice ? coinConfig.underlyingPrice : 0)
+        new Decimal(isValidAmount(ytReward) ? String(ytReward) : "0")
+          .mul(coinConfig?.underlyingPrice ?? 0)
           .toNumber(),
       )
     }
   }, [
     coinConfig.id,
-    lpReward,
     ptBalance,
     ytBalance,
     isConnected,
@@ -165,6 +161,7 @@ export default function Item({
     ptYtData?.ytPrice,
     coinConfig.coinPrice,
     coinConfig.underlyingPrice,
+    ytReward,
   ])
 
   async function claim() {
@@ -407,9 +404,9 @@ export default function Item({
       {["pt", "all"].includes(selectType) && !ptRedeemed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <img src={icon} alt="" className="size-6 sm:size-10" />
+            <img src={coinConfig.underlyingCoinLogo} alt="" className="size-6 sm:size-10" />
             <div className="flex flex-col md:flex-row md:items-center gap-2">
-              <span>PT {name}</span>
+              <span>PT {coinConfig.underlyingCoinName}</span>
               <span className="text-white/50 text-xs">
                 {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
               </span>
@@ -484,9 +481,9 @@ export default function Item({
       {["yt", "all"].includes(selectType) && !ytClaimed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex items-center gap-x-3">
-            <img src={icon} alt="" className="size-10" />
+            <img src={coinConfig.underlyingCoinLogo} alt="" className="size-10" />
             <div className="flex items-center gap-x-1">
-              <span>YT {name}</span>
+              <span>YT {coinConfig.underlyingCoinName}</span>
               <span className="text-white/50 text-xs">
                 {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
               </span>
@@ -582,9 +579,9 @@ export default function Item({
       {["lp", "all"].includes(selectType) && !lpRedeemed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex items-center gap-x-3">
-            <img src={icon} alt="" className="size-10" />
+            <img src={coinConfig.underlyingCoinLogo} alt="" className="size-10" />
             <div className="flex items-center gap-x-1">
-              <span>LP {name}</span>
+              <span>LP {coinConfig.underlyingCoinName}</span>
               <span className="text-white/50 text-xs">
                 {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
               </span>

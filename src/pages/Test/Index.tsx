@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { useCoinConfig } from "@/queries"
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import PoolSelect from "@/components/PoolSelect"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQueryButton, {
@@ -10,6 +10,7 @@ import useQueryButton, {
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "@/hooks/types"
 import { ContractError } from "@/hooks/types"
+import useCoinData from "@/hooks/useCoinData"
 
 interface ContractCall {
   name: string
@@ -53,23 +54,48 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
     status,
   } = useQueryButton(queryType, coinConfig, true)
 
+  const { data: suiData } = useCoinData(address, "0x2::sui::SUI")
+  const { data: coinData } = useCoinData(
+    address,
+    coinConfig?.coinType,
+  )
+
   const isLoading = status === "pending"
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
-  const formatAmount = useCallback(
-    (rawAmount: string, operation: "div" | "mul" = "div") => {
-      if (operation === "div") {
-        return new Decimal(rawAmount).div(10 ** decimal).toString()
-      } else {
-        return new Decimal(rawAmount).mul(10 ** decimal).toString()
-      }
-    },
-    [decimal],
-  )
+  const suiBalance = useMemo(() => {
+    if (suiData?.length) {
+      return suiData
+        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+        .div(10 ** 9)
+        .toString()
+    }
+    return "0"
+  }, [suiData])
+
+  const coinBalance = useMemo(() => {
+    if (coinData?.length) {
+      return coinData
+        .reduce((total, coin) => total.add(coin.balance), new Decimal(0))
+        .div(10 ** (decimal || 9))
+        .toString()
+    }
+    return "0"
+  }, [coinData, decimal])
 
   const handleQuery = async (amount: string) => {
-    if (!coinConfig && config.target !== "get_object") return
+    console.log("handleQuery called with:", {
+      amount,
+      coinConfig,
+      target: config.target,
+    })
+
+    if (!coinConfig && config.target !== "get_object") {
+      console.log("No coinConfig provided")
+      return
+    }
+
     const timestamp = Date.now()
 
     let input: QueryInputMap[T]
@@ -95,6 +121,12 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
           showStorageRebate: true,
         },
       } as QueryInputMap[T]
+    } else if (config.target === "mint_scoin") {
+      const mintInput = {
+        coinData: coinData || [],
+        amounts: [new Decimal(amount).mul(10 ** (decimal || 9)).toString()],
+      }
+      input = mintInput as unknown as QueryInputMap[T]
     } else {
       input = amount as QueryInputMap[T]
     }
@@ -105,6 +137,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
     }
     onQuery(callInfo)
 
+    console.log("Calling query with input:", input)
     await query(input)
   }
 
@@ -162,7 +195,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
         }
       }
     }
-  }, [error, data, coinConfig, calls, config.target, formatAmount, onQuery])
+  }, [error, data, coinConfig, calls, config.target, onQuery])
 
   return (
     <div className="bg-[#12121B] rounded-xl p-4 border border-white/[0.07]">
@@ -209,6 +242,46 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
               >
                 Get Object Info
               </button>
+            ) : config.target === "mint_scoin" ? (
+              <>
+                <div className="col-span-2 grid grid-cols-2 gap-2">
+                  <div className="text-sm text-white/60">
+                    SUI Balance: {suiBalance}
+                  </div>
+                  <div className="text-sm text-white/60 text-right">
+                    Token Balance: {coinBalance}
+                  </div>
+                </div>
+                <button
+                  className="flex items-center justify-center h-10 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] rounded-xl disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm"
+                  onClick={() => {
+                    handleQuery("0.001")
+                  }}
+                  disabled={!address || !coinConfig || isLoading}
+                >
+                  0.001 Input
+                </button>
+                <div className="flex h-10 bg-black/20 rounded-xl overflow-hidden">
+                  <input
+                    type="number"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    className="w-20 px-3 bg-transparent text-white/90 text-sm focus:outline-none disabled:opacity-50"
+                    placeholder="Amount"
+                    disabled={!address || !coinConfig}
+                  />
+                  <button
+                    className="flex-1 flex items-center justify-center px-3 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm whitespace-nowrap border-l border-white/[0.07]"
+                    onClick={() => {
+                      console.log("Custom amount button clicked for MINT_SCOIN")
+                      handleQuery(customAmount)
+                    }}
+                    disabled={!address || !coinConfig || isLoading}
+                  >
+                    Input
+                  </button>
+                </div>
+              </>
             ) : (
               <>
                 <button
@@ -289,6 +362,7 @@ export default function Test() {
   const queryButtons = Object.entries({
     ...QUERY_CONFIGS,
     // 重新排序，把相关的功能放在一起
+    MINT_SCOIN: QUERY_CONFIGS.MINT_SCOIN,
     LP_MARKET_POSITION: QUERY_CONFIGS.LP_MARKET_POSITION,
     PY_POSITION: QUERY_CONFIGS.PY_POSITION,
     SY_OUT_FROM_BURN_LP: QUERY_CONFIGS.SY_OUT_FROM_BURN_LP,
