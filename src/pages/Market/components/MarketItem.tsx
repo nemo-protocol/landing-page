@@ -150,7 +150,7 @@ const MarketItem = ({ item }: MarketItemProps) => {
                           <span className="text-[#96A9E4] text-xs">PT APY</span>
                         </div>
                         <span className="font-mono text-xs">
-                          {item.ptApy ? `${formatLargeNumber(item.ptApy, 6)}%` : "--"}
+                          {item.scaled_pt_apy ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%` : "--"}
                         </span>
                       </div>
                     </div>
@@ -161,7 +161,7 @@ const MarketItem = ({ item }: MarketItemProps) => {
                           <span className="text-[#96A9E4] text-xs">Underlying APY</span>
                         </div>
                         <span className="font-mono text-xs">
-                          {item.underlyingApy ? `${formatLargeNumber(item.underlyingApy, 6)}%` : "--"}
+                          {item.scaled_underlying_apy ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%` : "--"}
                         </span>
                       </div>
                     </div>
@@ -184,8 +184,8 @@ const MarketItem = ({ item }: MarketItemProps) => {
                   <div className="flex flex-row items-center justify-between gap-4">
                     <span className="text-[#2DF4DD] text-sm">Total APY</span>
                     <span className="text-[#2DF4DD] font-mono text-sm">
-                      {item.ptApy && item.underlyingApy
-                        ? `${formatLargeNumber(Number(item.ptApy) + Number(item.underlyingApy) + 0, 6)}%`
+                      {item.poolApy
+                        ? `${formatLargeNumber(item.poolApy, 6)}%`
                         : "--"}
                     </span>
                   </div>

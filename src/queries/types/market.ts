@@ -52,6 +52,8 @@ export interface CoinInfoWithMetrics extends CoinInfo {
   marketState: MarketState
   scaledApy: string
   underlyingApy: string
+  scaled_underlying_apy: string
+  scaled_pt_apy: string
   incentiveApy: string
   incentive: string
   totalApy: string

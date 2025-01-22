@@ -478,7 +478,7 @@ export default function Invest() {
             ) : decimal && swapValue && conversionRate ? (
               <div className="flex items-center gap-x-1.5">
                 <span>
-                  + $
+                  +
                   {ratio
                     ? formatDecimalValue(
                         new Decimal(swapValue)
@@ -516,19 +516,19 @@ export default function Invest() {
                 "--"
               ) : isCalcPtLoading ? (
                 <Skeleton className="h-4 w-20 bg-[#2D2D48]" />
-              ) : decimal && coinConfig?.underlyingPrice ? (
-                `≈ $${formatDecimalValue(
-                  new Decimal(swapValue)
-                    // ratio
-                    .mul(1)
-                    .minus(
-                      tokenType === 0
-                        ? new Decimal(swapValue)
-                        : new Decimal(swapValue).div(conversionRate || 1),
-                    )
-                    .mul(coinConfig.underlyingPrice),
-                  2,
-                )}`
+              ) : decimal &&  conversionRate && coinConfig?.underlyingPrice ? (
+                `≈ $${ratio
+                    ? formatDecimalValue(
+                        new Decimal(swapValue)
+                          .mul(ratio)
+                          .minus(
+                            tokenType === 0
+                              ? new Decimal(swapValue)
+                              : new Decimal(swapValue).mul(conversionRate),
+                          ).mul(coinConfig.underlyingPrice),
+                        decimal,
+                      )
+                    : "--"}`
               ) : (
                 "--"
               )}

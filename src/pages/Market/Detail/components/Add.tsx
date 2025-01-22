@@ -1028,16 +1028,16 @@ export default function SingleCoin() {
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled Underlying APY</span>
                       <span>
-                        {ptYtData?.poolApy
-                          ? `${new Decimal(ptYtData?.poolApy).toFixed(6)} %`
+                        {ptYtData?.scaled_underlying_apy
+                          ? `${new Decimal(ptYtData?.scaled_underlying_apy).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled PT APY</span>
                       <span>
-                        {ptYtData?.ptApy
-                          ? `${new Decimal(ptYtData.ptApy).toFixed(6)} %`
+                        {ptYtData?.scaled_pt_apy
+                          ? `${new Decimal(ptYtData.scaled_pt_apy).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>

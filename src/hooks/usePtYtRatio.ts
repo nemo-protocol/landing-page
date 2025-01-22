@@ -9,6 +9,8 @@ interface PtYtRatioResult {
   ptApy: string
   ytApy: string
   incentiveApy: string
+  scaled_underlying_apy: string
+  scaled_pt_apy: string
   tvl: string
   ptTvl: string
   syTvl: string
@@ -70,6 +72,8 @@ export function useCalculatePtYt(
           ytPrice: "0",
           ptApy: "0",
           ytApy: "0",
+          scaled_underlying_apy: "0",
+          scaled_pt_apy: "0",
           tvl: "0",
           poolApy: "0",
           incentiveApy: "",
@@ -135,7 +139,8 @@ export function useCalculatePtYt(
         Number(ytPrice),
         yearsToExpiry,
       )
-
+      let scaled_underlying_apy = new Decimal(0)
+      let scaled_pt_apy = new Decimal(0)
       if (marketState.lpSupply != "0") {
         const totalPt = new Decimal(marketState.totalPt)
         const totalSy = new Decimal(marketState.totalSy)
@@ -146,8 +151,8 @@ export function useCalculatePtYt(
         tvl = syTvl.add(ptTvl)
         const rSy = totalSy.div(totalSy.add(totalPt))
         const rPt = totalPt.div(totalSy.add(totalPt))
-        const apySy = rSy.mul(coinInfo.underlyingApy)
-        const apyPt = rPt.mul(ptApy)
+        scaled_underlying_apy = rSy.mul(coinInfo.underlyingApy)
+        scaled_pt_apy = rPt.mul(ptApy)
         const apyIncentive = new Decimal(0)
         const poolValue = calculatePoolValue(
           totalPt,
@@ -165,13 +170,15 @@ export function useCalculatePtYt(
           "decimal",
         )
         const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
-        swapFeeApy = swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1)
-        poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100))
+        swapFeeApy = swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1).mul(100)
+        poolApy = scaled_underlying_apy.add(scaled_pt_apy).add(apyIncentive).add(swapFeeApy)
       }
 
       return {
         ptApy,
         ytApy,
+        scaled_underlying_apy: scaled_underlying_apy.toString(),
+        scaled_pt_apy: scaled_pt_apy.toString(),
         incentiveApy: "",
         tvl: tvl.toString(),
         ptTvl: ptTvl.toString(),
