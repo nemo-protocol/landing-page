@@ -117,18 +117,24 @@ export default function Item({
   )
 
   useEffect(() => {
+    if (ytReward) {
+      console.log("ytReward", ytReward)
+    }
+  }, [ytReward])
+
+  useEffect(() => {
     if (isConnected) {
       updatePortfolio(
         coinConfig.id,
         new Decimal(ptBalance || 0)
           .mul(
-            ptYtData?.ptPrice && new Decimal(ptYtData.ptPrice).gt(0)
+            ptYtData?.ptPrice && isValidAmount(ptYtData?.ptPrice)
               ? ptYtData.ptPrice
               : 0,
           )
           .add(
             new Decimal(ytBalance || 0).mul(
-              ptYtData?.ytPrice && new Decimal(ptYtData.ytPrice).gt(0)
+              ptYtData?.ytPrice && isValidAmount(ptYtData?.ytPrice)
                 ? ptYtData.ytPrice
                 : 0,
             ),
@@ -137,7 +143,8 @@ export default function Item({
             new Decimal(lpBalance || 0).mul(
               coinConfig.coinPrice &&
                 ptYtData?.ptPrice &&
-                new Decimal(coinConfig.coinPrice).add(ptYtData.ptPrice).gt(0)
+                isValidAmount(ptYtData?.ptPrice) &&
+                isValidAmount(coinConfig.coinPrice)
                 ? new Decimal(coinConfig.coinPrice)
                     .add(ptYtData.ptPrice)
                     .toNumber()
@@ -145,23 +152,23 @@ export default function Item({
             ),
           )
           .toNumber(),
-        new Decimal(isValidAmount(ytReward) ? String(ytReward) : "0")
+        new Decimal(ytReward && isValidAmount(ytReward) ? ytReward : "0")
           .mul(coinConfig?.underlyingPrice ?? 0)
           .toNumber(),
       )
     }
   }, [
-    coinConfig.id,
+    ytReward,
     ptBalance,
     ytBalance,
-    isConnected,
     lpBalance,
+    isConnected,
+    coinConfig.id,
     updatePortfolio,
     ptYtData?.ptPrice,
     ptYtData?.ytPrice,
     coinConfig.coinPrice,
     coinConfig.underlyingPrice,
-    ytReward,
   ])
 
   async function claim() {
@@ -418,39 +425,39 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">PT</TableCell>
           <TableCell className="text-center space-x-1">
-            <div>
-              <div>
-                {isPtYtLoading ? (
-                  <Skeleton className="h-6 w-20 mx-auto" />
-                ) : (
-                  <>
-                    <span>
-                      {ptYtData?.ptPrice &&
-                        new Decimal(ptBalance)
-                          .mul(new Decimal(ptYtData.ptPrice))
-                          .gt(0) &&
-                        "≈"}
-                    </span>
-                    <span>
-                      $
-                      <SmallNumDisplay
-                        value={formatDecimalValue(
-                          ptYtData?.ptPrice
-                            ? new Decimal(ptBalance).mul(
-                                new Decimal(ptYtData.ptPrice),
-                              )
-                            : "0",
-                          Number(coinConfig?.decimal),
-                        )}
-                      />
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
+            {isPtYtLoading ? (
+              <Skeleton className="h-6 w-24 mx-auto" />
+            ) : (
+              <>
+                <span>
+                  {ptYtData?.ptPrice &&
+                    new Decimal(ptBalance)
+                      .mul(new Decimal(ptYtData.ptPrice))
+                      .gt(0) &&
+                    "≈"}
+                </span>
+                <span>
+                  $
+                  <SmallNumDisplay
+                    value={formatDecimalValue(
+                      ptYtData?.ptPrice
+                        ? new Decimal(ptBalance).mul(
+                            new Decimal(ptYtData.ptPrice),
+                          )
+                        : "0",
+                      Number(coinConfig?.decimal),
+                    )}
+                  />
+                </span>
+              </>
+            )}
           </TableCell>
           <TableCell className="text-center">
-            <SmallNumDisplay value={ptBalance} />
+            {isPtYtLoading ? (
+              <Skeleton className="h-6 w-24 mx-auto" />
+            ) : (
+              <SmallNumDisplay value={ptBalance} />
+            )}
           </TableCell>
           <TableCell align="center" className="text-white">
             {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
@@ -531,33 +538,45 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
-              <div className="flex flex-col items-center w-24">
-                <span className="text-white text-sm break-all">
-                  <SmallNumDisplay value={ytReward || 0} />
-                </span>
-                <span className="text-white/50 text-xs">
-                  $
-                  <SmallNumDisplay
-                    value={
-                      ytReward
-                        ? formatDecimalValue(
-                            new Decimal(ytReward).mul(
-                              Number(coinConfig?.underlyingPrice),
-                            ),
-                            Number(coinConfig?.decimal),
-                          )
-                        : "0"
-                    }
+              {isClaimLoading ? (
+                <div className="flex items-center gap-x-2">
+                  <div className="flex flex-col items-center w-24">
+                    <Skeleton className="h-5 w-16 mb-1" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <Skeleton className="h-8 w-24 rounded-3xl" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center w-24">
+                    <span className="text-white text-sm break-all">
+                      <SmallNumDisplay value={ytReward || 0} />
+                    </span>
+                    <span className="text-white/50 text-xs">
+                      $
+                      <SmallNumDisplay
+                        value={
+                          ytReward
+                            ? formatDecimalValue(
+                                new Decimal(ytReward).mul(
+                                  Number(coinConfig?.underlyingPrice),
+                                ),
+                                Number(coinConfig?.decimal),
+                              )
+                            : "0"
+                        }
+                      />
+                    </span>
+                  </div>
+                  <LoadingButton
+                    onClick={claim}
+                    loading={loading}
+                    buttonText="Claim"
+                    loadingText="Claiming"
+                    disabled={!isValidAmount(ytBalance)}
                   />
-                </span>
-              </div>
-              <LoadingButton
-                onClick={claim}
-                loading={loading || isClaimLoading}
-                buttonText="Claim"
-                loadingText="Claiming"
-                disabled={!isValidAmount(ytBalance)}
-              />
+                </>
+              )}
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">
@@ -615,7 +634,10 @@ export default function Item({
                   <SmallNumDisplay
                     value={formatDecimalValue(
                       ptYtData?.tvl && marketState?.lpSupply
-                        ? new Decimal(lpBalance).mul(ptYtData.tvl).mul(10 ** Number(coinConfig.decimal)).div(marketState.lpSupply)
+                        ? new Decimal(lpBalance)
+                            .mul(ptYtData.tvl)
+                            .mul(10 ** Number(coinConfig.decimal))
+                            .div(marketState.lpSupply)
                         : new Decimal(0),
                       6,
                     )}
@@ -629,21 +651,33 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
-              <div className="flex flex-col items-center w-24">
-                <span className="text-white text-sm break-all">
-                  <SmallNumDisplay value={0} />
-                </span>
-                <span className="text-white/50 text-xs">
-                  $<SmallNumDisplay value={"0"} />
-                </span>
-              </div>
-              <LoadingButton
-                onClick={() => {}}
-                loading={loading}
-                buttonText="Claim"
-                loadingText="Claiming"
-                disabled={true}
-              />
+              {isClaimLoading ? (
+                <div className="flex items-center gap-x-2">
+                  <div className="flex flex-col items-center w-24">
+                    <Skeleton className="h-5 w-16 mb-1" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <Skeleton className="h-8 w-24 rounded-3xl" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center w-24">
+                    <span className="text-white text-sm break-all">
+                      <SmallNumDisplay value={0} />
+                    </span>
+                    <span className="text-white/50 text-xs">
+                      $<SmallNumDisplay value={"0"} />
+                    </span>
+                  </div>
+                  <LoadingButton
+                    onClick={() => {}}
+                    loading={loading}
+                    buttonText="Claim"
+                    loadingText="Claiming"
+                    disabled={true}
+                  />
+                </>
+              )}
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">
