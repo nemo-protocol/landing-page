@@ -146,6 +146,18 @@ export default function Invest() {
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
 
+  useEffect(() => {
+    if (marketStateData) {
+      console.log("marketStateData", marketStateData)
+    }
+  }, [marketStateData])
+
+  useEffect(() => {
+    if (ptYtData) {
+      console.log("ptYtData", ptYtData)
+    }
+  }, [ptYtData])
+
   const { mutateAsync: calculateRatio } = useInvestRatio(coinConfig)
 
   const debouncedGetPtOut = useCallback(
@@ -516,8 +528,9 @@ export default function Invest() {
                 "--"
               ) : isCalcPtLoading ? (
                 <Skeleton className="h-4 w-20 bg-[#2D2D48]" />
-              ) : decimal &&  conversionRate && coinConfig?.underlyingPrice ? (
-                `≈ $${ratio
+              ) : decimal && conversionRate && coinConfig?.underlyingPrice ? (
+                `≈ $${
+                  ratio
                     ? formatDecimalValue(
                         new Decimal(swapValue)
                           .mul(ratio)
@@ -525,10 +538,12 @@ export default function Invest() {
                             tokenType === 0
                               ? new Decimal(swapValue)
                               : new Decimal(swapValue).mul(conversionRate),
-                          ).mul(coinConfig.underlyingPrice),
+                          )
+                          .mul(coinConfig.underlyingPrice),
                         decimal,
                       )
-                    : "--"}`
+                    : "--"
+                }`
               ) : (
                 "--"
               )}
