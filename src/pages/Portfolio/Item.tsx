@@ -56,8 +56,8 @@ const LoadingButton = ({
     disabled={disabled || loading}
   >
     {loading ? (
-      <div className="flex items-center justify-center gap-1">
-        <Loading className="h-4 w-4 border-b border-white" />
+      <div className="flex items-center justify-center gap-2.5">
+        <Loading className="h-4 w-4" />
         <span className="text-sm whitespace-nowrap">{loadingText}</span>
       </div>
     ) : (
