@@ -84,6 +84,8 @@ export default function Item({
   marketState?: MarketState
   selectType: "pt" | "yt" | "lp" | "all"
 }) {
+  console.log("Item", coinConfig)
+
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
