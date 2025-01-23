@@ -141,13 +141,8 @@ export default function Item({
           )
           .add(
             new Decimal(lpBalance || 0).mul(
-              coinConfig.coinPrice &&
-                ptYtData?.ptPrice &&
-                isValidAmount(ptYtData?.ptPrice) &&
-                isValidAmount(coinConfig.coinPrice)
-                ? new Decimal(coinConfig.coinPrice)
-                    .add(ptYtData.ptPrice)
-                    .toNumber()
+              ptYtData?.lpPrice && isValidAmount(ptYtData?.lpPrice)
+                ? ptYtData.lpPrice
                 : 0,
             ),
           )
@@ -169,6 +164,7 @@ export default function Item({
     ptYtData?.ytPrice,
     coinConfig.coinPrice,
     coinConfig.underlyingPrice,
+    ptYtData?.lpPrice,
   ])
 
   async function claim() {
@@ -625,20 +621,17 @@ export default function Item({
             ) : (
               <>
                 <span>
-                  {ptYtData?.tvl &&
-                    new Decimal(lpBalance).mul(ptYtData.tvl).gt(0) &&
+                  {ptYtData?.lpPrice &&
+                    new Decimal(lpBalance).mul(ptYtData.lpPrice).gt(0) &&
                     "≈"}
                 </span>
                 <span>
                   $
                   <SmallNumDisplay
                     value={formatDecimalValue(
-                      ptYtData?.tvl && marketState?.lpSupply
-                        ? new Decimal(lpBalance)
-                            .mul(ptYtData.tvl)
-                            .mul(10 ** Number(coinConfig.decimal))
-                            .div(marketState.lpSupply)
-                        : new Decimal(0),
+                      ptYtData?.lpPrice && isValidAmount(ptYtData?.lpPrice)
+                        ? ptYtData.lpPrice
+                        : "0",
                       6,
                     )}
                   />

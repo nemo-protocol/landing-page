@@ -18,6 +18,7 @@ interface PtYtRatioResult {
   ytPrice: string
   poolApy: string
   swapFeeApy: string
+  lpPrice: string
 }
 
 function validateCoinInfo(coinInfo: BaseCoinInfo) {
@@ -79,7 +80,8 @@ export function useCalculatePtYt(
           incentiveApy: "",
           ptTvl: "0",
           syTvl: "0",
-          swapFeeApy: "0"
+          swapFeeApy: "0",
+          lpPrice: "0",
         }
       }
 
@@ -180,6 +182,7 @@ export function useCalculatePtYt(
         ytPrice: ytPrice.toString(),
         poolApy: poolApy.toString(),
         swapFeeApy: swapFeeApy.toString(),
+        lpPrice: tvl.div(marketState.lpSupply).toString(),
       }
     },
     enabled: !!coinInfo?.decimal && !!marketState,
