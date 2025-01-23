@@ -138,7 +138,8 @@ export default function useCalculatePoolMetrics() {
       Number(ytPrice),
       yearsToExpiry,
     )
-
+    let scaled_underlying_apy = new Decimal(0)
+    let scaled_pt_apy = new Decimal(0)
     if (marketState.lpSupply != "0") {
       const totalPt = new Decimal(marketState.totalPt)
       const totalSy = new Decimal(marketState.totalSy)
@@ -149,8 +150,8 @@ export default function useCalculatePoolMetrics() {
       tvl = syTvl.add(ptTvl)
       const rSy = totalSy.div(totalSy.add(totalPt))
       const rPt = totalPt.div(totalSy.add(totalPt))
-      const apySy = rSy.mul(coinInfo.underlyingApy)
-      const apyPt = rPt.mul(ptApy)
+      scaled_underlying_apy = rSy.mul(coinInfo.underlyingApy).mul(100)
+      scaled_pt_apy = rPt.mul(ptApy)
       const apyIncentive = new Decimal(0)
       const poolValue = calculatePoolValue(
         totalPt,
@@ -167,12 +168,14 @@ export default function useCalculatePoolMetrics() {
       )
       const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
       const swapFeeApy = swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1)
-      poolApy = apySy.add(apyPt).add(apyIncentive).add(swapFeeApy.mul(100))
+      poolApy = scaled_underlying_apy.add(scaled_pt_apy).add(apyIncentive).add(swapFeeApy.mul(100))
     }
 
     return {
       ptApy,
       ytApy,
+      scaled_underlying_apy: scaled_underlying_apy.toString(),
+      scaled_pt_apy: scaled_pt_apy.toString(),
       tvl: tvl.toString(),
       ptTvl: ptTvl.toString(),
       syTvl: syTvl.toString(),

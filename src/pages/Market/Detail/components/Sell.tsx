@@ -283,6 +283,12 @@ export default function Sell() {
 
   const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
 
+  useEffect(() => {
+    if (marketState) {
+      console.log("marketState", marketState)
+    }
+  }, [marketState])
+
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketState)
 
   const price = useMemo(

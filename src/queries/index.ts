@@ -4,9 +4,9 @@ import {
   CoinInfo,
   CoinConfig,
   FixedReturnItem,
-  PortfolioItem,
   PointItem,
   CoinInfoWithMetrics,
+  PortfolioItem,
 } from "./types/market"
 import { handleInfinityValues, isValidAmount } from "../lib/utils"
 import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"

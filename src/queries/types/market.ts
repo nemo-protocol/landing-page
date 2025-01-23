@@ -32,6 +32,7 @@ export interface BaseCoinInfo {
   marketFactoryConfigId: string
   swapFeeForLpHolder: string
   underlyingCoinName: string
+  underlyingCoinLogo: string
   version: string
 }
 
@@ -51,6 +52,8 @@ export interface CoinInfoWithMetrics extends CoinInfo {
   marketState: MarketState
   scaledApy: string
   underlyingApy: string
+  scaled_underlying_apy: string
+  scaled_pt_apy: string
   incentiveApy: string
   incentive: string
   totalApy: string
@@ -70,8 +73,6 @@ export interface CoinConfig extends BaseCoinInfo {
   sevenAvgUnderlyingPtApy: string
   sevenAvgUnderlyingYtApy: string
   sevenAvgUnderlyingApy: string
-  underlyingCoinName: string
-  underlyingCoinLogo: string
   underlyingProtocol: string
   underlyingProtocolLogo: string
   swapFeeApy: string
@@ -83,11 +84,8 @@ export interface CoinConfig extends BaseCoinInfo {
 }
 
 export interface PortfolioItem extends CoinConfig {
-  name: string
-  icon: string
-  ptReward: string
-  ytReward: string
-  lpReward: string
+  pyPositionTypeList: string[]
+  marketPositionTypeList: string[]
 }
 
 export interface FixedReturnItem {

@@ -39,13 +39,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
         </TableHeader>
         <TableBody>
           {list?.map((item) => (
-            <TableRow
-              key={item.coinType + "_" + item.maturity}
-              className="cursor-pointer"
-              onClick={() =>
-                navigate(`/market/detail/${item.coinType}/${item.maturity}`)
-              }
-            >
+            <TableRow key={item.coinType + "_" + item.maturity}>
               <TableCell className="!px-0">
                 <div className="flex items-center">
                   <img
@@ -185,8 +179,8 @@ const MarketTable = ({ list }: MarketTableProps) => {
                               </span>
                             </div>
                             <span className="font-mono text-xs">
-                              {item.ptApy
-                                ? `${formatLargeNumber(item.ptApy, 6)}%`
+                              {item.scaled_pt_apy
+                                ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%`
                                 : "--"}
                             </span>
                           </div>
@@ -200,8 +194,8 @@ const MarketTable = ({ list }: MarketTableProps) => {
                               </span>
                             </div>
                             <span className="font-mono text-xs">
-                              {item.underlyingApy
-                                ? `${formatLargeNumber(item.underlyingApy, 6)}%`
+                              {item.scaled_underlying_apy
+                                ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%`
                                 : "--"}
                             </span>
                           </div>
@@ -233,8 +227,8 @@ const MarketTable = ({ list }: MarketTableProps) => {
                           Total APY
                         </span>
                         <span className="text-[#2DF4DD] font-mono text-sm">
-                          {item.ptApy && item.underlyingApy
-                            ? `${formatLargeNumber(Number(item.ptApy) + Number(item.underlyingApy) + 0, 6)}%`
+                          {item.poolApy
+                            ? `${formatLargeNumber(item.poolApy, 6)}%`
                             : "--"}
                         </span>
                       </div>
