@@ -151,7 +151,7 @@ export function useCalculatePtYt(
         tvl = syTvl.add(ptTvl)
         const rSy = totalSy.div(totalSy.add(totalPt))
         const rPt = totalPt.div(totalSy.add(totalPt))
-        scaled_underlying_apy = rSy.mul(coinInfo.underlyingApy)
+        scaled_underlying_apy = rSy.mul(coinInfo.underlyingApy).mul(100)
         scaled_pt_apy = rPt.mul(ptApy)
         const apyIncentive = new Decimal(0)
         const poolValue = calculatePoolValue(
