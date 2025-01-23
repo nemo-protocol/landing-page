@@ -614,8 +614,8 @@ export default function Item({
                   $
                   <SmallNumDisplay
                     value={formatDecimalValue(
-                      ptYtData?.tvl
-                        ? new Decimal(lpBalance).mul(ptYtData.tvl)
+                      ptYtData?.tvl && marketState?.lpSupply
+                        ? new Decimal(lpBalance).mul(ptYtData.tvl).mul(10 ** Number(coinConfig.decimal)).div(marketState.lpSupply)
                         : new Decimal(0),
                       6,
                     )}
