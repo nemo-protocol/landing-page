@@ -7,6 +7,7 @@ import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 import { getPriceVoucher } from "@/lib/txHelper"
 import Decimal from "decimal.js"
+import { DEBUG } from "@/config"
 
 export default function useQuerySyOutFromPtInWithVoucher(
   coinConfig?: CoinConfig,
@@ -50,6 +51,10 @@ export default function useQuerySyOutFromPtInWithVoucher(
         },
       }
 
+      if (DEBUG) {
+        console.log("debugInfo", debugInfo)
+      }
+
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
@@ -91,9 +96,9 @@ export default function useQuerySyOutFromPtInWithVoucher(
         new Uint8Array(result.results[1].returnValues[0][0]),
       )
 
-      const formattedAmount = new Decimal(outputAmount.toString()).toFixed(
-        Number(coinConfig.decimal),
-      )
+      const formattedAmount = new Decimal(outputAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
+        .toFixed()
 
       debugInfo.parsedOutput = formattedAmount
 

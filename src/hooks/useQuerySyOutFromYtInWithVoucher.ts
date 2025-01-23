@@ -7,6 +7,7 @@ import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 import { getPriceVoucher } from "@/lib/txHelper"
 import Decimal from "decimal.js"
+import { DEBUG } from "@/config"
 
 export default function useQuerySyOutFromYtInWithVoucher(
   coinConfig?: CoinConfig,
@@ -48,6 +49,10 @@ export default function useQuerySyOutFromYtInWithVoucher(
           ],
           typeArguments: [coinConfig.syCoinType],
         },
+      }
+
+      if (DEBUG) {
+        console.log("debugInfo", debugInfo)
       }
 
       tx.moveCall({

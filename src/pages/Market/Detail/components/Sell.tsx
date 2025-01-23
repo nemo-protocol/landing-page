@@ -109,29 +109,15 @@ export default function Sell() {
               .toString()
             console.log("syAmount", syAmount)
             setTargetValue(
-              tokenType === "pt"
-                ? new Decimal(syAmount).div(10 ** decimal).toString()
-                : syAmount,
+              new Decimal(syAmount)
+                .mul(
+                  receivingType === "underlying"
+                    ? coinConfig.conversionRate
+                    : 1,
+                )
+                .toString(),
             )
 
-            // const [result] = await (tokenType === "yt"
-            //   ? sellYtDryRun({
-            //       slippage,
-            //       receivingType,
-            //       sellValue: value,
-            //       pyPositions: pyPositionData,
-            //     })
-            //   : sellPtDryRun({
-            //       sellValue: value,
-            //       receivingType,
-            //       pyPositions: pyPositionData,
-            //     }))
-
-            // setTargetValue(
-            //   receivingType === "underlying"
-            //     ? result.underlyingAmount
-            //     : result.syAmount,
-            // )
             setError(undefined)
           } catch (error) {
             setError((error as ContractError)?.message)
@@ -282,12 +268,6 @@ export default function Sell() {
   )
 
   const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
-
-  useEffect(() => {
-    if (marketState) {
-      console.log("marketState", marketState)
-    }
-  }, [marketState])
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketState)
 
