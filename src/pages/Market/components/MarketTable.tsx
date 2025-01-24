@@ -211,7 +211,6 @@ const MarketTable = ({ list }: MarketTableProps) => {
                             ? `${formatLargeNumber(item.poolApy, 6)}%`
                             : "--"}
                         </span>
-                        <span>Thank you</span>
                       </div>
                     </div>
                   </TooltipContent>

@@ -61,22 +61,19 @@ export default function List({ list, isLoading }: ListProps) {
     isMarketStatesLoading ||
     isLpPositionsLoading
 
-  const filteredList = useMemo(() => {
-    if (!list?.length) return []
+  const filteredLists = useMemo(() => {
+    if (!list?.length) return { pt: [], yt: [], lp: [] }
 
-    return list.filter((item) => {
-      if (selectType === "pt") {
-        return isValidAmount(pyPositionsMap[item.id]?.ptBalance)
-      }
-      if (selectType === "yt") {
-        return isValidAmount(pyPositionsMap[item.id]?.ytBalance)
-      }
-      if (selectType === "lp") {
-        return isValidAmount(lpPositionsMap[item.id]?.lpBalance)
-      }
-      return true // for "all" type
-    })
-  }, [list, selectType, pyPositionsMap, lpPositionsMap])
+    return {
+      pt: list.filter((item) => isValidAmount(pyPositionsMap[item.id]?.ptBalance)),
+      yt: list.filter((item) => isValidAmount(pyPositionsMap[item.id]?.ytBalance)),
+      lp: list.filter((item) => isValidAmount(lpPositionsMap[item.id]?.lpBalance)),
+    }
+  }, [list, pyPositionsMap, lpPositionsMap])
+
+  const filteredList = useMemo(() => {
+    return filteredLists[selectType] || []
+  }, [filteredLists, selectType])
 
   return (
     <motion.div
@@ -141,24 +138,58 @@ export default function List({ list, isLoading }: ListProps) {
             </TableBody>
           ) : (
             <>
-              {isConnected && filteredList?.length ? (
-                <TableBody>
-                  {filteredList.map((item) => (
-                    <Item
-                      {...item}
-                      id={item.id}
-                      key={item.id}
-                      selectType={selectType}
-                      marketState={marketStates?.[item.marketStateId]}
-                      ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
-                      ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
-                      lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
-                      pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
-                      lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
-                    />
-                  ))}
-                </TableBody>
-              ) : null}
+              {isConnected && (
+                <>
+                  <TableBody className={selectType === "pt" ? "" : "hidden"}>
+                    {filteredLists.pt?.map((item) => (
+                      <Item
+                        {...item}
+                        id={item.id}
+                        key={item.id}
+                        selectType="pt"
+                        marketState={marketStates?.[item.marketStateId]}
+                        ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
+                        ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
+                        lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
+                        pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
+                        lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
+                      />
+                    ))}
+                  </TableBody>
+                  <TableBody className={selectType === "yt" ? "" : "hidden"}>
+                    {filteredLists.yt?.map((item) => (
+                      <Item
+                        {...item}
+                        id={item.id}
+                        key={item.id}
+                        selectType="yt"
+                        marketState={marketStates?.[item.marketStateId]}
+                        ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
+                        ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
+                        lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
+                        pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
+                        lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
+                      />
+                    ))}
+                  </TableBody>
+                  <TableBody className={selectType === "lp" ? "" : "hidden"}>
+                    {filteredLists.lp?.map((item) => (
+                      <Item
+                        {...item}
+                        id={item.id}
+                        key={item.id}
+                        selectType="lp"
+                        marketState={marketStates?.[item.marketStateId]}
+                        ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
+                        ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
+                        lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
+                        pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
+                        lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
+                      />
+                    ))}
+                  </TableBody>
+                </>
+              )}
             </>
           )}
         </Table>

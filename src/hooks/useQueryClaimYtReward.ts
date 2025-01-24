@@ -1,11 +1,11 @@
+import Decimal from "decimal.js"
 import type { PyPosition } from "./types"
+import { isValidAmount } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
-import { redeemSyCoin, getPriceVoucher, burnSCoin } from "@/lib/txHelper"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { isValidAmount } from "@/lib/utils"
-import Decimal from "decimal.js"
+import { redeemSyCoin, getPriceVoucher, burnSCoin } from "@/lib/txHelper"
 
 interface ClaimYtRewardParams {
   ytBalance: string
@@ -90,6 +90,8 @@ export default function useQueryClaimYtReward(
           onlyTransactionKind: true,
         }),
       })
+
+      console.log("result", result)
 
       if (result?.error) {
         throw new Error(result.error)

@@ -94,8 +94,8 @@ export default function Item({
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
 
+    const { address } = useWallet()
   const { updatePortfolio } = usePortfolio()
-  const { address } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
   const [loading, setLoading] = useState(false)

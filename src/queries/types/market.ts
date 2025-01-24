@@ -73,13 +73,13 @@ export interface CoinConfig extends BaseCoinInfo {
   underlyingProtocolLogo: string
   swapFeeApy: string
   marketFactoryConfigId: string
-  sCoinTreasure: string
   tradeFee: string
   feeRate: string
   yieldFactoryConfigId: string
 }
 
 export interface PortfolioItem extends CoinConfig {
+  underlyingProtocol: string
   yieldFactoryConfigId: string
   pyPositionTypeList: string[]
   marketPositionTypeList: string[]
