@@ -155,10 +155,10 @@ export default function Item({
     coinConfig.id,
     updatePortfolio,
     ptYtData?.ptPrice,
+    ptYtData?.lpPrice,
     ptYtData?.ytPrice,
     coinConfig.coinPrice,
     coinConfig.underlyingPrice,
-    ptYtData?.lpPrice,
   ])
 
   async function claim() {
@@ -650,10 +650,10 @@ export default function Item({
                 <>
                   <div className="flex flex-col items-center w-24">
                     <span className="text-white text-sm break-all">
-                      <SmallNumDisplay value={0} />
+                      0
                     </span>
                     <span className="text-white/50 text-xs">
-                      $<SmallNumDisplay value={"0"} />
+                      $0
                     </span>
                   </div>
                   <LoadingButton

@@ -103,11 +103,13 @@ export default function useQueryClaimYtReward(
         throw new Error("Failed to get yt reward data")
       }
 
+      const decimal = Number(coinConfig.decimal)
+
       return new Decimal(
         result.events[result.events.length - 1].parsedJson.withdraw_amount,
       )
-        .div(new Decimal(10).pow(coinConfig.decimal))
-        .toString()
+        .div(new Decimal(10).pow(decimal))
+        .toFixed(decimal)
     },
   })
 }
