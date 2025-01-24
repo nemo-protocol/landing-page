@@ -73,6 +73,7 @@ export default function Sell() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity)
+  
   const { data: pyPositionData, refetch: refetchPyPosition } =
     usePyPositionData(
       address,

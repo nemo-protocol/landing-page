@@ -3,13 +3,13 @@ import Decimal from "decimal.js"
 import { Link } from "react-router-dom"
 import Loading from "@/components/Loading"
 import usePortfolio from "@/hooks/usePortfolio"
-import { CoinConfig } from "@/queries/types/market"
 import { Skeleton } from "@/components/ui/skeleton"
 import { network, debugLog, DEBUG } from "@/config"
 import { useEffect, useMemo, useState } from "react"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
 import { Transaction } from "@mysten/sui/transactions"
+import { PortfolioItem } from "@/queries/types/market"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import SmallNumDisplay from "@/components/SmallNumDisplay"
 import { TableRow, TableCell } from "@/components/ui/table"
@@ -75,7 +75,7 @@ export default function Item({
   lpPositions,
   marketState,
   ...coinConfig
-}: CoinConfig & {
+}: PortfolioItem & {
   ptBalance: string
   ytBalance: string
   lpBalance: string
@@ -115,12 +115,6 @@ export default function Item({
       tokenType: selectType === "yt" ? 1 : 0,
     },
   )
-
-  useEffect(() => {
-    if (ytReward) {
-      console.log("ytReward", ytReward)
-    }
-  }, [ytReward])
 
   useEffect(() => {
     if (isConnected) {

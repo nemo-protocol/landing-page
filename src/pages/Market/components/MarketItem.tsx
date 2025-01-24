@@ -1,14 +1,15 @@
 import dayjs from "dayjs"
-import { motion } from "framer-motion"
 import PieChart from "./PieChart"
+import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
+import { getBgGradient } from "@/lib/gradients"
 import { CoinInfoWithMetrics } from "@/queries/types/market"
 import { formatLargeNumber, formatTimeDiff, isValidAmount } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip"
 
 interface MarketItemProps {
@@ -26,7 +27,7 @@ const MarketItem = ({ item }: MarketItemProps) => {
       >
         <motion.div
           className="p-5 rounded-3xl"
-          style={{ background: item?.bgGradient || "#0E0F16" }}
+          style={{ background: getBgGradient(item.coinType) }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}

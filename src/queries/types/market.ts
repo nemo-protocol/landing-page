@@ -36,11 +36,7 @@ export interface BaseCoinInfo {
   version: string
 }
 
-export interface CoinInfo extends BaseCoinInfo {
-  bgGradient: string
-}
-
-export interface CoinInfoWithMetrics extends CoinInfo {
+export interface CoinInfoWithMetrics extends BaseCoinInfo {
   ptPrice: string
   ytPrice: string
   ptApy: string
@@ -76,14 +72,15 @@ export interface CoinConfig extends BaseCoinInfo {
   underlyingProtocol: string
   underlyingProtocolLogo: string
   swapFeeApy: string
-  yieldFactoryConfigId: string
   marketFactoryConfigId: string
   sCoinTreasure: string
   tradeFee: string
   feeRate: string
+  yieldFactoryConfigId: string
 }
 
 export interface PortfolioItem extends CoinConfig {
+  yieldFactoryConfigId: string
   pyPositionTypeList: string[]
   marketPositionTypeList: string[]
 }

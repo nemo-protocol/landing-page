@@ -1,17 +1,17 @@
 import { nemoApi } from "./request"
-import { useQuery, UseQueryResult } from "@tanstack/react-query"
-import {
-  CoinInfo,
-  CoinConfig,
-  FixedReturnItem,
-  PointItem,
-  CoinInfoWithMetrics,
-  PortfolioItem,
-} from "./types/market"
-import { handleInfinityValues, isValidAmount } from "../lib/utils"
-import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
-import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
 import { MarketState } from "@/hooks/types"
+import { useQuery, UseQueryResult } from "@tanstack/react-query"
+import { handleInfinityValues, isValidAmount } from "@/lib/utils"
+import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
+import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
+import {
+  PointItem,
+  CoinConfig,
+  BaseCoinInfo,
+  PortfolioItem,
+  FixedReturnItem,
+  CoinInfoWithMetrics,
+} from "./types/market"
 
 interface CoinInfoListParams {
   name?: string
@@ -25,7 +25,7 @@ function getCoinInfoList({
   address = "",
   isShowExpiry = 0,
 }: CoinInfoListParams = {}) {
-  return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo").get({
+  return nemoApi<BaseCoinInfo[]>("/api/v1/market/coinInfo").get({
     name,
     address,
     isShowExpiry,
@@ -185,7 +185,10 @@ export function usePortfolioList() {
 
 export function useCoinInfoList<T extends boolean = true>(
   params: CoinInfoListParams & { isCalc?: T } = {},
-): UseQueryResult<T extends true ? CoinInfoWithMetrics[] : CoinInfo[], Error> {
+): UseQueryResult<
+  T extends true ? CoinInfoWithMetrics[] : BaseCoinInfo[],
+  Error
+> {
   const {
     name = "",
     address = "",
@@ -208,9 +211,9 @@ export function useCoinInfoList<T extends boolean = true>(
 
       const marketStateIds = coinList.map((coin) => coin.marketStateId)
 
-      const marketStates = (await fetchMarketStates(marketStateIds).catch(
-        () => ({} as { [key: string]: MarketState })
-      ))
+      const marketStates = await fetchMarketStates(marketStateIds).catch(
+        () => ({}) as { [key: string]: MarketState },
+      )
 
       const results = await Promise.all(
         coinList.map(async (coinInfo) => {
