@@ -1,13 +1,13 @@
+import Decimal from "decimal.js"
+import { debugLog } from "@/config"
+import { bcs } from "@mysten/sui/bcs"
+import { ContractError } from "./types"
+import type { DebugInfo } from "./types"
+import { getPriceVoucher } from "@/lib/txHelper"
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "./types"
-import { ContractError } from "./types"
-import { getPriceVoucher } from "@/lib/txHelper"
-import Decimal from "decimal.js"
-import { DEBUG } from "@/config"
+import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 
 export default function useQuerySyOutFromPtInWithVoucher(
   coinConfig?: CoinConfig,
@@ -51,9 +51,10 @@ export default function useQuerySyOutFromPtInWithVoucher(
         },
       }
 
-      if (DEBUG) {
-        console.log("debugInfo", debugInfo)
-      }
+      debugLog(
+        "get_sy_amount_out_for_exact_pt_in_with_price_voucher move call:",
+        debugInfo,
+      )
 
       tx.moveCall({
         target: debugInfo.moveCall.target,

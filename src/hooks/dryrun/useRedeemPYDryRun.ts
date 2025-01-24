@@ -4,7 +4,6 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
-import { DEBUG } from "@/config"
 import type { PyPosition } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
@@ -39,14 +38,9 @@ export default function useRedeemPYDryRun(
         throw new Error("Please select a pool")
       }
 
-      let pyPositions = inputPyPositions
-      if (!pyPositions) {
-        [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
-      }
-
-      if (DEBUG) {
-        console.log("pyPositions in dry run:", pyPositions)
-      }
+      const [pyPositions] = !inputPyPositions
+        ? ((await fetchPyPositionAsync()) as [PyPosition[]])
+        : [inputPyPositions]
 
       const tx = new Transaction()
       tx.setSender(address)
@@ -89,10 +83,6 @@ export default function useRedeemPYDryRun(
       })
 
       console.log("redeem_py dry run result:", result)
-
-      if (DEBUG) {
-        console.log("redeem_py dry run result:", result)
-      }
 
       const dryRunDebugInfo: DebugInfo = {
         moveCall: {

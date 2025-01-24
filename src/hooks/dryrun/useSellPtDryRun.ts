@@ -4,7 +4,6 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
-import { DEBUG } from "@/config"
 import Decimal from "decimal.js"
 import type { PyPosition } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
@@ -46,14 +45,9 @@ export default function useSellPtDryRun(
         throw new Error("Please select a pool")
       }
 
-      let pyPositions = inputPyPositions
-      if (!pyPositions) {
-        [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
-      }
-
-      if (DEBUG) {
-        console.log("pyPositions in dry run:", pyPositions)
-      }
+      const [pyPositions] = !inputPyPositions
+        ? ((await fetchPyPositionAsync()) as [PyPosition[]])
+        : [inputPyPositions]
 
       const tx = new Transaction()
       tx.setSender(address)
@@ -82,7 +76,7 @@ export default function useSellPtDryRun(
       )
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-      
+
       if (receivingType === "underlying") {
         const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
         tx.transferObjects([underlyingCoin], address)
@@ -102,20 +96,22 @@ export default function useSellPtDryRun(
         }),
       })
 
-      if (DEBUG) {
-        console.log("sell_pt dry run result:", result)
-      }
-
       const dryRunDebugInfo: DebugInfo = {
         moveCall: {
           target: `${coinConfig.nemoContractId}::market::swap_exact_pt_for_sy`,
           arguments: [
             { name: "version", value: coinConfig.version },
             { name: "amount", value: amount },
-            { name: "py_position", value: created ? "pyPosition" : pyPositions[0].id },
+            {
+              name: "py_position",
+              value: created ? "pyPosition" : pyPositions[0].id,
+            },
             { name: "py_state", value: coinConfig.pyStateId },
             { name: "price_voucher", value: "priceVoucher" },
-            { name: "market_factory_config", value: coinConfig.marketFactoryConfigId },
+            {
+              name: "market_factory_config",
+              value: coinConfig.marketFactoryConfigId,
+            },
             { name: "market_state", value: coinConfig.marketStateId },
             { name: "clock", value: "0x6" },
           ],
@@ -141,15 +137,14 @@ export default function useSellPtDryRun(
       }
 
       const syAmount = result.events[0].parsedJson.sy_amount as string
-      const underlyingAmount = receivingType === "underlying"
-        ? new Decimal(syAmount)
-            .mul(coinConfig.conversionRate)
-            .toFixed(0)
-        : syAmount
+      const underlyingAmount =
+        receivingType === "underlying"
+          ? new Decimal(syAmount).mul(coinConfig.conversionRate).toFixed(0)
+          : syAmount
 
-      dryRunDebugInfo.parsedOutput = JSON.stringify({ 
-        syAmount, 
-        underlyingAmount 
+      dryRunDebugInfo.parsedOutput = JSON.stringify({
+        syAmount,
+        underlyingAmount,
       })
 
       const returnValue = { syAmount, underlyingAmount }
@@ -157,4 +152,4 @@ export default function useSellPtDryRun(
       return debug ? [returnValue, dryRunDebugInfo] : [returnValue]
     },
   })
-} 
+}

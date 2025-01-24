@@ -8,7 +8,7 @@ import { ChevronsDown, Info } from "lucide-react"
 import AmountInput from "@/components/AmountInput"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { DEBUG, network, debugLog } from "@/config"
+import { network, debugLog } from "@/config"
 import ActionButton from "@/components/ActionButton"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 import { parseErrorMessage } from "@/lib/errorMapping"
@@ -448,8 +448,8 @@ export default function SingleCoin() {
               : amount
           try {
             if (marketStateData?.lpSupply === "0") {
-              console.log(1111);
-              
+              console.log(1111)
+
               const { lpAmount, ytAmount } = await seedLiquidityDryRun({
                 addAmount: convertedAmount,
                 tokenType,
@@ -637,9 +637,6 @@ export default function SingleCoin() {
 
         await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
         setMessage(parseErrorMessage(msg || ""))
@@ -1028,8 +1025,8 @@ export default function SingleCoin() {
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled Underlying APY</span>
                       <span>
-                        {ptYtData?.scaled_underlying_apy
-                          ? `${new Decimal(ptYtData?.scaled_underlying_apy).toFixed(6)} %`
+                        {coinConfig?.underlyingApy
+                          ? `${new Decimal(coinConfig.underlyingApy).mul(syRatio).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>

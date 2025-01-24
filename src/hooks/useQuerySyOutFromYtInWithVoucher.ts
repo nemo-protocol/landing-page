@@ -7,7 +7,7 @@ import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 import { getPriceVoucher } from "@/lib/txHelper"
 import Decimal from "decimal.js"
-import { DEBUG } from "@/config"
+import { debugLog } from "@/config"
 
 export default function useQuerySyOutFromYtInWithVoucher(
   coinConfig?: CoinConfig,
@@ -51,9 +51,10 @@ export default function useQuerySyOutFromYtInWithVoucher(
         },
       }
 
-      if (DEBUG) {
-        console.log("debugInfo", debugInfo)
-      }
+      debugLog(
+        "get_sy_amount_out_for_exact_yt_in_with_price_voucher move call:",
+        debugInfo,
+      )
 
       tx.moveCall({
         target: debugInfo.moveCall.target,

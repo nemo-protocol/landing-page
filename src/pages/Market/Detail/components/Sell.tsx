@@ -32,7 +32,6 @@ import useQuerySyOutFromYtInWithVoucher from "@/hooks/useQuerySyOutFromYtInWithV
 import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
-// import { ContractError } from "@/hooks/types"
 import dayjs from "dayjs"
 import SlippageSetting from "@/components/SlippageSetting"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
@@ -43,18 +42,18 @@ import { ContractError } from "@/hooks/types"
 import useMarketStateData from "@/hooks/useMarketStateData"
 
 export default function Sell() {
-  const { coinType, tokenType: _tokenType, maturity } = useParams()
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
+  const [error, setError] = useState<string>()
+  const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState("pt")
   const [redeemValue, setRedeemValue] = useState("")
   const [targetValue, setTargetValue] = useState("")
-  const [error, setError] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
   const [isRedeeming, setIsRedeeming] = useState(false)
-  const [slippage, setSlippage] = useState("0.5")
+  const [status, setStatus] = useState<"Success" | "Failed">()
+  const { coinType, tokenType: _tokenType, maturity } = useParams()
   const [receivingType, setReceivingType] = useState<"underlying" | "sy">(
     "underlying",
   )
@@ -73,7 +72,7 @@ export default function Sell() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity)
-  
+
   const { data: pyPositionData, refetch: refetchPyPosition } =
     usePyPositionData(
       address,
@@ -96,19 +95,17 @@ export default function Sell() {
     (value: string, decimal: number) => {
       const getSyOut = debounce(async () => {
         if (isValidAmount(value) && decimal && coinConfig?.conversionRate) {
+          // TODO: optimize this code to be more efficient
           try {
             const amount = new Decimal(value).mul(10 ** decimal).toString()
             const [syOut] = await (
               tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
             )(amount)
-            console.log("syOut", syOut)
             const syAmount = new Decimal(syOut)
-              // .div(10 ** decimal)
               .mul(
                 receivingType === "underlying" ? coinConfig.conversionRate : 1,
               )
               .toString()
-            console.log("syAmount", syAmount)
             setTargetValue(
               new Decimal(syAmount)
                 .mul(
@@ -201,7 +198,13 @@ export default function Sell() {
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        const minSyOut = new Decimal(targetValue)
+        const amount = new Decimal(redeemValue).mul(10 ** decimal).toString()
+
+        const [syOut] = await (
+          tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
+        )(amount)
+
+        const minSyOut = new Decimal(syOut)
           .mul(10 ** decimal)
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)

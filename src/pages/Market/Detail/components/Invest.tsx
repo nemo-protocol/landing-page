@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { DEBUG, network } from "@/config"
+import { network } from "@/config"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
@@ -314,9 +314,6 @@ export default function Invest() {
 
         await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error

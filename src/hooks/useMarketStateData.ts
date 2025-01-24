@@ -1,4 +1,4 @@
-import { DEBUG } from "@/config"
+import { debugLog } from "@/config"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 
 const useMarketStateData = (marketStateId?: string) => {
@@ -16,24 +16,27 @@ const useMarketStateData = (marketStateId?: string) => {
       select: (data) => {
         const fields = (
           data.data?.content as {
-            fields?: { lp_supply: string; total_sy: string; market_cap: string; total_pt: string }
+            fields?: {
+              lp_supply: string
+              total_sy: string
+              market_cap: string
+              total_pt: string
+            }
           }
         )?.fields
 
-        if (DEBUG) {
-          console.log("marketStateData", {
-            marketCap: fields?.market_cap || "",
-            totalSy: fields?.total_sy || "",
-            lpSupply: fields?.lp_supply || "",
-            totalPt: fields?.total_pt || "",
-          })
-        }
+        debugLog("marketStateData", {
+          marketCap: fields?.market_cap || "",
+          totalSy: fields?.total_sy || "",
+          lpSupply: fields?.lp_supply || "",
+          totalPt: fields?.total_pt || "",
+        })
 
         return {
           marketCap: fields?.market_cap || "",
           totalSy: fields?.total_sy || "",
           lpSupply: fields?.lp_supply || "",
-          totalPt: fields?.total_pt || ""
+          totalPt: fields?.total_pt || "",
         }
       },
     },

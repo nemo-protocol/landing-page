@@ -4,7 +4,6 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
-import { DEBUG } from "@/config"
 import Decimal from "decimal.js"
 import type { PyPosition } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
@@ -56,10 +55,6 @@ export default function useSellYtDryRun(
       const pyPositions =
         inputPyPositions ??
         ((await fetchPyPositionAsync()) as [PyPosition[]])[0]
-
-      // if (DEBUG) {
-      //   console.log("pyPositions in dry run:", pyPositions)
-      // }
 
       const tx = new Transaction()
       tx.setSender(address)
@@ -133,10 +128,6 @@ export default function useSellYtDryRun(
           onlyTransactionKind: true,
         }),
       })
-
-      if (DEBUG) {
-        console.log("sell_yt dry run result:", result)
-      }
 
       const dryRunDebugInfo: DebugInfo = {
         moveCall: {

@@ -4,7 +4,6 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
-import { DEBUG } from "@/config"
 import Decimal from "decimal.js"
 import type { CoinData } from "@/hooks/useCoinData"
 import type { PyPosition } from "../types"
@@ -50,15 +49,9 @@ export default function useMintPYDryRun(
         throw new Error("No available coins")
       }
 
-      let pyPositions = inputPyPositions
-      if (!pyPositions) {
-        [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
-      }
-
-      if (DEBUG) {
-        console.log("pyPositions in dry run:", pyPositions)
-        console.log("coinData in dry run:", coinData)
-      }
+      const [pyPositions] = !inputPyPositions
+        ? ((await fetchPyPositionAsync()) as [PyPosition[]])
+        : [inputPyPositions]
 
       const tx = new Transaction()
       tx.setSender(address)
@@ -115,10 +108,6 @@ export default function useMintPYDryRun(
       })
 
       console.log("mint_py dry run result:", result)
-
-      if (DEBUG) {
-        console.log("mint_py dry run result:", result)
-      }
 
       const dryRunDebugInfo: DebugInfo = {
         moveCall: debugInfo,

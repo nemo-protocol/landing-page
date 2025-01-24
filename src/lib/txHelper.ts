@@ -602,6 +602,7 @@ export const swapExactYtForSy = (
   priceVoucher: TransactionArgument,
   minSyOut: string,
 ) => {
+  console.log("minSyOut", minSyOut)
   const [syCoin] = tx.moveCall({
     target: `${coinConfig.nemoContractId}::router::swap_exact_yt_for_sy`,
     arguments: [

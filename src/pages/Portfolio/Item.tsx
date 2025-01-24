@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import Loading from "@/components/Loading"
 import usePortfolio from "@/hooks/usePortfolio"
 import { Skeleton } from "@/components/ui/skeleton"
-import { network, debugLog, DEBUG } from "@/config"
+import { network, debugLog } from "@/config"
 import { useEffect, useMemo, useState } from "react"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
@@ -94,7 +94,7 @@ export default function Item({
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
 
-    const { address } = useWallet()
+  const { address } = useWallet()
   const { updatePortfolio } = usePortfolio()
   const isConnected = useMemo(() => !!address, [address])
 
@@ -232,9 +232,6 @@ export default function Item({
         setYtClaimed(true)
         // await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
@@ -299,9 +296,6 @@ export default function Item({
         setPtRedeemed(true)
         // await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
@@ -333,9 +327,6 @@ export default function Item({
         setLpRedeemed(true)
         // await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
@@ -649,12 +640,8 @@ export default function Item({
               ) : (
                 <>
                   <div className="flex flex-col items-center w-24">
-                    <span className="text-white text-sm break-all">
-                      0
-                    </span>
-                    <span className="text-white/50 text-xs">
-                      $0
-                    </span>
+                    <span className="text-white text-sm break-all">0</span>
+                    <span className="text-white/50 text-xs">$0</span>
                   </div>
                   <LoadingButton
                     onClick={() => {}}

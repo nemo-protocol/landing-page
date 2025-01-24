@@ -2,7 +2,7 @@ import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { debounce } from "@/lib/utils"
 import { useCoinConfig } from "@/queries"
-import { network, DEBUG } from "@/config"
+import { network } from "@/config"
 import { ChevronsDown } from "lucide-react"
 import PoolSelect from "@/components/PoolSelect"
 import AmountInput from "@/components/AmountInput"
@@ -176,9 +176,6 @@ export default function Remove() {
 
         await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error

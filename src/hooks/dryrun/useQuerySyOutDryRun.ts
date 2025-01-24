@@ -6,7 +6,6 @@ import type { BaseCoinInfo } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { bcs } from "@mysten/sui/bcs"
 import { getPriceVoucher } from "@/lib/txHelper"
-import { DEBUG } from "@/config"
 
 interface SyoutParams {
   ptIn: string
@@ -90,9 +89,6 @@ export default function useQuerySyOutDryRun<T extends boolean = false>(
       }
 
       if (result?.error) {
-        if (DEBUG) {
-          console.log("debugInfo", debugInfo, coinInfo)
-        }
         throw new ContractError(result.error, debugInfo)
       }
 

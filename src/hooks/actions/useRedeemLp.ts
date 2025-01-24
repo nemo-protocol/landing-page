@@ -1,9 +1,12 @@
-import { Transaction } from "@mysten/sui/transactions"
-import { useCallback } from "react"
-import { useWallet } from "@nemoprotocol/wallet-kit"
 import Decimal from "decimal.js"
+import { useCallback } from "react"
 import { useMutation } from "@tanstack/react-query"
-import { DEBUG } from "@/config"
+import { CoinConfig } from "@/queries/types/market"
+import { useWallet } from "@nemoprotocol/wallet-kit"
+import { Transaction } from "@mysten/sui/transactions"
+import { LpPosition, PyPosition } from "@/hooks/types"
+import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
+import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
 import {
   initPyPosition,
   mergeLpPositions,
@@ -12,10 +15,6 @@ import {
   getPriceVoucher,
   swapExactPtForSy,
 } from "@/lib/txHelper"
-import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
-import { CoinConfig } from "@/queries/types/market"
-import { LpPosition, PyPosition } from "@/hooks/types"
-import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
 
 interface RedeemLpParams {
   lpAmount: string
@@ -129,10 +128,5 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
 
   return useMutation({
     mutationFn: redeemLp,
-    onError: (error) => {
-      if (DEBUG) {
-        console.log("Redeem LP error:", error)
-      }
-    },
   })
 }

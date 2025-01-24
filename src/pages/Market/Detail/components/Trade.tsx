@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { DEBUG, debugLog, network } from "@/config"
+import { debugLog, network } from "@/config"
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { useParams } from "react-router-dom"
 import { ChevronsDown } from "lucide-react"
@@ -209,7 +209,6 @@ export default function Trade() {
     }
   }, [swapValue, decimal, coinConfig, debouncedGetYtOut])
 
-
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
 
   useEffect(() => {
@@ -343,9 +342,6 @@ export default function Trade() {
 
         await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setOpen(true)
         setStatus("Failed")
         const msg = (error as Error)?.message ?? error
