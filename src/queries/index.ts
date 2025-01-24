@@ -12,6 +12,7 @@ import {
   FixedReturnItem,
   CoinInfoWithMetrics,
 } from "./types/market"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 
 interface CoinInfoListParams {
   name?: string
@@ -36,10 +37,17 @@ function getFixedReturnInfos() {
   return nemoApi<FixedReturnItem[]>("/api/v1/fixReturn/detail").get()
 }
 
-function getRewardList() {
-  return nemoApi<PointItem[]>("/api/v1/points/page").get({
-    pageSize: 100,
-  })
+function getRewardList(address?: string) {
+  const headers = new Headers()
+  if (address) {
+    headers.set("userAddress", address)
+  }
+  return nemoApi<PointItem[]>("/api/v1/points/page").get(
+    {
+      pageSize: 100,
+    },
+    headers,
+  )
 }
 
 function getRewardWithAddress(address?: string) {
@@ -270,10 +278,10 @@ export function useCoinInfoList<T extends boolean = true>(
 }
 
 export function useRewardList() {
+  const { address } = useWallet()
   return useQuery({
-    // FIXME： queryKey dose not work
     queryKey: ["RewardConfig"],
-    queryFn: () => getRewardList(),
+    queryFn: () => getRewardList(address),
   })
 }
 
