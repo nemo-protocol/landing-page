@@ -615,7 +615,7 @@ export default function Item({
                   <SmallNumDisplay
                     value={formatDecimalValue(
                       ptYtData?.lpPrice && isValidAmount(ptYtData?.lpPrice)
-                        ? ptYtData.lpPrice
+                        ? new Decimal(ptYtData.lpPrice).mul(10 ** Number(coinConfig.decimal)).mul(lpBalance)
                         : "0",
                       6,
                     )}
