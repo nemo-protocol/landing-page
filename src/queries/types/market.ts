@@ -34,6 +34,7 @@ export interface BaseCoinInfo {
   underlyingCoinName: string
   underlyingCoinLogo: string
   version: string
+  perPoints: string
 }
 
 export interface CoinInfoWithMetrics extends BaseCoinInfo {
@@ -53,6 +54,7 @@ export interface CoinInfoWithMetrics extends BaseCoinInfo {
   incentiveApy: string
   incentive: string
   totalApy: string
+  feeApy: string
 }
 
 export interface CoinConfig extends BaseCoinInfo {

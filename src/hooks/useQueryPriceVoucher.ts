@@ -6,6 +6,7 @@ import type { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "./types"
 import { bcs } from "@mysten/sui/bcs"
 import { getPriceVoucher } from "@/lib/txHelper"
+// import { debugLog } from "@/config"
 
 interface MoveCallInfo {
   target: string
@@ -81,7 +82,9 @@ export function useQueryPriceVoucherWithCoinInfo(
     "0x0000000000000000000000000000000000000000000000000000000000000001"
 
   return useMutation({
-    mutationFn: async (): Promise<[string, string] | [string, string, DebugInfo]> => {
+    mutationFn: async (): Promise<
+      [string, string] | [string, string, DebugInfo]
+    > => {
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }

@@ -84,9 +84,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
                     </span>
                     <span className="text-xs text-right">
                       $
-                      {item.ytPrice
-                        ? formatLargeNumber(item.ytPrice, 6)
-                        : "--"}
+                      {item.ytPrice ? formatLargeNumber(item.ytPrice, 6) : "--"}
                     </span>
                   </div>
                 </div>
@@ -110,9 +108,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
                     </span>
                     <span className="text-xs">
                       $
-                      {item.ptPrice
-                        ? formatLargeNumber(item.ptPrice, 6)
-                        : "--"}
+                      {item.ptPrice ? formatLargeNumber(item.ptPrice, 6) : "--"}
                     </span>
                   </div>
                 </div>
@@ -147,6 +143,19 @@ const MarketTable = ({ list }: MarketTableProps) => {
                     className="bg-[#1B202A] text-white border-none p-4 relative rounded-xl w-[312px]"
                   >
                     <div className="flex flex-col gap-4">
+                      <div className="flex flex-row items-start justify-between">
+                        <span className="text-sm text-left">Points</span>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span className="font-mono text-xs">
+                            {item.perPoints
+                              ? `${formatLargeNumber(item.perPoints, 6)}`
+                              : "--"}
+                          </span>
+                          <span className="text-[#96A9E4] text-xs">
+                            per LP per day
+                          </span>
+                        </div>
+                      </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-left">Scaled</div>
                         <div className="relative flex flex-row gap-2">
@@ -180,6 +189,14 @@ const MarketTable = ({ list }: MarketTableProps) => {
                             </span>
                           </div>
                         </div>
+                      </div>
+                      <div className="flex flex-row items-start justify-between">
+                        <span className="text-sm text-left">Fee APY</span>
+                        <span className="font-mono text-xs">
+                          {item.feeApy
+                            ? `${formatLargeNumber(item.feeApy, 6)}%`
+                            : "--"}
+                        </span>
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-left">Incentive APY</div>

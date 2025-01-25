@@ -124,12 +124,13 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
-      // debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
+      debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
+
       return [priceVoucher, moveCall]
     }
   }

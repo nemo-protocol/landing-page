@@ -1,5 +1,6 @@
 import { nemoApi } from "./request"
 import { MarketState } from "@/hooks/types"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import { useQuery, UseQueryResult } from "@tanstack/react-query"
 import { handleInfinityValues, isValidAmount } from "@/lib/utils"
 import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
@@ -12,7 +13,6 @@ import {
   FixedReturnItem,
   CoinInfoWithMetrics,
 } from "./types/market"
-import { useWallet } from "@nemoprotocol/wallet-kit"
 
 interface CoinInfoListParams {
   name?: string
@@ -238,6 +238,7 @@ export function useCoinInfoList<T extends boolean = true>(
               ptTvl: "0",
               syTvl: "0",
               marketState,
+              feeApy: "0",
             }
 
           try {
