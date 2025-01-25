@@ -1,4 +1,4 @@
-import { debugLog } from "@/config"
+// import { debugLog } from "@/config"
 import { useSuiClientQuery } from "@mysten/dapp-kit"
 
 const useMarketStateData = (marketStateId?: string) => {
@@ -25,12 +25,12 @@ const useMarketStateData = (marketStateId?: string) => {
           }
         )?.fields
 
-        debugLog("marketStateData", {
-          marketCap: fields?.market_cap || "",
-          totalSy: fields?.total_sy || "",
-          lpSupply: fields?.lp_supply || "",
-          totalPt: fields?.total_pt || "",
-        })
+        // debugLog("marketStateData", {
+        //   marketCap: fields?.market_cap || "",
+        //   totalSy: fields?.total_sy || "",
+        //   lpSupply: fields?.lp_supply || "",
+        //   totalPt: fields?.total_pt || "",
+        // })
 
         return {
           marketCap: fields?.market_cap || "",

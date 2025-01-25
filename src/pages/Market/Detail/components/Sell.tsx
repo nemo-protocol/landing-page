@@ -101,20 +101,13 @@ export default function Sell() {
             const [syOut] = await (
               tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
             )(amount)
+
             const syAmount = new Decimal(syOut)
               .mul(
                 receivingType === "underlying" ? coinConfig.conversionRate : 1,
               )
               .toString()
-            setTargetValue(
-              new Decimal(syAmount)
-                .mul(
-                  receivingType === "underlying"
-                    ? coinConfig.conversionRate
-                    : 1,
-                )
-                .toString(),
-            )
+            setTargetValue(syAmount)
 
             setError(undefined)
           } catch (error) {
@@ -204,10 +197,14 @@ export default function Sell() {
           tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
         )(amount)
 
+        console.log("syOut", syOut)
+
         const minSyOut = new Decimal(syOut)
           .mul(10 ** decimal)
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)
+
+        console.log("minSyOut", minSyOut)
 
         const syCoin =
           tokenType === "pt"
