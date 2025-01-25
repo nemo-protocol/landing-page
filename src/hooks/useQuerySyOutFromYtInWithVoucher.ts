@@ -9,17 +9,18 @@ import { getPriceVoucher } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
 
-export default function useQuerySyOutFromYtInWithVoucher(
-  coinConfig?: CoinConfig,
-  debug: boolean = false,
-) {
+type DryRunResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useQuerySyOutFromYtInWithVoucher<
+  T extends boolean = false,
+>(coinConfig?: CoinConfig, debug: T = false as T) {
   const client = useSuiClient()
   const { address } = useWallet()
 
   return useMutation({
-    mutationFn: async (
-      ytAmount: string,
-    ): Promise<[string] | [string, DebugInfo]> => {
+    mutationFn: async (ytAmount: string): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -103,7 +104,9 @@ export default function useQuerySyOutFromYtInWithVoucher(
 
       debugInfo.parsedOutput = formattedAmount
 
-      return debug ? [formattedAmount, debugInfo] : [formattedAmount]
+      return (
+        debug ? [formattedAmount, debugInfo] : formattedAmount
+      ) as DryRunResult<T>
     },
   })
 }

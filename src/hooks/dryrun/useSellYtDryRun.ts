@@ -6,7 +6,6 @@ import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
 import Decimal from "decimal.js"
 import type { PyPosition } from "../types"
-import useFetchPyPosition from "../useFetchPyPosition"
 import {
   initPyPosition,
   getPriceVoucher,
@@ -16,33 +15,33 @@ import {
 } from "@/lib/txHelper"
 import useQuerySyOutFromYtInWithVoucher from "../useQuerySyOutFromYtInWithVoucher"
 
-type SellResult = {
-  syAmount: string
-  underlyingAmount: string
+interface SellYtParams {
+  sellValue: string
+  receivingType: "underlying" | "sy"
+  slippage: string
+  pyPositions?: PyPosition[]
 }
 
-export default function useSellYtDryRun(
+type DryRunResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useSellYtDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
-  debug: boolean = false,
+  debug: T = false as T,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
-  const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
   const { mutateAsync: querySyOutFromYt } =
     useQuerySyOutFromYtInWithVoucher(coinConfig)
 
   return useMutation({
     mutationFn: async ({
+      slippage,
       sellValue,
       receivingType,
-      slippage,
       pyPositions: inputPyPositions,
-    }: {
-      sellValue: string
-      receivingType: "underlying" | "sy"
-      slippage: string
-      pyPositions?: PyPosition[]
-    }): Promise<[SellResult] | [SellResult, DebugInfo]> => {
+    }: SellYtParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -50,22 +49,16 @@ export default function useSellYtDryRun(
         throw new Error("Please select a pool")
       }
 
-      // console.log("inputPyPositions in dry run:", inputPyPositions)
-
-      const pyPositions =
-        inputPyPositions ??
-        ((await fetchPyPositionAsync()) as [PyPosition[]])[0]
-
       const tx = new Transaction()
       tx.setSender(address)
 
       let pyPosition
       let created = false
-      if (!pyPositions?.length) {
+      if (!inputPyPositions?.length) {
         created = true
         pyPosition = initPyPosition(tx, coinConfig)
       } else {
-        pyPosition = tx.object(pyPositions[0].id)
+        pyPosition = tx.object(inputPyPositions[0].id)
       }
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
@@ -74,28 +67,12 @@ export default function useSellYtDryRun(
         .mul(new Decimal(10).pow(coinConfig.decimal))
         .toString()
 
-      const redeemAmount = new Decimal(sellValue)
-        .mul(10 ** Number(coinConfig.decimal))
-        .toString()
-      console.log("redeemAmount", redeemAmount)
-
-      const [syOut] = await querySyOutFromYt(redeemAmount)
-
-      console.log("syOut", syOut)
+      const [syOut] = await querySyOutFromYt(amount)
 
       const minSyOut = new Decimal(syOut)
         .mul(10 ** Number(coinConfig.decimal))
         .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
         .toFixed(0)
-
-      console.log("params", {
-        tx,
-        coinConfig,
-        amount,
-        pyPosition,
-        priceVoucher,
-        minSyOut,
-      })
 
       const syCoin = swapExactYtForSy(
         tx,
@@ -105,8 +82,6 @@ export default function useSellYtDryRun(
         priceVoucher,
         minSyOut,
       )
-
-      // tx.transferObjects([syCoin], address)
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
@@ -121,15 +96,7 @@ export default function useSellYtDryRun(
         tx.transferObjects([pyPosition], address)
       }
 
-      const result = await client.devInspectTransactionBlock({
-        sender: address,
-        transactionBlock: await tx.build({
-          client: client,
-          onlyTransactionKind: true,
-        }),
-      })
-
-      const dryRunDebugInfo: DebugInfo = {
+      const debugInfo: DebugInfo = {
         moveCall: {
           target: `${coinConfig.nemoContractId}::router::swap_exact_yt_for_sy`,
           arguments: [
@@ -138,7 +105,7 @@ export default function useSellYtDryRun(
             { name: "min_sy_out", value: minSyOut },
             {
               name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id,
+              value: inputPyPositions?.length ? inputPyPositions[0].id : "pyPosition",
             },
             { name: "py_state", value: coinConfig.pyStateId },
             { name: "price_voucher", value: "priceVoucher" },
@@ -155,39 +122,36 @@ export default function useSellYtDryRun(
           ],
           typeArguments: [coinConfig.syCoinType],
         },
-        rawResult: {
-          error: result?.error,
-          results: result?.results,
-        },
+      }
+
+      const result = await client.devInspectTransactionBlock({
+        sender: address,
+        transactionBlock: await tx.build({
+          client: client,
+          onlyTransactionKind: true,
+        }),
+      })
+
+      debugInfo.rawResult = {
+        error: result?.error,
+        results: result?.results,
       }
 
       if (result?.error) {
-        throw new ContractError(result.error, dryRunDebugInfo)
+        throw new ContractError(result.error, debugInfo)
       }
 
       if (!result?.events?.[0]?.parsedJson) {
         const message = "Failed to get sell YT data"
-        dryRunDebugInfo.rawResult = {
-          error: message,
-          results: result?.results,
-        }
-        throw new ContractError(message, dryRunDebugInfo)
+        debugInfo.rawResult.error = message
+        throw new ContractError(message, debugInfo)
       }
 
       const syAmount = result.events[0].parsedJson.sy_amount as string
-      const underlyingAmount =
-        receivingType === "underlying"
-          ? new Decimal(syAmount).mul(coinConfig.conversionRate).toFixed(0)
-          : syAmount
 
-      dryRunDebugInfo.parsedOutput = JSON.stringify({
-        syAmount,
-        underlyingAmount,
-      })
+      debugInfo.parsedOutput = syAmount
 
-      const returnValue = { syAmount, underlyingAmount }
-
-      return debug ? [returnValue, dryRunDebugInfo] : [returnValue]
+      return (debug ? [syAmount, debugInfo] : syAmount) as DryRunResult<T>
     },
   })
 }

@@ -211,18 +211,6 @@ export default function Trade() {
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
 
-  useEffect(() => {
-    if (marketStateData) {
-      console.log("marketStateData", marketStateData)
-    }
-  }, [marketStateData])
-
-  useEffect(() => {
-    if (ptYtData) {
-      console.log("ptYtData", ptYtData)
-    }
-  }, [ptYtData])
-
   const hasLiquidity = useMemo(() => {
     return isValidAmount(marketStateData?.lpSupply)
   }, [marketStateData])

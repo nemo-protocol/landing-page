@@ -9,17 +9,19 @@ import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 
-export default function useQuerySyOutFromPtInWithVoucher(
+type DryRunResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useQuerySyOutFromPtInWithVoucher<T extends boolean = false>(
   coinConfig?: CoinConfig,
-  debug: boolean = false,
+  debug: T = false as T,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
 
   return useMutation({
-    mutationFn: async (
-      ptAmount: string,
-    ): Promise<[string] | [string, DebugInfo]> => {
+    mutationFn: async (ptAmount: string): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -103,7 +105,7 @@ export default function useQuerySyOutFromPtInWithVoucher(
 
       debugInfo.parsedOutput = formattedAmount
 
-      return debug ? [formattedAmount, debugInfo] : [formattedAmount]
+      return (debug ? [formattedAmount, debugInfo] : formattedAmount) as DryRunResult<T>
     },
   })
 }

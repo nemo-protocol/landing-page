@@ -29,7 +29,7 @@ import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQuerySyOutFromYtInWithVoucher from "@/hooks/useQuerySyOutFromYtInWithVoucher"
-import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
+// import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import dayjs from "dayjs"
@@ -85,8 +85,8 @@ export default function Sell() {
 
   const { mutateAsync: querySyOutFromYt } =
     useQuerySyOutFromYtInWithVoucher(coinConfig)
-  const { mutateAsync: querySyOutFromPt } =
-    useQuerySyOutFromPtInWithVoucher(coinConfig)
+  // const { mutateAsync: querySyOutFromPt } =
+  //   useQuerySyOutFromPtInWithVoucher(coinConfig)
 
   const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
   const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)
@@ -98,13 +98,20 @@ export default function Sell() {
           // TODO: optimize this code to be more efficient
           try {
             const amount = new Decimal(value).mul(10 ** decimal).toString()
-            const [syOut] = await (
-              tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
-            )(amount)
+            const syOut =
+              tokenType === "yt"
+                ? await querySyOutFromYt(amount)
+                : await sellPtDryRun({
+                    receivingType,
+                    sellValue: value,
+                    pyPositions: pyPositionData,
+                  })
 
             const syAmount = new Decimal(syOut)
               .mul(
-                receivingType === "underlying" ? coinConfig.conversionRate : 1,
+                receivingType === "underlying" && tokenType === "yt"
+                  ? coinConfig.conversionRate
+                  : 1,
               )
               .toString()
             setTargetValue(syAmount)
@@ -124,10 +131,12 @@ export default function Sell() {
     },
     [
       querySyOutFromYt,
-      querySyOutFromPt,
+      // querySyOutFromPt,
       tokenType,
       receivingType,
+      sellPtDryRun,
       coinConfig?.conversionRate,
+      pyPositionData,
     ],
   )
 
@@ -193,9 +202,7 @@ export default function Sell() {
 
         const amount = new Decimal(redeemValue).mul(10 ** decimal).toString()
 
-        const [syOut] = await (
-          tokenType === "yt" ? querySyOutFromYt : querySyOutFromPt
-        )(amount)
+        const syOut = tokenType === "yt" ? await querySyOutFromYt(amount) : 0
 
         console.log("syOut", syOut)
 
@@ -297,7 +304,7 @@ export default function Sell() {
   )
 
   const handleSell = async () => {
-    const [result] = await (tokenType === "yt"
+    const result = await (tokenType === "yt"
       ? sellYtDryRun({
           slippage,
           receivingType,
@@ -305,8 +312,8 @@ export default function Sell() {
           pyPositions: pyPositionData,
         })
       : sellPtDryRun({
-          sellValue: redeemValue,
           receivingType,
+          sellValue: redeemValue,
           pyPositions: pyPositionData,
         }))
     console.log("result", result)
