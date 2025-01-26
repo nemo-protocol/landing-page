@@ -6,7 +6,7 @@ export default function LongingYieldWithYT() {
         YT looks a bit like PT, yet there are still quite big differences.
       </p>
       <img
-        src="/images/png/LongingYieldWithYTPNG.png"
+        src="/images/learn/3/LongingYieldWithYT.png"
         alt=""
         className="mt-8 pr-4"
       />

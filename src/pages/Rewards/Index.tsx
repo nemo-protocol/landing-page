@@ -27,7 +27,11 @@ export default function Rewards() {
 
   return (
     <div className="min-h-screen w-full">
-      <Header />
+      <div className="bg-[#08080C]">
+        <div className="xl:max-w-[1200px] xl:mx-auto px-4 xl:px-0 bg-[#08080C]">
+          <Header />
+        </div>
+      </div>
       <div className="w-full max-w-[1200px] mx-auto px-4 xl:px-0">
         <div className="py-4 sm:py-10">
           {isUserPointLoading ? (

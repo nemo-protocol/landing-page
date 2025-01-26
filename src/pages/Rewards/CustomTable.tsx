@@ -13,7 +13,7 @@ import { motion } from "framer-motion"
 export default function CustomTable({ list }: { list?: PointItem[] }) {
   return (
     <motion.div
-      className="rounded-3xl border border-white/5 mt-9 relative bg-[#0A0B0F]/50 backdrop-blur-md"
+      className="rounded-3xl border border-white/5 mt-9 relative bg-[#0A0B0F]/50 backdrop-blur-md overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}

@@ -65,9 +65,16 @@ export default function List({ list, isLoading }: ListProps) {
     if (!list?.length) return { pt: [], yt: [], lp: [] }
 
     return {
-      pt: list.filter((item) => isValidAmount(pyPositionsMap[item.id]?.ptBalance)),
-      yt: list.filter((item) => isValidAmount(pyPositionsMap[item.id]?.ytBalance)),
-      lp: list.filter((item) => isValidAmount(lpPositionsMap[item.id]?.lpBalance)),
+      pt: list.filter((item) =>
+        isValidAmount(pyPositionsMap[item.id]?.ptBalance),
+      ),
+      yt: list.filter((item) =>
+        isValidAmount(pyPositionsMap[item.id]?.ytBalance),
+      ),
+
+      lp: list.filter((item) =>
+        isValidAmount(lpPositionsMap[item.id]?.lpBalance),
+      ),
     }
   }, [list, pyPositionsMap, lpPositionsMap])
 

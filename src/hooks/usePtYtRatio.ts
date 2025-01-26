@@ -182,7 +182,10 @@ export function useCalculatePtYt(
         ytPrice: ytPrice.toString(),
         poolApy: poolApy.toString(),
         swapFeeApy: swapFeeApy.toString(),
-        lpPrice: tvl.div(marketState.lpSupply).toString(),
+        lpPrice: tvl
+          .div(marketState.lpSupply)
+          .mul(10 ** Number(coinInfo.decimal))
+          .toString(),
       }
     },
     enabled: !!coinInfo?.decimal && !!marketState,

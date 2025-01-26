@@ -6,7 +6,7 @@ export default function FixingYieldWithPT() {
         Let's learn about PT step by step.
       </p>
       <img
-        src="/images/png/FixingYieldWithPTPNG.png"
+        src="/images/learn/2/FixingYieldWithPT.png"
         alt=""
         className="mt-7.5 pr-4"
       />

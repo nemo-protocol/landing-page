@@ -3,7 +3,7 @@ export default function YieldTokenisation() {
     <div className="flex flex-col items-center">
       <h1 className="text-4xl">Yield Tokenization</h1>
       <img
-        src="/images/png/YieldTokenizationPNG.png"
+        src="/images/learn/1/YieldTokenization.png"
         alt=""
         className="mt-7.5"
       />

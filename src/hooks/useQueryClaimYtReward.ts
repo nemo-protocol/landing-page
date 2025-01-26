@@ -9,8 +9,8 @@ import { redeemSyCoin, getPriceVoucher, burnSCoin } from "@/lib/txHelper"
 
 interface ClaimYtRewardParams {
   ytBalance: string
-  pyPositions?: PyPosition[]
   tokenType?: number
+  pyPositions?: PyPosition[]
 }
 
 export default function useQueryClaimYtReward(
@@ -91,7 +91,7 @@ export default function useQueryClaimYtReward(
         }),
       })
 
-      console.log("result", result)
+      console.log("yt reward result", result)
 
       if (result?.error) {
         throw new Error(result.error)
@@ -104,6 +104,21 @@ export default function useQueryClaimYtReward(
       }
 
       const decimal = Number(coinConfig.decimal)
+
+      console.log(
+        "yt reward",
+        new Decimal(
+          result.events[result.events.length - 1].parsedJson.burn_amount,
+        )
+          .mul(coinConfig.conversionRate)
+          .div(new Decimal(10).pow(decimal))
+          .toFixed(decimal),
+        new Decimal(
+          result.events[result.events.length - 1].parsedJson.withdraw_amount,
+        )
+          .div(new Decimal(10).pow(decimal))
+          .toFixed(decimal),
+      )
 
       return new Decimal(
         result.events[result.events.length - 1].parsedJson.withdraw_amount,
