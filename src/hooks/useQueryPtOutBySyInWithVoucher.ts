@@ -72,6 +72,7 @@ export default function useQueryPtOutBySyInWithVoucher(
         }),
       })
 
+      console.log("result", result)
       // Record raw result
       debugInfo.rawResult = {
         error: result?.error,

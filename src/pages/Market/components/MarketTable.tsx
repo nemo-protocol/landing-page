@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/tooltip"
 import dayjs from "dayjs"
 import { useNavigate } from "react-router-dom"
+import Decimal from "decimal.js"
 
 interface MarketTableProps {
   list: CoinInfoWithMetrics[]
@@ -158,46 +159,46 @@ const MarketTable = ({ list }: MarketTableProps) => {
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-left">Scaled</div>
-                        <div className="relative flex flex-row gap-2">
-                          <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
-                          <div className="absolute -bottom-1 left-0 top-0 w-[1px] bg-[#41517A]"></div>
-                          <div className="flex flex-1 flex-row items-start justify-between gap-4">
-                            <div className="flex flex-row items-center gap-1.5">
-                              <span className="text-[#96A9E4] text-xs">
-                                PT APY
+                        {item.scaled_pt_apy !== "0" && (
+                          <div className="relative flex flex-row gap-2">
+                            <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
+                            <div className="absolute -bottom-1 left-0 top-0 w-[1px] bg-[#41517A]"></div>
+                            <div className="flex flex-1 flex-row items-start justify-between gap-4">
+                              <div className="flex flex-row items-center gap-1.5">
+                                <span className="text-[#96A9E4] text-xs">PT APY</span>
+                              </div>
+                              <span className="font-mono text-xs">
+                                {item.scaled_pt_apy
+                                  ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%`
+                                  : "--"}
                               </span>
                             </div>
-                            <span className="font-mono text-xs">
-                              {item.scaled_pt_apy
-                                ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%`
-                                : "--"}
-                            </span>
                           </div>
-                        </div>
-                        <div className="relative flex flex-row gap-2">
-                          <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
-                          <div className="flex flex-1 flex-row items-start justify-between gap-4">
-                            <div className="flex flex-row items-center gap-1.5">
-                              <span className="text-[#96A9E4] text-xs">
-                                Underlying APY
+                        )}
+                        {item.scaled_underlying_apy !== "0" && (
+                          <div className="relative flex flex-row gap-2">
+                            <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
+                            <div className="flex flex-1 flex-row items-start justify-between gap-4">
+                              <div className="flex flex-row items-center gap-1.5">
+                                <span className="text-[#96A9E4] text-xs">Underlying APY</span>
+                              </div>
+                              <span className="font-mono text-xs">
+                                {item.scaled_underlying_apy
+                                  ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%`
+                                  : "--"}
                               </span>
                             </div>
-                            <span className="font-mono text-xs">
-                              {item.scaled_underlying_apy
-                                ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%`
-                                : "--"}
-                            </span>
                           </div>
-                        </div>
+                        )}
                       </div>
-                      <div className="flex flex-row items-start justify-between">
+                      {item.feeApy !== "0" &&(<div className="flex flex-row items-start justify-between">
                         <span className="text-sm text-left">Fee APY</span>
                         <span className="font-mono text-xs">
                           {item.feeApy
                             ? `${formatLargeNumber(item.feeApy, 6)}%`
                             : "--"}
                         </span>
-                      </div>
+                      </div>)}
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-left">Incentive APY</div>
                         <div className="relative flex flex-row gap-2">
