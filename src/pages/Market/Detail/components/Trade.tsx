@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { debugLog, network } from "@/config"
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { useParams } from "react-router-dom"
-import { ChevronsDown } from "lucide-react"
+import { ChevronsDown, Info } from "lucide-react"
 import { Transaction } from "@mysten/sui/transactions"
 import { useCoinConfig } from "@/queries"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
@@ -38,6 +38,12 @@ import useQueryYtOutBySyInWithVoucher from "@/hooks/useQueryYtOutBySyInWithVouch
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { CoinConfig } from "@/queries/types/market"
 import dayjs from "dayjs"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -473,11 +479,31 @@ export default function Trade() {
                     ) : (
                       priceImpact && (
                         <div className="flex items-center gap-x-1 text-xs">
+                          {priceImpact.ratio.gt(15) && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info 
+                                    className={`size-3 cursor-pointer ${
+                                      priceImpact.ratio.gt(30)
+                                        ? "text-red-500"
+                                        : priceImpact.ratio.gt(15)
+                                          ? "text-yellow-500"
+                                          : "text-white/60"
+                                    }`}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-[#12121B] max-w-[500px]">
+                                  <p>Price Impact Alert: Price impact is too high. Please consider adjusting the transaction size.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           <span
                             className={`text-xs ${
-                              priceImpact.ratio.gt(15)
+                              priceImpact.ratio.gt(30)
                                 ? "text-red-500"
-                                : priceImpact.ratio.gt(5)
+                                : priceImpact.ratio.gt(15)
                                   ? "text-yellow-500"
                                   : "text-white/60"
                             }`}

@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { useParams } from "react-router-dom"
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { Transaction } from "@mysten/sui/transactions"
-import { ChevronsDown } from "lucide-react"
+import { ChevronsDown, Info } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -38,6 +38,12 @@ import useSellPtDryRun from "@/hooks/dryrun/useSellPtDryRun"
 import useSellYtDryRun from "@/hooks/dryrun/useSellYtDryRun"
 import { ContractError } from "@/hooks/types"
 import useMarketStateData from "@/hooks/useMarketStateData"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default function Sell() {
   const [txId, setTxId] = useState("")
@@ -518,17 +524,49 @@ export default function Sell() {
                 <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
               </div>
             ) : priceImpact ? (
-              <div
-                className={`text-xs ${
-                  priceImpact.ratio.gt(15)
-                    ? "text-red-500"
-                    : priceImpact.ratio.gt(5)
-                      ? "text-yellow-500"
-                      : "text-white/60"
-                }`}
-              >
-                <span>${formatDecimalValue(priceImpact.value, 4)}</span>
-                <span> ({formatDecimalValue(priceImpact.ratio, 2)}%)</span>
+              <div className="flex items-center gap-x-1 text-xs">
+                {priceImpact.ratio.gt(5) && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info 
+                          className={`size-3 cursor-pointer ${
+                            priceImpact.ratio.gt(15)
+                              ? "text-red-500"
+                              : priceImpact.ratio.gt(5)
+                                ? "text-yellow-500"
+                                : "text-white/60"
+                          }`}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-[#12121B] max-w-[500px]">
+                        <p>Price Impact Alert: Price impact is too high. Please consider adjusting the transaction size.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                <span
+                  className={`text-xs ${
+                    priceImpact.ratio.gt(15)
+                      ? "text-red-500"
+                      : priceImpact.ratio.gt(5)
+                        ? "text-yellow-500"
+                        : "text-white/60"
+                  }`}
+                >
+                  ${formatDecimalValue(priceImpact.value, 4)}
+                </span>
+                <span
+                  className={`text-xs ${
+                    priceImpact.ratio.gt(15)
+                      ? "text-red-500"
+                      : priceImpact.ratio.gt(5)
+                        ? "text-yellow-500"
+                        : "text-white/60"
+                  }`}
+                >
+                  ({formatDecimalValue(priceImpact.ratio, 4)}%)
+                </span>
               </div>
             ) : null}
           </div>
