@@ -80,6 +80,7 @@ export default function useQueryPtOutBySyInWithVoucher<T extends boolean = false
         }),
       })
 
+      console.log("result", result)
       // Record raw result
       debugInfo.rawResult = {
         error: result?.error,

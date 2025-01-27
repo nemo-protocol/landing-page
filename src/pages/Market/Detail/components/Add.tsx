@@ -449,8 +449,6 @@ export default function SingleCoin() {
               : amount
           try {
             if (marketStateData?.lpSupply === "0") {
-              console.log(1111)
-
               const { lpAmount, ytAmount } = await seedLiquidityDryRun({
                 addAmount: convertedAmount,
                 tokenType,
@@ -1051,14 +1049,13 @@ export default function SingleCoin() {
                           : "--"}
                       </span>
                     </div>
-                    {ptYtData?.incentiveApy && (
-                      <div className="flex justify-between items-center text-white/60">
-                        <span>Incentive APY</span>
-                        <span>
-                          {`${new Decimal(ptYtData.incentiveApy).toFixed(6)} %`}
-                        </span>
-                      </div>
-                    )}
+                    {ptYtData?.incentiveApy &&
+                      isValidAmount(ptYtData.incentiveApy) && (
+                        <div className="flex justify-between items-center text-white/60">
+                          <span>Incentive APY</span>
+                          <span>{`${new Decimal(ptYtData.incentiveApy).toFixed(6)} %`}</span>
+                        </div>
+                      )}
                   </div>
                 </div>
               </div>
