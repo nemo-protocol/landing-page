@@ -29,7 +29,6 @@ import {
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import dayjs from "dayjs"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
@@ -44,16 +43,16 @@ export default function Trade() {
   const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
-  // const currentAccount = useCurrentAccount()
+  const [error, setError] = useState<string>()
+  const [ratio, setRatio] = useState<string>("")
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
+  const [ytValue, setYtValue] = useState<string>()
+  const [isSwapping, setIsSwapping] = useState(false)
+  const [errorDetail, setErrorDetail] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
   const [status, setStatus] = useState<"Success" | "Failed">()
-  const [ytOut, setYtOut] = useState<string>()
-  const [error, setError] = useState<string>()
-  const [isSwapping, setIsSwapping] = useState(false)
-  const [ratio, setRatio] = useState<string>("")
   const [isCalcYtLoading, setIsCalcYtLoading] = useState(false)
   const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
 
@@ -174,24 +173,21 @@ export default function Trade() {
               .div(tokenType === 0 ? conversionRate : 1)
               .mul(10 ** decimal)
               .toFixed(0)
-            const [ytOut] = await queryYtOut(swapAmount)
-            setYtOut(ytOut)
+            const ytValue = await queryYtOut(swapAmount)
+            setYtValue(ytValue)
 
-            const ytRatio = new Decimal(ytOut)
-              .div(10 ** decimal)
-              .div(value)
-              .toFixed(4)
+            const ytRatio = new Decimal(ytValue).div(value).toFixed(4)
             setRatio(ytRatio)
           } catch (error) {
             console.error("Failed to fetch YT out amount:", error)
             setError((error as Error).message || "Failed to fetch YT amount")
-            setYtOut(undefined)
+            setYtValue(undefined)
             setRatio("")
           } finally {
             setIsCalcYtLoading(false)
           }
         } else {
-          setYtOut(undefined)
+          setYtValue(undefined)
           setRatio("")
           setError(undefined)
         }
@@ -236,6 +232,36 @@ export default function Trade() {
     }
     return "Buy"
   }, [hasLiquidity, insufficientBalance, swapValue, coinName])
+
+  const priceImpact = useMemo(() => {
+    if (
+      !ytValue ||
+      !decimal ||
+      !swapValue ||
+      !ptYtData?.ytPrice ||
+      !coinConfig?.coinPrice ||
+      !coinConfig?.underlyingPrice
+    ) {
+      return
+    }
+
+    const inputValue =
+      tokenType === 0
+        ? new Decimal(swapValue).mul(coinConfig.underlyingPrice)
+        : new Decimal(swapValue).mul(coinConfig.coinPrice)
+
+    const outputValue = new Decimal(ytValue).mul(ptYtData.ytPrice)
+
+    return inputValue.minus(outputValue).div(inputValue).mul(100)
+  }, [
+    decimal,
+    ytValue,
+    swapValue,
+    tokenType,
+    ptYtData?.ytPrice,
+    coinConfig?.coinPrice,
+    coinConfig?.underlyingPrice,
+  ])
 
   async function swap() {
     if (
@@ -329,10 +355,10 @@ export default function Trade() {
         setSwapValue("")
 
         await refreshData()
-      } catch (error) {
+      } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")
-        const msg = (error as Error)?.message ?? error
+        const msg = (errorMsg as Error)?.message ?? error
         const gasMsg = parseGasErrorMessage(msg)
         if (gasMsg) {
           setMessage(gasMsg)
@@ -343,7 +369,9 @@ export default function Trade() {
         ) {
           setMessage("Insufficient YT in the pool.")
         } else {
-          setMessage(parseErrorMessage(msg || ""))
+          const { error, detail } = parseErrorMessage(msg || "")
+          setMessage(error)
+          setErrorDetail(detail)
         }
       } finally {
         setIsSwapping(false)
@@ -370,19 +398,21 @@ export default function Trade() {
           />
           <AmountInput
             price={price}
+            error={error}
+            warning={warning}
             decimal={decimal}
             amount={swapValue}
             coinName={coinName}
             coinLogo={coinLogo}
             isLoading={isLoading}
+            setWarning={setWarning}
+            disabled={!hasLiquidity}
+            errorDetail={errorDetail}
             coinBalance={coinBalance}
             isConnected={isConnected}
+            maturity={coinConfig?.maturity}
             isConfigLoading={isConfigLoading}
             isBalanceLoading={isBalanceLoading}
-            error={error}
-            disabled={!hasLiquidity}
-            warning={warning}
-            setWarning={setWarning}
             onChange={(value) => setSwapValue(value)}
             coinNameComponent={
               <Select
@@ -418,6 +448,7 @@ export default function Trade() {
           />
           <ChevronsDown className="size-6" />
           <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
+            {/* FIXME: loading issue */}
             <div className="flex flex-col items-end gap-y-1">
               <div className="flex items-center justify-between w-full h-[28px]">
                 <span>Receiving</span>
@@ -426,16 +457,13 @@ export default function Trade() {
                     "--"
                   ) : isCalcYtLoading ? (
                     <Skeleton className="h-7 w-60 bg-[#2D2D48]" />
-                  ) : !decimal || !ytOut ? (
+                  ) : !decimal || !ytValue ? (
                     "--"
                   ) : (
                     <span className="flex items-center gap-x-1.5">
                       {"≈  " +
-                        (ytOut
-                          ? formatDecimalValue(
-                              new Decimal(ytOut).div(10 ** decimal),
-                              decimal,
-                            )
+                        (ytValue
+                          ? formatDecimalValue(ytValue, decimal)
                           : "NAN")}{" "}
                       <span>YT {coinConfig?.coinName}</span>
                       <img
@@ -447,11 +475,25 @@ export default function Trade() {
                   )}
                 </span>
               </div>
-              <div className="text-xs text-white/60">
-                {coinConfig?.maturity
-                  ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
-                  : "--"}
-              </div>
+              {isCalcYtLoading ? (
+                <div className="text-xs">
+                  <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
+                </div>
+              ) : (
+                priceImpact && (
+                  <div
+                    className={`text-xs ${
+                      priceImpact.gt(30)
+                        ? "text-red-500"
+                        : priceImpact.gt(15)
+                          ? "text-yellow-500"
+                          : "text-white/60"
+                    }`}
+                  >
+                    Price Impact: {priceImpact.toFixed(4)}%
+                  </div>
+                )
+              )}
             </div>
             <hr className="border-t border-[#2D2D48] mt-6" />
             <div className="flex items-center justify-between mt-6">

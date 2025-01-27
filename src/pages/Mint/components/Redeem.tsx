@@ -20,6 +20,7 @@ import useRedeemPYDryRun from "@/hooks/dryrun/useRedeemPYDryRun"
 import { debounce, formatDecimalValue } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import useMarketStateData from "@/hooks/useMarketStateData"
+import { ContractError } from "@/hooks/types"
 
 export default function Redeem({
   maturity,
@@ -185,12 +186,13 @@ export default function Redeem({
         setStatus("Success")
 
         await Promise.all([refreshData(), refetchPtYtData()])
-      } catch (error) {
-        console.log("tx error", error)
+      } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")
-        const msg = (error as Error)?.message ?? error
-        setMessage(parseErrorMessage(msg || ""))
+        const { error } = parseErrorMessage(
+          (errorMsg as ContractError)?.message ?? errorMsg,
+        )
+        setMessage(error)
       } finally {
         setIsRedeeming(false)
       }

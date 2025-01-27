@@ -29,10 +29,8 @@ import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQuerySyOutFromYtInWithVoucher from "@/hooks/useQuerySyOutFromYtInWithVoucher"
-// import useQuerySyOutFromPtInWithVoucher from "@/hooks/useQuerySyOutFromPtInWithVoucher"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
-import dayjs from "dayjs"
 import SlippageSetting from "@/components/SlippageSetting"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
@@ -52,6 +50,7 @@ export default function Sell() {
   const [redeemValue, setRedeemValue] = useState("")
   const [targetValue, setTargetValue] = useState("")
   const [isRedeeming, setIsRedeeming] = useState(false)
+  const [errorDetail, setErrorDetail] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const { coinType, tokenType: _tokenType, maturity } = useParams()
   const [receivingType, setReceivingType] = useState<"underlying" | "sy">(
@@ -85,8 +84,6 @@ export default function Sell() {
 
   const { mutateAsync: querySyOutFromYt } =
     useQuerySyOutFromYtInWithVoucher(coinConfig)
-  // const { mutateAsync: querySyOutFromPt } =
-  //   useQuerySyOutFromPtInWithVoucher(coinConfig)
 
   const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
   const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)
@@ -117,9 +114,13 @@ export default function Sell() {
             setTargetValue(syAmount)
 
             setError(undefined)
-          } catch (error) {
-            setError((error as ContractError)?.message)
-            console.error("Failed to get SY out:", error)
+          } catch (errorMsg) {
+            // TODO:  use other calc hook when not connect
+            const { error, detail } = parseErrorMessage(
+              (errorMsg as ContractError)?.message,
+            )
+            setError(error)
+            setErrorDetail(detail)
             setTargetValue("")
           }
         } else {
@@ -130,13 +131,12 @@ export default function Sell() {
       return getSyOut.cancel
     },
     [
-      querySyOutFromYt,
-      // querySyOutFromPt,
       tokenType,
-      receivingType,
       sellPtDryRun,
-      coinConfig?.conversionRate,
+      receivingType,
       pyPositionData,
+      querySyOutFromYt,
+      coinConfig?.conversionRate,
     ],
   )
 
@@ -231,8 +231,6 @@ export default function Sell() {
                 minSyOut,
               )
 
-        // tx.transferObjects([syCoin], address)
-
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
         if (receivingType === "underlying") {
           const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
@@ -255,12 +253,15 @@ export default function Sell() {
         setStatus("Success")
 
         await refreshData()
-      } catch (error) {
-        console.log("tx error", error)
+      } catch (errorMsg) {
+        console.log("tx error", errorMsg)
         setOpen(true)
         setStatus("Failed")
-        const msg = (error as Error)?.message ?? error
-        setMessage(parseErrorMessage(msg || ""))
+        const { error: msg, detail } = parseErrorMessage(
+          (errorMsg as Error)?.message ?? "",
+        )
+        setMessage(msg)
+        setErrorDetail(detail)
       } finally {
         setIsRedeeming(false)
       }
@@ -319,6 +320,43 @@ export default function Sell() {
     console.log("result", result)
   }
 
+  const btnDisabled = useMemo(() => {
+    return ["", undefined].includes(redeemValue)
+  }, [redeemValue])
+
+  const priceImpact = useMemo(() => {
+    if (
+      !targetValue ||
+      !redeemValue ||
+      !ptYtData?.ptPrice ||
+      !coinConfig?.coinPrice ||
+      !coinConfig?.underlyingPrice
+    ) {
+      return
+    }
+
+    const inputValue = new Decimal(redeemValue).mul(
+      tokenType === "pt" ? ptYtData.ptPrice : ptYtData.ytPrice,
+    )
+
+    const outputValue = new Decimal(targetValue).mul(
+      receivingType === "underlying"
+        ? coinConfig.underlyingPrice
+        : coinConfig.coinPrice,
+    )
+
+    return inputValue.minus(outputValue).div(inputValue).mul(100)
+  }, [
+    tokenType,
+    targetValue,
+    redeemValue,
+    receivingType,
+    ptYtData?.ptPrice,
+    ptYtData?.ytPrice,
+    coinConfig?.coinPrice,
+    coinConfig?.underlyingPrice,
+  ])
+
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
@@ -343,16 +381,18 @@ export default function Sell() {
           error={error}
           price={price}
           decimal={decimal}
-          amount={redeemValue}
-          coinName={coinName}
-          isLoading={isLoading}
-          coinLogo={coinConfig?.coinLogo}
-          coinBalance={tokenType === "pt" ? ptBalance : ytBalance}
-          isConnected={isConnected}
-          isConfigLoading={isConfigLoading}
-          onChange={handleInputChange}
           warning={warning}
+          coinName={coinName}
+          amount={redeemValue}
+          isLoading={isLoading}
           setWarning={setWarning}
+          isConnected={isConnected}
+          errorDetail={errorDetail}
+          onChange={handleInputChange}
+          maturity={coinConfig?.maturity}
+          coinLogo={coinConfig?.coinLogo}
+          isConfigLoading={isConfigLoading}
+          coinBalance={tokenType === "pt" ? ptBalance : ytBalance}
           coinNameComponent={
             <Select
               value={tokenType}
@@ -390,9 +430,7 @@ export default function Sell() {
                   "--"
                 ) : (
                   <div className="flex items-center gap-x-1.5">
-                    <span>
-                      ≈ {formatDecimalValue(new Decimal(targetValue), decimal)}
-                    </span>
+                    <span>≈ {formatDecimalValue(targetValue, decimal)}</span>
                     <Select
                       value={receivingType}
                       onValueChange={(value) => {
@@ -472,18 +510,30 @@ export default function Sell() {
                 )}
               </span>
             </div>
-            <div className="text-xs text-white/60">
-              {coinConfig?.maturity
-                ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
-                : "--"}
-            </div>
+            {isLoading ? (
+              <div className="text-xs">
+                <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
+              </div>
+            ) : priceImpact ? (
+              <div
+                className={`text-xs ${
+                  priceImpact.gt(15)
+                    ? "text-red-500"
+                    : priceImpact.gt(5)
+                      ? "text-yellow-500"
+                      : "text-white/60"
+                }`}
+              >
+                Price Impact: {priceImpact.toFixed(4)}%
+              </div>
+            ) : null}
           </div>
         </div>
         <ActionButton
           btnText="Sell"
           onClick={redeem}
           loading={isRedeeming}
-          disabled={["", undefined].includes(redeemValue)}
+          disabled={btnDisabled}
         />
       </div>
     </div>

@@ -1,8 +1,15 @@
 import React from "react"
 import { cn, formatDecimalValue } from "@/lib/utils"
 import Decimal from "decimal.js"
-import { Wallet } from "lucide-react"
+import { Info, Wallet } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import dayjs from "dayjs"
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "./ui/tooltip"
 
 interface AmountInputProps {
   price?: string
@@ -22,6 +29,8 @@ interface AmountInputProps {
   setWarning: (value: string) => void
   coinNameComponent?: React.ReactNode
   disabled?: boolean
+  maturity?: string
+  errorDetail?: string
 }
 
 export default function AmountInput({
@@ -42,6 +51,8 @@ export default function AmountInput({
   onChange,
   setWarning,
   disabled,
+  maturity,
+  errorDetail,
 }: AmountInputProps) {
   return (
     <div className="w-full">
@@ -61,11 +72,16 @@ export default function AmountInput({
               )}
 
               <div className="space-y-1">
-                <div className="h-6">
+                <div className="h-6 flex items-center gap-x-2">
                   {isConfigLoading ? (
                     <Skeleton className="h-full w-12 bg-[#2D2D48]" />
                   ) : (
                     coinNameComponent
+                  )}
+                  {maturity && (
+                    <span className="text-sm text-white/60">
+                      {dayjs(parseInt(maturity)).format("DD MMM YYYY")}
+                    </span>
                   )}
                 </div>
                 <div>
@@ -142,7 +158,19 @@ export default function AmountInput({
         </div>
       </div>
       {error && (
-        <div className="mt-2 text-sm text-red-500 break-words">{error}</div>
+        <div className="space-x-1">
+          <span className="text-red-500">{error}</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="size-3.5 text-red-500" />
+              </TooltipTrigger>
+              <TooltipContent className="bg-[#0E0F16] text-white w-[500px]">
+                <p>{errorDetail}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       )}
       {warning && (
         <div className="mt-2 text-sm text-yellow-500 break-words">

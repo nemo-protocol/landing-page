@@ -61,6 +61,7 @@ export default function SingleCoin() {
   const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
   const [error, setError] = useState("")
+  const [errorDetail, setErrorDetail] = useState("")
   const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
@@ -636,10 +637,13 @@ export default function SingleCoin() {
         setStatus("Success")
 
         await refreshData()
-      } catch (error) {
+      } catch (errorMsg) {
         setStatus("Failed")
-        const msg = (error as Error)?.message ?? error
-        setMessage(parseErrorMessage(msg || ""))
+        const { error: msg, detail } = parseErrorMessage(
+          (errorMsg as Error)?.message ?? "",
+        )
+        setMessage(msg)
+        setErrorDetail(detail)
       } finally {
         setOpen(true)
         setIsAdding(false)
@@ -690,6 +694,7 @@ export default function SingleCoin() {
                 coinBalance={coinBalance}
                 isConnected={isConnected}
                 warning={warning}
+                errorDetail={errorDetail}
                 setWarning={setWarning}
                 isConfigLoading={isConfigLoading}
                 isBalanceLoading={isBalanceLoading}
@@ -1046,14 +1051,14 @@ export default function SingleCoin() {
                           : "--"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-white/60">
-                      <span>Incentive APY</span>
-                      <span>
-                        {ptYtData?.incentiveApy
-                          ? `${new Decimal(ptYtData.incentiveApy).toFixed(6)} %`
-                          : "--"}
-                      </span>
-                    </div>
+                    {ptYtData?.incentiveApy && (
+                      <div className="flex justify-between items-center text-white/60">
+                        <span>Incentive APY</span>
+                        <span>
+                          {`${new Decimal(ptYtData.incentiveApy).toFixed(6)} %`}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

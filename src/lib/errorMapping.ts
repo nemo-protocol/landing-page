@@ -29,10 +29,10 @@ const errorMapping: { [key: number]: string } = {
   787: "Market proportion too high", // 0x0000313
   788: "Market proportion cannot be one", // 0x0000314
   789: "Market exchange rate cannot be one", // 0x0000315
-  790: "Market exchange rate below one", // 0x0000316
+  790: "Insufficient liquidity in the pool, please try a smaller amount.", // 0x0000316
   791: "Market burn sy amount is zero", // 0x0000317
   792: "Market burn pt amount is zero", // 0x0000318
-  793: "Market insufficient pt for swap", // 0x0000319
+  793: "Insufficient liquidity in the pool, please try a smaller amount.", // 0x0000319
   800: "Market rate scalar negative", // 0x0000320
   801: "Market insufficient sy for swap", // 0x0000321
   802: "Repay sy in exceeds expected sy in", // 0x0000322
@@ -83,7 +83,7 @@ function getErrorMessage(errorCode: number, errorString: string): string {
 
 export const parseErrorMessage = (errorString: string) => {
   if (errorString.includes("OUT_OF_GAS")) {
-    return "Insufficient liquidity in the pool."
+    return { error: "Insufficient liquidity in the pool.", detail: "" }
   }
   const errorCodeMatch = errorString.match(/[^\d]*(\d+)\)/)
 
@@ -94,7 +94,16 @@ export const parseErrorMessage = (errorString: string) => {
       )
     : null
 
-  return errorCode ? getErrorMessage(errorCode, errorString) : errorString
+  const detail =
+    errorCode && [790, 793].includes(errorCode)
+      ? "To ensure the capital efficiency of the liquidity pool, Nemo's flash swap is utilized when selling YT, which requires higher liquidity. You can try swapping again later or reduce the selling amount."
+      : ""
+
+  const error = errorCode
+    ? getErrorMessage(errorCode, errorString)
+    : errorString
+
+  return { error, detail }
 }
 
 export function parseGasErrorMessage(msg: string) {

@@ -21,6 +21,7 @@ import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
+import { ContractError } from "@/hooks/types"
 
 export default function Remove() {
   const navigate = useNavigate()
@@ -34,6 +35,7 @@ export default function Remove() {
   const [message, setMessage] = useState<string>()
   const [targetValue, setTargetValue] = useState("")
   const [isRemoving, setIsRemoving] = useState(false)
+  const [errorDetail, setErrorDetail] = useState<string>()
   const [isInputLoading, setIsInputLoading] = useState(false)
   const [status, setStatus] = useState<"Success" | "Failed">()
 
@@ -175,11 +177,14 @@ export default function Remove() {
         setStatus("Success")
 
         await refreshData()
-      } catch (error) {
+      } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")
-        const msg = (error as Error)?.message ?? error
-        setMessage(parseErrorMessage(msg || ""))
+        const { error: msg, detail } = parseErrorMessage(
+          (errorMsg as ContractError)?.message ?? errorMsg,
+        )
+        setMessage(msg)
+        setErrorDetail(detail)
       } finally {
         setIsRemoving(false)
       }
@@ -226,6 +231,7 @@ export default function Remove() {
             setWarning={setWarning}
             isBalanceLoading={false}
             isConnected={isConnected}
+            errorDetail={errorDetail}
             coinBalance={lpCoinBalance}
             coinLogo={coinConfig?.coinLogo}
             isConfigLoading={isConfigLoading}

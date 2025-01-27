@@ -1,23 +1,27 @@
+import { bcs } from "@mysten/sui/bcs"
+import { debugLog } from "@/config"
+import { ContractError } from "./types"
+import type { DebugInfo } from "./types"
+import { getPriceVoucher } from "@/lib/txHelper"
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
-import { getPriceVoucher } from "@/lib/txHelper"
-import type { DebugInfo } from "./types"
-import { ContractError } from "./types"
+import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
+import Decimal from "decimal.js"
 
-export default function useQueryYtOutBySyInWithVoucher(
+type DryRunResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useQueryYtOutBySyInWithVoucher<T extends boolean = false>(
   coinConfig?: CoinConfig,
-  debug: boolean = false,
+  debug: T = false as T,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
 
   return useMutation({
-    mutationFn: async (
-      syValue: string,
-    ): Promise<[string] | [string, DebugInfo]> => {
+    mutationFn: async (syValue: string): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -44,7 +48,7 @@ export default function useQueryYtOutBySyInWithVoucher(
         },
       }
 
-      console.log("debugInfo", debugInfo)
+      debugLog("get_yt_out_for_exact_sy_in_with_price_voucher move call:", debugInfo)
 
       const tx = new Transaction()
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
@@ -72,8 +76,6 @@ export default function useQueryYtOutBySyInWithVoucher(
         }),
       })
 
-      console.log("result", result)
-
       // Record raw result
       debugInfo.rawResult = {
         error: result?.error,
@@ -94,11 +96,13 @@ export default function useQueryYtOutBySyInWithVoucher(
         new Uint8Array(result.results[1].returnValues[0][0]),
       )
 
-      debugInfo.parsedOutput = outputAmount.toString()
+      const formattedAmount = new Decimal(outputAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
+        .toFixed()
 
-      const returnValue = outputAmount.toString()
+      debugInfo.parsedOutput = formattedAmount
 
-      return debug ? [returnValue, debugInfo] : [returnValue]
+      return (debug ? [formattedAmount, debugInfo] : formattedAmount) as DryRunResult<T>
     },
   })
 }
