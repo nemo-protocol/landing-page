@@ -371,7 +371,10 @@ export default function Invest() {
 
     const outputValue = new Decimal(ptValue).mul(ptYtData.ptPrice)
 
-    return inputValue.minus(outputValue).div(inputValue).mul(100)
+    const value = inputValue.minus(outputValue)
+    const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
+
+    return { value, ratio }
   }, [
     decimal,
     ptValue,
@@ -412,7 +415,6 @@ export default function Invest() {
           errorDetail={errorDetail}
           coinBalance={coinBalance}
           isConnected={isConnected}
-          maturity={coinConfig?.maturity}
           isConfigLoading={isConfigLoading}
           isBalanceLoading={isBalanceLoading}
           onChange={(value) => setSwapValue(value)}
@@ -446,45 +448,44 @@ export default function Invest() {
           <div className="flex flex-col items-end gap-y-1">
             <div className="flex items-center justify-between w-full">
               <span>Receiving</span>
-              <span className="h-[28px]">
-                {!swapValue ? (
-                  "--"
-                ) : isCalcPtLoading ? (
-                  <Skeleton className="h-7 w-60 bg-[#2D2D48]" />
-                ) : !decimal || !ptValue ? (
-                  "--"
-                ) : (
-                  <span className="flex items-center gap-x-1.5">
-                    {"≈  " + formatDecimalValue(ptValue, decimal)}{" "}
-                    <span>PT {coinConfig?.coinName}</span>
-                    <img
-                      src={coinConfig?.coinLogo}
-                      alt={coinConfig?.coinName}
-                      className="size-[28px]"
-                    />
-                  </span>
-                )}
-              </span>
-            </div>
-            {isCalcPtLoading ? (
-              <div className="text-xs">
-                <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
-              </div>
-            ) : (
-              priceImpact && (
-                <div
-                  className={`text-xs ${
-                    priceImpact.gt(15)
-                      ? "text-red-500"
-                      : priceImpact.gt(5)
-                        ? "text-yellow-500"
-                        : "text-white/60"
-                  }`}
-                >
-                  Price Impact: {priceImpact.toFixed(4)}%
+              <div className="flex items-start gap-x-2">
+                <div className="flex flex-col items-end">
+                  {isCalcPtLoading ? (
+                    <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
+                  ) : ptValue && (
+                    <div className="flex items-center gap-x-1">
+                      <span>≈</span>
+                      <span>{formatDecimalValue(ptValue, decimal)}</span>
+                    </div>
+                  )}
+                  {isCalcPtLoading ? (
+                    <Skeleton className="h-3 w-24 bg-[#2D2D48] mt-1" />
+                  ) : priceImpact && (
+                    <div className="flex items-center gap-x-1 text-xs">
+                      <span className="text-yellow-500">
+                        ${priceImpact.value.toFixed(4)}
+                      </span>
+                      <span className="text-yellow-500">
+                        {priceImpact.ratio.toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )
-            )}
+                <div className="flex flex-col items-end">
+                  <span>PT {coinConfig?.coinName}</span>
+                  <span className="text-white/60 text-xs">
+                    {dayjs(
+                      parseInt(coinConfig?.maturity || Date.now().toString()),
+                    ).format("DD MMM YYYY")}
+                  </span>
+                </div>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-10"
+                />
+              </div>
+            </div>
           </div>
           <hr className="border-t border-[#2D2D48] mt-6" />
           <div className="flex items-center justify-between mt-6">

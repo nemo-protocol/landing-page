@@ -345,7 +345,10 @@ export default function Sell() {
         : coinConfig.coinPrice,
     )
 
-    return inputValue.minus(outputValue).div(inputValue).mul(100)
+    const value = inputValue.minus(outputValue)
+    const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
+
+    return { value, ratio }
   }, [
     tokenType,
     targetValue,
@@ -517,14 +520,15 @@ export default function Sell() {
             ) : priceImpact ? (
               <div
                 className={`text-xs ${
-                  priceImpact.gt(15)
+                  priceImpact.ratio.gt(15)
                     ? "text-red-500"
-                    : priceImpact.gt(5)
+                    : priceImpact.ratio.gt(5)
                       ? "text-yellow-500"
                       : "text-white/60"
                 }`}
               >
-                Price Impact: {priceImpact.toFixed(4)}%
+                <span>${formatDecimalValue(priceImpact.value, 4)}</span>
+                <span> ({formatDecimalValue(priceImpact.ratio, 2)}%)</span>
               </div>
             ) : null}
           </div>

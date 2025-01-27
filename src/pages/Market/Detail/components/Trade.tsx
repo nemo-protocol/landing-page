@@ -37,6 +37,7 @@ import useTradeRatio from "@/hooks/actions/useTradeRatio"
 import useQueryYtOutBySyInWithVoucher from "@/hooks/useQueryYtOutBySyInWithVoucher"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { CoinConfig } from "@/queries/types/market"
+import dayjs from "dayjs"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -252,7 +253,10 @@ export default function Trade() {
 
     const outputValue = new Decimal(ytValue).mul(ptYtData.ytPrice)
 
-    return inputValue.minus(outputValue).div(inputValue).mul(100)
+    const value = inputValue.minus(outputValue)
+    const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
+
+    return { value, ratio }
   }, [
     decimal,
     ytValue,
@@ -450,50 +454,66 @@ export default function Trade() {
           <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
             {/* FIXME: loading issue */}
             <div className="flex flex-col items-end gap-y-1">
-              <div className="flex items-center justify-between w-full h-[28px]">
+              <div className="flex items-center justify-between w-full">
                 <span>Receiving</span>
-                <span>
-                  {!swapValue ? (
-                    "--"
-                  ) : isCalcYtLoading ? (
-                    <Skeleton className="h-7 w-60 bg-[#2D2D48]" />
-                  ) : !decimal || !ytValue ? (
-                    "--"
-                  ) : (
-                    <span className="flex items-center gap-x-1.5">
-                      {"≈  " +
-                        (ytValue
-                          ? formatDecimalValue(ytValue, decimal)
-                          : "NAN")}{" "}
-                      <span>YT {coinConfig?.coinName}</span>
-                      <img
-                        src={coinConfig?.coinLogo}
-                        alt={coinConfig?.coinName}
-                        className="size-[28px]"
-                      />
-                    </span>
-                  )}
-                </span>
-              </div>
-              {isCalcYtLoading ? (
-                <div className="text-xs">
-                  <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
-                </div>
-              ) : (
-                priceImpact && (
-                  <div
-                    className={`text-xs ${
-                      priceImpact.gt(30)
-                        ? "text-red-500"
-                        : priceImpact.gt(15)
-                          ? "text-yellow-500"
-                          : "text-white/60"
-                    }`}
-                  >
-                    Price Impact: {priceImpact.toFixed(4)}%
+                <div className="flex items-start gap-x-2">
+                  <div className="flex flex-col items-end">
+                    {isCalcYtLoading ? (
+                      <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
+                    ) : (
+                      ytValue && (
+                        <div className="flex items-center gap-x-1">
+                          <span>≈</span>
+                          <span>{formatDecimalValue(ytValue, decimal)}</span>
+                        </div>
+                      )
+                    )}
+                    {isCalcYtLoading ? (
+                      <Skeleton className="h-3 w-24 bg-[#2D2D48] mt-1" />
+                    ) : (
+                      priceImpact && (
+                        <div className="flex items-center gap-x-1 text-xs">
+                          <span
+                            className={`text-xs ${
+                              priceImpact.ratio.gt(15)
+                                ? "text-red-500"
+                                : priceImpact.ratio.gt(5)
+                                  ? "text-yellow-500"
+                                  : "text-white/60"
+                            }`}
+                          >
+                            ${formatDecimalValue(priceImpact.value, 4)}
+                          </span>
+                          <span
+                            className={`text-xs ${
+                              priceImpact.ratio.gt(30)
+                                ? "text-red-500"
+                                : priceImpact.ratio.gt(15)
+                                  ? "text-yellow-500"
+                                  : "text-white/60"
+                            }`}
+                          >
+                            ({formatDecimalValue(priceImpact.ratio, 2)}%)
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
-                )
-              )}
+                  <div className="flex flex-col items-end">
+                    <span>YT {coinConfig?.coinName}</span>
+                    <span className="text-white/60 text-xs">
+                      {dayjs(
+                        parseInt(coinConfig?.maturity || Date.now().toString()),
+                      ).format("DD MMM YYYY")}
+                    </span>
+                  </div>
+                  <img
+                    src={coinConfig?.coinLogo}
+                    alt={coinConfig?.coinName}
+                    className="size-10"
+                  />
+                </div>
+              </div>
             </div>
             <hr className="border-t border-[#2D2D48] mt-6" />
             <div className="flex items-center justify-between mt-6">
