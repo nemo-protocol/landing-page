@@ -347,8 +347,8 @@ export default function Sell() {
 
     const outputValue = new Decimal(targetValue).mul(
       receivingType === "underlying"
-        ? coinConfig.underlyingPrice
-        : coinConfig.coinPrice,
+        ? (coinConfig.underlyingPrice ?? "0")
+        : (coinConfig.coinPrice ?? "0"),
     )
 
     const value = inputValue.minus(outputValue)
@@ -529,7 +529,7 @@ export default function Sell() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Info 
+                        <Info
                           className={`size-3 cursor-pointer ${
                             priceImpact.ratio.gt(15)
                               ? "text-red-500"
@@ -540,21 +540,24 @@ export default function Sell() {
                         />
                       </TooltipTrigger>
                       <TooltipContent className="bg-[#12121B] max-w-[500px]">
-                        <p>Price Impact Alert: Price impact is too high. Please consider adjusting the transaction size.</p>
+                        <p>
+                          Price Impact Alert: Price impact is too high. Please
+                          consider adjusting the transaction size.
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                <span
-                  className={`text-xs ${
-                    priceImpact.ratio.gt(15)
-                      ? "text-red-500"
-                      : priceImpact.ratio.gt(5)
-                        ? "text-yellow-500"
-                        : "text-white/60"
-                  }`}
-                >
-                  ${formatDecimalValue(priceImpact.value, 4)}
+                <span className={`text-xs `}>
+                  $
+                  {formatDecimalValue(
+                    new Decimal(targetValue).mul(
+                      receivingType === "underlying"
+                        ? (coinConfig?.underlyingPrice ?? "0")
+                        : (coinConfig?.coinPrice ?? "0"),
+                    ),
+                    4,
+                  )}
                 </span>
                 <span
                   className={`text-xs ${
