@@ -371,7 +371,7 @@ export default function Invest() {
 
     const outputValue = new Decimal(ptValue).mul(ptYtData.ptPrice)
 
-    const value = inputValue.minus(outputValue)
+    const value = outputValue
     const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
 
     return { value, ratio }

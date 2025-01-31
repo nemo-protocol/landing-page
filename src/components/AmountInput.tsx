@@ -160,16 +160,18 @@ export default function AmountInput({
       {error && (
         <div className="space-x-1">
           <span className="text-red-500">{error}</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="size-3.5 text-red-500" />
+          {errorDetail && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="size-3.5 text-red-500" />
               </TooltipTrigger>
               <TooltipContent className="bg-[#0E0F16] text-white w-[500px]">
                 <p>{errorDetail}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       )}
       {warning && (

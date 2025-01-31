@@ -186,8 +186,11 @@ export default function Trade() {
             const ytRatio = new Decimal(ytValue).div(value).toFixed(4)
             setRatio(ytRatio)
           } catch (error) {
-            console.error("Failed to fetch YT out amount:", error)
-            setError((error as Error).message || "Failed to fetch YT amount")
+            const { error: msg, detail } = parseErrorMessage(
+              (error as Error)?.message ?? "",
+            )
+            setError(msg)
+            setErrorDetail(detail)
             setYtValue(undefined)
             setRatio("")
           } finally {
@@ -259,7 +262,7 @@ export default function Trade() {
 
     const outputValue = new Decimal(ytValue).mul(ptYtData.ytPrice)
 
-    const value = inputValue.minus(outputValue)
+    const value = outputValue
     const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
 
     return { value, ratio }

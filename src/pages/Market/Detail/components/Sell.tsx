@@ -351,7 +351,7 @@ export default function Sell() {
         : (coinConfig.coinPrice ?? "0"),
     )
 
-    const value = inputValue.minus(outputValue)
+    const value = outputValue
     const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
 
     return { value, ratio }
@@ -548,16 +548,16 @@ export default function Sell() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                <span className={`text-xs `}>
-                  $
-                  {formatDecimalValue(
-                    new Decimal(targetValue).mul(
-                      receivingType === "underlying"
-                        ? (coinConfig?.underlyingPrice ?? "0")
-                        : (coinConfig?.coinPrice ?? "0"),
-                    ),
-                    4,
-                  )}
+                <span
+                  className={`text-xs ${
+                    priceImpact.ratio.gt(15)
+                      ? "text-red-500"
+                      : priceImpact.ratio.gt(5)
+                        ? "text-yellow-500"
+                        : "text-white/60"
+                  }`}
+                >
+                  ${formatDecimalValue(priceImpact.value, 4)}
                 </span>
                 <span
                   className={`text-xs ${

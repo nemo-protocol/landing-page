@@ -153,7 +153,7 @@ export const initPyPosition = (tx: Transaction, coinConfig: CoinConfig) => {
 }
 
 type MintSCoinResult<T extends boolean> = T extends true
-  ? [TransactionArgument[], MoveCallInfo]
+  ? [TransactionArgument[], MoveCallInfo[]]
   : TransactionArgument[]
 
 export const mintSCoin = <T extends boolean = false>(
@@ -172,52 +172,60 @@ export const mintSCoin = <T extends boolean = false>(
 
   let moveCall: MoveCallInfo
   const results: TransactionArgument[] = []
+  const moveCallInfos: MoveCallInfo[] = []
 
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
       const treasury = getTreasury(coinConfig.coinType)
-      moveCall = {
-        target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
-        arguments: [
-          { name: "version", value: SCALLOP.VERSION_OBJECT },
-          { name: "market", value: SCALLOP.MARKET_OBJECT },
-          { name: "amount", value: amounts[0] },
-          { name: "clock", value: "0x6" },
-        ],
-        typeArguments: [coinConfig.underlyingCoinType],
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        const moveCall = {
+          target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
+          arguments: [
+            { name: "version", value: SCALLOP.VERSION_OBJECT },
+            { name: "market", value: SCALLOP.MARKET_OBJECT },
+            { name: "amount", value: amounts[i] },
+            { name: "clock", value: "0x6" },
+          ],
+          typeArguments: [coinConfig.underlyingCoinType],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`scallop mint move call for amount ${i}:`, moveCall)
+
+        const [marketCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(SCALLOP.VERSION_OBJECT),
+            tx.object(SCALLOP.MARKET_OBJECT),
+            splitCoins[i],
+            tx.object("0x6"),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        const mintSCoinMoveCall: MoveCallInfo = {
+          target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
+          arguments: [
+            { name: "treasury", value: treasury },
+            { name: "market_coin", value: "marketCoin" },
+          ],
+          typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
+        }
+        moveCallInfos.push(mintSCoinMoveCall)
+        debugLog(`mint_s_coin move call for amount ${i}:`, mintSCoinMoveCall)
+
+        const [sCoin] = tx.moveCall({
+          ...mintSCoinMoveCall,
+          arguments: [tx.object(treasury), marketCoin],
+        })
+
+        sCoins.push(sCoin)
       }
-      debugLog(`scallop mint move call:`, moveCall)
 
-      const [marketCoin] = tx.moveCall({
-        target: moveCall.target,
-        arguments: [
-          tx.object(SCALLOP.VERSION_OBJECT),
-          tx.object(SCALLOP.MARKET_OBJECT),
-          splitCoins[0],
-          tx.object("0x6"),
-        ],
-        typeArguments: moveCall.typeArguments,
-      })
-
-      const mintSCoinMoveCall: MoveCallInfo = {
-        target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
-        arguments: [
-          { name: "treasury", value: treasury },
-          { name: "market_coin", value: "marketCoin" },
-        ],
-        typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
-      }
-      debugLog(`mint_s_coin move call:`, mintSCoinMoveCall)
-
-      const [sCoin] = tx.moveCall({
-        ...mintSCoinMoveCall,
-        arguments: [tx.object(treasury), marketCoin],
-      })
-
-      results.push(sCoin)
       return (debug
-        ? [results, mintSCoinMoveCall]
-        : results) as unknown as MintSCoinResult<T>
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Aftermath": {
       moveCall = {
@@ -251,7 +259,7 @@ export const mintSCoin = <T extends boolean = false>(
 
       results.push(sCoin)
       return (debug
-        ? [results, moveCall]
+        ? [results, moveCallInfos]
         : results) as unknown as MintSCoinResult<T>
     }
     default:
