@@ -1,7 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton"
-import { RotateCw } from "lucide-react"
-import { useState } from "react"
 import SlippageSetting from "./SlippageSetting"
+import RefreshButton from "./RefreshButton"
 
 interface TradeInfoProps {
   ratio?: string | React.ReactNode
@@ -28,17 +27,6 @@ export default function TradeInfo({
   isLoading,
   isRatioLoading,
 }: TradeInfoProps) {
-  const [isSpinning, setIsSpinning] = useState(false)
-
-  const handleClick = () => {
-    setIsSpinning(true)
-    const timer = setTimeout(() => {
-      setIsSpinning(false)
-      clearTimeout(timer)
-    }, 1000)
-    onRefresh?.()
-  }
-
   return (
     <div className="border border-[#2D2D48] bg-[#181827] rounded-xl px-[18px] py-6 w-full text-sm flex flex-col gap-y-4">
       <div className="flex items-center justify-between text-white/60">
@@ -51,13 +39,7 @@ export default function TradeInfo({
               {`1 ${coinName} ≈ ${Number(ratio || 0).toFixed(4)} ${targetCoinName}`}
             </span>
           )}
-          <RotateCw
-            className={[
-              "size-5 cursor-pointer",
-              isSpinning && "animate-spin",
-            ].join(" ")}
-            onClick={handleClick}
-          />
+          {onRefresh && <RefreshButton onRefresh={onRefresh} size={20} />}
         </div>
       </div>
       <div className="flex items-center justify-between text-white/60">

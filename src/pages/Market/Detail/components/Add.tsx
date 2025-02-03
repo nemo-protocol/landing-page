@@ -534,15 +534,6 @@ export default function SingleCoin() {
   }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
 
   async function add() {
-    console.log("decimal", decimal)
-    console.log("address", address)
-    console.log("coinType", coinType)
-    console.log("slippage", slippage)
-    console.log("coinConfig", coinConfig)
-    console.log("conversionRate", conversionRate)
-    console.log("marketStateData", marketStateData)
-    console.log("coinData", coinData)
-    console.log("insufficientBalance", insufficientBalance)
     if (
       decimal &&
       address &&
@@ -609,7 +600,11 @@ export default function SingleCoin() {
             minLpAmount,
           )
         } else {
-          console.log("handleAddLiquiditySingleSy")
+          console.log(
+            "handleAddLiquiditySingleSy",
+            new Decimal(marketStateData.totalSy).mul(0.4).div(10 ** decimal).toFixed(decimal),
+            new Decimal(addAmount).div(10 ** decimal).toFixed(decimal),
+          )
           await handleAddLiquiditySingleSy(
             tx,
             addAmount,

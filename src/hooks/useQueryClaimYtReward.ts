@@ -27,6 +27,8 @@ export default function useQueryClaimYtReward(
       !!coinConfig &&
       isValidAmount(params?.ytBalance) &&
       params?.tokenType === 1, // 1 represents YT token type
+    refetchInterval: 60 * 1000, // 每分钟刷新一次
+    refetchIntervalInBackground: true, // 即使页面在后台也继续刷新
     queryFn: async () => {
       if (!address) {
         throw new Error("Please connect wallet first")
@@ -94,7 +96,8 @@ export default function useQueryClaimYtReward(
       console.log("yt reward result", result)
 
       if (result?.error) {
-        throw new Error(result.error)
+        // throw new Error(result.error)
+        return "0"
       }
 
       if (

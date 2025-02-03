@@ -32,6 +32,7 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
+import RefreshButton from "@/components/RefreshButton"
 
 const LoadingButton = ({
   onClick,
@@ -109,14 +110,15 @@ export default function Item({
     marketState,
   )
 
-  const { data: ytReward, isLoading: isClaimLoading } = useQueryClaimYtReward(
-    coinConfig,
-    {
-      ytBalance,
-      pyPositions,
-      tokenType: selectType === "yt" ? 1 : 0,
-    },
-  )
+  const {
+    data: ytReward,
+    isLoading: isClaimLoading,
+    refetch: refetchYtReward,
+  } = useQueryClaimYtReward(coinConfig, {
+    ytBalance,
+    pyPositions,
+    tokenType: selectType === "yt" ? 1 : 0,
+  })
 
   useEffect(() => {
     if (isConnected) {
@@ -526,8 +528,9 @@ export default function Item({
                 ) : (
                   <>
                     <div className="flex flex-col items-center w-24">
-                      <span className="text-white text-sm break-all">
+                      <span className="text-white text-sm break-all flex items-center gap-x-1">
                         <SmallNumDisplay value={ytReward || 0} />
+                        <RefreshButton onRefresh={refetchYtReward} />
                       </span>
                       <span className="text-white/50 text-xs">
                         $
