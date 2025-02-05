@@ -26,7 +26,7 @@ import {
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import AmountInput from "@/components/AmountInput"
 import ActionButton from "@/components/ActionButton"
-import { formatDecimalValue, isValidAmount } from "@/lib/utils"
+import { formatDecimalValue, isValidAmount, safeDivide } from "@/lib/utils"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQuerySyOutFromYtInWithVoucher from "@/hooks/useQuerySyOutFromYtInWithVoucher"
 import { debounce } from "@/lib/utils"
@@ -210,14 +210,10 @@ export default function Sell() {
 
         const syOut = tokenType === "yt" ? await querySyOutFromYt(amount) : 0
 
-        console.log("syOut", syOut)
-
         const minSyOut = new Decimal(syOut)
           .mul(10 ** decimal)
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)
-
-        console.log("minSyOut", minSyOut)
 
         const syCoin =
           tokenType === "pt"
@@ -352,7 +348,11 @@ export default function Sell() {
     )
 
     const value = outputValue
-    const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
+    const ratio = safeDivide(
+      inputValue.minus(outputValue),
+      inputValue,
+      "decimal",
+    ).mul(100)
 
     return { value, ratio }
   }, [

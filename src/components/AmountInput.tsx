@@ -159,7 +159,7 @@ export default function AmountInput({
       </div>
       {error && (
         <div className="space-x-1">
-          <span className="text-red-500">{error}</span>
+          <span className="text-red-500 break-words">{error}</span>
           {errorDetail && (
             <TooltipProvider>
               <Tooltip>

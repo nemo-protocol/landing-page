@@ -18,7 +18,12 @@ import useCoinData from "@/hooks/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import { formatDecimalValue, isValidAmount, debounce } from "@/lib/utils"
+import {
+  formatDecimalValue,
+  isValidAmount,
+  debounce,
+  safeDivide,
+} from "@/lib/utils"
 import {
   depositSyCoin,
   getPriceVoucher,
@@ -263,7 +268,11 @@ export default function Trade() {
     const outputValue = new Decimal(ytValue).mul(ptYtData.ytPrice)
 
     const value = outputValue
-    const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
+    const ratio = safeDivide(
+      inputValue.minus(outputValue),
+      inputValue,
+      "decimal",
+    ).mul(100)
 
     return { value, ratio }
   }, [
@@ -486,7 +495,7 @@ export default function Trade() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Info 
+                                  <Info
                                     className={`size-3 cursor-pointer ${
                                       priceImpact.ratio.gt(30)
                                         ? "text-red-500"
@@ -497,7 +506,11 @@ export default function Trade() {
                                   />
                                 </TooltipTrigger>
                                 <TooltipContent className="bg-[#12121B] max-w-[500px]">
-                                  <p>Price Impact Alert: Price impact is too high. Please consider adjusting the transaction size.</p>
+                                  <p>
+                                    Price Impact Alert: Price impact is too
+                                    high. Please consider adjusting the
+                                    transaction size.
+                                  </p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>

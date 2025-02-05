@@ -11,7 +11,12 @@ import { Transaction } from "@mysten/sui/transactions"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { Info, ChevronsDown } from "lucide-react"
-import { formatDecimalValue, isValidAmount, debounce } from "@/lib/utils"
+import {
+  formatDecimalValue,
+  isValidAmount,
+  debounce,
+  safeDivide,
+} from "@/lib/utils"
 import { useCoinConfig } from "@/queries"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import TradeInfo from "@/components/TradeInfo"
@@ -372,7 +377,11 @@ export default function Invest() {
     const outputValue = new Decimal(ptValue).mul(ptYtData.ptPrice)
 
     const value = outputValue
-    const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
+    const ratio = safeDivide(
+      inputValue.minus(outputValue),
+      inputValue,
+      "decimal",
+    ).mul(100)
 
     return { value, ratio }
   }, [
@@ -452,59 +461,67 @@ export default function Invest() {
                 <div className="flex flex-col items-end">
                   {isCalcPtLoading ? (
                     <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
-                  ) : ptValue && (
-                    <div className="flex items-center gap-x-1">
-                      <span>≈</span>
-                      <span>{formatDecimalValue(ptValue, decimal)}</span>
-                    </div>
+                  ) : (
+                    ptValue && (
+                      <div className="flex items-center gap-x-1">
+                        <span>≈</span>
+                        <span>{formatDecimalValue(ptValue, decimal)}</span>
+                      </div>
+                    )
                   )}
                   {isCalcPtLoading ? (
                     <Skeleton className="h-3 w-24 bg-[#2D2D48] mt-1" />
-                  ) : priceImpact && (
-                    <div className="flex items-center gap-x-1 text-xs">
-                      {priceImpact.ratio.gt(5) && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info 
-                                className={`size-3 cursor-pointer ${
-                                  priceImpact.ratio.gt(15)
-                                    ? "text-red-500"
-                                    : priceImpact.ratio.gt(5)
-                                      ? "text-yellow-500"
-                                      : "text-white/60"
-                                }`}
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-[#12121B] max-w-[500px]">
-                              <p>Price Impact Alert: Price impact is too high. Please consider adjusting the transaction size.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                      <span
-                        className={`text-xs ${
-                          priceImpact.ratio.gt(15)
-                            ? "text-red-500"
-                            : priceImpact.ratio.gt(5)
-                              ? "text-yellow-500"
-                              : "text-white/60"
-                        }`}
-                      >
-                        ${formatDecimalValue(priceImpact.value, 4)}
-                      </span>
-                      <span
-                        className={`text-xs ${
-                          priceImpact.ratio.gt(15)
-                            ? "text-red-500"
-                            : priceImpact.ratio.gt(5)
-                              ? "text-yellow-500"
-                              : "text-white/60"
-                        }`}
-                      >
-                        ({formatDecimalValue(priceImpact.ratio, 4)}%)
-                      </span>
-                    </div>
+                  ) : (
+                    priceImpact && (
+                      <div className="flex items-center gap-x-1 text-xs">
+                        {priceImpact.ratio.gt(5) && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info
+                                  className={`size-3 cursor-pointer ${
+                                    priceImpact.ratio.gt(15)
+                                      ? "text-red-500"
+                                      : priceImpact.ratio.gt(5)
+                                        ? "text-yellow-500"
+                                        : "text-white/60"
+                                  }`}
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-[#12121B] max-w-[500px]">
+                                <p>
+                                  Price Impact Alert: Price impact is too high.
+                                  Please consider adjusting the transaction
+                                  size.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        <span
+                          className={`text-xs ${
+                            priceImpact.ratio.gt(15)
+                              ? "text-red-500"
+                              : priceImpact.ratio.gt(5)
+                                ? "text-yellow-500"
+                                : "text-white/60"
+                          }`}
+                        >
+                          ${formatDecimalValue(priceImpact.value, 4)}
+                        </span>
+                        <span
+                          className={`text-xs ${
+                            priceImpact.ratio.gt(15)
+                              ? "text-red-500"
+                              : priceImpact.ratio.gt(5)
+                                ? "text-yellow-500"
+                                : "text-white/60"
+                          }`}
+                        >
+                          ({formatDecimalValue(priceImpact.ratio, 4)}%)
+                        </span>
+                      </div>
+                    )
                   )}
                 </div>
                 <div className="flex flex-col items-end">
