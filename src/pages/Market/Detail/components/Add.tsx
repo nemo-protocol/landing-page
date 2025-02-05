@@ -54,6 +54,7 @@ import useAddLiquiditySingleSyDryRun from "@/hooks/dryrun/useAddLiquiditySingleS
 import useSeedLiquidityDryRun from "@/hooks/dryrun/useSeedLiquidityDryRun"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import type { CoinData } from "@/hooks/useCoinData"
+import { ContractError } from "@/hooks/types"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -209,8 +210,11 @@ export default function SingleCoin() {
         setIsInitRatioLoading(true)
         const initialRatio = await calculateRatio()
         setRatio(initialRatio)
-      } catch (error) {
-        console.error("Failed to calculate initial ratio:", error)
+      } catch (errorMsg) {
+        const { error } = parseErrorMessage(
+          (errorMsg as ContractError)?.message ?? errorMsg,
+        )
+        setError(error)
       } finally {
         setIsInitRatioLoading(false)
       }
@@ -602,7 +606,10 @@ export default function SingleCoin() {
         } else {
           console.log(
             "handleAddLiquiditySingleSy",
-            new Decimal(marketStateData.totalSy).mul(0.4).div(10 ** decimal).toFixed(decimal),
+            new Decimal(marketStateData.totalSy)
+              .mul(0.4)
+              .div(10 ** decimal)
+              .toFixed(decimal),
             new Decimal(addAmount).div(10 ** decimal).toFixed(decimal),
           )
           await handleAddLiquiditySingleSy(

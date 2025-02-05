@@ -54,7 +54,10 @@ export default function useQueryPriceVoucher(
       }
 
       if (result?.error) {
-        throw new ContractError(result.error, debugInfo)
+        throw new ContractError(
+          "useQueryPriceVoucher error: " + result.error,
+          debugInfo,
+        )
       }
 
       if (!result?.results?.[0]?.returnValues?.[0]) {
