@@ -9,7 +9,7 @@ import {
   TransactionArgument,
   TransactionResult,
 } from "@mysten/sui/transactions"
-import { SCALLOP, AFTERMATH, VALIDATORS } from "./constants"
+import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury } from "./constants"
 
 export type MoveCallInfo = DebugInfo["moveCall"]
 
@@ -124,12 +124,13 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
-      // debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
+      debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
+
       return [priceVoucher, moveCall]
     }
   }
@@ -152,7 +153,7 @@ export const initPyPosition = (tx: Transaction, coinConfig: CoinConfig) => {
 }
 
 type MintSCoinResult<T extends boolean> = T extends true
-  ? [TransactionArgument[], MoveCallInfo]
+  ? [TransactionArgument[], MoveCallInfo[]]
   : TransactionArgument[]
 
 export const mintSCoin = <T extends boolean = false>(
@@ -171,50 +172,60 @@ export const mintSCoin = <T extends boolean = false>(
 
   let moveCall: MoveCallInfo
   const results: TransactionArgument[] = []
+  const moveCallInfos: MoveCallInfo[] = []
 
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
-      moveCall = {
-        target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
-        arguments: [
-          { name: "version", value: SCALLOP.VERSION_OBJECT },
-          { name: "market", value: SCALLOP.MARKET_OBJECT },
-          { name: "amount", value: amounts[0] },
-          { name: "clock", value: "0x6" },
-        ],
-        typeArguments: [coinConfig.underlyingCoinType],
+      const treasury = getTreasury(coinConfig.coinType)
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        const moveCall = {
+          target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
+          arguments: [
+            { name: "version", value: SCALLOP.VERSION_OBJECT },
+            { name: "market", value: SCALLOP.MARKET_OBJECT },
+            { name: "amount", value: amounts[i] },
+            { name: "clock", value: "0x6" },
+          ],
+          typeArguments: [coinConfig.underlyingCoinType],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`scallop mint move call for amount ${i}:`, moveCall)
+
+        const [marketCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(SCALLOP.VERSION_OBJECT),
+            tx.object(SCALLOP.MARKET_OBJECT),
+            splitCoins[i],
+            tx.object("0x6"),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        const mintSCoinMoveCall: MoveCallInfo = {
+          target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
+          arguments: [
+            { name: "treasury", value: treasury },
+            { name: "market_coin", value: "marketCoin" },
+          ],
+          typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
+        }
+        moveCallInfos.push(mintSCoinMoveCall)
+        debugLog(`mint_s_coin move call for amount ${i}:`, mintSCoinMoveCall)
+
+        const [sCoin] = tx.moveCall({
+          ...mintSCoinMoveCall,
+          arguments: [tx.object(treasury), marketCoin],
+        })
+
+        sCoins.push(sCoin)
       }
-      debugLog(`scallop mint move call:`, moveCall)
 
-      const [marketCoin] = tx.moveCall({
-        target: moveCall.target,
-        arguments: [
-          tx.object(SCALLOP.VERSION_OBJECT),
-          tx.object(SCALLOP.MARKET_OBJECT),
-          splitCoins[0],
-          tx.object("0x6"),
-        ],
-        typeArguments: moveCall.typeArguments,
-      })
-
-      const mintSCoinMoveCall: MoveCallInfo = {
-        target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::mint_s_coin`,
-        arguments: [
-          { name: "treasury", value: coinConfig.sCoinTreasure },
-          { name: "market_coin", value: "marketCoin" },
-        ],
-        typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
-      }
-      debugLog(`mint_s_coin move call:`, mintSCoinMoveCall)
-
-      const [sCoin] = tx.moveCall({
-        target: mintSCoinMoveCall.target,
-        arguments: [tx.object(coinConfig.sCoinTreasure), marketCoin],
-        typeArguments: mintSCoinMoveCall.typeArguments,
-      })
-
-      results.push(sCoin)
-      return (debug ? [results, mintSCoinMoveCall] : results) as unknown as MintSCoinResult<T>
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Aftermath": {
       moveCall = {
@@ -247,7 +258,9 @@ export const mintSCoin = <T extends boolean = false>(
       })
 
       results.push(sCoin)
-      return (debug ? [results, moveCall] : results) as unknown as MintSCoinResult<T>
+      return (debug
+        ? [results, moveCallInfos]
+        : results) as unknown as MintSCoinResult<T>
     }
     default:
       throw new Error(
@@ -263,22 +276,20 @@ export const burnSCoin = (
 ) => {
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
-      // 1. First call burn_s_coin to get marketCoin
+      const treasury = getTreasury(coinConfig.coinType)
+
       const burnSCoinMoveCall = {
         target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::burn_s_coin`,
-        arguments: [coinConfig.sCoinTreasure, sCoin],
+        arguments: [treasury, sCoin],
         typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
       }
       debugLog(`burn_s_coin move call:`, burnSCoinMoveCall)
 
       const marketCoin = tx.moveCall({
         ...burnSCoinMoveCall,
-        arguments: [tx.object(coinConfig.sCoinTreasure), sCoin],
+        arguments: [tx.object(treasury), sCoin],
       })
 
-      // return marketCoin
-
-      // 2. Then call redeem to get underlying coin
       const redeemMoveCall = {
         target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::redeem::redeem`,
         arguments: [
@@ -600,6 +611,7 @@ export const swapExactYtForSy = (
   priceVoucher: TransactionArgument,
   minSyOut: string,
 ) => {
+  console.log("minSyOut", minSyOut)
   const [syCoin] = tx.moveCall({
     target: `${coinConfig.nemoContractId}::router::swap_exact_yt_for_sy`,
     arguments: [

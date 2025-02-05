@@ -3,9 +3,9 @@ import type { DebugInfo } from "../types"
 import { CoinData } from "@/hooks/useCoinData"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import { TransactionResult } from "@mysten/sui/transactions"
 import { mintSCoin, type MoveCallInfo } from "@/lib/txHelper"
-import { useWallet } from "@nemoprotocol/wallet-kit"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 
@@ -42,7 +42,7 @@ export default function useMintSCoin<T extends boolean = false>(
 
       const result = mintSCoin(tx, coinConfig, coinData, amounts, debug)
       const coins = debug
-        ? (result as [TransactionArgument[], MoveCallInfo])[0]
+        ? (result as [TransactionArgument[], MoveCallInfo[]])[0]
         : (result as TransactionArgument[])
 
       tx.transferObjects(coins, address)
@@ -55,7 +55,7 @@ export default function useMintSCoin<T extends boolean = false>(
         const message = "Failed to mint SCoin"
         throw new ContractError(message, {
           moveCall: debug
-            ? (result as [TransactionArgument[], MoveCallInfo])[1]
+            ? (result as [TransactionArgument[], MoveCallInfo[]])[1][0]
             : {
                 target: "",
                 arguments: [],
@@ -72,7 +72,7 @@ export default function useMintSCoin<T extends boolean = false>(
         ? ([
             coins,
             {
-              moveCall: (result as [TransactionArgument[], MoveCallInfo])[1],
+              moveCall: (result as [TransactionArgument[], MoveCallInfo[]])[1][0],
               rawResult: {
                 error: undefined,
                 results: txResult?.effects,

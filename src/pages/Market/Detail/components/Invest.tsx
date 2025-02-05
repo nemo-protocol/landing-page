@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { DEBUG, network } from "@/config"
+import { network } from "@/config"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { useParams } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
@@ -45,6 +45,7 @@ import {
 import useMarketStateData from "@/hooks/useMarketStateData"
 import useInvestRatio from "@/hooks/actions/useInvestRatio"
 import { CoinConfig } from "@/queries/types/market"
+import { ContractError } from "@/hooks/types"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -55,10 +56,11 @@ export default function Invest() {
   const [error, setError] = useState<string>()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
+  const [ptValue, setPtValue] = useState<string>()
   const [message, setMessage] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0)
-  const [ptOutAmount, setPtOutAmount] = useState<string>()
+  const [errorDetail, setErrorDetail] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [isCalcPtLoading, setIsCalcPtLoading] = useState(false)
   const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
@@ -146,18 +148,6 @@ export default function Invest() {
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
 
-  useEffect(() => {
-    if (marketStateData) {
-      console.log("marketStateData", marketStateData)
-    }
-  }, [marketStateData])
-
-  useEffect(() => {
-    if (ptYtData) {
-      console.log("ptYtData", ptYtData)
-    }
-  }, [ptYtData])
-
   const { mutateAsync: calculateRatio } = useInvestRatio(coinConfig)
 
   const debouncedGetPtOut = useCallback(
@@ -171,24 +161,22 @@ export default function Invest() {
               .div(tokenType === 0 ? conversionRate : 1)
               .mul(10 ** decimal)
               .toFixed(0)
-            const [ptOut] = await queryPtOut(swapAmount)
-            const ptRatio = new Decimal(ptOut)
-              .div(10 ** decimal)
-              .div(value)
-              .toFixed(4)
+            const ptValue = await queryPtOut(swapAmount)
+            const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
             setRatio(ptRatio)
-            setPtOutAmount(ptOut)
-          } catch (error) {
-            setError(
-              parseErrorMessage((error as Error).message) ||
-                "Failed to fetch PT amount",
+            setPtValue(ptValue)
+          } catch (errorMsg) {
+            const { error, detail } = parseErrorMessage(
+              (errorMsg as ContractError)?.message ?? errorMsg,
             )
-            setPtOutAmount(undefined)
+            setError(error)
+            setErrorDetail(detail)
+            setPtValue(undefined)
           } finally {
             setIsCalcPtLoading(false)
           }
         } else {
-          setPtOutAmount(undefined)
+          setPtValue(undefined)
           setError(undefined)
         }
       }, 500)
@@ -313,13 +301,10 @@ export default function Invest() {
         setSwapValue("")
 
         await refreshData()
-      } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
+      } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")
-        const msg = (error as Error)?.message ?? error
+        const msg = (errorMsg as Error)?.message ?? error
         const gasMsg = parseGasErrorMessage(msg)
         if (gasMsg) {
           setMessage(gasMsg)
@@ -330,7 +315,9 @@ export default function Invest() {
         ) {
           setMessage("Insufficient PT in the pool.")
         } else {
-          setMessage(parseErrorMessage(msg || ""))
+          const { error, detail } = parseErrorMessage(msg)
+          setMessage(error)
+          setErrorDetail(detail)
         }
       } finally {
         setIsSwapping(false)
@@ -365,6 +352,39 @@ export default function Invest() {
     return "Invest"
   }, [hasLiquidity, insufficientBalance, swapValue, coinName])
 
+  const priceImpact = useMemo(() => {
+    if (
+      !ptValue ||
+      !decimal ||
+      !swapValue ||
+      !ptYtData?.ptPrice ||
+      !coinConfig?.coinPrice ||
+      !coinConfig?.underlyingPrice
+    ) {
+      return
+    }
+
+    const inputValue =
+      tokenType === 0
+        ? new Decimal(swapValue).mul(coinConfig.underlyingPrice)
+        : new Decimal(swapValue).mul(coinConfig.coinPrice)
+
+    const outputValue = new Decimal(ptValue).mul(ptYtData.ptPrice)
+
+    const value = outputValue
+    const ratio = inputValue.minus(outputValue).div(inputValue).mul(100)
+
+    return { value, ratio }
+  }, [
+    decimal,
+    ptValue,
+    swapValue,
+    tokenType,
+    ptYtData?.ptPrice,
+    coinConfig?.coinPrice,
+    coinConfig?.underlyingPrice,
+  ])
+
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
@@ -383,19 +403,20 @@ export default function Invest() {
         />
         <AmountInput
           price={price}
+          error={error}
           decimal={decimal}
+          warning={warning}
           amount={swapValue}
           coinName={coinName}
           coinLogo={coinLogo}
           isLoading={isLoading}
+          setWarning={setWarning}
+          disabled={!hasLiquidity}
+          errorDetail={errorDetail}
           coinBalance={coinBalance}
           isConnected={isConnected}
           isConfigLoading={isConfigLoading}
           isBalanceLoading={isBalanceLoading}
-          error={error}
-          disabled={!hasLiquidity}
-          setWarning={setWarning}
-          warning={warning}
           onChange={(value) => setSwapValue(value)}
           coinNameComponent={
             <Select
@@ -423,37 +444,83 @@ export default function Invest() {
         />
         <ChevronsDown className="size-6" />
         <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
+          {/* FIXME: loading issue */}
           <div className="flex flex-col items-end gap-y-1">
             <div className="flex items-center justify-between w-full">
               <span>Receiving</span>
-              <span className="h-[28px]">
-                {!swapValue ? (
-                  "--"
-                ) : isCalcPtLoading ? (
-                  <Skeleton className="h-7 w-60 bg-[#2D2D48]" />
-                ) : !decimal || !ptOutAmount ? (
-                  "--"
-                ) : (
-                  <span className="flex items-center gap-x-1.5">
-                    {"≈  " +
-                      formatDecimalValue(
-                        new Decimal(ptOutAmount).div(10 ** decimal),
-                        decimal,
-                      )}{" "}
-                    <span>PT {coinConfig?.coinName}</span>
-                    <img
-                      src={coinConfig?.coinLogo}
-                      alt={coinConfig?.coinName}
-                      className="size-[28px]"
-                    />
+              <div className="flex items-start gap-x-2">
+                <div className="flex flex-col items-end">
+                  {isCalcPtLoading ? (
+                    <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
+                  ) : ptValue && (
+                    <div className="flex items-center gap-x-1">
+                      <span>≈</span>
+                      <span>{formatDecimalValue(ptValue, decimal)}</span>
+                    </div>
+                  )}
+                  {isCalcPtLoading ? (
+                    <Skeleton className="h-3 w-24 bg-[#2D2D48] mt-1" />
+                  ) : priceImpact && (
+                    <div className="flex items-center gap-x-1 text-xs">
+                      {priceImpact.ratio.gt(5) && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info 
+                                className={`size-3 cursor-pointer ${
+                                  priceImpact.ratio.gt(15)
+                                    ? "text-red-500"
+                                    : priceImpact.ratio.gt(5)
+                                      ? "text-yellow-500"
+                                      : "text-white/60"
+                                }`}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-[#12121B] max-w-[500px]">
+                              <p>Price Impact Alert: Price impact is too high. Please consider adjusting the transaction size.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <span
+                        className={`text-xs ${
+                          priceImpact.ratio.gt(15)
+                            ? "text-red-500"
+                            : priceImpact.ratio.gt(5)
+                              ? "text-yellow-500"
+                              : "text-white/60"
+                        }`}
+                      >
+                        ${formatDecimalValue(priceImpact.value, 4)}
+                      </span>
+                      <span
+                        className={`text-xs ${
+                          priceImpact.ratio.gt(15)
+                            ? "text-red-500"
+                            : priceImpact.ratio.gt(5)
+                              ? "text-yellow-500"
+                              : "text-white/60"
+                        }`}
+                      >
+                        ({formatDecimalValue(priceImpact.ratio, 4)}%)
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col items-end">
+                  <span>PT {coinConfig?.coinName}</span>
+                  <span className="text-white/60 text-xs">
+                    {dayjs(
+                      parseInt(coinConfig?.maturity || Date.now().toString()),
+                    ).format("DD MMM YYYY")}
                   </span>
-                )}
-              </span>
-            </div>
-            <div className="text-xs text-white/60">
-              {coinConfig?.maturity
-                ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
-                : "--"}
+                </div>
+                <img
+                  src={coinConfig?.coinLogo}
+                  alt={coinConfig?.coinName}
+                  className="size-10"
+                />
+              </div>
             </div>
           </div>
           <hr className="border-t border-[#2D2D48] mt-6" />

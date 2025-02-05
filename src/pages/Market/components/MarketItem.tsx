@@ -1,14 +1,15 @@
 import dayjs from "dayjs"
-import { motion } from "framer-motion"
 import PieChart from "./PieChart"
+import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
+import { getBgGradient } from "@/lib/gradients"
 import { CoinInfoWithMetrics } from "@/queries/types/market"
 import { formatLargeNumber, formatTimeDiff, isValidAmount } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip"
 
 interface MarketItemProps {
@@ -26,7 +27,7 @@ const MarketItem = ({ item }: MarketItemProps) => {
       >
         <motion.div
           className="p-5 rounded-3xl"
-          style={{ background: item?.bgGradient || "#0E0F16" }}
+          style={{ background: getBgGradient(item.coinType) }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -125,13 +126,23 @@ const MarketItem = ({ item }: MarketItemProps) => {
                 <button
                   className="mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer border border-transparent hover:border-white"
                   onClick={() =>
-                    navigate(`/market/detail/${item.coinType}/${item.maturity}/add`)
+                    navigate(
+                      `/market/detail/${item.coinType}/${item.maturity}/add`,
+                    )
                   }
                 >
                   <span>+ POOL APY</span>
                   <div className="flex flex-row items-center gap-1.5">
-                    {item.poolApy ? `${formatLargeNumber(item.poolApy, 6)}%` : "--"}
-                    <img src="/images/market/gift.png" alt="" className="size-4" />
+                    {item.poolApy
+                      ? `${formatLargeNumber(item.poolApy, 6)}%`
+                      : "--"}
+                    {item.incentiveApy && (
+                      <img
+                        src="/images/market/gift.png"
+                        alt=""
+                        className="size-4"
+                      />
+                    )}
                   </div>
                 </button>
               </TooltipTrigger>
@@ -140,6 +151,19 @@ const MarketItem = ({ item }: MarketItemProps) => {
                 className="bg-[#1B202A] text-white border-none p-4 relative rounded-xl w-[312px]"
               >
                 <div className="flex flex-col gap-4">
+                  <div className="flex flex-row items-start justify-between">
+                    <span className="text-sm text-left">Points</span>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <span className="font-mono text-xs">
+                        {item.perPoints
+                          ? `${formatLargeNumber(item.perPoints, 6)}`
+                          : "--"}
+                      </span>
+                      <span className="text-[#96A9E4] text-xs">
+                        per LP per day
+                      </span>
+                    </div>
+                  </div>
                   <div className="flex flex-col gap-2">
                     <div className="text-sm text-left">Scaled</div>
                     <div className="relative flex flex-row gap-2">
@@ -150,7 +174,9 @@ const MarketItem = ({ item }: MarketItemProps) => {
                           <span className="text-[#96A9E4] text-xs">PT APY</span>
                         </div>
                         <span className="font-mono text-xs">
-                          {item.scaled_pt_apy ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%` : "--"}
+                          {item.scaled_pt_apy
+                            ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%`
+                            : "--"}
                         </span>
                       </div>
                     </div>
@@ -158,29 +184,49 @@ const MarketItem = ({ item }: MarketItemProps) => {
                       <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
                       <div className="flex flex-1 flex-row items-start justify-between gap-4">
                         <div className="flex flex-row items-center gap-1.5">
-                          <span className="text-[#96A9E4] text-xs">Underlying APY</span>
+                          <span className="text-[#96A9E4] text-xs">
+                            Underlying APY
+                          </span>
                         </div>
                         <span className="font-mono text-xs">
-                          {item.scaled_underlying_apy ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%` : "--"}
+                          {item.scaled_underlying_apy
+                            ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%`
+                            : "--"}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="text-sm text-left">Incentive APY</div>
-                    <div className="relative flex flex-row gap-2">
-                      <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
-                      <div className="flex flex-1 flex-row items-start justify-between gap-4">
-                        <div className="flex flex-row items-center gap-1.5">
-                          <span className="text-[#96A9E4] text-xs">Incentive</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <img src={item.providerLogo} alt="" className="size-4" />
-                          <span className="font-mono text-xs">0%</span>
+                  <div className="flex flex-row items-start justify-between">
+                    <span className="text-sm text-left">Fee APY</span>
+                    <span className="font-mono text-xs">
+                      {item.feeApy
+                        ? `${formatLargeNumber(item.feeApy, 6)}%`
+                        : "--"}
+                    </span>
+                  </div>
+                  {item.incentiveApy && (
+                    <div className="flex flex-col gap-2">
+                      <div className="text-sm text-left">Incentive APY</div>
+                      <div className="relative flex flex-row gap-2">
+                        <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
+                        <div className="flex flex-1 flex-row items-start justify-between gap-4">
+                          <div className="flex flex-row items-center gap-1.5">
+                            <span className="text-[#96A9E4] text-xs">
+                              Incentive
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <img
+                              src={item.providerLogo}
+                              alt=""
+                              className="size-4"
+                            />
+                            <span className="font-mono text-xs">0%</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                   <div className="flex flex-row items-center justify-between gap-4">
                     <span className="text-[#2DF4DD] text-sm">Total APY</span>
                     <span className="text-[#2DF4DD] font-mono text-sm">

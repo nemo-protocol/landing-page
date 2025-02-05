@@ -7,7 +7,7 @@ export default function StrategicYieldTrading() {
         Fixing Yield and Long Yield
       </p>
       <img
-        src="/images/png/StrategicYieldTradingPNG.png"
+        src="/images/learn/4/StrategicYieldTrading.png"
         alt=""
         className="mt-7.5 pr-4"
       />

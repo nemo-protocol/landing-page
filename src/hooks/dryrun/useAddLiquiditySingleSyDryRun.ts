@@ -1,4 +1,3 @@
-import { DEBUG } from "@/config"
 import { ContractError } from "../types"
 import type { DebugInfo } from "../types"
 import { useMutation } from "@tanstack/react-query"
@@ -136,13 +135,6 @@ export default function useAddLiquiditySingleSyDryRun<
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
-      }
-
-      if (result?.error) {
-        if (DEBUG) {
-          console.log("debugInfo", debugInfo, coinConfig)
-        }
-        throw new ContractError(result.error, debugInfo)
       }
 
       if (!result?.events?.[result?.events?.length - 1]?.parsedJson) {

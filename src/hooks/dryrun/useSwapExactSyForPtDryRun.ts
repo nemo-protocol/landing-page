@@ -4,10 +4,15 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
-import { depositSyCoin, getPriceVoucher, initPyPosition, mintSCoin, splitCoinHelper } from "@/lib/txHelper"
+import {
+  depositSyCoin,
+  getPriceVoucher,
+  initPyPosition,
+  mintSCoin,
+  splitCoinHelper,
+} from "@/lib/txHelper"
 import useFetchPyPosition from "../useFetchPyPosition"
 import type { PyPosition } from "../types"
-import { DEBUG } from "@/config"
 import type { CoinData } from "@/hooks/useCoinData"
 
 interface SwapParams {
@@ -43,20 +48,13 @@ export default function useSwapExactSyForPtDryRun(
         throw new Error("Please select a pool")
       }
 
-      let pyPositions = inputPyPositions
-      if (!pyPositions) {
-        [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
-      }
-
-      if (DEBUG) {
-        console.log("pyPositions in dry run:", pyPositions)
-        console.log("coinData in dry run:", coinData)
-      }
+      const [pyPositions] = !inputPyPositions
+        ? ((await fetchPyPositionAsync()) as [PyPosition[]])
+        : [inputPyPositions]
 
       const tx = new Transaction()
       tx.setSender(address)
 
-      // Handle py position creation
       let pyPosition
       let created = false
       if (!pyPositions?.length) {
@@ -66,10 +64,10 @@ export default function useSwapExactSyForPtDryRun(
         pyPosition = tx.object(pyPositions[0].id)
       }
 
-      // Split coin and deposit to get syCoin
-      const [splitCoin] = tokenType === 0
-        ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
-        : splitCoinHelper(tx, coinData, [swapAmount], coinType)
+      const [splitCoin] =
+        tokenType === 0
+          ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
+          : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
       const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
@@ -83,7 +81,10 @@ export default function useSwapExactSyForPtDryRun(
             { name: "price_voucher", value: "priceVoucher" },
             { name: "py_position", value: "pyPosition" },
             { name: "py_state", value: coinConfig.pyStateId },
-            { name: "market_factory_config", value: coinConfig.marketFactoryConfigId },
+            {
+              name: "market_factory_config",
+              value: coinConfig.marketFactoryConfigId,
+            },
             { name: "market_state", value: coinConfig.marketStateId },
             { name: "clock", value: "0x6" },
           ],
@@ -118,12 +119,6 @@ export default function useSwapExactSyForPtDryRun(
           onlyTransactionKind: true,
         }),
       })
-
-      console.log("swap_exact_sy_for_pt dry run result:", result)
-
-      if (DEBUG) {
-        console.log("swap_exact_sy_for_pt dry run result:", result)
-      }
 
       debugInfo.rawResult = {
         error: result?.error,

@@ -1,4 +1,3 @@
-import { DEBUG } from "@/config"
 import { ContractError } from "../types"
 import type { DebugInfo, PyPosition } from "../types"
 import { useMutation } from "@tanstack/react-query"
@@ -141,9 +140,6 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
       }
 
       if (result?.error) {
-        if (DEBUG) {
-          console.log("debugInfo", debugInfo, coinConfig)
-        }
         throw new ContractError(result.error, debugInfo)
       }
 

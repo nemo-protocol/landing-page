@@ -2,18 +2,19 @@ import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { Link } from "react-router-dom"
 import Loading from "@/components/Loading"
+import { network, debugLog } from "@/config"
 import usePortfolio from "@/hooks/usePortfolio"
-import { CoinConfig } from "@/queries/types/market"
 import { Skeleton } from "@/components/ui/skeleton"
-import { network, debugLog, DEBUG } from "@/config"
 import { useEffect, useMemo, useState } from "react"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import useRedeemLp from "@/hooks/actions/useRedeemLp"
 import { Transaction } from "@mysten/sui/transactions"
+import { PortfolioItem } from "@/queries/types/market"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import SmallNumDisplay from "@/components/SmallNumDisplay"
 import { TableRow, TableCell } from "@/components/ui/table"
 import { formatDecimalValue, isValidAmount } from "@/lib/utils"
+import useQueryClaimYtReward from "@/hooks/useQueryClaimYtReward"
 import { PyPosition, MarketState, LpPosition } from "@/hooks/types"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
@@ -21,6 +22,7 @@ import {
   burnSCoin,
   redeemSyCoin,
   getPriceVoucher,
+  initPyPosition,
 } from "@/lib/txHelper"
 import {
   AlertDialog,
@@ -30,30 +32,30 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
-import useQueryClaimYtReward from "@/hooks/useQueryClaimYtReward"
+import RefreshButton from "@/components/RefreshButton"
 
 const LoadingButton = ({
+  onClick,
   loading,
   disabled,
-  onClick,
-  loadingText,
   buttonText,
+  loadingText,
 }: {
   loading: boolean
   disabled: boolean
-  onClick: () => void
-  loadingText: string
   buttonText: string
+  loadingText: string
+  onClick: () => void
 }) => (
   <button
+    onClick={onClick}
+    disabled={disabled || loading}
     className={[
       "rounded-3xl h-8",
       loading ? "bg-transparent w-32" : "w-24",
       !loading &&
         (disabled ? "bg-[#0F60FF]/50 cursor-not-allowed" : "bg-[#0F60FF]"),
     ].join(" ")}
-    onClick={onClick}
-    disabled={disabled || loading}
   >
     {loading ? (
       <div className="flex items-center justify-center gap-2.5">
@@ -75,7 +77,7 @@ export default function Item({
   lpPositions,
   marketState,
   ...coinConfig
-}: CoinConfig & {
+}: PortfolioItem & {
   ptBalance: string
   ytBalance: string
   lpBalance: string
@@ -87,34 +89,36 @@ export default function Item({
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
   const [ytClaimed, setYtClaimed] = useState(false)
   const [ptRedeemed, setPtRedeemed] = useState(false)
   const [lpRedeemed, setLpRedeemed] = useState(false)
+  const [status, setStatus] = useState<"Success" | "Failed">()
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
 
-  const { updatePortfolio } = usePortfolio()
   const { address } = useWallet()
+  const { updatePortfolio } = usePortfolio()
   const isConnected = useMemo(() => !!address, [address])
 
   const [loading, setLoading] = useState(false)
 
   const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
 
+  // TODO: yt price optimization
   const { data: ptYtData, isLoading: isPtYtLoading } = useCalculatePtYt(
     coinConfig,
     marketState,
   )
 
-  const { data: ytReward, isLoading: isClaimLoading } = useQueryClaimYtReward(
-    coinConfig,
-    {
-      ytBalance,
-      pyPositions,
-      tokenType: selectType === "yt" ? 1 : 0,
-    },
-  )
+  const {
+    data: ytReward,
+    isLoading: isClaimLoading,
+    refetch: refetchYtReward,
+  } = useQueryClaimYtReward(coinConfig, {
+    ytBalance,
+    pyPositions,
+    tokenType: selectType === "yt" ? 1 : 0,
+  })
 
   useEffect(() => {
     if (isConnected) {
@@ -122,46 +126,43 @@ export default function Item({
         coinConfig.id,
         new Decimal(ptBalance || 0)
           .mul(
-            ptYtData?.ptPrice && new Decimal(ptYtData.ptPrice).gt(0)
+            ptYtData?.ptPrice && isValidAmount(ptYtData?.ptPrice)
               ? ptYtData.ptPrice
               : 0,
           )
           .add(
             new Decimal(ytBalance || 0).mul(
-              ptYtData?.ytPrice && new Decimal(ptYtData.ytPrice).gt(0)
+              ptYtData?.ytPrice && isValidAmount(ptYtData?.ytPrice)
                 ? ptYtData.ytPrice
                 : 0,
             ),
           )
           .add(
             new Decimal(lpBalance || 0).mul(
-              coinConfig.coinPrice &&
-                ptYtData?.ptPrice &&
-                new Decimal(coinConfig.coinPrice).add(ptYtData.ptPrice).gt(0)
-                ? new Decimal(coinConfig.coinPrice)
-                    .add(ptYtData.ptPrice)
-                    .toNumber()
+              ptYtData?.lpPrice && isValidAmount(ptYtData?.lpPrice)
+                ? ptYtData.lpPrice
                 : 0,
             ),
           )
           .toNumber(),
-        new Decimal(isValidAmount(ytReward) ? String(ytReward) : "0")
+        new Decimal(ytReward && isValidAmount(ytReward) ? ytReward : "0")
           .mul(coinConfig?.underlyingPrice ?? 0)
           .toNumber(),
       )
     }
   }, [
-    coinConfig.id,
+    ytReward,
     ptBalance,
     ytBalance,
-    isConnected,
     lpBalance,
+    isConnected,
+    coinConfig.id,
     updatePortfolio,
     ptYtData?.ptPrice,
+    ptYtData?.lpPrice,
     ptYtData?.ytPrice,
     coinConfig.coinPrice,
     coinConfig.underlyingPrice,
-    ytReward,
   ])
 
   async function claim() {
@@ -174,17 +175,7 @@ export default function Item({
         let created = false
         if (!pyPositions?.length) {
           created = true
-          const moveCall = {
-            target: `${coinConfig?.nemoContractId}::py::init_py_position`,
-            arguments: [coinConfig?.version, coinConfig?.pyStateId],
-            typeArguments: [coinConfig?.syCoinType],
-          }
-          debugLog("init_py_position move call:", moveCall)
-
-          pyPosition = tx.moveCall({
-            ...moveCall,
-            arguments: moveCall.arguments.map((arg) => tx.object(arg)),
-          })[0]
+          pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositions[0].id)
         }
@@ -227,17 +218,14 @@ export default function Item({
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
-          // chain: `sui:${network}`,
         })
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
-        setYtClaimed(true)
-        // await refreshData()
-      } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
+        if (Number(coinConfig?.maturity || Infinity) <= Date.now()) {
+          setYtClaimed(true)
         }
+      } catch (error) {
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
@@ -302,9 +290,6 @@ export default function Item({
         setPtRedeemed(true)
         // await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
@@ -336,9 +321,6 @@ export default function Item({
         setLpRedeemed(true)
         // await refreshData()
       } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
         setOpen(true)
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
@@ -418,39 +400,39 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">PT</TableCell>
           <TableCell className="text-center space-x-1">
-            <div>
-              <div>
-                {isPtYtLoading ? (
-                  <Skeleton className="h-6 w-20 mx-auto" />
-                ) : (
-                  <>
-                    <span>
-                      {ptYtData?.ptPrice &&
-                        new Decimal(ptBalance)
-                          .mul(new Decimal(ptYtData.ptPrice))
-                          .gt(0) &&
-                        "≈"}
-                    </span>
-                    <span>
-                      $
-                      <SmallNumDisplay
-                        value={formatDecimalValue(
-                          ptYtData?.ptPrice
-                            ? new Decimal(ptBalance).mul(
-                                new Decimal(ptYtData.ptPrice),
-                              )
-                            : "0",
-                          Number(coinConfig?.decimal),
-                        )}
-                      />
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
+            {isPtYtLoading ? (
+              <Skeleton className="h-6 w-24 mx-auto" />
+            ) : (
+              <>
+                <span>
+                  {ptYtData?.ptPrice &&
+                    new Decimal(ptBalance)
+                      .mul(new Decimal(ptYtData.ptPrice))
+                      .gt(0) &&
+                    "≈"}
+                </span>
+                <span>
+                  $
+                  <SmallNumDisplay
+                    value={formatDecimalValue(
+                      ptYtData?.ptPrice
+                        ? new Decimal(ptBalance).mul(
+                            new Decimal(ptYtData.ptPrice),
+                          )
+                        : "0",
+                      Number(coinConfig?.decimal),
+                    )}
+                  />
+                </span>
+              </>
+            )}
           </TableCell>
           <TableCell className="text-center">
-            <SmallNumDisplay value={ptBalance} />
+            {isPtYtLoading ? (
+              <Skeleton className="h-6 w-24 mx-auto" />
+            ) : (
+              <SmallNumDisplay value={ptBalance} />
+            )}
           </TableCell>
           <TableCell align="center" className="text-white">
             {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
@@ -482,108 +464,125 @@ export default function Item({
           </TableCell>
         </TableRow>
       )}
-      {["yt", "all"].includes(selectType) && !ytClaimed && (
-        <TableRow className="cursor-pointer">
-          <TableCell className="flex items-center gap-x-3">
-            <img
-              src={coinConfig.underlyingCoinLogo}
-              alt=""
-              className="size-10"
-            />
-            <div className="flex items-center gap-x-1">
-              <span>YT {coinConfig.underlyingCoinName}</span>
-              <span className="text-white/50 text-xs">
-                {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
-              </span>
-            </div>
-          </TableCell>
-          <TableCell className="text-center">YT</TableCell>
-          <TableCell className="text-center space-x-1">
-            {isPtYtLoading ? (
-              <Skeleton className="h-6 w-20 mx-auto" />
-            ) : (
-              <>
-                <span>
-                  {ptYtData?.ytPrice &&
-                    new Decimal(ytBalance)
-                      .mul(new Decimal(ptYtData.ytPrice))
-                      .gt(0) &&
-                    "≈"}
-                </span>
-                <span>
-                  $
-                  <SmallNumDisplay
-                    value={formatDecimalValue(
-                      ptYtData?.ytPrice
-                        ? new Decimal(ytBalance).mul(
-                            new Decimal(ptYtData.ytPrice),
-                          )
-                        : "0",
-                      Number(coinConfig?.decimal),
-                    )}
-                  />
-                </span>
-              </>
-            )}
-          </TableCell>
-          <TableCell className="text-center">
-            <SmallNumDisplay value={ytBalance} />
-          </TableCell>
-          <TableCell className="text-center">
-            <div className="flex items-center gap-x-2 justify-center">
-              <div className="flex flex-col items-center w-24">
-                <span className="text-white text-sm break-all">
-                  <SmallNumDisplay value={ytReward || 0} />
-                </span>
-                <span className="text-white/50 text-xs">
-                  $
-                  <SmallNumDisplay
-                    value={
-                      ytReward
-                        ? formatDecimalValue(
-                            new Decimal(ytReward).mul(
-                              Number(coinConfig?.underlyingPrice),
-                            ),
-                            Number(coinConfig?.decimal),
-                          )
-                        : "0"
-                    }
-                  />
-                </span>
-              </div>
-              <LoadingButton
-                onClick={claim}
-                loading={loading || isClaimLoading}
-                buttonText="Claim"
-                loadingText="Claiming"
-                disabled={!isValidAmount(ytBalance)}
+      {["yt", "all"].includes(selectType) &&
+        !ytClaimed &&
+        (Number(coinConfig?.maturity || Infinity) > Date.now() ||
+          isValidAmount(ytReward) ||
+          isValidAmount(ptYtData?.ytPrice)) && (
+          <TableRow className="cursor-pointer">
+            <TableCell className="flex items-center gap-x-3">
+              <img
+                src={coinConfig.underlyingCoinLogo}
+                alt=""
+                className="size-10"
               />
-            </div>
-          </TableCell>
-          <TableCell align="center" className="text-white">
-            {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
-              <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
-                <Link
-                  to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/yt`}
-                >
-                  <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
-                    Buy
-                  </button>
-                </Link>
-                <Link
-                  to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/sell/yt`}
-                >
-                  <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
-                    Sell
-                  </button>
-                </Link>
+              <div className="flex items-center gap-x-1">
+                <span>YT {coinConfig.underlyingCoinName}</span>
+                <span className="text-white/50 text-xs">
+                  {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
+                </span>
               </div>
-            ) : (
-              <span className="text-white/50">Expired</span>
-            )}
-          </TableCell>
-        </TableRow>
-      )}
+            </TableCell>
+            <TableCell className="text-center">YT</TableCell>
+            <TableCell className="text-center space-x-1">
+              {isPtYtLoading ? (
+                <Skeleton className="h-6 w-20 mx-auto" />
+              ) : (
+                <>
+                  <span>
+                    {ptYtData?.ytPrice &&
+                      new Decimal(ytBalance)
+                        .mul(new Decimal(ptYtData.ytPrice))
+                        .gt(0) &&
+                      "≈"}
+                  </span>
+                  <span>
+                    $
+                    <SmallNumDisplay
+                      value={formatDecimalValue(
+                        ptYtData?.ytPrice
+                          ? new Decimal(ytBalance).mul(
+                              new Decimal(ptYtData.ytPrice),
+                            )
+                          : "0",
+                        Number(coinConfig?.decimal),
+                      )}
+                    />
+                  </span>
+                </>
+              )}
+            </TableCell>
+            <TableCell className="text-center">
+              <SmallNumDisplay value={ytBalance} />
+            </TableCell>
+            <TableCell className="text-center">
+              <div className="flex items-center gap-x-2 justify-center">
+                {isClaimLoading ? (
+                  <div className="flex items-center gap-x-2">
+                    <div className="flex flex-col items-center w-24">
+                      <Skeleton className="h-5 w-16 mb-1" />
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                    <Skeleton className="h-8 w-24 rounded-3xl" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-col items-center w-24">
+                      <span className="text-white text-sm break-all flex items-center gap-x-1">
+                        <SmallNumDisplay value={ytReward || 0} />
+                        <RefreshButton onRefresh={refetchYtReward} />
+                      </span>
+                      <span className="text-white/50 text-xs">
+                        $
+                        <SmallNumDisplay
+                          value={
+                            ytReward
+                              ? formatDecimalValue(
+                                  new Decimal(ytReward).mul(
+                                    Number(coinConfig?.underlyingPrice),
+                                  ),
+                                  Number(coinConfig?.decimal),
+                                )
+                              : "0"
+                          }
+                        />
+                      </span>
+                    </div>
+                    <LoadingButton
+                      onClick={claim}
+                      loading={loading}
+                      buttonText="Claim"
+                      loadingText="Claiming"
+                      disabled={!isValidAmount(ytBalance)}
+                    />
+                  </>
+                )}
+              </div>
+            </TableCell>
+            <TableCell align="center" className="text-white">
+              {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
+                <div className="flex md:flex-row flex-col items-center gap-2 justify-center">
+                  <Link
+                    to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/yt`}
+                  >
+                    <button className="rounded-3xl bg-[#00B795] w-24 h-8 text-white">
+                      Buy
+                    </button>
+                  </Link>
+                  <Link
+                    to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/sell/yt`}
+                  >
+                    <button className="rounded-3xl bg-[#FF7474] w-24 h-8 text-white">
+                      Sell
+                    </button>
+                  </Link>
+                </div>
+              ) : (
+                <span className="text-white/50">Expired</span>
+              )}
+            </TableCell>
+          </TableRow>
+        )}
       {["lp", "all"].includes(selectType) && !lpRedeemed && (
         <TableRow className="cursor-pointer">
           <TableCell className="flex items-center gap-x-3">
@@ -606,17 +605,17 @@ export default function Item({
             ) : (
               <>
                 <span>
-                  {ptYtData?.tvl &&
-                    new Decimal(lpBalance).mul(ptYtData.tvl).gt(0) &&
+                  {ptYtData?.lpPrice &&
+                    new Decimal(lpBalance).mul(ptYtData.lpPrice).gt(0) &&
                     "≈"}
                 </span>
                 <span>
                   $
                   <SmallNumDisplay
                     value={formatDecimalValue(
-                      ptYtData?.tvl
-                        ? new Decimal(lpBalance).mul(ptYtData.tvl)
-                        : new Decimal(0),
+                      ptYtData?.lpPrice && isValidAmount(ptYtData?.lpPrice)
+                        ? new Decimal(ptYtData.lpPrice).mul(lpBalance)
+                        : "0",
                       6,
                     )}
                   />
@@ -629,21 +628,29 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
-              <div className="flex flex-col items-center w-24">
-                <span className="text-white text-sm break-all">
-                  <SmallNumDisplay value={0} />
-                </span>
-                <span className="text-white/50 text-xs">
-                  $<SmallNumDisplay value={"0"} />
-                </span>
-              </div>
-              <LoadingButton
-                onClick={() => {}}
-                loading={loading}
-                buttonText="Claim"
-                loadingText="Claiming"
-                disabled={true}
-              />
+              {isClaimLoading ? (
+                <div className="flex items-center gap-x-2">
+                  <div className="flex flex-col items-center w-24">
+                    <Skeleton className="h-5 w-16 mb-1" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <Skeleton className="h-8 w-24 rounded-3xl" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center w-24">
+                    <span className="text-white text-sm break-all">0</span>
+                    <span className="text-white/50 text-xs">$0</span>
+                  </div>
+                  <LoadingButton
+                    onClick={() => {}}
+                    loading={loading}
+                    buttonText="Claim"
+                    loadingText="Claiming"
+                    disabled={true}
+                  />
+                </>
+              )}
             </div>
           </TableCell>
           <TableCell align="center" className="text-white">

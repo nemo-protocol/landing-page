@@ -1,24 +1,27 @@
+import Decimal from "decimal.js"
+import { debugLog } from "@/config"
+import { bcs } from "@mysten/sui/bcs"
+import { ContractError } from "./types"
+import type { DebugInfo } from "./types"
+import { getPriceVoucher } from "@/lib/txHelper"
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "./types"
-import { ContractError } from "./types"
-import { getPriceVoucher } from "@/lib/txHelper"
-import Decimal from "decimal.js"
+import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 
-export default function useQuerySyOutFromPtInWithVoucher(
+type DryRunResult<T extends boolean> = T extends true
+  ? [string, DebugInfo]
+  : string
+
+export default function useQuerySyOutFromPtInWithVoucher<T extends boolean = false>(
   coinConfig?: CoinConfig,
-  debug: boolean = false,
+  debug: T = false as T,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
 
   return useMutation({
-    mutationFn: async (
-      ptAmount: string,
-    ): Promise<[string] | [string, DebugInfo]> => {
+    mutationFn: async (ptAmount: string): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -49,6 +52,11 @@ export default function useQuerySyOutFromPtInWithVoucher(
           typeArguments: [coinConfig.syCoinType],
         },
       }
+
+      debugLog(
+        "get_sy_amount_out_for_exact_pt_in_with_price_voucher move call:",
+        debugInfo,
+      )
 
       tx.moveCall({
         target: debugInfo.moveCall.target,
@@ -91,13 +99,13 @@ export default function useQuerySyOutFromPtInWithVoucher(
         new Uint8Array(result.results[1].returnValues[0][0]),
       )
 
-      const formattedAmount = new Decimal(outputAmount.toString()).toFixed(
-        Number(coinConfig.decimal),
-      )
+      const formattedAmount = new Decimal(outputAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
+        .toFixed()
 
       debugInfo.parsedOutput = formattedAmount
 
-      return debug ? [formattedAmount, debugInfo] : [formattedAmount]
+      return (debug ? [formattedAmount, debugInfo] : formattedAmount) as DryRunResult<T>
     },
   })
 }

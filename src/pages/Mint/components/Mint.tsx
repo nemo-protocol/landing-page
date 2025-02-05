@@ -21,6 +21,7 @@ import ActionButton from "@/components/ActionButton"
 import useMintPYDryRun from "@/hooks/dryrun/useMintPYDryRun"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ContractError } from "@/hooks/types"
 
 export default function Mint({
   maturity,
@@ -175,12 +176,13 @@ export default function Mint({
         setStatus("Success")
 
         await refreshData()
-      } catch (error) {
-        console.log("tx error", error)
+      } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")
-        const msg = (error as Error)?.message ?? error
-        setMessage(parseErrorMessage(msg || ""))
+        const { error } = parseErrorMessage(
+          (errorMsg as ContractError)?.message ?? errorMsg,
+        )
+        setMessage(error)
       } finally {
         setIsMinting(false)
       }

@@ -1,16 +1,16 @@
+import Decimal from "decimal.js"
 import type { PyPosition } from "./types"
+import { isValidAmount } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
-import { redeemSyCoin, getPriceVoucher, burnSCoin } from "@/lib/txHelper"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { isValidAmount } from "@/lib/utils"
-import Decimal from "decimal.js"
+import { redeemSyCoin, getPriceVoucher, burnSCoin } from "@/lib/txHelper"
 
 interface ClaimYtRewardParams {
   ytBalance: string
-  pyPositions?: PyPosition[]
   tokenType?: number
+  pyPositions?: PyPosition[]
 }
 
 export default function useQueryClaimYtReward(
@@ -27,6 +27,8 @@ export default function useQueryClaimYtReward(
       !!coinConfig &&
       isValidAmount(params?.ytBalance) &&
       params?.tokenType === 1, // 1 represents YT token type
+    refetchInterval: 60 * 1000, // 每分钟刷新一次
+    refetchIntervalInBackground: true, // 即使页面在后台也继续刷新
     queryFn: async () => {
       if (!address) {
         throw new Error("Please connect wallet first")
@@ -91,8 +93,11 @@ export default function useQueryClaimYtReward(
         }),
       })
 
+      console.log("yt reward result", result)
+
       if (result?.error) {
-        throw new Error(result.error)
+        // throw new Error(result.error)
+        return "0"
       }
 
       if (
@@ -101,11 +106,28 @@ export default function useQueryClaimYtReward(
         throw new Error("Failed to get yt reward data")
       }
 
+      const decimal = Number(coinConfig.decimal)
+
+      console.log(
+        "yt reward",
+        new Decimal(
+          result.events[result.events.length - 1].parsedJson.burn_amount,
+        )
+          .mul(coinConfig.conversionRate)
+          .div(new Decimal(10).pow(decimal))
+          .toFixed(decimal),
+        new Decimal(
+          result.events[result.events.length - 1].parsedJson.withdraw_amount,
+        )
+          .div(new Decimal(10).pow(decimal))
+          .toFixed(decimal),
+      )
+
       return new Decimal(
         result.events[result.events.length - 1].parsedJson.withdraw_amount,
       )
-        .div(new Decimal(10).pow(coinConfig.decimal))
-        .toString()
+        .div(new Decimal(10).pow(decimal))
+        .toFixed(decimal)
     },
   })
 }

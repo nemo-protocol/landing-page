@@ -19,7 +19,7 @@ export default function Learn() {
     <div className="h-screen xl:max-w-[1200px] xl:mx-auto w-full flex flex-col overflow-hidden">
       <Header />
       <div className="lg:px-7.5 pt-4 lg:pt-8 grow flex flex-col overflow-hidden">
-        <div className="grow overflow-y-auto custom-scrollbar">
+        <div className="grow overflow-y-auto custom-scrollbar pr-4 -mr-4">
           <AnimatePresence mode="wait">
             {step === 0 && (
               <motion.div

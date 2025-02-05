@@ -1,4 +1,3 @@
-import { DEBUG } from "@/config"
 import { ContractError } from "../types"
 import type { DebugInfo } from "../types"
 import { useMutation } from "@tanstack/react-query"
@@ -170,9 +169,6 @@ export default function useMintLpDryRun<T extends boolean = false>(
       }
 
       if (result?.error) {
-        if (DEBUG) {
-          console.log("debugInfo", debugInfo, coinConfig)
-        }
         throw new ContractError(result.error, debugInfo)
       }
 

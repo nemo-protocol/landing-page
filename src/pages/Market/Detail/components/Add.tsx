@@ -8,7 +8,7 @@ import { ChevronsDown, Info } from "lucide-react"
 import AmountInput from "@/components/AmountInput"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { DEBUG, network, debugLog } from "@/config"
+import { network, debugLog } from "@/config"
 import ActionButton from "@/components/ActionButton"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 import { parseErrorMessage } from "@/lib/errorMapping"
@@ -61,6 +61,7 @@ export default function SingleCoin() {
   const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
   const [error, setError] = useState("")
+  const [errorDetail, setErrorDetail] = useState("")
   const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
@@ -448,8 +449,6 @@ export default function SingleCoin() {
               : amount
           try {
             if (marketStateData?.lpSupply === "0") {
-              console.log(1111);
-              
               const { lpAmount, ytAmount } = await seedLiquidityDryRun({
                 addAmount: convertedAmount,
                 tokenType,
@@ -535,15 +534,6 @@ export default function SingleCoin() {
   }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
 
   async function add() {
-    console.log("decimal", decimal)
-    console.log("address", address)
-    console.log("coinType", coinType)
-    console.log("slippage", slippage)
-    console.log("coinConfig", coinConfig)
-    console.log("conversionRate", conversionRate)
-    console.log("marketStateData", marketStateData)
-    console.log("coinData", coinData)
-    console.log("insufficientBalance", insufficientBalance)
     if (
       decimal &&
       address &&
@@ -610,7 +600,11 @@ export default function SingleCoin() {
             minLpAmount,
           )
         } else {
-          console.log("handleAddLiquiditySingleSy")
+          console.log(
+            "handleAddLiquiditySingleSy",
+            new Decimal(marketStateData.totalSy).mul(0.4).div(10 ** decimal).toFixed(decimal),
+            new Decimal(addAmount).div(10 ** decimal).toFixed(decimal),
+          )
           await handleAddLiquiditySingleSy(
             tx,
             addAmount,
@@ -636,13 +630,13 @@ export default function SingleCoin() {
         setStatus("Success")
 
         await refreshData()
-      } catch (error) {
-        if (DEBUG) {
-          console.log("tx error", error)
-        }
+      } catch (errorMsg) {
         setStatus("Failed")
-        const msg = (error as Error)?.message ?? error
-        setMessage(parseErrorMessage(msg || ""))
+        const { error: msg, detail } = parseErrorMessage(
+          (errorMsg as Error)?.message ?? "",
+        )
+        setMessage(msg)
+        setErrorDetail(detail)
       } finally {
         setOpen(true)
         setIsAdding(false)
@@ -693,6 +687,7 @@ export default function SingleCoin() {
                 coinBalance={coinBalance}
                 isConnected={isConnected}
                 warning={warning}
+                errorDetail={errorDetail}
                 setWarning={setWarning}
                 isConfigLoading={isConfigLoading}
                 isBalanceLoading={isBalanceLoading}
@@ -1028,8 +1023,8 @@ export default function SingleCoin() {
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled Underlying APY</span>
                       <span>
-                        {ptYtData?.scaled_underlying_apy
-                          ? `${new Decimal(ptYtData?.scaled_underlying_apy).toFixed(6)} %`
+                        {coinConfig?.underlyingApy
+                          ? `${new Decimal(coinConfig.underlyingApy).mul(syRatio).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>
@@ -1049,14 +1044,13 @@ export default function SingleCoin() {
                           : "--"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-white/60">
-                      <span>Incentive APY</span>
-                      <span>
-                        {ptYtData?.incentiveApy
-                          ? `${new Decimal(ptYtData.incentiveApy).toFixed(6)} %`
-                          : "--"}
-                      </span>
-                    </div>
+                    {ptYtData?.incentiveApy &&
+                      isValidAmount(ptYtData.incentiveApy) && (
+                        <div className="flex justify-between items-center text-white/60">
+                          <span>Incentive APY</span>
+                          <span>{`${new Decimal(ptYtData.incentiveApy).toFixed(6)} %`}</span>
+                        </div>
+                      )}
                   </div>
                 </div>
               </div>

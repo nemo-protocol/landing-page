@@ -18,6 +18,7 @@ interface PtYtRatioResult {
   ytPrice: string
   poolApy: string
   swapFeeApy: string
+  lpPrice: string
 }
 
 function validateCoinInfo(coinInfo: BaseCoinInfo) {
@@ -79,7 +80,8 @@ export function useCalculatePtYt(
           incentiveApy: "",
           ptTvl: "0",
           syTvl: "0",
-          swapFeeApy: "0"
+          swapFeeApy: "0",
+          lpPrice: "0",
         }
       }
 
@@ -154,25 +156,18 @@ export function useCalculatePtYt(
         scaled_underlying_apy = rSy.mul(coinInfo.underlyingApy).mul(100)
         scaled_pt_apy = rPt.mul(ptApy)
         const apyIncentive = new Decimal(0)
-        const poolValue = calculatePoolValue(
-          totalPt,
-          totalSy,
-          new Decimal(marketState.lpSupply),
-          ptPrice,
-          new Decimal(coinInfo.coinPrice),
-        )
-
         const swapFeeRateForLpHolder = safeDivide(
           new Decimal(coinInfo.swapFeeForLpHolder).mul(
             coinInfo.coinPrice,
           ),
-          poolValue,
+          tvl,
           "decimal",
         )
         const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
         swapFeeApy = swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1).mul(100)
         poolApy = scaled_underlying_apy.add(scaled_pt_apy).add(apyIncentive).add(swapFeeApy)
       }
+
 
       return {
         ptApy,
@@ -187,6 +182,10 @@ export function useCalculatePtYt(
         ytPrice: ytPrice.toString(),
         poolApy: poolApy.toString(),
         swapFeeApy: swapFeeApy.toString(),
+        lpPrice: tvl
+          .div(marketState.lpSupply)
+          .mul(10 ** Number(coinInfo.decimal))
+          .toString(),
       }
     },
     enabled: !!coinInfo?.decimal && !!marketState,
@@ -236,17 +235,4 @@ function calculateYtAPY(
     .minus(1)
 
   return longYieldApy.mul(100).toFixed(6)
-}
-
-function calculatePoolValue(
-  totalPt: Decimal,
-  totalSy: Decimal,
-  lpSupply: Decimal,
-  ptPrice: Decimal,
-  syPrice: Decimal,
-) {
-  const lpAmount = new Decimal(1)
-  const netSy = safeDivide(lpAmount.mul(totalSy), lpSupply, "decimal")
-  const netPt = safeDivide(lpAmount.mul(totalPt), lpSupply, "decimal")
-  return netSy.mul(ptPrice).add(netPt.mul(syPrice))
 }

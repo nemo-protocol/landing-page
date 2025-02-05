@@ -13,10 +13,10 @@ const MarketTableSkeleton = () => {
       <TableHeader>
         <TableRow>
           <TableHead className="!px-0">Pool</TableHead>
-          <TableHead align="center">Maturity</TableHead>
-          <TableHead align="center">TVL</TableHead>
-          <TableHead className="!px-2 text-right">Fixed APY</TableHead>
-          <TableHead className="!px-2 text-right">Leveraged APY</TableHead>
+          <TableHead className="text-center">Maturity</TableHead>
+          <TableHead className="text-center">TVL</TableHead>
+          <TableHead className="!px-2 text-center">Leveraged APY</TableHead>
+          <TableHead className="!px-2 text-center">Fixed APY</TableHead>
           <TableHead className="!px-2 text-right">Pool APY</TableHead>
         </TableRow>
       </TableHeader>
@@ -52,4 +52,4 @@ const MarketTableSkeleton = () => {
   )
 }
 
-export default MarketTableSkeleton 
+export default MarketTableSkeleton

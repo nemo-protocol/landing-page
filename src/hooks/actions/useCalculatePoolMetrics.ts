@@ -50,19 +50,6 @@ function calculateYtAPY(
   return longYieldApy.mul(100).toFixed(6)
 }
 
-function calculatePoolValue(
-  totalPt: Decimal,
-  totalSy: Decimal,
-  lpSupply: Decimal,
-  ptPrice: Decimal,
-  syPrice: Decimal,
-) {
-  const lpAmount = new Decimal(1)
-  const netSy = safeDivide(lpAmount.mul(totalSy), lpSupply, "decimal")
-  const netPt = safeDivide(lpAmount.mul(totalPt), lpSupply, "decimal")
-  return netSy.mul(ptPrice).add(netPt.mul(syPrice))
-}
-
 interface CalculatePoolMetricsParams {
   coinInfo: BaseCoinInfo
   marketState: MarketState
@@ -114,6 +101,7 @@ export default function useCalculatePoolMetrics() {
 
     let ptTvl = new Decimal(0)
     let syTvl = new Decimal(0)
+    let swapFeeApy = new Decimal(0)
 
     const daysToExpiry = new Decimal(
       (Number(coinInfo.maturity) - Date.now()) / 1000,
@@ -153,22 +141,23 @@ export default function useCalculatePoolMetrics() {
       scaled_underlying_apy = rSy.mul(coinInfo.underlyingApy).mul(100)
       scaled_pt_apy = rPt.mul(ptApy)
       const apyIncentive = new Decimal(0)
-      const poolValue = calculatePoolValue(
-        totalPt,
-        totalSy,
-        new Decimal(marketState.lpSupply),
-        ptPrice,
-        new Decimal(coinInfo.coinPrice),
-      )
 
       const swapFeeRateForLpHolder = safeDivide(
         new Decimal(coinInfo.swapFeeForLpHolder).mul(coinInfo.coinPrice),
-        poolValue,
+        tvl,
         "decimal",
       )
       const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
-      const swapFeeApy = swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1)
-      poolApy = scaled_underlying_apy.add(scaled_pt_apy).add(apyIncentive).add(swapFeeApy.mul(100))
+
+      swapFeeApy = swapFeeRateForLpHolder
+        .add(1)
+        .pow(expiryRate)
+        .minus(1)
+        .mul(100)
+      poolApy = scaled_underlying_apy
+        .add(scaled_pt_apy)
+        .add(apyIncentive)
+        .add(swapFeeApy.mul(100))
     }
 
     return {
@@ -182,6 +171,7 @@ export default function useCalculatePoolMetrics() {
       ptPrice: ptPrice.toString(),
       ytPrice: ytPrice.toString(),
       poolApy: poolApy.toString(),
+      feeApy: swapFeeApy.toString(),
     }
   }
 

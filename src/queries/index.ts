@@ -1,17 +1,18 @@
 import { nemoApi } from "./request"
-import { useQuery, UseQueryResult } from "@tanstack/react-query"
-import {
-  CoinInfo,
-  CoinConfig,
-  FixedReturnItem,
-  PointItem,
-  CoinInfoWithMetrics,
-  PortfolioItem,
-} from "./types/market"
-import { handleInfinityValues, isValidAmount } from "../lib/utils"
-import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
-import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
 import { MarketState } from "@/hooks/types"
+import { useWallet } from "@nemoprotocol/wallet-kit"
+import { useQuery, UseQueryResult } from "@tanstack/react-query"
+import { handleInfinityValues, isValidAmount } from "@/lib/utils"
+import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
+import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
+import {
+  PointItem,
+  CoinConfig,
+  BaseCoinInfo,
+  PortfolioItem,
+  FixedReturnItem,
+  CoinInfoWithMetrics,
+} from "./types/market"
 
 interface CoinInfoListParams {
   name?: string
@@ -25,7 +26,7 @@ function getCoinInfoList({
   address = "",
   isShowExpiry = 0,
 }: CoinInfoListParams = {}) {
-  return nemoApi<CoinInfo[]>("/api/v1/market/coinInfo").get({
+  return nemoApi<BaseCoinInfo[]>("/api/v1/market/coinInfo").get({
     name,
     address,
     isShowExpiry,
@@ -36,10 +37,17 @@ function getFixedReturnInfos() {
   return nemoApi<FixedReturnItem[]>("/api/v1/fixReturn/detail").get()
 }
 
-function getRewardList() {
-  return nemoApi<PointItem[]>("/api/v1/points/page").get({
-    pageSize: 100,
-  })
+function getRewardList(address?: string) {
+  const headers = new Headers()
+  if (address) {
+    headers.set("userAddress", address)
+  }
+  return nemoApi<PointItem[]>("/api/v1/points/page").get(
+    {
+      pageSize: 100,
+    },
+    headers,
+  )
 }
 
 function getRewardWithAddress(address?: string) {
@@ -185,7 +193,10 @@ export function usePortfolioList() {
 
 export function useCoinInfoList<T extends boolean = true>(
   params: CoinInfoListParams & { isCalc?: T } = {},
-): UseQueryResult<T extends true ? CoinInfoWithMetrics[] : CoinInfo[], Error> {
+): UseQueryResult<
+  T extends true ? CoinInfoWithMetrics[] : BaseCoinInfo[],
+  Error
+> {
   const {
     name = "",
     address = "",
@@ -208,9 +219,9 @@ export function useCoinInfoList<T extends boolean = true>(
 
       const marketStateIds = coinList.map((coin) => coin.marketStateId)
 
-      const marketStates = (await fetchMarketStates(marketStateIds).catch(
-        () => ({} as { [key: string]: MarketState })
-      ))
+      const marketStates = await fetchMarketStates(marketStateIds).catch(
+        () => ({}) as { [key: string]: MarketState },
+      )
 
       const results = await Promise.all(
         coinList.map(async (coinInfo) => {
@@ -227,6 +238,7 @@ export function useCoinInfoList<T extends boolean = true>(
               ptTvl: "0",
               syTvl: "0",
               marketState,
+              feeApy: "0",
             }
 
           try {
@@ -267,10 +279,10 @@ export function useCoinInfoList<T extends boolean = true>(
 }
 
 export function useRewardList() {
+  const { address } = useWallet()
   return useQuery({
-    // FIXME： queryKey dose not work
     queryKey: ["RewardConfig"],
-    queryFn: () => getRewardList(),
+    queryFn: () => getRewardList(address),
   })
 }
 
