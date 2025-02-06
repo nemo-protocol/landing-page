@@ -51,6 +51,8 @@ import useMarketStateData from "@/hooks/useMarketStateData"
 import useInvestRatio from "@/hooks/actions/useInvestRatio"
 import { CoinConfig } from "@/queries/types/market"
 import { ContractError } from "@/hooks/types"
+import useGetApproxPtOutDryRun from "@/hooks/dryrun/useGetApproxPtOutDryRun"
+import { debugLog } from "@/config"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -155,6 +157,8 @@ export default function Invest() {
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
 
   const { mutateAsync: calculateRatio } = useInvestRatio(coinConfig)
+
+  const { mutateAsync: getApproxPtOut } = useGetApproxPtOutDryRun(coinConfig)
 
   const debouncedGetPtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
@@ -265,18 +269,34 @@ export default function Invest() {
             .div(tokenType === 0 ? conversionRate : 1)
             .toFixed(0),
         )
+
         const minPtOut = new Decimal(ptOut)
+          .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
-        // await dryRunSwap({
-        //   tokenType,
-        //   swapAmount,
-        //   coinData,
-        //   coinType,
-        //   minPtOut,
-        //   pyPositions: pyPositionData,
-        // })
+        const netSyIn = new Decimal(swapAmount)
+          .div(tokenType === 0 ? conversionRate : 1)
+          .toFixed(0)
+
+        const approxPtOut = await getApproxPtOut({
+          netSyIn,
+          minPtOut,
+        })
+
+        debugLog("swap_exact_sy_for_pt parameters:", {
+          version: coinConfig.version,
+          minPtOut,
+          approxPtOut,
+          syCoin: "syCoin object",
+          priceVoucher: "priceVoucher object",
+          pyPosition: pyPositionData?.length ? pyPositionData[0].id : "new pyPosition",
+          pyStateId: coinConfig.pyStateId,
+          marketFactoryConfigId: coinConfig.marketFactoryConfigId,
+          marketStateId: coinConfig.marketStateId,
+          clock: "0x6",
+          typeArgument: coinConfig.syCoinType
+        })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
@@ -285,6 +305,7 @@ export default function Invest() {
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(minPtOut),
+            tx.pure.u64(approxPtOut),
             syCoin,
             priceVoucher,
             pyPosition,
@@ -662,7 +683,7 @@ export default function Invest() {
             }
           }}
           isRatioLoading={isRatioLoading}
-          tradeFee= {ptFeeValue}
+          tradeFee={ptFeeValue}
           targetCoinName={`PT ${coinConfig?.coinName}`}
         />
         <ActionButton

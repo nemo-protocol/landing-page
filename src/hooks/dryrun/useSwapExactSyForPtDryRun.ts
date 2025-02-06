@@ -21,6 +21,7 @@ interface SwapParams {
   coinData: CoinData[]
   coinType: string
   minPtOut: string
+  approxPtOut: string
   pyPositions?: PyPosition[]
 }
 
@@ -39,6 +40,7 @@ export default function useSwapExactSyForPtDryRun(
       coinData,
       coinType,
       minPtOut,
+      approxPtOut,
       pyPositions: inputPyPositions,
     }: SwapParams): Promise<[boolean] | [boolean, DebugInfo]> => {
       if (!address) {
@@ -76,7 +78,9 @@ export default function useSwapExactSyForPtDryRun(
         moveCall: {
           target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
           arguments: [
+            { name: "version", value: coinConfig.version },
             { name: "min_pt_out", value: minPtOut },
+            { name: "approx_pt_out", value: approxPtOut },
             { name: "sy_coin", value: "syCoin" },
             { name: "price_voucher", value: "priceVoucher" },
             { name: "py_position", value: "pyPosition" },
@@ -97,6 +101,7 @@ export default function useSwapExactSyForPtDryRun(
         arguments: [
           tx.object(coinConfig.version),
           tx.pure.u64(minPtOut),
+          tx.pure.u64(approxPtOut),
           syCoin,
           priceVoucher,
           pyPosition,
@@ -124,6 +129,8 @@ export default function useSwapExactSyForPtDryRun(
         error: result?.error,
         results: result?.results,
       }
+
+      console.log("useSwapExactSyForPtDryRun", result.event)
 
       if (result?.error) {
         throw new ContractError(result.error, debugInfo)
