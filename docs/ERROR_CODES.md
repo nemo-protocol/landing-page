@@ -57,9 +57,35 @@ This document provides a comprehensive list of error codes and their description
 | 791 (0x0000317) | Market burn sy amount is zero |
 | 792 (0x0000318) | Market burn pt amount is zero |
 | 793 (0x0000319) | Insufficient liquidity in the pool, please try a smaller amount |
+| 800 (0x0000320) | Market rate scalar negative |
+| 801 (0x0000321) | Market insufficient sy for swap |
+| 802 (0x0000322) | Repay sy in exceeds expected sy in |
+| 803 (0x0000323) | Market insufficient sy in for swap yt |
+| 804 (0x0000324) | Swapped sy borrowed amount not equal |
+| 805 (0x0000325) | Market cap exceeded |
+| 806 (0x0000326) | Invalid repay |
+| 807 (0x0000327) | Register sy invalid sender |
+| 808 (0x0000328) | Sy not supported |
+| 809 (0x0000329) | Register sy type already registered |
+| 816 (0x0000330) | Register sy type not registered |
+| 817 (0x0000331) | Sy insufficient repay |
+| 818 (0x0000332) | Factory invalid py |
+| 819 (0x0000333) | Invalid py amount |
+| 820 (0x0000334) | Market insufficient pt in for mint lp |
+| 821 (0x0000335) | Market invalid py state |
+| 822 (0x0000336) | Market invalid market position |
+| 823 (0x0000337) | Market lp amount is zero |
+| 824 (0x0000338) | Market insufficient lp for burn |
+| 825 (0x0000339) | Market insufficient yt balance swap |
+| 832 (0x0000340) | Invalid flash loan position |
+| 833 (0x0000341) | Create market invalid sender |
+| 834 (0x0000342) | Invalid epoch |
+| 835 (0x0000343) | Swap exact yt amount mismatch |
+| 836 (0x0000344) | Insufficient lp output |
+| 837 (0x0000345) | Price fluctuation too large |
 
 ### 🔐 System and Access Control Errors
-*Range: 0x0000401 - 0x0000407*
+*Range: 0x0000401 - 0x0000409*
 
 | Error Code | Description |
 |:---:|:---|
@@ -68,7 +94,10 @@ This document provides a comprehensive list of error codes and their description
 | 1027 (0x0000403) | Acl role not exists |
 | 1028 (0x0000404) | Version mismatch error |
 | 1029 (0x0000405) | Update config invalid sender |
-| 1031 (0x0000407) | Slippage is too low |
+| 1030 (0x0000406) | Withdraw from treasury invalid sender |
+| 1031 (0x0000407) | Invalid yt approx out |
+| 1032 (0x0000408) | Invalid sy approx out |
+| 1033 (0x0000409) | Wrong slippage tolerance |
 
 ### 🧮 Calculation and Arithmetic Errors
 *Range: 0x10001 - 0x20005*
@@ -108,7 +137,7 @@ When encountering insufficient gas fee errors, the system will provide a detaile
 - ⏳ Wait for more liquidity to be available in the pool
 - 🔄 Try the transaction at a different time
 
-### 2️⃣ Slippage Errors (1031)
+### 2️⃣ Slippage Errors (1033)
 - 🎚️ Adjust your slippage tolerance
 - ⚙️ Try the transaction with a higher slippage setting
 

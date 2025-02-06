@@ -3,7 +3,6 @@ const errorMapping: { [key: number]: string } = {
   258: "Sy insufficient sharesOut", // 0x0000102
   259: "Sy zero redeem", // 0x0000103
   260: "Sy insufficient amountOut", // 0x0000104
-  // 261: "Sy insufficient amountOut", // 0x0000105
   513: "Interest fee rate too high", // 0x0000201
   514: "Reward fee rate too high", // 0x0000202
   515: "Factory zero expiry divisor", // 0x0000203
@@ -59,20 +58,21 @@ const errorMapping: { [key: number]: string } = {
   835: "Swap exact yt amount mismatch", // 0x0000343
   836: "Insufficient lp output", // 0x0000344
   837: "Price fluctuation too large", // 0x0000345
-  1031: "Slippage is too low.", // 0x0000407
   1025: "Acl invalid permission", // 0x0000401
   1026: "Acl role already exists", // 0x0000402
   1027: "Acl role not exists", // 0x0000403
   1028: "Version mismatch error", // 0x0000404
   1029: "Update config invalid sender", // 0x0000405
-
+  1030: "Withdraw from treasury invalid sender", // 0x0000406
+  1031: "Invalid yt approx out", // 0x0000407
+  1032: "Invalid sy approx out", // 0x0000408
+  1033: "Wrong slippage tolerance", // 0x0000409
   65537: "Denominator error", // 0x10001
   65542: "Abort code on calculation result is negative", // 0x10006
   131074: "The quotient value would be too large to be held in a u128", // 0x20002
   131075: "The multiplied value would be too large to be held in a u128", // 0x20003
   65540: "A division by zero was encountered", // 0x10004
-  131077:
-    "The computed ratio when converting to a FixedPoint64 would be unrepresentable", // 0x20005
+  131077: "The computed ratio when converting to a FixedPoint64 would be unrepresentable", // 0x20005
 }
 
 export default errorMapping
