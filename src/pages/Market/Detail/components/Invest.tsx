@@ -62,6 +62,7 @@ export default function Invest() {
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
   const [ptValue, setPtValue] = useState<string>()
+  const [ptFeeValue, setPtFeeValue] = useState<string>()
   const [message, setMessage] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0)
@@ -166,10 +167,11 @@ export default function Invest() {
               .div(tokenType === 0 ? conversionRate : 1)
               .mul(10 ** decimal)
               .toFixed(0)
-            const ptValue = await queryPtOut(swapAmount)
+            const [ptValue, ptFeeValue] = await queryPtOut(swapAmount)
             const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
             setRatio(ptRatio)
             setPtValue(ptValue)
+            setPtFeeValue(ptFeeValue)
           } catch (errorMsg) {
             const { error, detail } = parseErrorMessage(
               (errorMsg as ContractError)?.message ?? errorMsg,
@@ -177,11 +179,13 @@ export default function Invest() {
             setError(error)
             setErrorDetail(detail)
             setPtValue(undefined)
+            setPtFeeValue(undefined)
           } finally {
             setIsCalcPtLoading(false)
           }
         } else {
           setPtValue(undefined)
+          setPtFeeValue(undefined)
           setError(undefined)
         }
       }, 500)
@@ -658,21 +662,7 @@ export default function Invest() {
             }
           }}
           isRatioLoading={isRatioLoading}
-          tradeFee={
-            !!swapValue &&
-            !!conversionRate &&
-            !!coinConfig?.feeRate &&
-            !!coinConfig?.coinPrice
-              ? new Decimal(coinConfig.feeRate)
-                  .mul(
-                    tokenType === 0
-                      ? new Decimal(swapValue).mul(conversionRate)
-                      : swapValue,
-                  )
-                  .mul(coinConfig.coinPrice)
-                  .toString()
-              : undefined
-          }
+          tradeFee= {ptFeeValue}
           targetCoinName={`PT ${coinConfig?.coinName}`}
         />
         <ActionButton

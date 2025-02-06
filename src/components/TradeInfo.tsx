@@ -51,7 +51,7 @@ export default function TradeInfo({
         ) : (
           <span title={`$${tradeFee} ${tradeFeeSymbol}`}>
             {tradeFee
-              ? `≈ $${Number(tradeFee).toFixed(4)} ${tradeFeeSymbol}`
+              ? `≈ $${Number(tradeFee).toFixed(10)} ${tradeFeeSymbol}`
               : "--"}
           </span>
         )}

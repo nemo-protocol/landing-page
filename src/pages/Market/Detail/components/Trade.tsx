@@ -61,6 +61,7 @@ export default function Trade() {
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
   const [ytValue, setYtValue] = useState<string>()
+  const [ytFeeValue, setYtFeeValue] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
   const [errorDetail, setErrorDetail] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
@@ -185,9 +186,9 @@ export default function Trade() {
               .div(tokenType === 0 ? conversionRate : 1)
               .mul(10 ** decimal)
               .toFixed(0)
-            const ytValue = await queryYtOut(swapAmount)
+            const [ytValue, ytFeeValue] = await queryYtOut(swapAmount)
             setYtValue(ytValue)
-
+            setYtFeeValue(ytFeeValue)
             const ytRatio = new Decimal(ytValue).div(value).toFixed(4)
             setRatio(ytRatio)
           } catch (error) {
@@ -197,12 +198,14 @@ export default function Trade() {
             setError(msg)
             setErrorDetail(detail)
             setYtValue(undefined)
+            setYtFeeValue(undefined)
             setRatio("")
           } finally {
             setIsCalcYtLoading(false)
           }
         } else {
           setYtValue(undefined)
+          setYtFeeValue(undefined)
           setRatio("")
           setError(undefined)
         }
@@ -591,21 +594,7 @@ export default function Trade() {
               }
             }}
             isRatioLoading={isRatioLoading}
-            tradeFee={
-              !!swapValue &&
-              !!conversionRate &&
-              !!coinConfig?.feeRate &&
-              !!coinConfig?.coinPrice
-                ? new Decimal(coinConfig.feeRate)
-                    .mul(
-                      tokenType === 0
-                        ? new Decimal(swapValue).mul(conversionRate)
-                        : swapValue,
-                    )
-                    .mul(coinConfig.coinPrice)
-                    .toString()
-                : undefined
-            }
+            tradeFee={ytFeeValue}
             targetCoinName={`YT ${coinConfig?.coinName}`}
           />
           <ActionButton
