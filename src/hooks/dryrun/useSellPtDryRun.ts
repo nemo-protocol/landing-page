@@ -21,9 +21,11 @@ interface SellPtParams {
   minSyOut: string
 }
 
+type Result = { outputValue: string; syAmount: string }
+
 type DryRunResult<T extends boolean> = T extends true
-  ? [string, DebugInfo]
-  : string
+  ? [Result, DebugInfo]
+  : Result
 
 export default function useSellPtDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
@@ -108,22 +110,38 @@ export default function useSellPtDryRun<T extends boolean = false>(
         throw new ContractError(result.error, debugInfo)
       }
 
+      if (!result?.events?.[1]?.parsedJson) {
+        const message = "Failed to get sy amount"
+        debugInfo.rawResult.error = message
+        throw new ContractError(message, debugInfo)
+      }
+
       if (!result?.events?.[result.events.length - 1]?.parsedJson) {
         const message = "Failed to get sell PT data"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const syAmount = result.events[result.events.length - 1].parsedJson
-        .withdraw_amount as string
+      const outputAmount =
+        receivingType === "underlying"
+          ? result.events[result.events.length - 1].parsedJson.withdraw_amount
+          : result.events[result.events.length - 1].parsedJson.amount_out
+
+      const syAmount = result.events[1].parsedJson.amount_out
 
       const decimal = Number(coinConfig.decimal)
 
-      const syOut = new Decimal(syAmount).div(10 ** decimal).toString()
+      const outputValue = new Decimal(outputAmount)
+        .div(10 ** decimal)
+        .toString()
 
-      debugInfo.parsedOutput = syOut
+      debugInfo.parsedOutput = outputValue
 
-      return (debug ? [syOut, debugInfo] : syOut) as DryRunResult<T>
+      return (
+        debug
+          ? [{ outputValue, syAmount }, debugInfo]
+          : { outputValue, syAmount }
+      ) as DryRunResult<T>
     },
   })
 }
