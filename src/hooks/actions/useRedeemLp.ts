@@ -107,6 +107,7 @@ export default function useRedeemLp(coinConfig?: CoinConfig) {
           new Decimal(ptAmount).div(10 ** decimal).toString(),
           pyPosition,
           priceVoucher,
+          "0"
         )
 
         const swappedYieldToken = redeemSyCoin(tx, coinConfig, swappedSyCoin)

@@ -105,6 +105,7 @@ export default function Sell() {
               tokenType === "yt"
                 ? await querySyOutFromYt(amount)
                 : await sellPtDryRun({
+                    minSyOut: "0",
                     receivingType,
                     sellValue: value,
                     pyPositions: pyPositionData,
@@ -208,9 +209,18 @@ export default function Sell() {
 
         const amount = new Decimal(redeemValue).mul(10 ** decimal).toString()
 
-        const syOut = tokenType === "yt" ? await querySyOutFromYt(amount) : 0
+        // 计算预期输出
+        const expectedSyOut = await (tokenType === "yt"
+          ? querySyOutFromYt(amount)
+          : sellPtDryRun({
+              receivingType,
+              sellValue: redeemValue,
+              pyPositions: pyPositionData,
+              minSyOut: "0",
+            }))
 
-        const minSyOut = new Decimal(syOut)
+        // 计算最小输出（考虑滑点）
+        const minSyOut = new Decimal(expectedSyOut)
           .mul(10 ** decimal)
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)
@@ -223,6 +233,7 @@ export default function Sell() {
                 redeemValue,
                 pyPosition,
                 priceVoucher,
+                minSyOut,
               )
             : swapExactYtForSy(
                 tx,
@@ -307,19 +318,44 @@ export default function Sell() {
   )
 
   const handleSell = async () => {
-    const result = await (tokenType === "yt"
-      ? sellYtDryRun({
-          slippage,
-          receivingType,
-          sellValue: redeemValue,
-          pyPositions: pyPositionData,
-        })
-      : sellPtDryRun({
-          receivingType,
-          sellValue: redeemValue,
-          pyPositions: pyPositionData,
-        }))
-    console.log("result", result)
+    try {
+      // 先获取预期输出
+      const expectedSyOut = await (tokenType === "yt"
+        ? querySyOutFromYt(
+            new Decimal(redeemValue).mul(10 ** decimal).toString(),
+          )
+        : sellPtDryRun({
+            receivingType,
+            sellValue: redeemValue,
+            pyPositions: pyPositionData,
+            minSyOut: "0", // 这里用0是因为我们只是为了获取预期输出
+          }))
+
+      // 然后用预期输出计算 minSyOut
+      const calculatedMinSyOut = new Decimal(expectedSyOut)
+        .mul(10 ** decimal)
+        .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
+        .toFixed(0)
+
+      // 执行实际的 dry run
+      const result = await (tokenType === "yt"
+        ? sellYtDryRun({
+            slippage,
+            receivingType,
+            sellValue: redeemValue,
+            pyPositions: pyPositionData,
+            minSyOut: calculatedMinSyOut,
+          })
+        : sellPtDryRun({
+            receivingType,
+            sellValue: redeemValue,
+            pyPositions: pyPositionData,
+            minSyOut: calculatedMinSyOut,
+          }))
+      console.log("result", result)
+    } catch (error) {
+      console.error("Dry run failed:", error)
+    }
   }
 
   const btnDisabled = useMemo(() => {

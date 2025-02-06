@@ -83,7 +83,14 @@ export default function useSwapExactPtForSyDryRun(
         },
       }
 
-      swapExactPtForSy(tx, coinConfig, redeemValue, pyPosition, priceVoucher)
+      swapExactPtForSy(
+        tx,
+        coinConfig,
+        redeemValue,
+        pyPosition,
+        priceVoucher,
+        "0",
+      )
 
       if (created) {
         tx.transferObjects([pyPosition], address)
@@ -115,7 +122,7 @@ export default function useSwapExactPtForSyDryRun(
 
       const syAmount = result.events[0].parsedJson.sy_amount as string
 
-    //   console.log("syAmount", syAmount)
+      //   console.log("syAmount", syAmount)
 
       debugInfo.parsedOutput = JSON.stringify({ syAmount })
 

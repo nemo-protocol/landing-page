@@ -20,6 +20,7 @@ interface SellYtParams {
   receivingType: "underlying" | "sy"
   slippage: string
   pyPositions?: PyPosition[]
+  minSyOut: string
 }
 
 type DryRunResult<T extends boolean> = T extends true
