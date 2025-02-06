@@ -8,16 +8,21 @@ import { bcs } from "@mysten/sui/bcs"
 import { getPriceVoucher } from "@/lib/txHelper"
 import { debugLog } from "@/config"
 
-interface GetApproxPtOutParams {
+interface GetApproxYtOutParams {
   netSyIn: string
-  minPtOut: string
+  minYtOut: string
+}
+
+interface YtOutResult {
+  approxYtOut: string
+  netSyTokenization: string
 }
 
 type DryRunResult<T extends boolean> = T extends true
-  ? [string, DebugInfo]
-  : string
+  ? [YtOutResult, DebugInfo] // Return result object with debug info when debug is true
+  : YtOutResult // Return just the result object
 
-export default function useGetApproxPtOutDryRun<T extends boolean = false>(
+export default function useGetApproxYtOutDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
   debug: T = false as T,
 ) {
@@ -27,8 +32,8 @@ export default function useGetApproxPtOutDryRun<T extends boolean = false>(
   return useMutation({
     mutationFn: async ({
       netSyIn,
-      minPtOut,
-    }: GetApproxPtOutParams): Promise<DryRunResult<T>> => {
+      minYtOut,
+    }: GetApproxYtOutParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -43,34 +48,34 @@ export default function useGetApproxPtOutDryRun<T extends boolean = false>(
 
       const debugInfo: DebugInfo = {
         moveCall: {
-          target: `${coinConfig.nemoContractId}::offchain::get_approx_pt_out_for_net_sy_in_internal`,
+          target: `${coinConfig.nemoContractId}::offchain::get_approx_yt_out_for_net_sy_in_internal`,
           arguments: [
             { name: "net_sy_in", value: netSyIn },
-            { name: "min_pt_out", value: minPtOut },
+            { name: "min_yt_out", value: minYtOut },
             { name: "price_voucher", value: "priceVoucher" },
             { name: "py_state", value: coinConfig.pyStateId },
+            { name: "market_state", value: coinConfig.marketStateId },
             {
               name: "market_factory_config",
               value: coinConfig.marketFactoryConfigId,
             },
-            { name: "market_state", value: coinConfig.marketStateId },
             { name: "clock", value: "0x6" },
           ],
           typeArguments: [coinConfig.syCoinType],
         },
       }
 
-      debugLog("get_approx_pt_out move call:", debugInfo.moveCall)
+      debugLog("get_approx_yt_out move call:", debugInfo.moveCall)
 
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
           tx.pure.u64(netSyIn),
-          tx.pure.u64(minPtOut),
+          tx.pure.u64(minYtOut),
           priceVoucher,
           tx.object(coinConfig.pyStateId),
-          tx.object(coinConfig.marketFactoryConfigId),
           tx.object(coinConfig.marketStateId),
+          tx.object(coinConfig.marketFactoryConfigId),
           tx.object("0x6"),
         ],
         typeArguments: [coinConfig.syCoinType],
@@ -84,26 +89,40 @@ export default function useGetApproxPtOutDryRun<T extends boolean = false>(
         }),
       })
 
+      console.log("result", result)
+
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
       }
 
       if (!result?.results?.[result.results.length - 1]?.returnValues?.[0]) {
-        const message = "Failed to get pt output amount"
+        const message = "Failed to get yt output amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const approxPtOut = bcs.U64.parse(
+      // Parse both YT out and PT out amounts from the return values
+      const approxYtOut = bcs.U64.parse(
         new Uint8Array(
           result.results[result.results.length - 1].returnValues[0][0],
         ),
       )
 
-      debugInfo.parsedOutput = approxPtOut
+      const netSyTokenization = bcs.U64.parse(
+        new Uint8Array(
+          result.results[result.results.length - 1].returnValues[1][0],
+        ),
+      )
 
-      return (debug ? [approxPtOut, debugInfo] : approxPtOut) as DryRunResult<T>
+      const resultObj = {
+        approxYtOut,
+        netSyTokenization,
+      }
+
+      debugInfo.parsedOutput = `${approxYtOut},${netSyTokenization}`
+
+      return (debug ? [resultObj, debugInfo] : resultObj) as DryRunResult<T>
     },
   })
 }

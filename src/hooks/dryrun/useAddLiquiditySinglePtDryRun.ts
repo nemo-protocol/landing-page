@@ -8,7 +8,6 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
 import { getPriceVoucher } from "@/lib/txHelper"
 import { debugLog } from "@/config"
-import Decimal from "decimal.js"
 
 interface AddLiquiditySinglePtParams {
   netSyIn: string
@@ -93,27 +92,15 @@ export default function useAddLiquiditySinglePtDryRun<
 
       console.log("result", result)
 
-      if (!result?.results?.[0]?.returnValues?.[0]) {
+      if (!result?.results?.[1]?.returnValues?.[0]) {
         const message = "Failed to get pt value"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const outputAmount = bcs.U64.parse(
-        new Uint8Array(result.results[0].returnValues[0][0]),
+      const ptValue = bcs.U64.parse(
+        new Uint8Array(result.results[1].returnValues[0][0]),
       )
-
-      console.log("outputAmount", outputAmount)
-
-      console.log(
-        "outputAmount1",
-        bcs.U64.parse(new Uint8Array(result.results[1].returnValues[0][0])),
-      )
-
-      const ptValue = new Decimal(outputAmount)
-        .div(Math.pow(2, 64))
-        // .mul(10 ** Number(coinConfig.decimal))
-        .toFixed(0)
 
       console.log("ptValue", ptValue)
 

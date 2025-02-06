@@ -34,6 +34,7 @@ import {
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
 import { useWallet } from "@nemoprotocol/wallet-kit"
+import useGetApproxYtOutDryRun from "@/hooks/dryrun/useGetApproxYtOutDryRun"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
@@ -147,6 +148,7 @@ export default function Trade() {
 
   const { mutateAsync: calculateRatio } = useTradeRatio(coinConfig)
   const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
+  const getApproxYtOutDryRun = useGetApproxYtOutDryRun(coinConfig)
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -308,7 +310,9 @@ export default function Trade() {
           .toFixed(0)
 
         const [ytOut] = await queryYtOut(syCoinAmount)
+
         const minYtOut = new Decimal(ytOut)
+          .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
@@ -331,11 +335,26 @@ export default function Trade() {
         }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+
+        const { approxYtOut, netSyTokenization } =
+          await getApproxYtOutDryRun.mutateAsync({
+            netSyIn: syCoinAmount,
+            minYtOut,
+          })
+
+        console.log(
+          "approxYtOut, netSyTokenization",
+          approxYtOut,
+          netSyTokenization,
+        )
+
         tx.moveCall({
           target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_yt`,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(minYtOut),
+            tx.pure.u64(approxYtOut),
+            tx.pure.u64(netSyTokenization),
             syCoin,
             priceVoucher,
             pyPosition,
@@ -353,11 +372,12 @@ export default function Trade() {
           arguments: [
             coinConfig.version,
             minYtOut,
+            approxYtOut,
+            netSyTokenization,
             "syCoin",
             "priceVoucher",
             "pyPosition",
             coinConfig.pyStateId,
-            coinConfig.syStateId,
             coinConfig.yieldFactoryConfigId,
             coinConfig.marketFactoryConfigId,
             coinConfig.marketStateId,

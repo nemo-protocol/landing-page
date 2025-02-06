@@ -407,8 +407,8 @@ export default function SingleCoin() {
       arguments: [
         coinConfig.version,
         syCoin,
-        minLpAmount,
         ptValue,
+        minLpAmount,
         priceVoucher,
         pyPosition,
         coinConfig.pyStateId,
@@ -426,8 +426,8 @@ export default function SingleCoin() {
       arguments: [
         tx.object(coinConfig.version),
         syCoin,
-        tx.pure.u64(minLpAmount),
         tx.pure.u64(ptValue),
+        tx.pure.u64(minLpAmount),
         priceVoucher,
         pyPosition,
         tx.object(coinConfig.pyStateId),
@@ -577,14 +577,16 @@ export default function SingleCoin() {
 
         const calculatedLpOut = await calculateLpOut(addAmount)
 
+        console.log("calculatedLpOut", calculatedLpOut)
+
         const minLpAmount = new Decimal(calculatedLpOut.lpAmount)
+          .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
         console.log("minLpAmount", minLpAmount)
 
         if (marketStateData.lpSupply === "0") {
-          console.log("handleSeedLiquidity")
           await handleSeedLiquidity(
             tx,
             addAmount,
@@ -599,7 +601,6 @@ export default function SingleCoin() {
         } else if (
           new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
         ) {
-          console.log("handleMintLp")
           await handleMintLp(
             tx,
             addAmount,
@@ -612,14 +613,6 @@ export default function SingleCoin() {
             minLpAmount,
           )
         } else {
-          console.log(
-            "handleAddLiquiditySingleSy",
-            new Decimal(marketStateData.totalSy)
-              .mul(0.4)
-              .div(10 ** decimal)
-              .toFixed(decimal),
-            new Decimal(addAmount).div(10 ** decimal).toFixed(decimal),
-          )
           await handleAddLiquiditySingleSy(
             tx,
             addAmount,
