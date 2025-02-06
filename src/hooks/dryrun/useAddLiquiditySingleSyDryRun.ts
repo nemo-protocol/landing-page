@@ -127,7 +127,6 @@ export default function useAddLiquiditySingleSyDryRun<
           onlyTransactionKind: true,
         }),
       })
-      console.log("result=====", result)
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,

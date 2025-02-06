@@ -55,6 +55,7 @@ import useSeedLiquidityDryRun from "@/hooks/dryrun/useSeedLiquidityDryRun"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import type { CoinData } from "@/hooks/useCoinData"
 import { ContractError } from "@/hooks/types"
+import useAddLiquiditySinglePtDryRun from "@/hooks/dryrun/useAddLiquiditySinglePtDryRun"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -137,6 +138,8 @@ export default function SingleCoin() {
     useAddLiquiditySingleSyDryRun(coinConfig)
   const { mutateAsync: seedLiquidityDryRun } =
     useSeedLiquidityDryRun(coinConfig)
+  const { mutateAsync: addLiquiditySinglePtDryRun } =
+    useAddLiquiditySinglePtDryRun(coinConfig)
 
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
@@ -394,12 +397,18 @@ export default function SingleCoin() {
 
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
+    const ptValue = await addLiquiditySinglePtDryRun({
+      netSyIn: addAmount,
+      coinData,
+    })
+
     const addLiquidityMoveCall = {
       target: `${coinConfig.nemoContractId}::router::add_liquidity_single_sy`,
       arguments: [
         coinConfig.version,
         syCoin,
-        tx.pure.u64(minLpAmount),
+        minLpAmount,
+        ptValue,
         priceVoucher,
         pyPosition,
         coinConfig.pyStateId,
@@ -409,12 +418,8 @@ export default function SingleCoin() {
       ],
       typeArguments: [coinConfig.syCoinType],
     }
-    debugLog(
-      "add_liquidity_single_sy move call:",
-      addLiquidityMoveCall,
-      "minLpAmount",
-      minLpAmount,
-    )
+
+    debugLog("add_liquidity_single_sy move call:", addLiquidityMoveCall)
 
     const [mp] = tx.moveCall({
       ...addLiquidityMoveCall,
@@ -422,6 +427,7 @@ export default function SingleCoin() {
         tx.object(coinConfig.version),
         syCoin,
         tx.pure.u64(minLpAmount),
+        tx.pure.u64(ptValue),
         priceVoucher,
         pyPosition,
         tx.object(coinConfig.pyStateId),
