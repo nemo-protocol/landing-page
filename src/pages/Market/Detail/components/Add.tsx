@@ -69,6 +69,7 @@ export default function SingleCoin() {
   const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(1)
   const [lpAmount, setLpAmount] = useState<string>()
+  const [lpFeeAmount, setLpFeeAmount] = useState<string>()
   const [ytAmount, setYtAmount] = useState<string>()
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [isAdding, setIsAdding] = useState(false)
@@ -484,25 +485,26 @@ export default function SingleCoin() {
                 new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
               )
             } else {
-              const lpAmount = await addLiquiditySingleSyDryRun({
+              const [lpAmount, lpFeeAmount] = await addLiquiditySingleSyDryRun({
                 addAmount: convertedAmount,
                 tokenType,
                 coinData,
                 pyPositions: pyPositionData,
               })
-              setLpAmount(
-                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
-              )
+              setLpAmount(lpAmount)
+              setLpFeeAmount(lpFeeAmount)
               setYtAmount(undefined)
             }
           } catch (error) {
             try {
               const amount = await calculateLpOut(convertedAmount)
               setLpAmount(amount.lpAmount)
+              setLpFeeAmount(undefined)
               setYtAmount(undefined)
             } catch (error) {
               setLpAmount(undefined)
               setYtAmount(undefined)
+              setLpFeeAmount(undefined)
               console.error("Failed to get LP position:", error)
               setError((error as Error)?.message ?? "Failed to get LP position")
             }
@@ -825,21 +827,7 @@ export default function SingleCoin() {
                 isRatioLoading={isRatioLoading}
                 coinName={coinConfig?.coinName}
                 targetCoinName={`LP ${coinConfig?.coinName}`}
-                tradeFee={
-                  !!addValue &&
-                  !!conversionRate &&
-                  !!coinConfig?.feeRate &&
-                  !!coinConfig?.coinPrice
-                    ? new Decimal(coinConfig.feeRate)
-                        .mul(
-                          tokenType === 0
-                            ? new Decimal(addValue).mul(conversionRate)
-                            : addValue,
-                        )
-                        .mul(coinConfig.coinPrice)
-                        .toString()
-                    : undefined
-                }
+                tradeFee={lpFeeAmount}
               />
 
               <ActionButton

@@ -7,13 +7,12 @@ import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchPyPosition from "../useFetchPyPosition"
 import type { PyPosition } from "../types"
+import { bcs } from "@mysten/sui/bcs"
 import {
-  mintSCoin,
-  depositSyCoin,
   getPriceVoucher,
   initPyPosition,
-  splitCoinHelper,
 } from "@/lib/txHelper"
+import Decimal from "decimal.js"
 
 interface AddLiquiditySingleSyParams {
   addAmount: string
@@ -24,7 +23,7 @@ interface AddLiquiditySingleSyParams {
 
 type DryRunResult<T extends boolean> = T extends true
   ? [string, DebugInfo]
-  : string
+  : [string, string]
 
 export default function useAddLiquiditySingleSyDryRun<
   T extends boolean = false,
@@ -37,7 +36,6 @@ export default function useAddLiquiditySingleSyDryRun<
     mutationFn: async ({
       coinData,
       addAmount,
-      tokenType,
       pyPositions: inputPyPositions,
     }: AddLiquiditySingleSyParams): Promise<DryRunResult<T>> => {
       if (!address) {
@@ -66,32 +64,32 @@ export default function useAddLiquiditySingleSyDryRun<
         pyPosition = tx.object(pyPositions[0].id)
       }
 
-      const [splitCoin] =
-        tokenType === 0
-          ? mintSCoin(tx, coinConfig, coinData, [addAmount])
-          : splitCoinHelper(tx, coinData, [addAmount], coinConfig.coinType)
+      // const [splitCoin] =
+      //   tokenType === 0
+      //     ? mintSCoin(tx, coinConfig, coinData, [addAmount])
+      //     : splitCoinHelper(tx, coinData, [addAmount], coinConfig.coinType)
 
-      const syCoin = depositSyCoin(
-        tx,
-        coinConfig,
-        splitCoin,
-        coinConfig.coinType,
-      )
+      // const syCoin = depositSyCoin(
+      //   tx,
+      //   coinConfig,
+      //   splitCoin,
+      //   coinConfig.coinType,
+      // )
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
       const debugInfo: DebugInfo = {
         moveCall: {
-          target: `${coinConfig.nemoContractId}::router::add_liquidity_single_sy`,
+          target: `${coinConfig.nemoContractId}::router::get_lp_out_for_single_sy_in`,
           arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "sy_coin", value: "syCoin" },
-            { name: "min_lp_amount", value: "0" },
+            // { name: "version", value: coinConfig.version },
+            { name: "sy_coin_in", value: addAmount },
+            // { name: "min_lp_amount", value: "0" },
             { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "py_position",
-              value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
-            },
+            // {
+            //   name: "py_position",
+            //   value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
+            // },
             { name: "py_state", value: coinConfig.pyStateId },
             {
               name: "market_factory_config",
@@ -107,11 +105,9 @@ export default function useAddLiquiditySingleSyDryRun<
       tx.moveCall({
         target: debugInfo.moveCall.target,
         arguments: [
-          tx.object(coinConfig.version),
-          syCoin,
-          tx.pure.u64(0),
+          tx.pure.u64(addAmount),
           priceVoucher,
-          pyPosition,
+          // pyPosition,
           tx.object(coinConfig.pyStateId),
           tx.object(coinConfig.marketFactoryConfigId),
           tx.object(coinConfig.marketStateId),
@@ -131,24 +127,34 @@ export default function useAddLiquiditySingleSyDryRun<
           onlyTransactionKind: true,
         }),
       })
-
+      console.log("result=====", result)
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
       }
 
-      if (!result?.events?.[result?.events?.length - 1]?.parsedJson) {
+      if (!result?.results?.[1]?.returnValues?.[0]) {
         const message = "Failed to get add liquidity data"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const lpAmount = result.events[result.events.length - 1].parsedJson
-        .lp_amount as string
+      const outputAmount = bcs.U64.parse(
+        new Uint8Array(result.results[1].returnValues[0][0]),
+      )
+
+      const fee = bcs.U128.parse(
+        new Uint8Array(result.results[1].returnValues[1][0]),
+      )
+      const formattedFee = new Decimal(fee).div(2 ** 64).div(10 ** Number(coinConfig.decimal)).toString()
+
+      const lpAmount = new Decimal(outputAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
+        .toFixed()
 
       debugInfo.parsedOutput = lpAmount
 
-      return (debug ? [lpAmount, debugInfo] : lpAmount) as DryRunResult<T>
+      return (debug ? [lpAmount, debugInfo] : [lpAmount, formattedFee]) as DryRunResult<T>
     },
   })
 }
