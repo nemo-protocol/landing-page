@@ -262,6 +262,7 @@ export default function Invest() {
             .toFixed(0),
         )
         const minPtOut = new Decimal(ptOut)
+          .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 

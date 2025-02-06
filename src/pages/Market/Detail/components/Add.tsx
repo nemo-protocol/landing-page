@@ -566,6 +566,7 @@ export default function SingleCoin() {
         const calculatedLpOut = await calculateLpOut(addAmount)
 
         const minLpAmount = new Decimal(calculatedLpOut.lpAmount)
+          .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
@@ -602,7 +603,10 @@ export default function SingleCoin() {
         } else {
           console.log(
             "handleAddLiquiditySingleSy",
-            new Decimal(marketStateData.totalSy).mul(0.4).div(10 ** decimal).toFixed(decimal),
+            new Decimal(marketStateData.totalSy)
+              .mul(0.4)
+              .div(10 ** decimal)
+              .toFixed(decimal),
             new Decimal(addAmount).div(10 ** decimal).toFixed(decimal),
           )
           await handleAddLiquiditySingleSy(

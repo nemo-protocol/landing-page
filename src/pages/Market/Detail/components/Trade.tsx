@@ -306,6 +306,7 @@ export default function Trade() {
 
         const [ytOut] = await queryYtOut(syCoinAmount)
         const minYtOut = new Decimal(ytOut)
+          .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
