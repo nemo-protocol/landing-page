@@ -551,6 +551,7 @@ export default function SingleCoin() {
       address &&
       coinType &&
       slippage &&
+      lpAmount &&
       coinConfig &&
       conversionRate &&
       marketStateData &&
@@ -575,16 +576,12 @@ export default function SingleCoin() {
           pyPosition = tx.object(pyPositionData[0].id)
         }
 
-        const calculatedLpOut = await calculateLpOut(addAmount)
-
-        console.log("calculatedLpOut", calculatedLpOut)
-
-        const minLpAmount = new Decimal(calculatedLpOut.lpAmount)
+        const minLpAmount = new Decimal(lpAmount)
           .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
-
-        console.log("minLpAmount", minLpAmount)
+          
+        debugLog("minLpAmount", minLpAmount)
 
         if (marketStateData.lpSupply === "0") {
           await handleSeedLiquidity(
