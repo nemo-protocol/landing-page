@@ -1,17 +1,19 @@
+export interface MoveCallInfo {
+  target: string
+  arguments: {
+    name: string
+    value: string
+  }[]
+  typeArguments: string[]
+}
+
 export interface DebugInfo {
-  moveCall: {
-    target: string
-    arguments: {
-      name: string
-      value: string
-    }[]
-    typeArguments: string[]
-  }
+  moveCall: MoveCallInfo[]
   rawResult?: {
     error?: string
-    results?: unknown
+    results?: unknown[]
   }
-  parsedOutput?: string
+  parsedOutput?: unknown
 }
 
 export class ContractError extends Error {

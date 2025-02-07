@@ -304,12 +304,13 @@ export default function Trade() {
         setIsSwapping(true)
         const tx = new Transaction()
 
-        const syCoinAmount = new Decimal(swapValue)
+        const swapAmount = new Decimal(swapValue).mul(10 ** decimal).toFixed(0)
+
+        const syAmount = new Decimal(swapAmount)
           .div(tokenType === 0 ? conversionRate : 1)
-          .mul(10 ** decimal)
           .toFixed(0)
 
-        const [ytOut] = await queryYtOut(syCoinAmount)
+        const [ytOut] = await queryYtOut(syAmount)
 
         const minYtOut = new Decimal(ytOut)
           .mul(10 ** decimal)
@@ -318,10 +319,8 @@ export default function Trade() {
 
         const [splitCoin] =
           tokenType === 0
-            ? mintSCoin(tx, coinConfig, coinData, [
-                new Decimal(swapValue).mul(10 ** decimal).toFixed(0),
-              ])
-            : splitCoinHelper(tx, coinData, [syCoinAmount], coinType)
+            ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
+            : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
@@ -338,7 +337,7 @@ export default function Trade() {
 
         const { approxYtOut, netSyTokenization } =
           await getApproxYtOutDryRun.mutateAsync({
-            netSyIn: syCoinAmount,
+            netSyIn: syAmount,
             minYtOut,
           })
 

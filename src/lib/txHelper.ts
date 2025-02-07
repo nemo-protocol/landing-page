@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
-import { DebugInfo } from "@/hooks/types"
+import { MoveCallInfo } from "@/hooks/types"
 import { LpPosition } from "@/hooks/types"
 import { CoinData } from "@/hooks/useCoinData"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
@@ -11,7 +11,7 @@ import {
 } from "@mysten/sui/transactions"
 import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury } from "./constants"
 
-export type MoveCallInfo = DebugInfo["moveCall"]
+
 
 export const getPriceVoucher = (
   tx: Transaction,
@@ -785,4 +785,58 @@ export const mergeAllLpPositions = (
   }
 
   return tx.object(lpPositions[0].id.id)
+}
+
+export const swapExactSyForPt = <T extends boolean = false>(
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  syCoin: TransactionArgument,
+  priceVoucher: TransactionArgument,
+  pyPosition: TransactionArgument,
+  minPtOut: string,
+  approxPtOut: string,
+  returnDebugInfo?: T,
+): T extends true ? MoveCallInfo : void => {
+  const debugInfo: MoveCallInfo = {
+    target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
+    arguments: [
+      { name: "version", value: coinConfig.version },
+      { name: "min_pt_out", value: minPtOut },
+      { name: "approx_pt_out", value: approxPtOut },
+      { name: "sy_coin", value: "syCoin" },
+      { name: "price_voucher", value: "priceVoucher" },
+      { name: "py_position", value: "pyPosition" },
+      { name: "py_state", value: coinConfig.pyStateId },
+      {
+        name: "market_factory_config",
+        value: coinConfig.marketFactoryConfigId,
+      },
+      { name: "market_state", value: coinConfig.marketStateId },
+      { name: "clock", value: "0x6" },
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  }
+
+  debugLog("swap_exact_sy_for_pt move call:", debugInfo)
+
+  const txMoveCall = {
+    target: debugInfo.target,
+    arguments: [
+      tx.object(coinConfig.version),
+      tx.pure.u64(minPtOut),
+      tx.pure.u64(approxPtOut),
+      syCoin,
+      priceVoucher,
+      pyPosition,
+      tx.object(coinConfig.pyStateId),
+      tx.object(coinConfig.marketFactoryConfigId),
+      tx.object(coinConfig.marketStateId),
+      tx.object("0x6"),
+    ],
+    typeArguments: debugInfo.typeArguments,
+  }
+
+  tx.moveCall(txMoveCall)
+
+  return (returnDebugInfo ? debugInfo : undefined) as T extends true ? MoveCallInfo : void
 }

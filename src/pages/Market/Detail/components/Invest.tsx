@@ -32,6 +32,7 @@ import {
   splitCoinHelper,
   mintSCoin,
   depositSyCoin,
+  swapExactSyForPt,
 } from "@/lib/txHelper"
 import {
   Select,
@@ -52,7 +53,7 @@ import useInvestRatio from "@/hooks/actions/useInvestRatio"
 import { CoinConfig } from "@/queries/types/market"
 import { ContractError } from "@/hooks/types"
 import useGetApproxPtOutDryRun from "@/hooks/dryrun/useGetApproxPtOutDryRun"
-import { debugLog } from "@/config"
+import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -153,6 +154,8 @@ export default function Invest() {
   )
 
   const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
+  const { mutateAsync: swapExactSyForPtDryRun } =
+    useSwapExactSyForPtDryRun(coinConfig)
 
   const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
 
@@ -164,18 +167,66 @@ export default function Invest() {
     (value: string, decimal: number, config?: CoinConfig) => {
       const getPtOut = debounce(async () => {
         setError(undefined)
-        if (isValidAmount(value) && decimal && config && conversionRate) {
+        if (
+          isValidAmount(value) &&
+          decimal &&
+          config &&
+          conversionRate &&
+          coinType
+        ) {
           setIsCalcPtLoading(true)
           try {
-            const swapAmount = new Decimal(value)
+            const swapAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
+            const syAmount = new Decimal(swapAmount)
               .div(tokenType === 0 ? conversionRate : 1)
-              .mul(10 ** decimal)
               .toFixed(0)
-            const [ptValue, ptFeeValue] = await queryPtOut(swapAmount)
-            const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
-            setRatio(ptRatio)
-            setPtValue(ptValue)
+
+            console.log("value", value, "conversionRate", conversionRate)
+
+            console.log("syAmount", syAmount)
+
+            const [ptValue, ptFeeValue] = await queryPtOut(syAmount)
+
+            console.log("queryPtOut ptValue", ptValue)
+
             setPtFeeValue(ptFeeValue)
+
+            const minPtOut = new Decimal(ptValue)
+              .mul(10 ** decimal)
+              .mul(1 - new Decimal(slippage).div(100).toNumber())
+              .toFixed(0)
+
+            console.log("minPtOut", minPtOut)
+
+            const approxPtOut = await getApproxPtOut({
+              netSyIn: syAmount,
+              minPtOut,
+            })
+
+            console.log("approxPtOut", approxPtOut)
+
+            if (address && coinData?.length) {
+              try {
+                const newPtValue = await swapExactSyForPtDryRun({
+                  tokenType,
+                  swapAmount,
+                  coinData,
+                  coinType,
+                  minPtOut,
+                  approxPtOut,
+                })
+
+                console.log("newPtValue", newPtValue)
+                const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
+                setRatio(ptRatio)
+                setPtValue(newPtValue)
+                return
+              } catch (dryRunError) {
+                const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
+                setRatio(ptRatio)
+                setPtValue(ptValue)
+              }
+            }
           } catch (errorMsg) {
             const { error, detail } = parseErrorMessage(
               (errorMsg as ContractError)?.message ?? errorMsg,
@@ -196,7 +247,17 @@ export default function Invest() {
       getPtOut()
       return getPtOut.cancel
     },
-    [queryPtOut, tokenType, conversionRate],
+    [
+      queryPtOut,
+      tokenType,
+      conversionRate,
+      address,
+      coinData,
+      swapExactSyForPtDryRun,
+      coinType,
+      getApproxPtOut,
+      slippage,
+    ],
   )
 
   useEffect(() => {
@@ -247,6 +308,9 @@ export default function Invest() {
         setIsSwapping(true)
         const tx = new Transaction()
         const swapAmount = new Decimal(swapValue).mul(10 ** decimal).toFixed(0)
+        const syAmount = new Decimal(swapAmount)
+          .div(tokenType === 0 ? conversionRate : 1)
+          .toFixed(0)
 
         const [splitCoin] =
           tokenType === 0
@@ -264,58 +328,29 @@ export default function Invest() {
           pyPosition = tx.object(pyPositionData[0].id)
         }
 
-        const [ptOut] = await queryPtOut(
-          new Decimal(swapAmount)
-            .div(tokenType === 0 ? conversionRate : 1)
-            .toFixed(0),
-        )
+        const [ptOut] = await queryPtOut(syAmount)
 
         const minPtOut = new Decimal(ptOut)
           .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
-        const netSyIn = new Decimal(swapAmount)
-          .div(tokenType === 0 ? conversionRate : 1)
-          .toFixed(0)
-
         const approxPtOut = await getApproxPtOut({
-          netSyIn,
+          netSyIn: syAmount,
           minPtOut,
-        })
-
-        debugLog("swap_exact_sy_for_pt parameters:", {
-          version: coinConfig.version,
-          minPtOut,
-          approxPtOut,
-          syCoin: "syCoin object",
-          priceVoucher: "priceVoucher object",
-          pyPosition: pyPositionData?.length ? pyPositionData[0].id : "new pyPosition",
-          pyStateId: coinConfig.pyStateId,
-          marketFactoryConfigId: coinConfig.marketFactoryConfigId,
-          marketStateId: coinConfig.marketStateId,
-          clock: "0x6",
-          typeArgument: coinConfig.syCoinType
         })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        tx.moveCall({
-          target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
-          arguments: [
-            tx.object(coinConfig.version),
-            tx.pure.u64(minPtOut),
-            tx.pure.u64(approxPtOut),
-            syCoin,
-            priceVoucher,
-            pyPosition,
-            tx.object(coinConfig.pyStateId),
-            tx.object(coinConfig.marketFactoryConfigId),
-            tx.object(coinConfig.marketStateId),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        })
+        swapExactSyForPt(
+          tx,
+          coinConfig,
+          syCoin,
+          priceVoucher,
+          pyPosition,
+          minPtOut,
+          approxPtOut,
+        )
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -354,12 +389,6 @@ export default function Invest() {
       }
     }
   }
-
-  // const refetch = useCallback(() => {
-  //   refetchCoinConfig()
-  //   refetchPyPosition()
-  //   refetchCoinData()
-  // }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
 
   const hasLiquidity = useMemo(() => {
     return isValidAmount(marketStateData?.lpSupply)
