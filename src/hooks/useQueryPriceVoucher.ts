@@ -36,7 +36,7 @@ export default function useQueryPriceVoucher(
       const [, moveCallInfo] = getPriceVoucher(tx, coinConfig)
 
       const debugInfo: DebugInfo = {
-        moveCall: moveCallInfo as MoveCallInfo,
+        moveCall: [moveCallInfo as MoveCallInfo],
       }
 
       const result = await client.devInspectTransactionBlock({
@@ -110,7 +110,7 @@ export function useQueryPriceVoucherWithCoinInfo(
         typeArguments: [coinConfig.syCoinType],
       })
       const debugInfo: DebugInfo = {
-        moveCall: moveCallInfo as MoveCallInfo,
+        moveCall: [moveCallInfo as MoveCallInfo],
       }
 
       const result = await client.devInspectTransactionBlock({

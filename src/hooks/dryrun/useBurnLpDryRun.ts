@@ -71,25 +71,27 @@ export default function useBurnLpDryRun(
 
       console.log("mergedPosition", mergedPosition)
 
+      const moveCallInfo = {
+        target: `${effectiveConfig.nemoContractId}::market::burn_lp`,
+        arguments: [
+          { name: "lp_amount", value: lpAmount },
+          {
+            name: "py_position",
+            value: created ? "pyPosition" : pyPositions[0].id,
+          },
+          { name: "market", value: "market" },
+          { name: "market_position", value: marketPositions[0].id.id },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [effectiveConfig.syCoinType],
+      }
+
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${effectiveConfig.nemoContractId}::market::burn_lp`,
-          arguments: [
-            { name: "lp_amount", value: lpAmount },
-            {
-              name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id,
-            },
-            { name: "market", value: "market" },
-            { name: "market_position", value: marketPositions[0].id.id },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [effectiveConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.object(effectiveConfig.version),
           tx.pure.u64(lpAmount),
@@ -98,7 +100,7 @@ export default function useBurnLpDryRun(
           mergedPosition,
           tx.object("0x6"),
         ],
-        typeArguments: debugInfo.moveCall.typeArguments,
+        typeArguments: moveCallInfo.typeArguments,
       })
 
       const result = await client.devInspectTransactionBlock({

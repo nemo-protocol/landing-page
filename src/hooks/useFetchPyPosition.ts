@@ -19,7 +19,7 @@ const useFetchPyPosition = (
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: {
+        moveCall: [{
           target: "get_py_position",
           arguments: [
             { name: "address", value: address },
@@ -27,7 +27,7 @@ const useFetchPyPosition = (
             { name: "maturity", value: coinConfig.maturity },
           ],
           typeArguments: coinConfig.pyPositionTypeList,
-        },
+        }],
       }
 
       const response = await suiClient.getOwnedObjects({
@@ -43,7 +43,7 @@ const useFetchPyPosition = (
       })
 
       debugInfo.rawResult = {
-        results: response,
+        results: [response],
       }
 
       const positions = response.data

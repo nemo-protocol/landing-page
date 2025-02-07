@@ -78,32 +78,34 @@ export default function useAddLiquiditySingleSyDryRun<
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::router::get_lp_out_for_single_sy_in`,
+        arguments: [
+          // { name: "version", value: coinConfig.version },
+          { name: "sy_coin_in", value: addAmount },
+          // { name: "min_lp_amount", value: "0" },
+          { name: "price_voucher", value: "priceVoucher" },
+          // {
+          //   name: "py_position",
+          //   value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
+          // },
+          { name: "py_state", value: coinConfig.pyStateId },
+          {
+            name: "market_factory_config",
+            value: coinConfig.marketFactoryConfigId,
+          },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
+
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::router::get_lp_out_for_single_sy_in`,
-          arguments: [
-            // { name: "version", value: coinConfig.version },
-            { name: "sy_coin_in", value: addAmount },
-            // { name: "min_lp_amount", value: "0" },
-            { name: "price_voucher", value: "priceVoucher" },
-            // {
-            //   name: "py_position",
-            //   value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
-            // },
-            { name: "py_state", value: coinConfig.pyStateId },
-            {
-              name: "market_factory_config",
-              value: coinConfig.marketFactoryConfigId,
-            },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.pure.u64(addAmount),
           priceVoucher,

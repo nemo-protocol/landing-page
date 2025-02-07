@@ -80,32 +80,34 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
+        arguments: [
+          { name: "version", value: coinConfig.version },
+          { name: "sy_coin", value: "syCoin" },
+          { name: "min_lp_amount", value: "0" },
+          { name: "price_voucher", value: "priceVoucher" },
+          {
+            name: "py_position",
+            value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
+          },
+          { name: "py_state", value: coinConfig.pyStateId },
+          {
+            name: "yield_factory_config",
+            value: coinConfig.yieldFactoryConfigId,
+          },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
+
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "sy_coin", value: "syCoin" },
-            { name: "min_lp_amount", value: "0" },
-            { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "py_position",
-              value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            {
-              name: "yield_factory_config",
-              value: coinConfig.yieldFactoryConfigId,
-            },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       const [lp] = tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.object(coinConfig.version),
           syCoin,

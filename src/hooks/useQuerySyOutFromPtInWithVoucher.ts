@@ -36,7 +36,7 @@ export default function useQuerySyOutFromPtInWithVoucher<T extends boolean = fal
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
       const debugInfo: DebugInfo = {
-        moveCall: {
+        moveCall: [{
           target: `${coinConfig.nemoContractId}::router::get_sy_amount_out_for_exact_pt_in_with_price_voucher`,
           arguments: [
             { name: "exact_pt_in", value: ptAmount },
@@ -50,7 +50,7 @@ export default function useQuerySyOutFromPtInWithVoucher<T extends boolean = fal
             { name: "clock", value: "0x6" },
           ],
           typeArguments: [coinConfig.syCoinType],
-        },
+        }],
       }
 
       debugLog(
@@ -59,7 +59,7 @@ export default function useQuerySyOutFromPtInWithVoucher<T extends boolean = fal
       )
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: debugInfo.moveCall[0].target,
         arguments: [
           tx.pure.u64(ptAmount),
           priceVoucher,
@@ -68,7 +68,7 @@ export default function useQuerySyOutFromPtInWithVoucher<T extends boolean = fal
           tx.object(coinConfig.marketStateId),
           tx.object("0x6"),
         ],
-        typeArguments: debugInfo.moveCall.typeArguments,
+        typeArguments: debugInfo.moveCall[0].typeArguments,
       })
 
       const result = await client.devInspectTransactionBlock({

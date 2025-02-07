@@ -84,27 +84,29 @@ export default function useRedeemPYDryRun(
 
       console.log("redeem_py dry run result:", result)
 
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
+        arguments: [
+          { name: "version", value: coinConfig.version },
+          { name: "yt_amount", value: ytRedeemValue },
+          { name: "pt_amount", value: ptRedeemValue },
+          { name: "price_voucher", value: "priceVoucher" },
+          {
+            name: "py_position",
+            value: created ? "pyPosition" : pyPositions[0].id,
+          },
+          { name: "py_state", value: coinConfig.pyStateId },
+          {
+            name: "yield_factory_config",
+            value: coinConfig.yieldFactoryConfigId,
+          },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
+
       const dryRunDebugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::yield_factory::redeem_py`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "yt_amount", value: ytRedeemValue },
-            { name: "pt_amount", value: ptRedeemValue },
-            { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id,
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            {
-              name: "yield_factory_config",
-              value: coinConfig.yieldFactoryConfigId,
-            },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
         rawResult: {
           error: result?.error,
           results: result?.results,

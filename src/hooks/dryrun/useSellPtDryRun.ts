@@ -90,7 +90,7 @@ export default function useSellPtDryRun<T extends boolean = false>(
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: moveCallInfo,
+        moveCall: [moveCallInfo],
       }
 
       const result = await client.devInspectTransactionBlock({

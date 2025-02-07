@@ -20,7 +20,7 @@ const useFetchLpPosition = (
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: {
+        moveCall: [{
           target: "get_lp_market_position",
           arguments: [
             { name: "address", value: address },
@@ -28,7 +28,7 @@ const useFetchLpPosition = (
             { name: "maturity", value: coinConfig.maturity },
           ],
           typeArguments: coinConfig.marketPositionTypeList,
-        },
+        }],
       }
 
       const response = await suiClient.getOwnedObjects({

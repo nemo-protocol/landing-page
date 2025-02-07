@@ -13,7 +13,7 @@ const useFetchObject = (_coinConfig: unknown, debug = false) => {
       typeArguments = [],
     }: GetObjectParams): Promise<string | [string, DebugInfo]> => {
       const debugInfo: DebugInfo = {
-        moveCall: {
+        moveCall: [{
           target: "get_object",
           arguments: [
             {
@@ -22,6 +22,10 @@ const useFetchObject = (_coinConfig: unknown, debug = false) => {
             },
           ],
           typeArguments,
+        }],
+        rawResult: {
+          error: undefined,
+          results: [],
         },
       }
 
@@ -33,7 +37,8 @@ const useFetchObject = (_coinConfig: unknown, debug = false) => {
 
         // Record raw result
         debugInfo.rawResult = {
-          results: response,
+          error: undefined,
+          results: [response],
         }
 
         if ("error" in response && response.error) {

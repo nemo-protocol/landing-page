@@ -35,7 +35,7 @@ export default function useQuerySyOutFromYtInWithVoucher<
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
       const debugInfo: DebugInfo = {
-        moveCall: {
+        moveCall: [{
           target: `${coinConfig.nemoContractId}::router::get_sy_amount_out_for_exact_yt_in_with_price_voucher`,
           arguments: [
             { name: "exact_yt_in", value: ytAmount },
@@ -49,7 +49,7 @@ export default function useQuerySyOutFromYtInWithVoucher<
             { name: "clock", value: "0x6" },
           ],
           typeArguments: [coinConfig.syCoinType],
-        },
+        }],
       }
 
       debugLog(
@@ -58,7 +58,7 @@ export default function useQuerySyOutFromYtInWithVoucher<
       )
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: debugInfo.moveCall[0].target,
         arguments: [
           tx.pure.u64(ytAmount),
           priceVoucher,
@@ -67,7 +67,7 @@ export default function useQuerySyOutFromYtInWithVoucher<
           tx.object(coinConfig.marketStateId),
           tx.object("0x6"),
         ],
-        typeArguments: debugInfo.moveCall.typeArguments,
+        typeArguments: debugInfo.moveCall[0].typeArguments,
       })
 
       const result = await client.devInspectTransactionBlock({

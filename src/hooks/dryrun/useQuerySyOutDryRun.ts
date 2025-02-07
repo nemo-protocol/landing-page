@@ -36,31 +36,33 @@ export default function useQuerySyOutDryRun<T extends boolean = false>(
         throw new Error("Please connect wallet first")
       }
 
-
       const tx = new Transaction()
       tx.setSender(address)
 
-      const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinInfo.nemoContractId}::router::get_sy_amount_out_for_exact_pt_in_with_price_voucher`,
-          arguments: [
-            { name: "exact_pt_in", value: ptIn },
-            { name: "price_voucher", value: "priceVoucher" },
-            { name: "py_state", value: coinInfo.pyStateId },
-            {
-              name: "market_factory_config",
-              value: coinInfo.marketFactoryConfigId,
-            },
-            { name: "market", value: coinInfo.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinInfo.syCoinType],
-        },
+      const moveCallInfo = {
+        target: `${coinInfo.nemoContractId}::router::get_sy_amount_out_for_exact_pt_in_with_price_voucher`,
+        arguments: [
+          { name: "exact_pt_in", value: ptIn },
+          { name: "price_voucher", value: "priceVoucher" },
+          { name: "py_state", value: coinInfo.pyStateId },
+          {
+            name: "market_factory_config",
+            value: coinInfo.marketFactoryConfigId,
+          },
+          { name: "market", value: coinInfo.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinInfo.syCoinType],
       }
+
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+      }
+
       const [priceVoucher] = getPriceVoucher(tx, coinInfo)
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.pure.u64(ptIn),
           priceVoucher,
@@ -69,10 +71,8 @@ export default function useQuerySyOutDryRun<T extends boolean = false>(
           tx.object(coinInfo.marketStateId),
           tx.object("0x6"),
         ],
-        typeArguments: debugInfo.moveCall.typeArguments,
+        typeArguments: moveCallInfo.typeArguments,
       })
-
-
 
       const result = await client.devInspectTransactionBlock({
         sender: address,

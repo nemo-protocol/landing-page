@@ -574,8 +574,8 @@ export default function Test() {
                         ) : (
                           <div className="space-y-2">
                             {/* Arguments */}
-                            {call.result?.debugInfo?.moveCall.arguments.map(
-                              (arg) => (
+                            {call.result?.debugInfo?.moveCall[0]?.arguments.map(
+                              (arg: { name: string; value: string }) => (
                                 <div
                                   key={arg.name}
                                   className="grid grid-cols-[180px,1fr] gap-2 items-start"
@@ -639,14 +639,16 @@ export default function Test() {
                               </span>
                               <div className="text-white/80 break-all flex items-center gap-2">
                                 <span className="break-all">
-                                  {call.result?.debugInfo?.moveCall.typeArguments.join(
-                                    ", ",
+                                  {call.result?.debugInfo?.moveCall.map(
+                                    (moveCall) => moveCall.typeArguments.join(
+                                      ", ",
+                                    ),
                                   )}
                                 </span>
                                 <button
                                   onClick={() =>
                                     handleCopy(
-                                      call.result?.debugInfo?.moveCall.typeArguments.join(
+                                      call.result?.debugInfo?.moveCall[0]?.typeArguments.join(
                                         ", ",
                                       ) || "",
                                       `${call.timestamp}-type_arguments`,

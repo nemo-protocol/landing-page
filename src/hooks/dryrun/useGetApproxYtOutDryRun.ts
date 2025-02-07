@@ -46,29 +46,31 @@ export default function useGetApproxYtOutDryRun<T extends boolean = false>(
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-      const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::offchain::get_approx_yt_out_for_net_sy_in_internal`,
-          arguments: [
-            { name: "net_sy_in", value: netSyIn },
-            { name: "min_yt_out", value: minYtOut },
-            { name: "price_voucher", value: "priceVoucher" },
-            { name: "py_state", value: coinConfig.pyStateId },
-            { name: "market_state", value: coinConfig.marketStateId },
-            {
-              name: "market_factory_config",
-              value: coinConfig.marketFactoryConfigId,
-            },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::offchain::get_approx_yt_out_for_net_sy_in_internal`,
+        arguments: [
+          { name: "net_sy_in", value: netSyIn },
+          { name: "min_yt_out", value: minYtOut },
+          { name: "price_voucher", value: "priceVoucher" },
+          { name: "py_state", value: coinConfig.pyStateId },
+          { name: "market_state", value: coinConfig.marketStateId },
+          {
+            name: "market_factory_config",
+            value: coinConfig.marketFactoryConfigId,
+          },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
       }
 
-      debugLog("get_approx_yt_out move call:", debugInfo.moveCall)
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+      }
+
+      debugLog("get_approx_yt_out move call:", moveCallInfo)
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.pure.u64(netSyIn),
           tx.pure.u64(minYtOut),

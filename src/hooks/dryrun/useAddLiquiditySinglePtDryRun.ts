@@ -44,28 +44,30 @@ export default function useAddLiquiditySinglePtDryRun<
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-      const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::offchain::single_liquidity_add_pt_out`,
-          arguments: [
-            { name: "net_sy_in", value: netSyIn },
-            { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "market_factory_config",
-              value: coinConfig.marketFactoryConfigId,
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::offchain::single_liquidity_add_pt_out`,
+        arguments: [
+          { name: "net_sy_in", value: netSyIn },
+          { name: "price_voucher", value: "priceVoucher" },
+          {
+            name: "market_factory_config",
+            value: coinConfig.marketFactoryConfigId,
+          },
+          { name: "py_state", value: coinConfig.pyStateId },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
       }
 
-      debugLog("single_liquidity_add_pt_out move call:", debugInfo.moveCall)
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+      }
+
+      debugLog("single_liquidity_add_pt_out move call:", moveCallInfo)
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.pure.u64(netSyIn),
           priceVoucher,

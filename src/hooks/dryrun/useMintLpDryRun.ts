@@ -113,30 +113,32 @@ export default function useMintLpDryRun<T extends boolean = false>(
       )
 
       const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
+      
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::market::mint_lp`,
+        arguments: [
+          { name: "version", value: coinConfig.version },
+          { name: "sy_coin", value: "syCoin" },
+          { name: "pt_amount", value: "pt_amount" },
+          { name: "min_lp_amount", value: "0" },
+          { name: "price_voucher", value: "priceVoucherForMintLp" },
+          {
+            name: "py_position",
+            value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
+          },
+          { name: "py_state", value: coinConfig.pyStateId },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
 
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::market::mint_lp`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "sy_coin", value: "syCoin" },
-            { name: "pt_amount", value: "pt_amount" },
-            { name: "min_lp_amount", value: "0" },
-            { name: "price_voucher", value: "priceVoucherForMintLp" },
-            {
-              name: "py_position",
-              value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.object(coinConfig.version),
           syCoin,

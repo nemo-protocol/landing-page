@@ -97,32 +97,34 @@ export default function useSellYtDryRun<T extends boolean = false>(
         tx.transferObjects([pyPosition], address)
       }
 
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::router::swap_exact_yt_for_sy`,
+        arguments: [
+          { name: "version", value: coinConfig.version },
+          { name: "amount", value: amount },
+          { name: "min_sy_out", value: minSyOut },
+          {
+            name: "py_position",
+            value: inputPyPositions?.length ? inputPyPositions[0].id : "pyPosition",
+          },
+          { name: "py_state", value: coinConfig.pyStateId },
+          { name: "price_voucher", value: "priceVoucher" },
+          {
+            name: "yield_factory_config",
+            value: coinConfig.yieldFactoryConfigId,
+          },
+          {
+            name: "market_factory_config",
+            value: coinConfig.marketFactoryConfigId,
+          },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
+
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::router::swap_exact_yt_for_sy`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "amount", value: amount },
-            { name: "min_sy_out", value: minSyOut },
-            {
-              name: "py_position",
-              value: inputPyPositions?.length ? inputPyPositions[0].id : "pyPosition",
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "yield_factory_config",
-              value: coinConfig.yieldFactoryConfigId,
-            },
-            {
-              name: "market_factory_config",
-              value: coinConfig.marketFactoryConfigId,
-            },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       const result = await client.devInspectTransactionBlock({

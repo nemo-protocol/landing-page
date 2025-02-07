@@ -36,31 +36,33 @@ export default function useQueryPtOutDryRun<T extends boolean = false>(
         throw new Error("Please connect wallet first")
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinInfo.nemoContractId}::router::get_pt_out_for_exact_sy_in_with_price_voucher`,
-          arguments: [
-            { name: "net_sy_in", value: syIn },
-            { name: "min_pt_out", value: "0" },
-            { name: "price_voucher", value: "priceVoucher" },
-            { name: "py_state_id", value: coinInfo.pyStateId },
-            {
-              name: "market_factory_config_id",
-              value: coinInfo.marketFactoryConfigId,
-            },
-            { name: "market_state_id", value: coinInfo.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinInfo.syCoinType],
-        },
-      }
-
       const tx = new Transaction()
       tx.setSender(address)
 
+      const moveCallInfo = {
+        target: `${coinInfo.nemoContractId}::router::get_pt_out_for_exact_sy_in_with_price_voucher`,
+        arguments: [
+          { name: "net_sy_in", value: syIn },
+          { name: "min_pt_out", value: "0" },
+          { name: "price_voucher", value: "priceVoucher" },
+          { name: "py_state_id", value: coinInfo.pyStateId },
+          {
+            name: "market_factory_config_id",
+            value: coinInfo.marketFactoryConfigId,
+          },
+          { name: "market_state_id", value: coinInfo.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinInfo.syCoinType],
+      }
+
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+      }
+
       const [priceVoucher] = getPriceVoucher(tx, coinInfo)
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.pure.u64(syIn),
           tx.pure.u64("0"),
@@ -70,7 +72,7 @@ export default function useQueryPtOutDryRun<T extends boolean = false>(
           tx.object(coinInfo.marketStateId),
           tx.object("0x6"),
         ],
-        typeArguments: debugInfo.moveCall.typeArguments,
+        typeArguments: moveCallInfo.typeArguments,
       })
 
       const result = await client.devInspectTransactionBlock({
