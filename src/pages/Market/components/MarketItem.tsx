@@ -11,9 +11,11 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip"
+import type { Pool } from "@/hooks/usePoolObject"
 
 interface MarketItemProps {
   item: CoinInfoWithMetrics
+  poolData?: Pool
 }
 
 const MarketItem = ({ item }: MarketItemProps) => {

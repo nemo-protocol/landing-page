@@ -2,6 +2,7 @@ import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
 import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
+import usePoolObject from "@/hooks/usePoolObject"
 import MarketItem from "./components/MarketItem"
 import MarketTable from "./components/MarketTable"
 import MarketSkeleton from "./components/MarketSkeleton"
@@ -15,10 +16,15 @@ const textVariants = {
 }
 
 export default function Home() {
-  const { data: list, isLoading } = useCoinInfoList()
+  const { data: list, isLoading: isListLoading } = useCoinInfoList()
+
+  const { data: poolData, isLoading: isPoolLoading } = usePoolObject()
+
   const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
     const savedViewMode = localStorage.getItem("marketViewMode")
-    return (savedViewMode === "table" || savedViewMode === "grid") ? savedViewMode : "grid"
+    return savedViewMode === "table" || savedViewMode === "grid"
+      ? savedViewMode
+      : "grid"
   })
 
   useEffect(() => {
@@ -39,6 +45,8 @@ export default function Home() {
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
   }, [viewMode])
+
+  const isLoading = isListLoading || isPoolLoading
 
   return (
     <>
@@ -124,11 +132,16 @@ export default function Home() {
                   <MarketItem
                     key={item.coinType + "_" + item.maturity}
                     item={item}
+                    poolData={
+                      item.nativePool && poolData
+                        ? poolData[item.nativePool]
+                        : undefined
+                    }
                   />
                 ))}
               </div>
             ) : (
-              <MarketTable list={list || []} />
+              <MarketTable list={list || []} poolData={poolData || {}} />
             )}
           </motion.div>
         )}

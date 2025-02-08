@@ -103,16 +103,19 @@ export default function useQueryPtOutBySyInWithVoucher<
         new Uint8Array(result.results[1].returnValues[0][0]),
       )
 
+      const formattedAmount = new Decimal(outputAmount.toString())
+      .div(10 ** Number(coinConfig.decimal))
+      .toFixed()
+
       const fee = bcs.U128.parse(
         new Uint8Array(result.results[1].returnValues[1][0]),
       )
+      
       const formattedFee = new Decimal(fee)
         .div(2 ** 64)
         .div(10 ** Number(coinConfig.decimal))
         .toString()
-      const formattedAmount = new Decimal(outputAmount.toString())
-        .div(10 ** Number(coinConfig.decimal))
-        .toFixed()
+
 
       debugInfo.parsedOutput = formattedAmount
 

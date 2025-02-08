@@ -16,9 +16,11 @@ import {
 } from "@/components/ui/tooltip"
 import dayjs from "dayjs"
 import { useNavigate } from "react-router-dom"
+import type { Pool } from "@/hooks/usePoolObject"
 
 interface MarketTableProps {
   list: CoinInfoWithMetrics[]
+  poolData: Record<string, Pool>
 }
 
 const MarketTable = ({ list }: MarketTableProps) => {
