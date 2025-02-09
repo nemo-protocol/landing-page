@@ -2,13 +2,13 @@ import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
 import Header from "@/components/Header"
 import { useCoinInfoList } from "@/queries"
-import usePoolObject from "@/hooks/usePoolObject"
 import MarketItem from "./components/MarketItem"
 import MarketTable from "./components/MarketTable"
 import MarketSkeleton from "./components/MarketSkeleton"
 import MarketTableSkeleton from "./components/MarketTableSkeleton"
 import { useState, useEffect } from "react"
 import { TableIcon, LayoutGridIcon } from "lucide-react"
+import useMultiPoolData from "@/hooks/useMultiPoolData"
 
 const textVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -16,16 +16,23 @@ const textVariants = {
 }
 
 export default function Home() {
-  const { data: list, isLoading: isListLoading } = useCoinInfoList()
-
-  const { data: poolData, isLoading: isPoolLoading } = usePoolObject()
-
+  const { data: list, isLoading } = useCoinInfoList()
+  const poolIds = ["0xf7ba237574389af49521b47b005be2e5ab3855bd85c4db46c578fa8176acc175"]
+  const { data: poolDataList } = useMultiPoolData(poolIds)
   const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
     const savedViewMode = localStorage.getItem("marketViewMode")
     return savedViewMode === "table" || savedViewMode === "grid"
       ? savedViewMode
       : "grid"
   })
+
+  useEffect(() => {
+    console.log("poolDataList", poolDataList)
+  }, [poolDataList])
+
+  useEffect(() => {
+    console.log("list", list)
+  }, [list])
 
   useEffect(() => {
     localStorage.setItem("marketViewMode", viewMode)
@@ -45,8 +52,6 @@ export default function Home() {
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
   }, [viewMode])
-
-  const isLoading = isListLoading || isPoolLoading
 
   return (
     <>
@@ -132,16 +137,12 @@ export default function Home() {
                   <MarketItem
                     key={item.coinType + "_" + item.maturity}
                     item={item}
-                    poolData={
-                      item.nativePool && poolData
-                        ? poolData[item.nativePool]
-                        : undefined
-                    }
+                    poolData={poolDataList?.[item.marketStateId]}
                   />
                 ))}
               </div>
             ) : (
-              <MarketTable list={list || []} poolData={poolData || {}} />
+              <MarketTable list={list || []} poolDataMap={poolDataList} />
             )}
           </motion.div>
         )}

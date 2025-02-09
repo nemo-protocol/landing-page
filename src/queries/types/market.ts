@@ -51,7 +51,6 @@ export interface CoinInfoWithMetrics extends BaseCoinInfo {
   underlyingApy: string
   scaled_underlying_apy: string
   scaled_pt_apy: string
-  incentiveApy: string
   incentive: string
   totalApy: string
   feeApy: string

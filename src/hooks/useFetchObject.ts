@@ -4,7 +4,7 @@ import { useSuiClient } from "@mysten/dapp-kit"
 import { useMutation } from "@tanstack/react-query"
 import type { GetObjectParams } from "./useQueryButton"
 
-const useFetchObject = (_coinConfig: unknown, debug = false) => {
+const useFetchObject = (debug = false) => {
   const client = useSuiClient()
   return useMutation({
     mutationFn: async ({

@@ -11,14 +11,14 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip"
-import type { Pool } from "@/hooks/usePoolObject"
+import { RewardMetrics } from "@/hooks/useMultiPoolData"
 
 interface MarketItemProps {
   item: CoinInfoWithMetrics
-  poolData?: Pool
+  poolData?: RewardMetrics[]
 }
 
-const MarketItem = ({ item }: MarketItemProps) => {
+const MarketItem = ({ item, poolData }: MarketItemProps) => {
   const navigate = useNavigate()
 
   return (
@@ -138,7 +138,7 @@ const MarketItem = ({ item }: MarketItemProps) => {
                     {item.poolApy
                       ? `${formatLargeNumber(item.poolApy, 6)}%`
                       : "--"}
-                    {item.incentiveApy && (
+                    {poolData?.length && (
                       <img
                         src="/images/market/gift.png"
                         alt=""
@@ -206,27 +206,34 @@ const MarketItem = ({ item }: MarketItemProps) => {
                         : "--"}
                     </span>
                   </div>
-                  {item.incentiveApy && (
+                  {poolData?.length && (
                     <div className="flex flex-col gap-2">
                       <div className="text-sm text-left">Incentive APY</div>
-                      <div className="relative flex flex-row gap-2">
-                        <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
-                        <div className="flex flex-1 flex-row items-start justify-between gap-4">
-                          <div className="flex flex-row items-center gap-1.5">
-                            <span className="text-[#96A9E4] text-xs">
-                              Incentive
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <img
-                              src={item.providerLogo}
-                              alt=""
-                              className="size-4"
-                            />
-                            <span className="font-mono text-xs">0%</span>
+                      {poolData?.map((reward, index) => (
+                        <div
+                          key={index}
+                          className="relative flex flex-row gap-2"
+                        >
+                          <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
+                          <div className="flex flex-1 flex-row items-start justify-between gap-4">
+                            <div className="flex flex-row items-center gap-1.5">
+                              <span className="text-[#96A9E4] text-xs">
+                                Incentive
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <img
+                                src={item.providerLogo}
+                                alt=""
+                                className="size-4"
+                              />
+                              <span className="font-mono text-xs">
+                                {reward.apy}%
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   )}
                   <div className="flex flex-row items-center justify-between gap-4">
