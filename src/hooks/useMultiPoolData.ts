@@ -90,7 +90,7 @@ const useMultiPoolData = (poolIds?: string[]) => {
         options: { showContent: true },
       })
 
-      return poolIds.reduce((acc, poolId, index) => {
+      return poolIds.reduce((acc, _, index) => {
         const item = poolDataList[index]
         const { fields } = item.data?.content as unknown as {
           fields: RawPoolData

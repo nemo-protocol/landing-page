@@ -16,10 +16,7 @@ export function useAddLiquidityRatio(
   const lastPowerRef = useRef(0)
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
-  const { mutateAsync: exchangeRateFun } = useFetchObject(
-    coinConfig?.pyStateId,
-    false,
-  )
+  const { mutateAsync: exchangeRateFun } = useFetchObject()
   const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
     coinConfig,
     false,
