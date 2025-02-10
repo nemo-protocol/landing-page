@@ -139,3 +139,5 @@ export function getTreasury(coinType: string) {
   }
   return treasury
 }
+
+export const DEFAULT_Address = '0x0000000000000000000000000000000000000000000000000000000000000001'

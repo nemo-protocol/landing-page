@@ -16,6 +16,7 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
   const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
     coinConfig,
     false,
+    "useCalculateLpOut",
   )
   return useMutation({
     mutationFn: async (syAmount: string) => {

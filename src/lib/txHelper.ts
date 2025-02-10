@@ -11,11 +11,10 @@ import {
 } from "@mysten/sui/transactions"
 import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury } from "./constants"
 
-
-
 export const getPriceVoucher = (
   tx: Transaction,
   coinConfig: BaseCoinInfo,
+  caller: string = "default",
 ): [TransactionArgument, MoveCallInfo] => {
   let moveCall: MoveCallInfo
   switch (coinConfig.coinType) {
@@ -33,7 +32,7 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType],
       }
-      debugLog("get_price_voucher_from_volo move call:", moveCall)
+      debugLog(`[${caller}] get_price_voucher_from_volo move call:`, moveCall)
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
@@ -52,9 +51,9 @@ export const getPriceVoucher = (
           { name: "lst_info", value: coinConfig.lstInfoId },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
-        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
-      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      debugLog(`[${caller}] get_price_voucher_from_spring move call:`, moveCall)
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
@@ -70,16 +69,16 @@ export const getPriceVoucher = (
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
           },
-          { name: "aftermath_safe", value: coinConfig.aftermathSafeId },
           {
             name: "aftermath_staked_sui_vault",
-            value: coinConfig.aftermathStakedSuiVaultId,
+            value: AFTERMATH.STAKED_SUI_VAULT,
           },
+          { name: "aftermath_safe", value: AFTERMATH.SAFE },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
-      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      debugLog(`[${caller}] get_price_voucher_from_spring move call:`, moveCall)
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
@@ -101,7 +100,7 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
-      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      debugLog(`[${caller}] get_price_voucher_from_spring move call:`, moveCall)
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
@@ -124,7 +123,10 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
-      debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
+      debugLog(
+        `[${caller}] get_price_voucher_from_x_oracle move call:`,
+        moveCall,
+      )
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
@@ -838,5 +840,7 @@ export const swapExactSyForPt = <T extends boolean = false>(
 
   tx.moveCall(txMoveCall)
 
-  return (returnDebugInfo ? debugInfo : undefined) as T extends true ? MoveCallInfo : void
+  return (returnDebugInfo ? debugInfo : undefined) as T extends true
+    ? MoveCallInfo
+    : void
 }

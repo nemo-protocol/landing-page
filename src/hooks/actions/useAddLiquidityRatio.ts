@@ -2,7 +2,6 @@ import { useRef } from "react"
 import Decimal from "decimal.js"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQueryLpOutFromMintLp from "../useQueryLpOutFromMintLp"
 import { splitSyAmount } from "@/lib/utils"
 import useFetchObject from "@/hooks/useFetchObject.ts"
@@ -14,21 +13,18 @@ export function useAddLiquidityRatio(
   marketState?: MarketState,
 ) {
   const lastPowerRef = useRef(0)
-  const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
   const { mutateAsync: exchangeRateFun } = useFetchObject()
   const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
     coinConfig,
     false,
+    "useAddLiquidityRatio",
   )
 
   return useMutation({
     mutationFn: async () => {
       if (!coinConfig) {
         throw new Error("Please select a pool")
-      }
-      if (!address) {
-        throw new Error("Please connect wallet first")
       }
       if (!marketState) {
         throw new Error("not found market")
@@ -37,6 +33,7 @@ export function useAddLiquidityRatio(
         objectId: coinConfig.pyStateId,
         options: { showContent: true },
       })
+
       const priceVoucher = await priceVoucherFun()
       const decimal = 3
 

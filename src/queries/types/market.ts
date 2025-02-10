@@ -19,8 +19,6 @@ export interface BaseCoinInfo {
   metadataId: string
   nativePool: string
   priceOracleConfigId: string
-  aftermathSafeId: string
-  aftermathStakedSuiVaultId: string
   haedalStakeingId: string
   decimal: string
   underlyingApy: string

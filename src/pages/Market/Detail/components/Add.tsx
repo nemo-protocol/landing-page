@@ -218,6 +218,7 @@ export default function SingleCoin() {
         const { error } = parseErrorMessage(
           (errorMsg as ContractError)?.message ?? errorMsg,
         )
+
         setError(error)
       } finally {
         setIsInitRatioLoading(false)
@@ -580,7 +581,7 @@ export default function SingleCoin() {
           .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
-          
+
         debugLog("minLpAmount", minLpAmount)
 
         if (marketStateData.lpSupply === "0") {

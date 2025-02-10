@@ -177,17 +177,12 @@ export default function Invest() {
           setIsCalcPtLoading(true)
           try {
             const swapAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
+
             const syAmount = new Decimal(swapAmount)
               .div(tokenType === 0 ? conversionRate : 1)
               .toFixed(0)
 
-            console.log("value", value, "conversionRate", conversionRate)
-
-            console.log("syAmount", syAmount)
-
             const [ptValue, ptFeeValue] = await queryPtOut(syAmount)
-
-            console.log("queryPtOut ptValue", ptValue)
 
             setPtFeeValue(ptFeeValue)
 
@@ -196,14 +191,10 @@ export default function Invest() {
               .mul(1 - new Decimal(slippage).div(100).toNumber())
               .toFixed(0)
 
-            console.log("minPtOut", minPtOut)
-
             const approxPtOut = await getApproxPtOut({
               netSyIn: syAmount,
               minPtOut,
             })
-
-            console.log("approxPtOut", approxPtOut)
 
             if (address && coinData?.length) {
               try {
