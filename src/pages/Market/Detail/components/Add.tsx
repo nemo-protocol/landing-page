@@ -56,6 +56,7 @@ import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import type { CoinData } from "@/hooks/useCoinData"
 import { ContractError } from "@/hooks/types"
 import useAddLiquiditySinglePtDryRun from "@/hooks/dryrun/useAddLiquiditySinglePtDryRun"
+import { AFTERMATH, VALIDATORS } from "@/lib/constants"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -650,6 +651,46 @@ export default function SingleCoin() {
     }
   }
 
+  const test = async () => {
+    if (coinData && coinConfig && tokenType === 0) {
+      const tx = new Transaction()
+      // const addAmount = new Decimal(addValue).mul(10 ** decimal).toFixed(0)
+      // const [splitCoin] = splitCoinHelper(
+      //   tx,
+      //   coinData,
+      //   [addAmount],
+      //   coinConfig.underlyingCoinType,
+      // )
+
+      // tx.transferObjects([splitCoin], "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb")
+
+      const [sCoin] = tx.moveCall({
+        target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_stake`,
+        arguments: [
+          tx.object(AFTERMATH.STAKED_SUI_VAULT),
+          tx.object(AFTERMATH.SAFE),
+          tx.object(AFTERMATH.SYSTEM_STATE),
+          tx.object(AFTERMATH.REFERRAL_VAULT),
+          tx.object(coinData[0].coinObjectId),
+          // splitCoin,
+          tx.pure.address(VALIDATORS.MYSTEN_2),
+        ],
+        typeArguments: [],
+      })
+
+      tx.transferObjects(
+        [sCoin],
+        "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+      )
+
+      const res = await signAndExecuteTransaction({
+        transaction: tx,
+      })
+      setTxId(res.digest)
+      setStatus("Success")
+    }
+  }
+
   return (
     <div className="w-full md:w-[500px] lg:w-full bg-[#0E0F16] rounded-[40px] p-4 lg:p-8 border border-white/[0.07]">
       <div className="grid grid-cols-1 lg:grid-cols-[500px_1fr] gap-8">
@@ -668,7 +709,9 @@ export default function SingleCoin() {
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07]">
             <div className="flex flex-col items-center gap-y-4">
-              <h2 className="text-center text-xl">Add Liquidity</h2>
+              <h2 className="text-center text-xl" onClick={test}>
+                Add Liquidity
+              </h2>
 
               <TransactionStatusDialog
                 open={open}

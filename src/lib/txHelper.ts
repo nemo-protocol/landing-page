@@ -76,7 +76,7 @@ export const getPriceVoucher = (
           { name: "aftermath_safe", value: AFTERMATH.SAFE },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
-        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
       debugLog(`[${caller}] get_price_voucher_from_spring move call:`, moveCall)
       const [priceVoucher] = tx.moveCall({
@@ -239,7 +239,6 @@ export const mintSCoin = <T extends boolean = false>(
           { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
           { name: "coin", value: amounts[0] },
           { name: "validator", value: VALIDATORS.MYSTEN_2 },
-          { name: "clock", value: AFTERMATH.CLOCK },
         ],
         typeArguments: [],
       }
@@ -254,7 +253,6 @@ export const mintSCoin = <T extends boolean = false>(
           tx.object(AFTERMATH.REFERRAL_VAULT),
           splitCoins[0],
           tx.pure.address(VALIDATORS.MYSTEN_2),
-          tx.object(AFTERMATH.CLOCK),
         ],
         typeArguments: moveCall.typeArguments,
       })
