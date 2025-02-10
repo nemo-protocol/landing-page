@@ -173,7 +173,6 @@ export const mintSCoin = <T extends boolean = false>(
   )
 
   let moveCall: MoveCallInfo
-  const results: TransactionArgument[] = []
   const moveCallInfos: MoveCallInfo[] = []
 
   switch (coinConfig.underlyingProtocol) {
@@ -230,37 +229,72 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Aftermath": {
-      moveCall = {
-        target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_stake`,
-        arguments: [
-          { name: "staked_sui_vault", value: AFTERMATH.STAKED_SUI_VAULT },
-          { name: "safe", value: AFTERMATH.SAFE },
-          { name: "system_state", value: AFTERMATH.SYSTEM_STATE },
-          { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
-          { name: "coin", value: amounts[0] },
-          { name: "validator", value: VALIDATORS.MYSTEN_2 },
-        ],
-        typeArguments: [],
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        moveCall = {
+          target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_stake`,
+          arguments: [
+            { name: "staked_sui_vault", value: AFTERMATH.STAKED_SUI_VAULT },
+            { name: "safe", value: AFTERMATH.SAFE },
+            { name: "system_state", value: AFTERMATH.SYSTEM_STATE },
+            { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
+            { name: "coin", value: amounts[i] },
+            { name: "validator", value: VALIDATORS.MYSTEN_2 },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`aftermath request_stake move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(AFTERMATH.STAKED_SUI_VAULT),
+            tx.object(AFTERMATH.SAFE),
+            tx.object(AFTERMATH.SYSTEM_STATE),
+            tx.object(AFTERMATH.REFERRAL_VAULT),
+            splitCoins[i],
+            tx.pure.address(VALIDATORS.MYSTEN_2),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        sCoins.push(sCoin)
       }
-      debugLog(`aftermath request_stake move call:`, moveCall)
 
-      const [sCoin] = tx.moveCall({
-        target: moveCall.target,
-        arguments: [
-          tx.object(AFTERMATH.STAKED_SUI_VAULT),
-          tx.object(AFTERMATH.SAFE),
-          tx.object(AFTERMATH.SYSTEM_STATE),
-          tx.object(AFTERMATH.REFERRAL_VAULT),
-          splitCoins[0],
-          tx.pure.address(VALIDATORS.MYSTEN_2),
-        ],
-        typeArguments: moveCall.typeArguments,
-      })
+      return (debug ? [sCoins, moveCallInfos] : sCoins) as unknown as MintSCoinResult<T>
+    }
+    case "SpringSui": {
+      const sCoins: TransactionArgument[] = []
 
-      results.push(sCoin)
-      return (debug
-        ? [results, moveCallInfos]
-        : results) as unknown as MintSCoinResult<T>
+      for (let i = 0; i < amounts.length; i++) {
+        moveCall = {
+          target: `0x82e6f4f75441eae97d2d5850f41a09d28c7b64a05b067d37748d471f43aaf3f7::liquid_staking::mint`,
+          arguments: [
+            { name: "liquid_staking_info", value: "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b" },
+            { name: "sui_system_state", value: "0x5" },
+            { name: "coin", value: amounts[i] },
+          ],
+          typeArguments: [coinConfig.coinType],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`spring_sui mint move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object("0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b"),
+            tx.object("0x5"),
+            splitCoins[i],
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        sCoins.push(sCoin)
+      }
+
+      return (debug ? [sCoins, moveCallInfos] : sCoins) as unknown as MintSCoinResult<T>
     }
     default:
       throw new Error(
