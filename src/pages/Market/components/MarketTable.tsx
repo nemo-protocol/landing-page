@@ -16,14 +16,12 @@ import {
 } from "@/components/ui/tooltip"
 import dayjs from "dayjs"
 import { useNavigate } from "react-router-dom"
-import { RewardMetrics } from "@/hooks/useMultiPoolData"
 
 interface MarketTableProps {
   list: CoinInfoWithMetrics[]
-  poolDataMap?: { [key: string]: RewardMetrics[] }
 }
 
-const MarketTable = ({ list, poolDataMap }: MarketTableProps) => {
+const MarketTable = ({ list }: MarketTableProps) => {
   const navigate = useNavigate()
 
   return (
@@ -132,7 +130,7 @@ const MarketTable = ({ list, poolDataMap }: MarketTableProps) => {
                         {item.poolApy
                           ? `${formatLargeNumber(item.poolApy, 6)}%`
                           : "--"}
-                        {(poolDataMap?.[item.marketStateId] || []).length > 0 && (
+                        {(item.marketState?.rewardMetrics || []).length > 0 && (
                           <img
                             src="/images/market/gift.png"
                             alt=""
@@ -202,36 +200,33 @@ const MarketTable = ({ list, poolDataMap }: MarketTableProps) => {
                             : "--"}
                         </span>
                       </div>
-                      {(() => {
-                        const rewards = poolDataMap?.[item.marketStateId] || [];
-                        return rewards.length > 0 && (
-                          <div className="flex flex-col gap-2">
-                            <div className="text-sm text-left">Incentive APY</div>
-                            {rewards.map((reward, index) => (
-                              <div key={index} className="relative flex flex-row gap-2">
-                                <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
-                                <div className="flex flex-1 flex-row items-start justify-between gap-4">
-                                  <div className="flex flex-row items-center gap-1.5">
-                                    <span className="text-[#96A9E4] text-xs">
-                                      Incentive
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <img
-                                      src={item.providerLogo}
-                                      alt=""
-                                      className="size-4"
-                                    />
-                                    <span className="font-mono text-xs">
-                                      {reward.apy}%
-                                    </span>
-                                  </div>
+                      {(item.marketState?.rewardMetrics || []).length > 0 && (
+                        <div className="flex flex-col gap-2">
+                          <div className="text-sm text-left">Incentive APY</div>
+                          {(item.marketState?.rewardMetrics || []).map((reward, index) => (
+                            <div key={index} className="relative flex flex-row gap-2">
+                              <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
+                              <div className="flex flex-1 flex-row items-start justify-between gap-4">
+                                <div className="flex flex-row items-center gap-1.5">
+                                  <span className="text-[#96A9E4] text-xs">
+                                    Incentive
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <img
+                                    src={item.providerLogo}
+                                    alt=""
+                                    className="size-4"
+                                  />
+                                  <span className="font-mono text-xs">
+                                    {Number(reward.apy).toFixed(6)}%
+                                  </span>
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        )
-                      })()}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex flex-row items-center justify-between gap-4">
                         <span className="text-[#2DF4DD] text-sm">
                           Total APY

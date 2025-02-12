@@ -8,7 +8,6 @@ import MarketSkeleton from "./components/MarketSkeleton"
 import MarketTableSkeleton from "./components/MarketTableSkeleton"
 import { useState, useEffect } from "react"
 import { TableIcon, LayoutGridIcon } from "lucide-react"
-import useMultiPoolData from "@/hooks/useMultiPoolData"
 
 const textVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -17,18 +16,12 @@ const textVariants = {
 
 export default function Home() {
   const { data: list, isLoading } = useCoinInfoList()
-  const poolIds = ["0xf7ba237574389af49521b47b005be2e5ab3855bd85c4db46c578fa8176acc175"]
-  const { data: poolDataList } = useMultiPoolData(poolIds)
   const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
     const savedViewMode = localStorage.getItem("marketViewMode")
     return savedViewMode === "table" || savedViewMode === "grid"
       ? savedViewMode
       : "grid"
   })
-
-  useEffect(() => {
-    console.log("poolDataList", poolDataList)
-  }, [poolDataList])
 
   useEffect(() => {
     console.log("list", list)
@@ -137,12 +130,11 @@ export default function Home() {
                   <MarketItem
                     key={item.coinType + "_" + item.maturity}
                     item={item}
-                    poolData={poolDataList?.[item.marketStateId]}
                   />
                 ))}
               </div>
             ) : (
-              <MarketTable list={list || []} poolDataMap={poolDataList} />
+              <MarketTable list={list || []} />
             )}
           </motion.div>
         )}

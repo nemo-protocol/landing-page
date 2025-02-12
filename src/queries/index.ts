@@ -223,6 +223,9 @@ export function useCoinInfoList<T extends boolean = true>(
         () => ({}) as { [key: string]: MarketState },
       )
 
+      console.log("new marketStates", marketStates)
+      
+
       const results = await Promise.all(
         coinList.map(async (coinInfo) => {
           const marketState = marketStates?.[coinInfo.marketStateId]
@@ -253,7 +256,6 @@ export function useCoinInfoList<T extends boolean = true>(
               marketState,
             }
           } catch (error) {
-            // console.log("error", index, marketStateIds[index], marketState)
             return {
               ...coinInfo,
               ptPrice: "",

@@ -46,9 +46,22 @@ export interface PyPosition {
   pyStateId: string
 }
 
+export interface RewardMetrics {
+  totalReward: string
+  durationInDays: number
+  dailyEmission: string
+  rewardTokenType: string
+  tokenPrice: number
+  dailyValue: string
+  rewardTvl: string
+  dailyYieldRate: string
+  apy: string
+}
+
 export interface MarketState {
   totalSy: string
   totalPt: string
   lpSupply: string
   marketCap: string
+  rewardMetrics?: RewardMetrics[]
 }

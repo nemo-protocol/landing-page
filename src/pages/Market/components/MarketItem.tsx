@@ -11,14 +11,12 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip"
-import { RewardMetrics } from "@/hooks/useMultiPoolData"
 
 interface MarketItemProps {
   item: CoinInfoWithMetrics
-  poolData?: RewardMetrics[]
 }
 
-const MarketItem = ({ item, poolData }: MarketItemProps) => {
+const MarketItem = ({ item }: MarketItemProps) => {
   const navigate = useNavigate()
 
   return (
@@ -138,7 +136,7 @@ const MarketItem = ({ item, poolData }: MarketItemProps) => {
                     {item.poolApy
                       ? `${formatLargeNumber(item.poolApy, 6)}%`
                       : "--"}
-                    {poolData?.length && (
+                    {item.marketState.rewardMetrics?.length && (
                       <img
                         src="/images/market/gift.png"
                         alt=""
@@ -206,10 +204,10 @@ const MarketItem = ({ item, poolData }: MarketItemProps) => {
                         : "--"}
                     </span>
                   </div>
-                  {poolData?.length && (
+                  {item.marketState.rewardMetrics?.length && (
                     <div className="flex flex-col gap-2">
                       <div className="text-sm text-left">Incentive APY</div>
-                      {poolData?.map((reward, index) => (
+                      {item.marketState.rewardMetrics?.map((reward, index) => (
                         <div
                           key={index}
                           className="relative flex flex-row gap-2"
@@ -228,7 +226,7 @@ const MarketItem = ({ item, poolData }: MarketItemProps) => {
                                 className="size-4"
                               />
                               <span className="font-mono text-xs">
-                                {reward.apy}%
+                                {Number(reward.apy).toFixed(6)}%
                               </span>
                             </div>
                           </div>
