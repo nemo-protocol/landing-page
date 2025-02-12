@@ -136,13 +136,13 @@ const MarketItem = ({ item }: MarketItemProps) => {
                     {item.poolApy
                       ? `${formatLargeNumber(item.poolApy, 6)}%`
                       : "--"}
-                    {item.marketState.rewardMetrics?.length && (
+                    {item.marketState.rewardMetrics?.length ? (
                       <img
                         src="/images/market/gift.png"
                         alt=""
                         className="size-4"
                       />
-                    )}
+                    ) : null}
                   </div>
                 </button>
               </TooltipTrigger>
@@ -221,7 +221,7 @@ const MarketItem = ({ item }: MarketItemProps) => {
                             </div>
                             <div className="flex items-center gap-1.5">
                               <img
-                                src={item.providerLogo}
+                                src={reward.logo}
                                 alt=""
                                 className="size-4"
                               />

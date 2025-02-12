@@ -51,7 +51,8 @@ export interface RewardMetrics {
   durationInDays: number
   dailyEmission: string
   rewardTokenType: string
-  tokenPrice: number
+  tokenPrice: string
+  logo: string
   dailyValue: string
   rewardTvl: string
   dailyYieldRate: string

@@ -1,7 +1,7 @@
 import { nemoApi } from "./request"
 import { MarketState } from "@/hooks/types"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import { useQuery, UseQueryResult } from "@tanstack/react-query"
+import { useQuery, UseQueryResult, useMutation } from "@tanstack/react-query"
 import { handleInfinityValues, isValidAmount } from "@/lib/utils"
 import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
 import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
@@ -12,6 +12,7 @@ import {
   PortfolioItem,
   FixedReturnItem,
   CoinInfoWithMetrics,
+  TokenInfoMap,
 } from "./types/market"
 
 interface CoinInfoListParams {
@@ -223,9 +224,6 @@ export function useCoinInfoList<T extends boolean = true>(
         () => ({}) as { [key: string]: MarketState },
       )
 
-      console.log("new marketStates", marketStates)
-      
-
       const results = await Promise.all(
         coinList.map(async (coinInfo) => {
           const marketState = marketStates?.[coinInfo.marketStateId]
@@ -293,5 +291,15 @@ export function useRewardWithAddress(userAddress?: string) {
     // FIXME： queryKey dose not work
     queryKey: ["RewardWithAddress"],
     queryFn: () => getRewardWithAddress(userAddress),
+  })
+}
+
+export const getTokenInfo = async (): Promise<TokenInfoMap> => {
+  return nemoApi<TokenInfoMap>("/api/v1/market/info").get()
+}
+
+export const useTokenInfo = () => {
+  return useMutation<TokenInfoMap, Error>({
+    mutationFn: getTokenInfo,
   })
 }

@@ -102,3 +102,12 @@ export interface PointItem {
   pointsPerDay: string
   totalPoints: string
 }
+
+export interface TokenInfo {
+  logo: string
+  price: string
+}
+
+export interface TokenInfoMap {
+  [key: string]: TokenInfo
+}

@@ -214,7 +214,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <img
-                                    src={item.providerLogo}
+                                    src={reward.logo}
                                     alt=""
                                     className="size-4"
                                   />

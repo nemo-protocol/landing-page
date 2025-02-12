@@ -236,7 +236,7 @@ export const safeDivide = <T extends "string" | "number" | "decimal">(
     if (!isValidAmount(denominator)) {
       return (
         returnType === "string"
-          ? ""
+          ? "0"
           : returnType === "number"
             ? 0
             : new Decimal(0)
@@ -255,7 +255,7 @@ export const safeDivide = <T extends "string" | "number" | "decimal">(
   } catch {
     return (
       returnType === "string"
-        ? ""
+        ? "0"
         : returnType === "number"
           ? 0
           : new Decimal(0)

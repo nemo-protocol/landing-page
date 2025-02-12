@@ -4,14 +4,7 @@ import { useMutation } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { safeDivide } from "@/lib/utils"
-
-const SPRING_SUI_TYPE = "83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI"
-const SSUI_TYPE = "0000000000000000000000000000000000000000000000000000000000000002::sui::SUI"
-
-const priceMap: { [key: string]: number } = {
-  [SPRING_SUI_TYPE]: 3.1589,
-  [SSUI_TYPE]: 3.1589,
-}
+import { useTokenInfo } from "@/queries"
 
 interface PoolRewarderInfo {
   total_reward: string
@@ -47,13 +40,19 @@ interface RawMarketState {
   }
 }
 
-const calculateDurationInDays = (startTime: string, endTime: string): number => {
+const calculateDurationInDays = (
+  startTime: string,
+  endTime: string,
+): number => {
   const start = dayjs(parseInt(startTime))
   const end = dayjs(parseInt(endTime))
   return end.diff(start, "day")
 }
 
-const calculateDailyEmission = (totalReward: string, durationInDays: number): string => {
+const calculateDailyEmission = (
+  totalReward: string,
+  durationInDays: number,
+): string => {
   if (durationInDays === 0) return "0"
   return safeDivide(totalReward, durationInDays, "string")
 }
@@ -63,12 +62,16 @@ const calculateAPY = (dailyYieldRate: string): string => {
   return rate.plus(1).pow(365).minus(1).toString()
 }
 
-const calculateRewardMetrics = (rewarder: PoolRewarderInfo) => {
+const calculateRewardMetrics = (
+  rewarder: PoolRewarderInfo,
+  tokenData: { price: string; logo: string },
+) => {
   const durationInDays = calculateDurationInDays(
     rewarder.last_reward_time,
     rewarder.end_time,
   )
-  const tokenPrice = priceMap[rewarder.reward_token.fields.name] || 0
+
+  const tokenPrice = new Decimal(tokenData.price || "0")
   const dailyEmission = calculateDailyEmission(
     rewarder.total_reward,
     durationInDays,
@@ -80,9 +83,7 @@ const calculateRewardMetrics = (rewarder: PoolRewarderInfo) => {
     .toString()
 
   // Calculate daily value (daily emission * token price)
-  const dailyValue = new Decimal(dailyEmission)
-    .mul(tokenPrice)
-    .toString()
+  const dailyValue = new Decimal(dailyEmission).mul(tokenPrice).toString()
 
   // Calculate daily yield rate (daily value / TVL)
   const dailyYieldRate = safeDivide(dailyValue, rewardTvl, "string")
@@ -95,7 +96,8 @@ const calculateRewardMetrics = (rewarder: PoolRewarderInfo) => {
     durationInDays,
     dailyEmission,
     rewardTokenType: rewarder.reward_token.fields.name,
-    tokenPrice,
+    tokenPrice: tokenPrice.toString(),
+    logo: tokenData.logo,
     dailyValue,
     rewardTvl,
     dailyYieldRate,
@@ -105,37 +107,56 @@ const calculateRewardMetrics = (rewarder: PoolRewarderInfo) => {
 
 const useMultiMarketState = () => {
   const suiClient = useSuiClient()
+  const { mutateAsync: fetchTokenInfo } = useTokenInfo()
 
   return useMutation<{ [key: string]: MarketState }, Error, string[]>({
     mutationFn: async (marketStateIds: string[]) => {
-      const marketStates = await suiClient.multiGetObjects({
-        ids: marketStateIds,
-        options: { showContent: true },
-      })
+      const [marketStates, tokenInfo] = await Promise.all([
+        suiClient.multiGetObjects({
+          ids: marketStateIds,
+          options: { showContent: true },
+        }),
+        fetchTokenInfo(),
+      ])
 
-      console.log("marketStates", marketStates)
+      console.log("marketStates", marketStates, "tokenInfo", tokenInfo)
 
-      return marketStateIds.reduce((acc, marketStateId, index) => {
-        const item = marketStates[index]
-        const { fields } = item.data?.content as unknown as {
-          fields: RawMarketState
-        }
-        
-        const rewardMetrics = fields.reward_pool?.fields.rewarders.fields.contents.map(
-          entry => calculateRewardMetrics(entry.fields.value.fields)
-        ) || []
+      return marketStateIds.reduce(
+        (acc, marketStateId, index) => {
+          const item = marketStates[index]
+          const { fields } = item.data?.content as unknown as {
+            fields: RawMarketState
+          }
 
-        const state: MarketState = {
-          totalSy: fields?.total_sy,
-          totalPt: fields?.total_pt,
-          lpSupply: fields?.lp_supply,
-          marketCap: fields?.market_cap,
-          rewardMetrics,
-        }
+          const rewardMetrics =
+            fields.reward_pool?.fields.rewarders.fields.contents.map(
+              (entry) => {
+                const rewarder = entry.fields.value.fields
+                const tokenFullName = `0x${rewarder.reward_token.fields.name}`
+                console.log("tokenFullName", tokenFullName)
 
-        acc[marketStateId] = state
-        return acc
-      }, {} as { [key: string]: MarketState })
+                const tokenData = tokenInfo?.[tokenFullName] || {
+                  price: "0",
+                  logo: "",
+                }
+
+                return calculateRewardMetrics(rewarder, tokenData)
+              },
+            ) || []
+
+          const state: MarketState = {
+            totalSy: fields?.total_sy,
+            totalPt: fields?.total_pt,
+            lpSupply: fields?.lp_supply,
+            marketCap: fields?.market_cap,
+            rewardMetrics,
+          }
+
+          acc[marketStateId] = state
+          return acc
+        },
+        {} as { [key: string]: MarketState },
+      )
     },
   })
 }
