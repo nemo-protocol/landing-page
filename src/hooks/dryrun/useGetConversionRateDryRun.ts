@@ -67,13 +67,12 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
         throw new ContractError(result.error, debugInfo)
       }
 
-      console.log("result", result)
-
       if (!result?.results?.[result.results.length - 1]?.returnValues?.[0]) {
         const message = "Failed to get PT amount"
         debugInfo.rawResult = {
           error: message,
         }
+        debugLog("useGetConversionRateDryRun error", debugInfo)
         throw new ContractError(message, debugInfo)
       }
 
@@ -83,15 +82,11 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
         ),
       )
 
-      console.log(result.results[result.results.length - 1].returnValues[0][1])
-
       const formattedConversionRate = new Decimal(conversionRate)
         .div(Math.pow(2, 64))
         .toFixed()
 
-      console.log("conversionRate", formattedConversionRate)
-
-      debugInfo.parsedOutput = conversionRate
+      debugInfo.parsedOutput = formattedConversionRate
 
       debugLog("useGetConversionRateDryRun", debugInfo)
 
