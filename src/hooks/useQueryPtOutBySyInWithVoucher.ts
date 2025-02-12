@@ -1,31 +1,37 @@
-import { bcs } from "@mysten/sui/bcs"
+import Decimal from "decimal.js"
 import { debugLog } from "@/config"
+import { bcs } from "@mysten/sui/bcs"
 import { ContractError } from "./types"
 import type { DebugInfo } from "./types"
 import { getPriceVoucher } from "@/lib/txHelper"
+import { DEFAULT_Address } from "@/lib/constants"
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
+import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import Decimal from "decimal.js"
+
+type Result = {
+  ptValue: string
+  ptAmount: string
+  syValue: string
+  syAmount: string
+  tradeFee: string
+}
 
 type DryRunResult<T extends boolean> = T extends true
-  ? [string, DebugInfo]
-  : [string, string]
+  ? [Result, DebugInfo]
+  : Result
 
 export default function useQueryPtOutBySyInWithVoucher<
   T extends boolean = false,
 >(coinConfig?: CoinConfig, debug: T = false as T) {
   const client = useSuiClient()
-  const { address } = useWallet()
+  const address = DEFAULT_Address
 
   return useMutation({
     mutationFn: async (syAmount: string): Promise<DryRunResult<T>> => {
       console.log("useQueryPtOutBySyInWithVoucher syAmount", syAmount)
 
-      if (!address) {
-        throw new Error("Please connect wallet first")
-      }
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
@@ -99,28 +105,37 @@ export default function useQueryPtOutBySyInWithVoucher<
         throw new ContractError(message, debugInfo)
       }
 
-      const outputAmount = bcs.U64.parse(
+      const ptAmount = bcs.U64.parse(
         new Uint8Array(result.results[1].returnValues[0][0]),
       )
 
-      const formattedAmount = new Decimal(outputAmount.toString())
-      .div(10 ** Number(coinConfig.decimal))
-      .toFixed()
+      const ptValue = new Decimal(ptAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
+        .toFixed()
 
-      const fee = bcs.U128.parse(
+      syAmount = bcs.U64.parse(
         new Uint8Array(result.results[1].returnValues[1][0]),
       )
-      
-      const formattedFee = new Decimal(fee)
+
+      const syValue = new Decimal(syAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
+        .toFixed()
+
+      const fee = bcs.U128.parse(
+        new Uint8Array(result.results[1].returnValues[2][0]),
+      )
+
+      const tradeFee = new Decimal(fee)
         .div(2 ** 64)
         .div(10 ** Number(coinConfig.decimal))
         .toString()
 
-
-      debugInfo.parsedOutput = formattedAmount
+      debugInfo.parsedOutput = `${ptValue} ${syValue} ${tradeFee}`
 
       return (
-        debug ? [formattedAmount, debugInfo] : [formattedAmount, formattedFee]
+        debug
+          ? [{ ptValue, ptAmount, syValue, syAmount, tradeFee }, debugInfo]
+          : { ptValue, ptAmount, syValue, syAmount, tradeFee }
       ) as DryRunResult<T>
     },
   })

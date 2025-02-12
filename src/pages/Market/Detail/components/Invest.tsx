@@ -182,9 +182,19 @@ export default function Invest() {
               .div(tokenType === 0 ? conversionRate : 1)
               .toFixed(0)
 
-            const [ptValue, ptFeeValue] = await queryPtOut(syAmount)
+            console.log("syAmount", syAmount)
 
-            setPtFeeValue(ptFeeValue)
+            const {
+              ptValue,
+              syAmount: newSyAmount,
+              tradeFee,
+            } = await queryPtOut(syAmount)
+
+            console.log("ptValue", ptValue)
+
+            console.log("newSyAmount", newSyAmount)
+
+            setPtFeeValue(tradeFee)
 
             const minPtOut = new Decimal(ptValue)
               .mul(10 ** decimal)
@@ -192,7 +202,7 @@ export default function Invest() {
               .toFixed(0)
 
             const approxPtOut = await getApproxPtOut({
-              netSyIn: syAmount,
+              netSyIn: newSyAmount,
               minPtOut,
             })
 
@@ -319,15 +329,14 @@ export default function Invest() {
           pyPosition = tx.object(pyPositionData[0].id)
         }
 
-        const [ptOut] = await queryPtOut(syAmount)
+        const { ptAmount, syAmount: newSyAmount } = await queryPtOut(syAmount)
 
-        const minPtOut = new Decimal(ptOut)
-          .mul(10 ** decimal)
+        const minPtOut = new Decimal(ptAmount)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
 
         const approxPtOut = await getApproxPtOut({
-          netSyIn: syAmount,
+          netSyIn: newSyAmount,
           minPtOut,
         })
 

@@ -24,8 +24,8 @@ export default function useInvestRatios(coinConfig?: CoinConfig) {
         const safeDecimal = Math.max(decimal - power, 0)
         try {
           const amount = new Decimal(10).pow(safeDecimal).toString()
-          const [ptOut] = await queryPtOut(amount)
-          const ptRatio = new Decimal(ptOut)
+          const { ptValue } = await queryPtOut(amount)
+          const ptRatio = new Decimal(ptValue)
             .div(amount)
             .div(conversionRate)
             .toString()
