@@ -98,7 +98,7 @@ export const getPriceVoucher = (
           { name: "haedal_staking", value: coinConfig.haedalStakeingId },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
-        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
       debugLog(`[${caller}] get_price_voucher_from_spring move call:`, moveCall)
       const [priceVoucher] = tx.moveCall({
@@ -285,6 +285,39 @@ export const mintSCoin = <T extends boolean = false>(
           target: moveCall.target,
           arguments: [
             tx.object("0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b"),
+            tx.object("0x5"),
+            splitCoins[i],
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        sCoins.push(sCoin)
+      }
+
+      return (debug ? [sCoins, moveCallInfos] : sCoins) as unknown as MintSCoinResult<T>
+    }
+    case "Volo": {
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        const moveCall = {
+          target: `0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::native_pool::stake_non_entry`,
+          arguments: [
+            { name: "native_pool", value: "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf" },
+            { name: "metadata", value: "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60" },
+            { name: "sui_system_state", value: "0x5" },
+            { name: "coin", value: amounts[i] },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`volo stake move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object("0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf"),
+            tx.object("0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60"),
             tx.object("0x5"),
             splitCoins[i],
           ],
