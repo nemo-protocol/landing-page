@@ -330,6 +330,41 @@ export default function Item({
     }
   }
 
+  async function claimLpReward() {
+    if (coinConfig?.coinType && address && lpBalance && lpPositions?.length) {
+      try {
+        setLoading(true)
+        const tx = new Transaction()
+
+        const [marketPosition] = tx.moveCall({
+          target: `${coinConfig?.nemoContractId}::market::claim_reward`,
+          arguments: [
+            tx.object(coinConfig.version),
+            tx.object(coinConfig.marketStateId),
+            tx.object(lpPositions[0].id.id),
+            tx.object("0x6"),
+          ],
+          typeArguments: [coinConfig?.syCoinType, coinConfig?.underlyingCoinType],
+        })
+
+        tx.transferObjects([marketPosition], address)
+
+        const { digest } = await signAndExecuteTransaction({
+          transaction: tx,
+        })
+        setTxId(digest)
+        setOpen(true)
+        setStatus("Success")
+      } catch (error) {
+        setOpen(true)
+        setStatus("Failed")
+        setMessage((error as Error)?.message ?? error)
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
   return (
     <>
       <AlertDialog open={open}>
@@ -643,11 +678,11 @@ export default function Item({
                     <span className="text-white/50 text-xs">$0</span>
                   </div>
                   <LoadingButton
-                    onClick={() => {}}
+                    onClick={claimLpReward}
                     loading={loading}
                     buttonText="Claim"
                     loadingText="Claiming"
-                    disabled={true}
+                    disabled={!lpBalance || lpBalance === "0" || !lpPositions?.length}
                   />
                 </>
               )}
