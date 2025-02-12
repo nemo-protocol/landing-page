@@ -4,18 +4,21 @@ import { MoveCallInfo } from "@/hooks/types"
 import { LpPosition } from "@/hooks/types"
 import { CoinData } from "@/hooks/useCoinData"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
+import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury } from "./constants"
 import {
   Transaction,
-  TransactionArgument,
   TransactionResult,
+  TransactionArgument,
 } from "@mysten/sui/transactions"
-import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury } from "./constants"
 
-export const getPriceVoucher = (
+export const getPriceVoucher = <T extends boolean = true>(
   tx: Transaction,
   coinConfig: BaseCoinInfo,
   caller: string = "default",
-): [TransactionArgument, MoveCallInfo] => {
+  returnDebugInfo: T = true as T,
+): T extends true
+  ? [TransactionArgument, MoveCallInfo]
+  : TransactionArgument => {
   let moveCall: MoveCallInfo
   switch (coinConfig.coinType) {
     case "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT": {
@@ -32,13 +35,19 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType],
       }
-      debugLog(`[${caller}] get_price_voucher_from_volo move call:`, moveCall)
+      if (!returnDebugInfo) {
+        debugLog(`[${caller}] get_price_voucher_from_volo move call:`, moveCall)
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
     case "0x83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI": {
       moveCall = {
@@ -53,13 +62,22 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
-      debugLog(`[${caller}] get_price_voucher_from_spring move call:`, moveCall)
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_spring move call:`,
+          moveCall,
+        )
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
     case "0xf325ce1300e8dac124071d3152c5c5ee6174914f8bc2161e88329cf579246efc::afsui::AFSUI": {
       moveCall = {
@@ -78,14 +96,22 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
-      debugLog(`[${caller}] get_price_voucher_from_spring move call:`, moveCall)
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_spring move call:`,
+          moveCall,
+        )
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
     case "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI": {
       moveCall = {
@@ -100,13 +126,22 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
-      debugLog(`[${caller}] get_price_voucher_from_spring move call:`, moveCall)
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_spring move call:`,
+          moveCall,
+        )
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
     default: {
       moveCall = {
@@ -123,17 +158,22 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
-      debugLog(
-        `[${caller}] get_price_voucher_from_x_oracle move call:`,
-        moveCall,
-      )
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_x_oracle move call:`,
+          moveCall,
+        )
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
   }
 }
@@ -263,7 +303,9 @@ export const mintSCoin = <T extends boolean = false>(
         sCoins.push(sCoin)
       }
 
-      return (debug ? [sCoins, moveCallInfos] : sCoins) as unknown as MintSCoinResult<T>
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
     }
     case "SpringSui": {
       const sCoins: TransactionArgument[] = []
@@ -272,7 +314,11 @@ export const mintSCoin = <T extends boolean = false>(
         moveCall = {
           target: `0x82e6f4f75441eae97d2d5850f41a09d28c7b64a05b067d37748d471f43aaf3f7::liquid_staking::mint`,
           arguments: [
-            { name: "liquid_staking_info", value: "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b" },
+            {
+              name: "liquid_staking_info",
+              value:
+                "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b",
+            },
             { name: "sui_system_state", value: "0x5" },
             { name: "coin", value: amounts[i] },
           ],
@@ -284,7 +330,9 @@ export const mintSCoin = <T extends boolean = false>(
         const [sCoin] = tx.moveCall({
           target: moveCall.target,
           arguments: [
-            tx.object("0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b"),
+            tx.object(
+              "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b",
+            ),
             tx.object("0x5"),
             splitCoins[i],
           ],
@@ -294,7 +342,9 @@ export const mintSCoin = <T extends boolean = false>(
         sCoins.push(sCoin)
       }
 
-      return (debug ? [sCoins, moveCallInfos] : sCoins) as unknown as MintSCoinResult<T>
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Volo": {
       const sCoins: TransactionArgument[] = []
@@ -303,8 +353,16 @@ export const mintSCoin = <T extends boolean = false>(
         const moveCall = {
           target: `0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::native_pool::stake_non_entry`,
           arguments: [
-            { name: "native_pool", value: "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf" },
-            { name: "metadata", value: "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60" },
+            {
+              name: "native_pool",
+              value:
+                "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf",
+            },
+            {
+              name: "metadata",
+              value:
+                "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
+            },
             { name: "sui_system_state", value: "0x5" },
             { name: "coin", value: amounts[i] },
           ],
@@ -316,8 +374,12 @@ export const mintSCoin = <T extends boolean = false>(
         const [sCoin] = tx.moveCall({
           target: moveCall.target,
           arguments: [
-            tx.object("0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf"),
-            tx.object("0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60"),
+            tx.object(
+              "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf",
+            ),
+            tx.object(
+              "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
+            ),
             tx.object("0x5"),
             splitCoins[i],
           ],
@@ -327,7 +389,9 @@ export const mintSCoin = <T extends boolean = false>(
         sCoins.push(sCoin)
       }
 
-      return (debug ? [sCoins, moveCallInfos] : sCoins) as unknown as MintSCoinResult<T>
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
     }
     default:
       throw new Error(

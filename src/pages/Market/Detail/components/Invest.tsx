@@ -54,6 +54,7 @@ import { CoinConfig } from "@/queries/types/market"
 import { ContractError } from "@/hooks/types"
 import useGetApproxPtOutDryRun from "@/hooks/dryrun/useGetApproxPtOutDryRun"
 import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
+import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -73,6 +74,7 @@ export default function Invest() {
   const [status, setStatus] = useState<"Success" | "Failed">()
   const [isCalcPtLoading, setIsCalcPtLoading] = useState(false)
   const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
+  const [conversionRate, setConversionRate] = useState<string>()
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -112,8 +114,6 @@ export default function Invest() {
   )
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
-
-  const conversionRate = useMemo(() => coinConfig?.conversionRate, [coinConfig])
 
   const { data: pyPositionData, refetch: refetchPyPosition } =
     usePyPositionData(
@@ -163,23 +163,22 @@ export default function Invest() {
 
   const { mutateAsync: getApproxPtOut } = useGetApproxPtOutDryRun(coinConfig)
 
+  const { mutateAsync: getConversionRate } =
+    useGetConversionRateDryRun(coinConfig)
+
   const debouncedGetPtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getPtOut = debounce(async () => {
         setError(undefined)
-        if (
-          isValidAmount(value) &&
-          decimal &&
-          config &&
-          conversionRate &&
-          coinType
-        ) {
+        if (isValidAmount(value) && decimal && config && coinType) {
           setIsCalcPtLoading(true)
           try {
+            const rate = await getConversionRate()
+            setConversionRate(rate)
             const swapAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
 
             const syAmount = new Decimal(swapAmount)
-              .div(tokenType === 0 ? conversionRate : 1)
+              .div(tokenType === 0 ? rate : 1)
               .toFixed(0)
 
             console.log("syAmount", syAmount)
@@ -251,7 +250,7 @@ export default function Invest() {
     [
       queryPtOut,
       tokenType,
-      conversionRate,
+      getConversionRate,
       address,
       coinData,
       swapExactSyForPtDryRun,
@@ -270,22 +269,22 @@ export default function Invest() {
 
   useEffect(() => {
     async function initRatio() {
-      if (conversionRate) {
-        try {
-          setIsInitRatioLoading(true)
-          const initialRatio = await calculateRatio(
-            tokenType === 0 ? conversionRate : "1",
-          )
-          setRatio(initialRatio)
-        } catch (error) {
-          console.error("Failed to calculate initial ratio:", error)
-        } finally {
-          setIsInitRatioLoading(false)
-        }
+      try {
+        setIsInitRatioLoading(true)
+        const rate = await getConversionRate()
+        setConversionRate(rate)
+        const initialRatio = await calculateRatio(tokenType === 0 ? rate : "1")
+        setRatio(initialRatio)
+      } catch (error) {
+        console.error("Failed to calculate initial ratio:", error)
+      } finally {
+        setIsInitRatioLoading(false)
       }
     }
-    initRatio()
-  }, [calculateRatio, conversionRate, tokenType])
+    if (coinConfig) {
+      initRatio()
+    }
+  }, [calculateRatio, getConversionRate, tokenType, coinConfig])
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -301,16 +300,17 @@ export default function Invest() {
       coinType &&
       swapValue &&
       coinConfig &&
-      conversionRate &&
       coinData?.length &&
       !insufficientBalance
     ) {
       try {
         setIsSwapping(true)
         const tx = new Transaction()
+        const rate = await getConversionRate()
+        setConversionRate(rate)
         const swapAmount = new Decimal(swapValue).mul(10 ** decimal).toFixed(0)
         const syAmount = new Decimal(swapAmount)
-          .div(tokenType === 0 ? conversionRate : 1)
+          .div(tokenType === 0 ? rate : 1)
           .toFixed(0)
 
         const [splitCoin] =
