@@ -33,6 +33,21 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
 import RefreshButton from "@/components/RefreshButton"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+interface LoadingButtonProps {
+  loading: boolean
+  disabled: boolean
+  buttonText: string | JSX.Element
+  loadingText: string
+  onClick: () => void
+}
 
 const LoadingButton = ({
   onClick,
@@ -40,13 +55,7 @@ const LoadingButton = ({
   disabled,
   buttonText,
   loadingText,
-}: {
-  loading: boolean
-  disabled: boolean
-  buttonText: string
-  loadingText: string
-  onClick: () => void
-}) => (
+}: LoadingButtonProps) => (
   <button
     onClick={onClick}
     disabled={disabled || loading}
@@ -119,6 +128,8 @@ export default function Item({
     pyPositions,
     tokenType: selectType === "yt" ? 1 : 0,
   })
+
+  const [selectedRewardIndex, setSelectedRewardIndex] = useState(0)
 
   useEffect(() => {
     if (isConnected) {
@@ -330,11 +341,16 @@ export default function Item({
     }
   }
 
-  async function claimLpReward() {
+  async function claimLpReward(rewardIndex: number = selectedRewardIndex) {
     if (coinConfig?.coinType && address && lpBalance && lpPositions?.length) {
       try {
         setLoading(true)
         const tx = new Transaction()
+
+        const rewardMetric = marketState?.rewardMetrics?.[rewardIndex]
+        if (!rewardMetric?.tokenType) {
+          throw new Error("No reward token type found")
+        }
 
         const [marketPosition] = tx.moveCall({
           target: `${coinConfig?.nemoContractId}::market::claim_reward`,
@@ -344,7 +360,7 @@ export default function Item({
             tx.object(lpPositions[0].id.id),
             tx.object("0x6"),
           ],
-          typeArguments: [coinConfig?.syCoinType, coinConfig?.underlyingCoinType],
+          typeArguments: [coinConfig.syCoinType, rewardMetric.tokenType],
         })
 
         tx.transferObjects([marketPosition], address)
@@ -666,24 +682,156 @@ export default function Item({
               {isClaimLoading ? (
                 <div className="flex items-center gap-x-2">
                   <div className="flex flex-col items-center w-24">
-                    <Skeleton className="h-5 w-16 mb-1" />
-                    <Skeleton className="h-4 w-12" />
+                    <div className="flex items-center gap-2">
+                      {marketState?.rewardMetrics?.[selectedRewardIndex]?.logo && (
+                        <img 
+                          src={marketState?.rewardMetrics?.[selectedRewardIndex]?.logo} 
+                          alt="reward token" 
+                          className="w-4 h-4"
+                        />
+                      )}
+                      <span className="text-white text-sm break-all">0</span>
+                    </div>
+                    <span className="text-white/50 text-xs">$0</span>
                   </div>
-                  <Skeleton className="h-8 w-24 rounded-3xl" />
+                  {marketState?.rewardMetrics && marketState?.rewardMetrics?.length > 1 ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          disabled={
+                            !lpBalance ||
+                            lpBalance === "0" ||
+                            !lpPositions?.length ||
+                            !marketState?.rewardMetrics?.length
+                          }
+                          className={[
+                            "rounded-3xl h-8",
+                            loading ? "bg-transparent w-32" : "w-24",
+                            !loading &&
+                            (!lpBalance ||
+                              lpBalance === "0" ||
+                              !lpPositions?.length ||
+                              !marketState?.rewardMetrics?.length)
+                              ? "bg-[#0F60FF]/50 cursor-not-allowed"
+                              : "bg-[#0F60FF]",
+                          ].join(" ")}
+                        >
+                          {loading ? (
+                            <div className="flex items-center justify-center gap-2.5">
+                              <Loading className="h-4 w-4" />
+                              <span className="text-sm whitespace-nowrap">Claiming</span>
+                            </div>
+                          ) : (
+                            <span>Claim</span>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {marketState?.rewardMetrics?.map((metric, index) => (
+                          <DropdownMenuItem
+                            key={metric.tokenType}
+                            onClick={() => {
+                              setSelectedRewardIndex(index)
+                              claimLpReward(index)
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <span>Claim {metric.rewardTokenType ?? `Reward ${index + 1}`}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <LoadingButton
+                      onClick={() => claimLpReward()}
+                      loading={loading}
+                      buttonText="Claim"
+                      loadingText="Claiming"
+                      disabled={
+                        !lpBalance ||
+                        lpBalance === "0" ||
+                        !lpPositions?.length ||
+                        !marketState?.rewardMetrics?.length
+                      }
+                    />
+                  )}
                 </div>
               ) : (
                 <>
                   <div className="flex flex-col items-center w-24">
-                    <span className="text-white text-sm break-all">0</span>
+                    <div className="flex items-center gap-2">
+                      {marketState?.rewardMetrics?.[selectedRewardIndex]?.logo && (
+                        <img 
+                          src={marketState?.rewardMetrics?.[selectedRewardIndex]?.logo} 
+                          alt="reward token" 
+                          className="w-4 h-4"
+                        />
+                      )}
+                      <span className="text-white text-sm break-all">0</span>
+                    </div>
                     <span className="text-white/50 text-xs">$0</span>
                   </div>
-                  <LoadingButton
-                    onClick={claimLpReward}
-                    loading={loading}
-                    buttonText="Claim"
-                    loadingText="Claiming"
-                    disabled={!lpBalance || lpBalance === "0" || !lpPositions?.length}
-                  />
+                  {marketState?.rewardMetrics && marketState?.rewardMetrics?.length > 1 ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          disabled={
+                            !lpBalance ||
+                            lpBalance === "0" ||
+                            !lpPositions?.length ||
+                            !marketState?.rewardMetrics?.length
+                          }
+                          className={[
+                            "rounded-3xl h-8",
+                            loading ? "bg-transparent w-32" : "w-24",
+                            !loading &&
+                            (!lpBalance ||
+                              lpBalance === "0" ||
+                              !lpPositions?.length ||
+                              !marketState?.rewardMetrics?.length)
+                              ? "bg-[#0F60FF]/50 cursor-not-allowed"
+                              : "bg-[#0F60FF]",
+                          ].join(" ")}
+                        >
+                          {loading ? (
+                            <div className="flex items-center justify-center gap-2.5">
+                              <Loading className="h-4 w-4" />
+                              <span className="text-sm whitespace-nowrap">Claiming</span>
+                            </div>
+                          ) : (
+                            <span>Claim</span>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {marketState?.rewardMetrics?.map((metric, index) => (
+                          <DropdownMenuItem
+                            key={metric.tokenType}
+                            onClick={() => {
+                              setSelectedRewardIndex(index)
+                              claimLpReward(index)
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <span>Claim {metric.rewardTokenType ?? `Reward ${index + 1}`}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <LoadingButton
+                      onClick={() => claimLpReward()}
+                      loading={loading}
+                      buttonText="Claim"
+                      loadingText="Claiming"
+                      disabled={
+                        !lpBalance ||
+                        lpBalance === "0" ||
+                        !lpPositions?.length ||
+                        !marketState?.rewardMetrics?.length
+                      }
+                    />
+                  )}
                 </>
               )}
             </div>

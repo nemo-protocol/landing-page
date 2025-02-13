@@ -93,8 +93,6 @@ export default function useQueryClaimYtReward(
         }),
       })
 
-      console.log("yt reward result", result)
-
       if (result?.error) {
         // throw new Error(result.error)
         return "0"
@@ -107,21 +105,6 @@ export default function useQueryClaimYtReward(
       }
 
       const decimal = Number(coinConfig.decimal)
-
-      console.log(
-        "yt reward",
-        new Decimal(
-          result.events[result.events.length - 1].parsedJson.burn_amount,
-        )
-          .mul(coinConfig.conversionRate)
-          .div(new Decimal(10).pow(decimal))
-          .toFixed(decimal),
-        new Decimal(
-          result.events[result.events.length - 1].parsedJson.withdraw_amount,
-        )
-          .div(new Decimal(10).pow(decimal))
-          .toFixed(decimal),
-      )
 
       return new Decimal(
         result.events[result.events.length - 1].parsedJson.withdraw_amount,

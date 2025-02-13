@@ -87,6 +87,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
         .toFixed()
 
       debugInfo.parsedOutput = formattedConversionRate
+      debugInfo.result = formattedConversionRate
 
       debugLog("useGetConversionRateDryRun", debugInfo)
 
