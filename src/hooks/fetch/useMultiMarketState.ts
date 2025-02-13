@@ -96,6 +96,7 @@ const calculateRewardMetrics = (
     durationInDays,
     dailyEmission,
     rewardTokenType: rewarder.reward_token.fields.name,
+    tokenType: `0x${rewarder.reward_token.fields.name}`,
     tokenPrice: tokenPrice.toString(),
     logo: tokenData.logo,
     dailyValue,
@@ -133,7 +134,6 @@ const useMultiMarketState = () => {
               (entry) => {
                 const rewarder = entry.fields.value.fields
                 const tokenFullName = `0x${rewarder.reward_token.fields.name}`
-                console.log("tokenFullName", tokenFullName)
 
                 const tokenData = tokenInfo?.[tokenFullName] || {
                   price: "0",

@@ -14,6 +14,7 @@ export interface DebugInfo {
     results?: unknown[]
   }
   parsedOutput?: unknown
+  result?: string
 }
 
 export class ContractError extends Error {
@@ -51,6 +52,7 @@ export interface RewardMetrics {
   durationInDays: number
   dailyEmission: string
   rewardTokenType: string
+  tokenType: string
   tokenPrice: string
   logo: string
   dailyValue: string
