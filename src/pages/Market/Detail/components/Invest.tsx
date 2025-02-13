@@ -59,6 +59,7 @@ import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRu
 export default function Invest() {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
+  const [syAmount, setSyAmount] = useState("")
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
   const [ratio, setRatio] = useState<string>()
@@ -185,9 +186,11 @@ export default function Invest() {
 
             const {
               ptValue,
-              syAmount: newSyAmount,
               tradeFee,
+              syAmount: newSyAmount,
             } = await queryPtOut(syAmount)
+
+            setSyAmount(newSyAmount)
 
             console.log("ptValue", ptValue)
 
@@ -414,6 +417,7 @@ export default function Invest() {
   const priceImpact = useMemo(() => {
     if (
       !ptValue ||
+      !syAmount ||
       !decimal ||
       !swapValue ||
       !ptYtData?.ptPrice ||
@@ -423,10 +427,7 @@ export default function Invest() {
       return
     }
 
-    const inputValue =
-      tokenType === 0
-        ? new Decimal(swapValue).mul(coinConfig.underlyingPrice)
-        : new Decimal(swapValue).mul(coinConfig.coinPrice)
+    const inputValue = new Decimal(syAmount).div(10 ** decimal).mul(coinConfig.coinPrice)
 
     const outputValue = new Decimal(ptValue).mul(ptYtData.ptPrice)
 
@@ -441,8 +442,8 @@ export default function Invest() {
   }, [
     decimal,
     ptValue,
+    syAmount,
     swapValue,
-    tokenType,
     ptYtData?.ptPrice,
     coinConfig?.coinPrice,
     coinConfig?.underlyingPrice,
