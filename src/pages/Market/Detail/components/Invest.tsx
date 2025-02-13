@@ -192,9 +192,38 @@ export default function Invest() {
 
             setSyAmount(newSyAmount)
 
-            console.log("ptValue", ptValue)
+            console.log("ptYtData", ptYtData)
 
-            console.log("newSyAmount", newSyAmount)
+            console.log(
+              "ptValue",
+              ptValue,
+              ptYtData?.ptPrice,
+              new Decimal(ptValue).mul(ptYtData?.ptPrice || "0").toString(),
+            )
+
+            console.log(
+              "newSyAmount",
+              newSyAmount,
+              coinConfig?.coinPrice,
+              new Decimal(newSyAmount)
+                .div(10 ** Number(decimal))
+                .mul(coinConfig?.coinPrice || "0")
+                .toString(),
+            )
+
+            console.log(
+              "new underlyingAmount",
+              new Decimal(newSyAmount)
+                .div(10 ** Number(decimal))
+                .mul(rate)
+                .toString(),
+              coinConfig?.underlyingPrice,
+              new Decimal(newSyAmount)
+                .mul(rate)
+                .div(10 ** Number(decimal))
+                .mul(coinConfig?.underlyingPrice || 0)
+                .toString(),
+            )
 
             setPtFeeValue(tradeFee)
 
@@ -419,6 +448,7 @@ export default function Invest() {
       !ptValue ||
       !syAmount ||
       !decimal ||
+      !conversionRate ||
       !swapValue ||
       !ptYtData?.ptPrice ||
       !coinConfig?.coinPrice ||
@@ -427,7 +457,13 @@ export default function Invest() {
       return
     }
 
-    const inputValue = new Decimal(syAmount).div(10 ** decimal).mul(coinConfig.coinPrice)
+    const inputValue =
+      tokenType === 0
+        ? new Decimal(syAmount)
+            .mul(conversionRate)
+            .div(10 ** decimal)
+            .mul(coinConfig.underlyingPrice)
+        : new Decimal(syAmount).div(10 ** decimal).mul(coinConfig.coinPrice)
 
     const outputValue = new Decimal(ptValue).mul(ptYtData.ptPrice)
 
@@ -444,6 +480,8 @@ export default function Invest() {
     ptValue,
     syAmount,
     swapValue,
+    tokenType,
+    conversionRate,
     ptYtData?.ptPrice,
     coinConfig?.coinPrice,
     coinConfig?.underlyingPrice,
