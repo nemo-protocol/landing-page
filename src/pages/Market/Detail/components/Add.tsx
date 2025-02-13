@@ -369,13 +369,17 @@ export default function SingleCoin() {
 
     const yieldToken = redeemSyCoin(tx, coinConfig, remainingSyCoin)
     const [lpPositions] = await fetchLpPositions()
-    const mergedPosition = mergeAllLpPositions(
-      tx,
-      coinConfig,
-      lpPositions,
-      marketPosition,
-    )
-    tx.transferObjects([yieldToken, mergedPosition], address)
+    if (lpPositions && lpPositions.length > 0) {
+      const mergedPosition = mergeAllLpPositions(
+        tx,
+        coinConfig,
+        lpPositions,
+        marketPosition
+      )
+      tx.transferObjects([yieldToken, mergedPosition], address)
+    }else {
+      tx.transferObjects([yieldToken], address)
+    }
   }
 
   async function handleAddLiquiditySingleSy(

@@ -393,6 +393,50 @@ export const mintSCoin = <T extends boolean = false>(
         ? [sCoins, moveCallInfos]
         : sCoins) as unknown as MintSCoinResult<T>
     }
+    case "Haedal": {
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        const moveCall = {
+          target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::interface::request_stake`,
+          arguments: [
+            { name: "sui_system_state", value: "0x5" },
+
+            {
+              name: "staking",
+              value:
+                "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
+            },
+            { name: "coin", value: amounts[i] },
+            {name: "address", value: "0x0000000000000000000000000000000000000000000000000000000000000000"}
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`Haedal stake move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(
+              "0x5",
+            ),
+            tx.object(
+              "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
+            ),
+            splitCoins[i],
+            tx.object("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+        sCoins.push(sCoin)
+      }
+
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
+    }
+
     default:
       throw new Error(
         "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
