@@ -398,7 +398,7 @@ export const mintSCoin = <T extends boolean = false>(
 
       for (let i = 0; i < amounts.length; i++) {
         const moveCall = {
-          target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::interface::request_stake`,
+          target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_stake_coin`,
           arguments: [
             { name: "sui_system_state", value: "0x5" },
 
@@ -419,7 +419,7 @@ export const mintSCoin = <T extends boolean = false>(
           target: moveCall.target,
           arguments: [
             tx.object(
-              "0x5",
+              "0x0000000000000000000000000000000000000000000000000000000000000005",
             ),
             tx.object(
               "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
