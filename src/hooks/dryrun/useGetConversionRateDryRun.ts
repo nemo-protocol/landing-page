@@ -76,7 +76,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
         throw new ContractError(message, debugInfo)
       }
 
-      const conversionRate = bcs.U64.parse(
+      const conversionRate = bcs.U128.parse(
         new Uint8Array(
           result.results[result.results.length - 1].returnValues[0][0],
         ),
