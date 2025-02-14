@@ -55,11 +55,12 @@ import { ContractError } from "@/hooks/types"
 import useGetApproxPtOutDryRun from "@/hooks/dryrun/useGetApproxPtOutDryRun"
 import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
 import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
+import useQueryPtPrice from "@/hooks/useQueryPtPrice"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
   const [open, setOpen] = useState(false)
-  const [syAmount, setSyAmount] = useState("")
+  const [syValue, setSyValue] = useState("")
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
   const [ratio, setRatio] = useState<string>()
@@ -167,13 +168,27 @@ export default function Invest() {
   const { mutateAsync: getConversionRate } =
     useGetConversionRateDryRun(coinConfig)
 
+  const { data: ptPrice } = useQueryPtPrice(coinConfig, "1000")
+
   const debouncedGetPtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getPtOut = debounce(async () => {
         setError(undefined)
-        if (isValidAmount(value) && decimal && config && coinType) {
+        if (
+          isValidAmount(value) &&
+          decimal &&
+          config &&
+          coinType &&
+          coinConfig &&
+          ptPrice
+        ) {
           setIsCalcPtLoading(true)
           try {
+            console.log(
+              "value",
+              new Decimal(value).mul(10 ** decimal).toFixed(0),
+            )
+
             const rate = await getConversionRate()
             setConversionRate(rate)
             const swapAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
@@ -186,19 +201,18 @@ export default function Invest() {
 
             const {
               ptValue,
+              syValue,
               tradeFee,
               syAmount: newSyAmount,
             } = await queryPtOut(syAmount)
 
-            setSyAmount(newSyAmount)
-
-            console.log("ptYtData", ptYtData)
+            setSyValue(syValue)
 
             console.log(
               "ptValue",
               ptValue,
-              ptYtData?.ptPrice,
-              new Decimal(ptValue).mul(ptYtData?.ptPrice || "0").toString(),
+              ptPrice,
+              new Decimal(ptValue).mul(ptPrice).toString(),
             )
 
             console.log(
@@ -213,15 +227,12 @@ export default function Invest() {
 
             console.log(
               "new underlyingAmount",
-              new Decimal(newSyAmount)
-                .div(10 ** Number(decimal))
-                .mul(rate)
-                .toString(),
+              new Decimal(newSyAmount).mul(rate).toString(),
               coinConfig?.underlyingPrice,
               new Decimal(newSyAmount)
                 .mul(rate)
                 .div(10 ** Number(decimal))
-                .mul(coinConfig?.underlyingPrice || 0)
+                .mul(coinConfig.underlyingPrice)
                 .toString(),
             )
 
@@ -233,19 +244,21 @@ export default function Invest() {
               .toFixed(0)
 
             const approxPtOut = await getApproxPtOut({
-              netSyIn: newSyAmount,
+              netSyIn: syAmount,
               minPtOut,
             })
+
+            const _newSyAmount = new Decimal(newSyAmount).mul(rate).toFixed(0)
 
             if (address && coinData?.length) {
               try {
                 const newPtValue = await swapExactSyForPtDryRun({
-                  tokenType,
-                  swapAmount,
                   coinData,
                   coinType,
                   minPtOut,
+                  tokenType,
                   approxPtOut,
+                  swapAmount: _newSyAmount,
                 })
 
                 console.log("newPtValue", newPtValue)
@@ -280,15 +293,17 @@ export default function Invest() {
       return getPtOut.cancel
     },
     [
-      queryPtOut,
-      tokenType,
+      coinType,
+      coinConfig,
+      ptPrice,
       getConversionRate,
+      tokenType,
+      queryPtOut,
+      slippage,
+      getApproxPtOut,
       address,
       coinData,
       swapExactSyForPtDryRun,
-      coinType,
-      getApproxPtOut,
-      slippage,
     ],
   )
 
@@ -444,28 +459,25 @@ export default function Invest() {
   }, [hasLiquidity, insufficientBalance, swapValue, coinName])
 
   const priceImpact = useMemo(() => {
-    if (
-      !ptValue ||
-      !syAmount ||
-      !decimal ||
-      !conversionRate ||
-      !swapValue ||
-      !ptYtData?.ptPrice ||
-      !coinConfig?.coinPrice ||
-      !coinConfig?.underlyingPrice
-    ) {
-      return
+    if (!ptValue || !ptPrice || !swapValue || !coinConfig?.coinPrice) {
+      return undefined
     }
 
-    const inputValue =
-      tokenType === 0
-        ? new Decimal(syAmount)
-            .mul(conversionRate)
-            .div(10 ** decimal)
-            .mul(coinConfig.underlyingPrice)
-        : new Decimal(syAmount).div(10 ** decimal).mul(coinConfig.coinPrice)
+    console.log("priceImpact syValue", syValue)
+    console.log("priceImpact coinConfig.coinPrice", coinConfig.coinPrice)
 
-    const outputValue = new Decimal(ptValue).mul(ptYtData.ptPrice)
+    const inputValue = new Decimal(syValue).mul(coinConfig.coinPrice)
+
+    console.log("priceImpact inputValue", inputValue.toString())
+
+    console.log("priceImpact ptValue", ptValue)
+    console.log("priceImpact ptPrice", ptPrice)
+
+    const outputValue = new Decimal(ptValue).mul(ptPrice)
+
+    console.log("priceImpact outputValue", outputValue.toString())
+
+    console.log("mins", inputValue.minus(outputValue).toString())
 
     const value = outputValue
     const ratio = safeDivide(
@@ -475,17 +487,7 @@ export default function Invest() {
     ).mul(100)
 
     return { value, ratio }
-  }, [
-    decimal,
-    ptValue,
-    syAmount,
-    swapValue,
-    tokenType,
-    conversionRate,
-    ptYtData?.ptPrice,
-    coinConfig?.coinPrice,
-    coinConfig?.underlyingPrice,
-  ])
+  }, [ptValue, ptPrice, swapValue, coinConfig?.coinPrice, syValue])
 
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
@@ -664,19 +666,15 @@ export default function Invest() {
               "--"
             ) : isCalcPtLoading ? (
               <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
-            ) : decimal && swapValue && conversionRate ? (
+            ) : decimal && ptValue && syValue && conversionRate ? (
               <div className="flex items-center gap-x-1.5">
                 <span>
                   +
-                  {ratio
+                  {ptValue
                     ? formatDecimalValue(
-                        new Decimal(swapValue)
-                          .mul(ratio)
-                          .minus(
-                            tokenType === 0
-                              ? new Decimal(swapValue)
-                              : new Decimal(swapValue).mul(conversionRate),
-                          ),
+                        new Decimal(ptValue).minus(
+                          new Decimal(syValue).mul(conversionRate),
+                        ),
                         decimal,
                       )
                     : "--"}
