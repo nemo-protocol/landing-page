@@ -11,12 +11,7 @@ import { Transaction } from "@mysten/sui/transactions"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { Info, ChevronsDown } from "lucide-react"
-import {
-  formatDecimalValue,
-  isValidAmount,
-  debounce,
-  safeDivide,
-} from "@/lib/utils"
+import { formatDecimalValue, isValidAmount, debounce } from "@/lib/utils"
 import { useCoinConfig } from "@/queries"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import TradeInfo from "@/components/TradeInfo"
@@ -55,7 +50,7 @@ import { ContractError } from "@/hooks/types"
 import useGetApproxPtOutDryRun from "@/hooks/dryrun/useGetApproxPtOutDryRun"
 import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
 import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
-import useQueryPtPrice from "@/hooks/useQueryPtPrice"
+import useQueryPtRatio from "@/hooks/useQueryPtRatio"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -63,7 +58,6 @@ export default function Invest() {
   const [syValue, setSyValue] = useState("")
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
-  const [ratio, setRatio] = useState<string>()
   const [error, setError] = useState<string>()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
@@ -77,6 +71,7 @@ export default function Invest() {
   const [isCalcPtLoading, setIsCalcPtLoading] = useState(false)
   const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
   const [conversionRate, setConversionRate] = useState<string>()
+  const [ptRatio, setPtRatio] = useState<Decimal>(new Decimal(0))
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -168,7 +163,7 @@ export default function Invest() {
   const { mutateAsync: getConversionRate } =
     useGetConversionRateDryRun(coinConfig)
 
-  const { data: ptPrice } = useQueryPtPrice(coinConfig, "1000")
+  const { data: initPtRatio } = useQueryPtRatio(coinConfig, "1000")
 
   const debouncedGetPtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
@@ -179,8 +174,7 @@ export default function Invest() {
           decimal &&
           config &&
           coinType &&
-          coinConfig &&
-          ptPrice
+          coinConfig
         ) {
           setIsCalcPtLoading(true)
           try {
@@ -214,8 +208,10 @@ export default function Invest() {
             })
 
             const actualSwapAmount = new Decimal(newSyAmount)
-              .mul(rate)
+              .mul(tokenType === 0 ? rate : 1)
               .toFixed(0)
+
+            console.log("actualSwapAmount", actualSwapAmount)
 
             try {
               if (address && coinData?.length) {
@@ -228,15 +224,19 @@ export default function Invest() {
                   swapAmount: actualSwapAmount,
                 })
 
-                const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
-                setRatio(ptRatio)
+                const ptRatio = new Decimal(ptValue)
+                  .div(syValue)
+                  .mul(tokenType === 0 ? rate : 1)
+                setPtRatio(ptRatio)
                 setPtValue(newPtValue)
               } else {
                 throw new Error("Please connect your wallet")
               }
             } catch (dryRunError) {
-              const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
-              setRatio(ptRatio)
+              const ptRatio = new Decimal(ptValue)
+                .div(syValue)
+                .mul(tokenType === 0 ? rate : 1)
+              setPtRatio(ptRatio)
               setPtValue(ptValue)
             }
           } catch (errorMsg) {
@@ -262,7 +262,6 @@ export default function Invest() {
     [
       coinType,
       coinConfig,
-      ptPrice,
       getConversionRate,
       tokenType,
       queryPtOut,
@@ -287,8 +286,8 @@ export default function Invest() {
         setIsInitRatioLoading(true)
         const rate = await getConversionRate()
         setConversionRate(rate)
-        const initialRatio = await calculateRatio(tokenType === 0 ? rate : "1")
-        setRatio(initialRatio)
+        // const initialRatio = await calculateRatio(tokenType === 0 ? rate : "1")
+        // setIn(initialRatio)
       } catch (error) {
         console.error("Failed to calculate initial ratio:", error)
       } finally {
@@ -327,13 +326,6 @@ export default function Invest() {
           .div(tokenType === 0 ? rate : 1)
           .toFixed(0)
 
-        const [splitCoin] =
-          tokenType === 0
-            ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
-            : splitCoinHelper(tx, coinData, [swapAmount], coinType)
-
-        const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
-
         let pyPosition
         let created = false
         if (!pyPositionData?.length) {
@@ -355,6 +347,17 @@ export default function Invest() {
         })
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+
+        const actualSwapAmount = new Decimal(newSyAmount)
+          .mul(tokenType === 0 ? rate : 1)
+          .toFixed(0)
+
+        const [splitCoin] =
+          tokenType === 0
+            ? mintSCoin(tx, coinConfig, coinData, [actualSwapAmount])
+            : splitCoinHelper(tx, coinData, [actualSwapAmount], coinType)
+
+        const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
         swapExactSyForPt(
           tx,
@@ -426,23 +429,31 @@ export default function Invest() {
   }, [hasLiquidity, insufficientBalance, swapValue, coinName])
 
   const priceImpact = useMemo(() => {
-    if (!ptValue || !ptPrice || !swapValue || !coinConfig?.coinPrice) {
+    if (
+      !ptValue ||
+      !initPtRatio ||
+      !ptRatio ||
+      !swapValue ||
+      !coinConfig?.coinPrice ||
+      !ptYtData?.ptPrice
+    ) {
       return undefined
     }
 
-    const inputValue = new Decimal(syValue).mul(coinConfig.coinPrice)
-
-    const outputValue = new Decimal(ptValue).mul(ptPrice)
+    const outputValue = new Decimal(ptValue).mul(ptYtData?.ptPrice)
 
     const value = outputValue
-    const ratio = safeDivide(
-      inputValue.minus(outputValue),
-      inputValue,
-      "decimal",
-    ).mul(100)
+    const ratio = new Decimal(ptRatio).minus(initPtRatio).abs().mul(100)
 
     return { value, ratio }
-  }, [ptValue, ptPrice, swapValue, coinConfig?.coinPrice, syValue])
+  }, [
+    ptValue,
+    initPtRatio,
+    ptRatio,
+    swapValue,
+    coinConfig?.coinPrice,
+    ptYtData?.ptPrice,
+  ])
 
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
@@ -674,7 +685,7 @@ export default function Invest() {
           </div>
         </div>
         <TradeInfo
-          ratio={ratio}
+          ratio={!swapValue ? initPtRatio?.toString() : ptRatio.toString()}
           coinName={coinName}
           slippage={slippage}
           isLoading={isLoading}
@@ -684,13 +695,14 @@ export default function Invest() {
             if (conversionRate) {
               try {
                 setIsCalcPtLoading(true)
-                const newRatio = await calculateRatio(
-                  tokenType === 0 ? conversionRate : "1",
-                )
-                setRatio(newRatio)
+                // const newRatio = await calculateRatio(
+                //   tokenType === 0 ? conversionRate : "1",
+                // )
+                // setRatio(newRatio)
+                setIsCalcPtLoading(false)
               } catch (error) {
                 console.error("Failed to refresh ratio:", error)
-                setRatio("")
+                // setRatio("")
               } finally {
                 setIsCalcPtLoading(false)
               }
