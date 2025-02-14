@@ -443,7 +443,7 @@ export default function Invest() {
     const outputValue = new Decimal(ptValue).mul(ptYtData?.ptPrice)
 
     const value = outputValue
-    const ratio = new Decimal(ptRatio).minus(initPtRatio).abs().mul(100)
+    const ratio = new Decimal(ptRatio).minus(initPtRatio).mul(100)
 
     return { value, ratio }
   }, [
