@@ -9,9 +9,9 @@ import { useTokenInfo } from "@/queries"
 interface PoolRewarderInfo {
   total_reward: string
   end_time: string
-  last_reward_time: unknown
+  last_reward_time: string
   reward_harvested: unknown
-  reward_debt: string
+  reward_debt: unknown
   reward_token: {
     type: string
     fields: {
