@@ -9,7 +9,9 @@ import { useTokenInfo } from "@/queries"
 interface PoolRewarderInfo {
   total_reward: string
   end_time: string
-  last_reward_time: string
+  last_reward_time: unknown
+  reward_harvested: unknown
+  reward_debt: string
   reward_token: {
     type: string
     fields: {
@@ -103,6 +105,8 @@ const calculateRewardMetrics = (
     rewardTvl,
     dailyYieldRate,
     apy,
+    rewardHarvested: rewarder.reward_harvested,
+    rewardDebt: rewarder.reward_debt,
   }
 }
 

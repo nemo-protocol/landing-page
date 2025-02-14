@@ -342,6 +342,7 @@ export default function Item({
   }
 
   async function claimLpReward(rewardIndex: number = selectedRewardIndex) {
+    debugLog("claimLpReward", lpPositions, marketState)
     if (coinConfig?.coinType && address && lpBalance && lpPositions?.length) {
       try {
         setLoading(true)
@@ -683,10 +684,14 @@ export default function Item({
                 <div className="flex items-center gap-x-2">
                   <div className="flex flex-col items-center w-24">
                     <div className="flex items-center gap-2">
-                      {marketState?.rewardMetrics?.[selectedRewardIndex]?.logo && (
-                        <img 
-                          src={marketState?.rewardMetrics?.[selectedRewardIndex]?.logo} 
-                          alt="reward token" 
+                      {marketState?.rewardMetrics?.[selectedRewardIndex]
+                        ?.logo && (
+                        <img
+                          src={
+                            marketState?.rewardMetrics?.[selectedRewardIndex]
+                              ?.logo
+                          }
+                          alt="reward token"
                           className="w-4 h-4"
                         />
                       )}
@@ -694,7 +699,8 @@ export default function Item({
                     </div>
                     <span className="text-white/50 text-xs">$0</span>
                   </div>
-                  {marketState?.rewardMetrics && marketState?.rewardMetrics?.length > 1 ? (
+                  {marketState?.rewardMetrics &&
+                  marketState?.rewardMetrics?.length > 1 ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -719,7 +725,9 @@ export default function Item({
                           {loading ? (
                             <div className="flex items-center justify-center gap-2.5">
                               <Loading className="h-4 w-4" />
-                              <span className="text-sm whitespace-nowrap">Claiming</span>
+                              <span className="text-sm whitespace-nowrap">
+                                Claiming
+                              </span>
                             </div>
                           ) : (
                             <span>Claim</span>
@@ -736,7 +744,10 @@ export default function Item({
                             }}
                             className="flex items-center gap-2"
                           >
-                            <span>Claim {metric.rewardTokenType ?? `Reward ${index + 1}`}</span>
+                            <span>
+                              Claim{" "}
+                              {metric.rewardTokenType ?? `Reward ${index + 1}`}
+                            </span>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -760,10 +771,14 @@ export default function Item({
                 <>
                   <div className="flex flex-col items-center w-24">
                     <div className="flex items-center gap-2">
-                      {marketState?.rewardMetrics?.[selectedRewardIndex]?.logo && (
-                        <img 
-                          src={marketState?.rewardMetrics?.[selectedRewardIndex]?.logo} 
-                          alt="reward token" 
+                      {marketState?.rewardMetrics?.[selectedRewardIndex]
+                        ?.logo && (
+                        <img
+                          src={
+                            marketState?.rewardMetrics?.[selectedRewardIndex]
+                              ?.logo
+                          }
+                          alt="reward token"
                           className="w-4 h-4"
                         />
                       )}
@@ -771,7 +786,8 @@ export default function Item({
                     </div>
                     <span className="text-white/50 text-xs">$0</span>
                   </div>
-                  {marketState?.rewardMetrics && marketState?.rewardMetrics?.length > 1 ? (
+                  {marketState?.rewardMetrics &&
+                  marketState?.rewardMetrics?.length > 1 ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -796,7 +812,9 @@ export default function Item({
                           {loading ? (
                             <div className="flex items-center justify-center gap-2.5">
                               <Loading className="h-4 w-4" />
-                              <span className="text-sm whitespace-nowrap">Claiming</span>
+                              <span className="text-sm whitespace-nowrap">
+                                Claiming
+                              </span>
                             </div>
                           ) : (
                             <span>Claim</span>
@@ -813,7 +831,10 @@ export default function Item({
                             }}
                             className="flex items-center gap-2"
                           >
-                            <span>Claim {metric.rewardTokenType ?? `Reward ${index + 1}`}</span>
+                            <span>
+                              Claim{" "}
+                              {metric.rewardTokenType ?? `Reward ${index + 1}`}
+                            </span>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>

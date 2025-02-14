@@ -184,11 +184,6 @@ export default function Invest() {
         ) {
           setIsCalcPtLoading(true)
           try {
-            console.log(
-              "value",
-              new Decimal(value).mul(10 ** decimal).toFixed(0),
-            )
-
             const rate = await getConversionRate()
             setConversionRate(rate)
             const swapAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
@@ -196,8 +191,6 @@ export default function Invest() {
             const syAmount = new Decimal(swapAmount)
               .div(tokenType === 0 ? rate : 1)
               .toFixed(0)
-
-            console.log("syAmount", syAmount)
 
             const {
               ptValue,
@@ -207,34 +200,6 @@ export default function Invest() {
             } = await queryPtOut(syAmount)
 
             setSyValue(syValue)
-
-            console.log(
-              "ptValue",
-              ptValue,
-              ptPrice,
-              new Decimal(ptValue).mul(ptPrice).toString(),
-            )
-
-            console.log(
-              "newSyAmount",
-              newSyAmount,
-              coinConfig?.coinPrice,
-              new Decimal(newSyAmount)
-                .div(10 ** Number(decimal))
-                .mul(coinConfig?.coinPrice || "0")
-                .toString(),
-            )
-
-            console.log(
-              "new underlyingAmount",
-              new Decimal(newSyAmount).mul(rate).toString(),
-              coinConfig?.underlyingPrice,
-              new Decimal(newSyAmount)
-                .mul(rate)
-                .div(10 ** Number(decimal))
-                .mul(coinConfig.underlyingPrice)
-                .toString(),
-            )
 
             setPtFeeValue(tradeFee)
 
@@ -248,10 +213,12 @@ export default function Invest() {
               minPtOut,
             })
 
-            const actualSwapAmount = new Decimal(newSyAmount).mul(rate).toFixed(0)
+            const actualSwapAmount = new Decimal(newSyAmount)
+              .mul(rate)
+              .toFixed(0)
 
-            if (address && coinData?.length) {
-              try {
+            try {
+              if (address && coinData?.length) {
                 const newPtValue = await swapExactSyForPtDryRun({
                   coinData,
                   coinType,
@@ -261,16 +228,16 @@ export default function Invest() {
                   swapAmount: actualSwapAmount,
                 })
 
-                console.log("newPtValue", newPtValue)
                 const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
                 setRatio(ptRatio)
                 setPtValue(newPtValue)
-                return
-              } catch (dryRunError) {
-                const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
-                setRatio(ptRatio)
-                setPtValue(ptValue)
+              } else {
+                throw new Error("Please connect your wallet")
               }
+            } catch (dryRunError) {
+              const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
+              setRatio(ptRatio)
+              setPtValue(ptValue)
             }
           } catch (errorMsg) {
             const { error, detail } = parseErrorMessage(
@@ -463,21 +430,9 @@ export default function Invest() {
       return undefined
     }
 
-    console.log("priceImpact syValue", syValue)
-    console.log("priceImpact coinConfig.coinPrice", coinConfig.coinPrice)
-
     const inputValue = new Decimal(syValue).mul(coinConfig.coinPrice)
 
-    console.log("priceImpact inputValue", inputValue.toString())
-
-    console.log("priceImpact ptValue", ptValue)
-    console.log("priceImpact ptPrice", ptPrice)
-
     const outputValue = new Decimal(ptValue).mul(ptPrice)
-
-    console.log("priceImpact outputValue", outputValue.toString())
-
-    console.log("mins", inputValue.minus(outputValue).toString())
 
     const value = outputValue
     const ratio = safeDivide(
