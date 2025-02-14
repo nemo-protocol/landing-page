@@ -248,7 +248,7 @@ export default function Invest() {
               minPtOut,
             })
 
-            const _newSyAmount = new Decimal(newSyAmount).mul(rate).toFixed(0)
+            const actualSwapAmount = new Decimal(newSyAmount).mul(rate).toFixed(0)
 
             if (address && coinData?.length) {
               try {
@@ -258,7 +258,7 @@ export default function Invest() {
                   minPtOut,
                   tokenType,
                   approxPtOut,
-                  swapAmount: _newSyAmount,
+                  swapAmount: actualSwapAmount,
                 })
 
                 console.log("newPtValue", newPtValue)
