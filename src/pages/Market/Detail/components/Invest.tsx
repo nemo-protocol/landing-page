@@ -666,11 +666,11 @@ export default function Invest() {
               "--"
             ) : isCalcPtLoading ? (
               <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
-            ) : decimal && ptValue && syValue && conversionRate ? (
+            ) : (
               <div className="flex items-center gap-x-1.5">
                 <span>
                   +
-                  {ptValue
+                  {ptValue && decimal && ptValue && conversionRate
                     ? formatDecimalValue(
                         new Decimal(ptValue).minus(
                           new Decimal(syValue).mul(conversionRate),
@@ -686,8 +686,6 @@ export default function Invest() {
                   className="size-[28px]"
                 />
               </div>
-            ) : (
-              <span>--</span>
             )}
           </div>
           <div className="flex items-center justify-between mt-2 text-white/60 text-xs">
@@ -705,15 +703,10 @@ export default function Invest() {
                 <Skeleton className="h-4 w-20 bg-[#2D2D48]" />
               ) : decimal && conversionRate && coinConfig?.underlyingPrice ? (
                 `≈ $${
-                  ratio
+                  ptValue && decimal && ptValue && conversionRate
                     ? formatDecimalValue(
-                        new Decimal(swapValue)
-                          .mul(ratio)
-                          .minus(
-                            tokenType === 0
-                              ? new Decimal(swapValue)
-                              : new Decimal(swapValue).mul(conversionRate),
-                          )
+                        new Decimal(ptValue)
+                          .minus(new Decimal(syValue).mul(conversionRate))
                           .mul(coinConfig.underlyingPrice),
                         decimal,
                       )
