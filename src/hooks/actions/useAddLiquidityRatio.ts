@@ -35,7 +35,7 @@ export function useAddLiquidityRatio(
       })
 
       const priceVoucher = await priceVoucherFun()
-      const decimal = 3
+      const decimal = 5
 
       const calculateRatio = async (
         power = lastPowerRef.current,
@@ -47,6 +47,7 @@ export function useAddLiquidityRatio(
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
 
           const parsedData = JSON.parse(exchangeRate.toString())
+
           const { syValue, ptValue } = splitSyAmount(
             baseAmount,
             marketState.lpSupply,
@@ -55,10 +56,12 @@ export function useAddLiquidityRatio(
             parsedData?.content?.fields?.py_index_stored?.fields?.value,
             priceVoucher.toString(),
           )
+
           const lpAmount =
             marketState.lpSupply == "0"
               ? (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000).toString()
               : (await queryLpOut({ ptValue, syValue }))[0]
+
           const ratio = new Decimal(lpAmount).div(baseAmount).toString()
 
           lastPowerRef.current = power

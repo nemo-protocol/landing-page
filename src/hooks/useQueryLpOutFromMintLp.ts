@@ -6,6 +6,7 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 
+// TODO: optimize the mutation
 export default function useQueryLpOutFromMintLp(
   coinConfig?: CoinConfig,
   debug: boolean = false,

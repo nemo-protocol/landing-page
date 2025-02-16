@@ -54,8 +54,7 @@ import useAddLiquiditySingleSyDryRun from "@/hooks/dryrun/useAddLiquiditySingleS
 import useSeedLiquidityDryRun from "@/hooks/dryrun/useSeedLiquidityDryRun"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import type { CoinData } from "@/hooks/useCoinData"
-import { ContractError } from "@/hooks/types"
-import useAddLiquiditySinglePtDryRun from "@/hooks/dryrun/useAddLiquiditySinglePtDryRun"
+import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -77,7 +76,7 @@ export default function SingleCoin() {
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isCalcLpLoading, setIsCalcLpLoading] = useState(false)
   const [ratio, setRatio] = useState<string>()
-  const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
+  const [conversionRate, setConversionRate] = useState<string>()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -138,8 +137,6 @@ export default function SingleCoin() {
     useAddLiquiditySingleSyDryRun(coinConfig)
   const { mutateAsync: seedLiquidityDryRun } =
     useSeedLiquidityDryRun(coinConfig)
-  const { mutateAsync: addLiquiditySinglePtDryRun } =
-    useAddLiquiditySinglePtDryRun(coinConfig)
 
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
@@ -178,11 +175,24 @@ export default function SingleCoin() {
     return ["0", "0"]
   }, [ptYtData])
 
-  const conversionRate = useMemo(() => coinConfig?.conversionRate, [coinConfig])
+  const { mutateAsync: getConversionRate } =
+    useGetConversionRateDryRun(coinConfig)
+
+  useEffect(() => {
+    async function initConversionRate() {
+      const rate = await getConversionRate()
+      setConversionRate(rate)
+    }
+    initConversionRate()
+  }, [getConversionRate])
 
   const { isLoading } = useInputLoadingState(
     addValue,
-    isConfigLoading || isLpAmountOutLoading,
+    isConfigLoading || isLpAmountOutLoading || isCalcLpLoading,
+  )
+
+  const { isLoading: isRatioLoading } = useRatioLoadingState(
+    isConfigLoading || isCalcLpLoading,
   )
 
   const btnDisabled = useMemo(() => {
@@ -204,43 +214,23 @@ export default function SingleCoin() {
     marketStateData,
   )
 
-  const { isLoading: isRatioLoading } = useRatioLoadingState(
-    isConfigLoading || isInitRatioLoading,
-  )
-
-  useEffect(() => {
-    async function initRatio() {
-      try {
-        setIsInitRatioLoading(true)
-        const initialRatio = await calculateRatio()
-        setRatio(initialRatio)
-      } catch (errorMsg) {
-        const { error } = parseErrorMessage(
-          (errorMsg as ContractError)?.message ?? errorMsg,
-        )
-
-        setError(error)
-      } finally {
-        setIsInitRatioLoading(false)
-      }
-    }
-    if (coinConfig && marketStateData) {
-      initRatio()
-    }
-  }, [calculateRatio, coinConfig, marketStateData])
-
+  // FIXME: update handleRefresh
   const handleRefresh = useCallback(async () => {
     try {
       setIsCalcLpLoading(true)
       const newRatio = await calculateRatio()
-      setRatio(newRatio)
+      setRatio(
+        tokenType === 0
+          ? new Decimal(newRatio).mul(conversionRate || 0).toString()
+          : newRatio,
+      )
     } catch (error) {
       console.error("Failed to refresh ratio:", error)
       setRatio("")
     } finally {
       setIsCalcLpLoading(false)
     }
-  }, [calculateRatio])
+  }, [calculateRatio, conversionRate, tokenType])
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -249,6 +239,104 @@ export default function SingleCoin() {
       refetchCoinData(),
     ])
   }, [refetchCoinConfig, refetchPyPosition, refetchCoinData])
+
+  useEffect(() => {
+    if (coinConfig && marketStateData) {
+      handleRefresh()
+    }
+  }, [coinConfig, handleRefresh, marketStateData])
+
+  const debouncedGetLpPosition = useCallback(
+    (value: string, decimal: number, config: CoinConfig | undefined) => {
+      const getLpPosition = debounce(async () => {
+        if (config && decimal && isValidAmount(value) && coinData?.length) {
+          setIsCalcLpLoading(true)
+          const inputAmount = new Decimal(value).mul(10 ** decimal).toString()
+          try {
+            if (marketStateData?.lpSupply === "0") {
+              const { lpAmount, ytAmount } = await seedLiquidityDryRun({
+                addAmount: inputAmount,
+                tokenType,
+                coinData,
+                pyPositions: pyPositionData,
+              })
+
+              setLpAmount(
+                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
+              )
+              setYtAmount(
+                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
+              )
+            } else if (
+              marketStateData &&
+              new Decimal(marketStateData.totalSy).mul(0.4).lt(inputAmount)
+            ) {
+              const { lpAmount, ytAmount } = await mintLpDryRun({
+                addAmount: inputAmount,
+                tokenType,
+                coinData,
+                pyPositions: pyPositionData,
+              })
+
+              setLpAmount(
+                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
+              )
+              setYtAmount(
+                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
+              )
+            } else {
+              const [lpAmount, lpFeeAmount] = await addLiquiditySingleSyDryRun({
+                addAmount: inputAmount,
+                tokenType,
+                coinData,
+                pyPositions: pyPositionData,
+              })
+              setLpAmount(lpAmount)
+              setLpFeeAmount(lpFeeAmount)
+              setYtAmount(undefined)
+            }
+          } catch (error) {
+            try {
+              const lpOut = await calculateLpOut(inputAmount)
+              setLpAmount(lpOut.lpAmount)
+              setLpFeeAmount(undefined)
+              setYtAmount(undefined)
+            } catch (error) {
+              setLpAmount(undefined)
+              setYtAmount(undefined)
+              setLpFeeAmount(undefined)
+              console.error("Failed to get LP position:", error)
+              setError((error as Error)?.message ?? "Failed to get LP position")
+            }
+          } finally {
+            setIsCalcLpLoading(false)
+          }
+        } else {
+          setLpAmount(undefined)
+          setYtAmount(undefined)
+        }
+      }, 500)
+      getLpPosition()
+      return getLpPosition.cancel
+    },
+    [
+      mintLpDryRun,
+      addLiquiditySingleSyDryRun,
+      seedLiquidityDryRun,
+      tokenType,
+      coinData,
+      pyPositionData,
+      marketStateData,
+      calculateLpOut,
+    ],
+  )
+
+  useEffect(() => {
+    const cancelFn = debouncedGetLpPosition(addValue, decimal ?? 0, coinConfig)
+    return () => {
+      cancelFn()
+    }
+  }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
 
   async function handleSeedLiquidity(
     tx: Transaction,
@@ -373,7 +461,7 @@ export default function SingleCoin() {
       tx,
       coinConfig,
       lpPositions,
-      marketPosition
+      marketPosition,
     )
     tx.transferObjects([yieldToken, mergedPosition], address)
   }
@@ -398,9 +486,11 @@ export default function SingleCoin() {
 
     const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-    const ptValue = await addLiquiditySinglePtDryRun({
-      netSyIn: addAmount,
+    const [ptValue] = await addLiquiditySingleSyDryRun({
+      addAmount,
+      tokenType,
       coinData,
+      pyPositions: pyPositionData,
     })
 
     const addLiquidityMoveCall = {
@@ -443,109 +533,6 @@ export default function SingleCoin() {
     tx.transferObjects([mergedPosition], address)
   }
 
-  const debouncedGetLpPosition = useCallback(
-    (value: string, decimal: number, config: CoinConfig | undefined) => {
-      const getLpPosition = debounce(async () => {
-        if (
-          config &&
-          decimal &&
-          conversionRate &&
-          isValidAmount(value) &&
-          coinData?.length
-        ) {
-          setIsCalcLpLoading(true)
-          const amount = new Decimal(value).mul(10 ** decimal).toString()
-          const convertedAmount =
-            tokenType === 0
-              ? new Decimal(amount).div(conversionRate).toFixed(0)
-              : amount
-          try {
-            if (marketStateData?.lpSupply === "0") {
-              const { lpAmount, ytAmount } = await seedLiquidityDryRun({
-                addAmount: convertedAmount,
-                tokenType,
-                coinData,
-                pyPositions: pyPositionData,
-              })
-
-              setLpAmount(
-                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
-              )
-              setYtAmount(
-                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
-              )
-            } else if (
-              marketStateData &&
-              new Decimal(marketStateData.totalSy).mul(0.4).lt(convertedAmount)
-            ) {
-              const { lpAmount, ytAmount } = await mintLpDryRun({
-                addAmount: convertedAmount,
-                tokenType,
-                coinData,
-                pyPositions: pyPositionData,
-              })
-
-              setLpAmount(
-                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
-              )
-              setYtAmount(
-                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
-              )
-            } else {
-              const [lpAmount, lpFeeAmount] = await addLiquiditySingleSyDryRun({
-                addAmount: convertedAmount,
-                tokenType,
-                coinData,
-                pyPositions: pyPositionData,
-              })
-              setLpAmount(lpAmount)
-              setLpFeeAmount(lpFeeAmount)
-              setYtAmount(undefined)
-            }
-          } catch (error) {
-            try {
-              const amount = await calculateLpOut(convertedAmount)
-              setLpAmount(amount.lpAmount)
-              setLpFeeAmount(undefined)
-              setYtAmount(undefined)
-            } catch (error) {
-              setLpAmount(undefined)
-              setYtAmount(undefined)
-              setLpFeeAmount(undefined)
-              console.error("Failed to get LP position:", error)
-              setError((error as Error)?.message ?? "Failed to get LP position")
-            }
-          } finally {
-            setIsCalcLpLoading(false)
-          }
-        } else {
-          setLpAmount(undefined)
-          setYtAmount(undefined)
-        }
-      }, 500)
-      getLpPosition()
-      return getLpPosition.cancel
-    },
-    [
-      mintLpDryRun,
-      addLiquiditySingleSyDryRun,
-      seedLiquidityDryRun,
-      tokenType,
-      coinData,
-      pyPositionData,
-      marketStateData,
-      conversionRate,
-      calculateLpOut,
-    ],
-  )
-
-  useEffect(() => {
-    const cancelFn = debouncedGetLpPosition(addValue, decimal ?? 0, coinConfig)
-    return () => {
-      cancelFn()
-    }
-  }, [addValue, decimal, coinConfig, debouncedGetLpPosition])
-
   async function add() {
     if (
       decimal &&
@@ -554,17 +541,13 @@ export default function SingleCoin() {
       slippage &&
       lpAmount &&
       coinConfig &&
-      conversionRate &&
       marketStateData &&
       coinData?.length &&
       !insufficientBalance
     ) {
       try {
         setIsAdding(true)
-        const addAmount = new Decimal(addValue)
-          // .div(tokenType === 0 ? 1 : conversionRate)
-          .mul(10 ** decimal)
-          .toFixed(0)
+        const addAmount = new Decimal(addValue).mul(10 ** decimal).toFixed(0)
 
         const tx = new Transaction()
 
@@ -822,7 +805,11 @@ export default function SingleCoin() {
                 isLoading={isLoading}
                 setSlippage={setSlippage}
                 isRatioLoading={isRatioLoading}
-                coinName={coinConfig?.coinName}
+                coinName={
+                  tokenType === 0
+                    ? coinConfig?.underlyingCoinName
+                    : coinConfig?.coinName
+                }
                 targetCoinName={`LP ${coinConfig?.coinName}`}
                 tradeFee={lpFeeAmount}
               />
