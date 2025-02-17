@@ -1011,8 +1011,8 @@ export default function SingleCoin() {
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled PT APY</span>
                       <span>
-                        {ptYtData?.scaled_pt_apy
-                          ? `${new Decimal(ptYtData.scaled_pt_apy).toFixed(6)} %`
+                        {ptYtData?.scaledPtApy
+                          ? `${new Decimal(ptYtData.scaledPtApy).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>

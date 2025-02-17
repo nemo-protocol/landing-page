@@ -279,6 +279,11 @@ export const formatLargeNumber = (
     const num = new Decimal(value)
     const abs = num.abs()
 
+    // Return infinity symbol if value exceeds 1000T
+    if (abs.greaterThanOrEqualTo(new Decimal("1e15"))) {
+      return "∞"
+    }
+
     if (abs.lessThan(1000)) {
       return formatDecimalValue(num, decimals)
     }

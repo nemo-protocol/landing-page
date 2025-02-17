@@ -1,26 +1,8 @@
-import Decimal from "decimal.js"
 import { MarketState } from "./types"
 import { useQuery } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import useQuerySyOutDryRun from "@/hooks/dryrun/useQuerySyOutDryRun.ts"
-import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
-import { safeDivide } from "@/lib/utils"
-
-interface PtYtRatioResult {
-  ptApy: string
-  ytApy: string
-  incentiveApy: string
-  scaled_underlying_apy: string
-  scaled_pt_apy: string
-  tvl: string
-  ptTvl: string
-  syTvl: string
-  ptPrice: string
-  ytPrice: string
-  poolApy: string
-  swapFeeApy: string
-  lpPrice: string
-}
+import { PoolMetricsResult } from "./usePoolMetrics"
+import { usePoolMetrics } from "./usePoolMetrics"
 
 function validateCoinInfo(coinInfo: CoinConfig) {
   const requiredFields = [
@@ -53,10 +35,9 @@ export function useCalculatePtYt(
   coinInfo?: CoinConfig,
   marketState?: MarketState,
 ) {
-  const { mutateAsync: priceVoucherFun } = useQuerySyOutDryRun()
-  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
+  const mutation = usePoolMetrics()
 
-  return useQuery<PtYtRatioResult>({
+  return useQuery<PoolMetricsResult>({
     queryKey: ["useCalculatePtYt", coinInfo?.marketStateId],
     queryFn: async () => {
       if (!coinInfo) {
@@ -68,183 +49,11 @@ export function useCalculatePtYt(
 
       validateCoinInfo(coinInfo)
 
-      if (marketState.lpSupply == "0") {
-        return {
-          ptPrice: "0",
-          ytPrice: "0",
-          ptApy: "0",
-          ytApy: "0",
-          scaled_underlying_apy: "0",
-          scaled_pt_apy: "0",
-          tvl: "0",
-          poolApy: "0",
-          incentiveApy: "",
-          ptTvl: "0",
-          syTvl: "0",
-          swapFeeApy: "0",
-          lpPrice: "0",
-        }
-      }
-
-      const conversionRate = await getConversionRate(coinInfo)
-
-      let ptIn = "1000000"
-      let syOut: string
-
-      try {
-        syOut = await priceVoucherFun({ ptIn, coinInfo })
-      } catch (error) {
-        ptIn = "100"
-        syOut = await priceVoucherFun({ ptIn, coinInfo })
-      }
-
-      console.log("syOut", syOut)
-      console.log("ptIn", ptIn)
-
-      const ptPrice = safeDivide(
-        new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
-        ptIn,
-        "decimal",
-      )
-
-      console.log("ptPrice", ptPrice.toString())
-
-      const ytPrice = safeDivide(
-        new Decimal(coinInfo.coinPrice),
-        conversionRate,
-        "decimal",
-      ).sub(ptPrice)
-
-      console.log("ytPrice", ytPrice.toString())
-
-      const underlyingPrice = safeDivide(
-        coinInfo.coinPrice,
-        conversionRate,
-        "decimal",
-      )
-
-      console.log("underlyingPrice", underlyingPrice.toString())
-
-      let poolApy = new Decimal(0)
-      let tvl = new Decimal(0)
-      let ptTvl = new Decimal(0)
-      let syTvl = new Decimal(0)
-      let swapFeeApy = new Decimal(0)
-      const daysToExpiry = new Decimal(
-        (Number(coinInfo.maturity) - Date.now()) / 1000,
-      )
-        .div(86400)
-        .toNumber()
-
-      const ptApy = calculatePtAPY(
-        Number(underlyingPrice),
-        Number(ptPrice),
-        daysToExpiry,
-      )
-
-      const yearsToExpiry = new Decimal(
-        (Number(coinInfo.maturity) - Date.now()) / 1000,
-      )
-        .div(31536000)
-        .toNumber()
-
-      const ytApy = calculateYtAPY(
-        Number(coinInfo.underlyingApy),
-        Number(ytPrice),
-        yearsToExpiry,
-      )
-      let scaled_underlying_apy = new Decimal(0)
-      let scaled_pt_apy = new Decimal(0)
-      if (marketState.lpSupply != "0") {
-        const totalPt = new Decimal(marketState.totalPt)
-        const totalSy = new Decimal(marketState.totalSy)
-        ptTvl = totalPt.mul(ptPrice).div(new Decimal(10).pow(coinInfo.decimal))
-        syTvl = totalSy
-          .mul(coinInfo.coinPrice)
-          .div(new Decimal(10).pow(coinInfo.decimal))
-        tvl = syTvl.add(ptTvl)
-        const rSy = totalSy.div(totalSy.add(totalPt))
-        const rPt = totalPt.div(totalSy.add(totalPt))
-        scaled_underlying_apy = rSy.mul(coinInfo.underlyingApy).mul(100)
-        scaled_pt_apy = rPt.mul(ptApy)
-        const apyIncentive = new Decimal(0)
-        const swapFeeRateForLpHolder = safeDivide(
-          new Decimal(coinInfo.swapFeeForLpHolder).mul(
-            coinInfo.coinPrice,
-          ),
-          tvl,
-          "decimal",
-        )
-        const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
-        swapFeeApy = swapFeeRateForLpHolder.add(1).pow(expiryRate).minus(1).mul(100)
-        poolApy = scaled_underlying_apy.add(scaled_pt_apy).add(apyIncentive).add(swapFeeApy)
-      }
-
-
-      return {
-        ptApy,
-        ytApy,
-        scaled_underlying_apy: scaled_underlying_apy.toString(),
-        scaled_pt_apy: scaled_pt_apy.toString(),
-        incentiveApy: "",
-        tvl: tvl.toString(),
-        ptTvl: ptTvl.toString(),
-        syTvl: syTvl.toString(),
-        ptPrice: ptPrice.toString(),
-        ytPrice: ytPrice.toString(),
-        poolApy: poolApy.toString(),
-        swapFeeApy: swapFeeApy.toString(),
-        lpPrice: tvl
-          .div(marketState.lpSupply)
-          .mul(10 ** Number(coinInfo.decimal))
-          .toString(),
-      }
+      return mutation.mutateAsync({
+        coinInfo,
+        marketState,
+      })
     },
     enabled: !!coinInfo?.decimal && !!marketState,
   })
-}
-
-function calculatePtAPY(
-  coinPrice: number,
-  ptPrice: number,
-  daysToExpiry: number,
-): string {
-  if (daysToExpiry <= 0) {
-    return "0"
-  }
-
-  const ratio = safeDivide(coinPrice, ptPrice, "decimal")
-  const exponent = new Decimal(365).div(daysToExpiry)
-  const apy = ratio.pow(exponent).minus(1)
-  return apy.mul(100).toFixed(6)
-}
-
-function calculateYtAPY(
-  underlyingInterestApy: number,
-  ytPrice: number,
-  yearsToExpiry: number,
-): string {
-  if (yearsToExpiry <= 0) {
-    return "0"
-  }
-
-  const underlyingInterestApyDecimal = new Decimal(underlyingInterestApy)
-  const yearsToExpiryDecimal = new Decimal(yearsToExpiry)
-
-  const interestReturns = underlyingInterestApyDecimal
-    .plus(1)
-    .pow(yearsToExpiryDecimal)
-    .minus(1)
-
-  const rewardsReturns = new Decimal(0)
-
-  const ytReturns = interestReturns.plus(rewardsReturns)
-
-  const ytReturnsAfterFee = ytReturns.mul(0.97)
-
-  const longYieldApy = safeDivide(ytReturnsAfterFee, ytPrice, "decimal")
-    .pow(new Decimal(1).div(yearsToExpiryDecimal))
-    .minus(1)
-
-  return longYieldApy.mul(100).toFixed(6)
 }
