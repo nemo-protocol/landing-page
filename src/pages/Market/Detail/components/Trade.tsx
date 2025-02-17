@@ -50,6 +50,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { formatLargeNumber } from "@/lib/utils"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -584,7 +585,7 @@ export default function Trade() {
               <span>Leveraged Yield APY</span>
               <span className="underline">
                 {ptYtData?.ytApy
-                  ? `${new Decimal(ptYtData.ytApy).toFixed(6)} %`
+                  ? `${formatLargeNumber(ptYtData.ytApy, 6)} %`
                   : "--"}
               </span>
             </div>

@@ -78,7 +78,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
                     <span>
                       {item.ytApy
                         ? Number(item.ytApy) > 0
-                          ? `+${formatLargeNumber(item.ytApy, 6)}%`
+                          ? `${formatLargeNumber(item.ytApy, 6)}%`
                           : `${formatLargeNumber(item.ytApy, 6)}%`
                         : "--"}
                     </span>
