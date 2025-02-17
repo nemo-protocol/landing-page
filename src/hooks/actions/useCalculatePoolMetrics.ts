@@ -4,6 +4,7 @@ import { safeDivide } from "@/lib/utils"
 import { useMutation } from "@tanstack/react-query"
 import { BaseCoinInfo } from "@/queries/types/market"
 import useQuerySyOutDryRun from "@/hooks/dryrun/useQuerySyOutDryRun.ts"
+import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
 
 function calculatePtAPY(
   coinPrice: number,
@@ -57,6 +58,7 @@ interface CalculatePoolMetricsParams {
 
 export default function useCalculatePoolMetrics() {
   const { mutateAsync: priceVoucherFn } = useQuerySyOutDryRun()
+  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
   const calculateMetrics = async ({
     coinInfo,
@@ -69,6 +71,8 @@ export default function useCalculatePoolMetrics() {
     if (!marketState) {
       throw new Error("Please provide market state")
     }
+
+    const conversionRate = await getConversionRate(coinInfo)
 
     let ptIn = "1000000"
     let syOut: string
@@ -87,12 +91,12 @@ export default function useCalculatePoolMetrics() {
     )
     const ytPrice = safeDivide(
       new Decimal(coinInfo.coinPrice),
-      coinInfo.conversionRate,
+      conversionRate,
       "decimal",
     ).sub(ptPrice)
     const suiCoinPrice = safeDivide(
       coinInfo.coinPrice,
-      coinInfo.conversionRate,
+      conversionRate,
       "decimal",
     )
 

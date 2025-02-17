@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient } from "@nemoprotocol/wallet-kit"
-import type { CoinConfig } from "@/queries/types/market"
+import type { BaseCoinInfo } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
 import { getPriceVoucher } from "@/lib/txHelper"
@@ -15,7 +15,6 @@ type DryRunResult<T extends boolean> = T extends true
   : string
 
 export default function useGetConversionRateDryRun<T extends boolean = false>(
-  coinConfig?: CoinConfig,
   debug: T = false as T,
 ) {
   const client = useSuiClient()
@@ -23,7 +22,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
   const address = DEFAULT_Address
 
   return useMutation({
-    mutationFn: async (): Promise<DryRunResult<T>> => {
+    mutationFn: async (coinConfig?: BaseCoinInfo): Promise<DryRunResult<T>> => {
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }

@@ -1,8 +1,9 @@
 import Decimal from "decimal.js"
 import { MarketState } from "./types"
 import { useQuery } from "@tanstack/react-query"
-import { BaseCoinInfo } from "@/queries/types/market"
+import { CoinConfig } from "@/queries/types/market"
 import useQuerySyOutDryRun from "@/hooks/dryrun/useQuerySyOutDryRun.ts"
+import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
 import { safeDivide } from "@/lib/utils"
 
 interface PtYtRatioResult {
@@ -21,13 +22,12 @@ interface PtYtRatioResult {
   lpPrice: string
 }
 
-function validateCoinInfo(coinInfo: BaseCoinInfo) {
+function validateCoinInfo(coinInfo: CoinConfig) {
   const requiredFields = [
     "decimal",
     "maturity",
     "marketStateId",
     "underlyingApy",
-    "conversionRate",
     "underlyingPrice",
     "coinPrice",
     "swapFeeForLpHolder",
@@ -50,10 +50,11 @@ function validateCoinInfo(coinInfo: BaseCoinInfo) {
 }
 
 export function useCalculatePtYt(
-  coinInfo?: BaseCoinInfo,
+  coinInfo?: CoinConfig,
   marketState?: MarketState,
 ) {
   const { mutateAsync: priceVoucherFun } = useQuerySyOutDryRun()
+  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
   return useQuery<PtYtRatioResult>({
     queryKey: ["useCalculatePtYt", coinInfo?.marketStateId],
@@ -85,6 +86,8 @@ export function useCalculatePtYt(
         }
       }
 
+      const conversionRate = await getConversionRate(coinInfo)
+
       let ptIn = "1000000"
       let syOut: string
 
@@ -95,23 +98,32 @@ export function useCalculatePtYt(
         syOut = await priceVoucherFun({ ptIn, coinInfo })
       }
 
+      console.log("syOut", syOut)
+      console.log("ptIn", ptIn)
+
       const ptPrice = safeDivide(
         new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
         ptIn,
         "decimal",
       )
 
+      console.log("ptPrice", ptPrice.toString())
+
       const ytPrice = safeDivide(
         new Decimal(coinInfo.coinPrice),
-        coinInfo.conversionRate,
+        conversionRate,
         "decimal",
       ).sub(ptPrice)
 
-      const suiPrice = safeDivide(
+      console.log("ytPrice", ytPrice.toString())
+
+      const underlyingPrice = safeDivide(
         coinInfo.coinPrice,
-        coinInfo.conversionRate,
+        conversionRate,
         "decimal",
       )
+
+      console.log("underlyingPrice", underlyingPrice.toString())
 
       let poolApy = new Decimal(0)
       let tvl = new Decimal(0)
@@ -125,7 +137,7 @@ export function useCalculatePtYt(
         .toNumber()
 
       const ptApy = calculatePtAPY(
-        Number(suiPrice),
+        Number(underlyingPrice),
         Number(ptPrice),
         daysToExpiry,
       )

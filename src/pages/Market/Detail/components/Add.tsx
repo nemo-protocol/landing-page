@@ -175,16 +175,17 @@ export default function SingleCoin() {
     return ["0", "0"]
   }, [ptYtData])
 
-  const { mutateAsync: getConversionRate } =
-    useGetConversionRateDryRun(coinConfig)
+  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
   useEffect(() => {
     async function initConversionRate() {
-      const rate = await getConversionRate()
+      const rate = await getConversionRate(coinConfig)
       setConversionRate(rate)
     }
-    initConversionRate()
-  }, [getConversionRate])
+    if (coinConfig) {
+      initConversionRate()
+    }
+  }, [getConversionRate, coinConfig])
 
   const { isLoading } = useInputLoadingState(
     addValue,

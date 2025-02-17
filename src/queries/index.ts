@@ -244,7 +244,7 @@ export function useCoinInfoList<T extends boolean = true>(
 
           try {
             const metrics = await calculateMetrics({
-              coinInfo,
+              coinInfo ,
               marketState,
             })
 

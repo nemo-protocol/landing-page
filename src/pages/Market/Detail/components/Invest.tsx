@@ -161,7 +161,7 @@ export default function Invest() {
   const { mutateAsync: getApproxPtOut } = useGetApproxPtOutDryRun(coinConfig)
 
   const { mutateAsync: getConversionRate } =
-    useGetConversionRateDryRun(coinConfig)
+    useGetConversionRateDryRun()
 
   const { data: initPtRatio } = useQueryPtRatio(coinConfig, "1000")
 
@@ -178,7 +178,7 @@ export default function Invest() {
         ) {
           setIsCalcPtLoading(true)
           try {
-            const rate = await getConversionRate()
+            const rate = await getConversionRate(coinConfig)
             setConversionRate(rate)
             const swapAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
 
@@ -284,7 +284,7 @@ export default function Invest() {
     async function initRatio() {
       try {
         setIsInitRatioLoading(true)
-        const rate = await getConversionRate()
+        const rate = await getConversionRate(coinConfig)
         setConversionRate(rate)
         // const initialRatio = await calculateRatio(tokenType === 0 ? rate : "1")
         // setIn(initialRatio)
@@ -319,7 +319,7 @@ export default function Invest() {
       try {
         setIsSwapping(true)
         const tx = new Transaction()
-        const rate = await getConversionRate()
+        const rate = await getConversionRate(coinConfig)
         setConversionRate(rate)
         const swapAmount = new Decimal(swapValue).mul(10 ** decimal).toFixed(0)
         const syAmount = new Decimal(swapAmount)
