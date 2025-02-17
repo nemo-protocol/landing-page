@@ -284,15 +284,15 @@ export const formatLargeNumber = (
       return "∞"
     }
 
-    if (abs.lessThan(1000)) {
+    if (abs.lessThan(1000000)) {
       return formatDecimalValue(num, decimals)
     }
 
-    const suffixes = ["", "K", "M", "B", "T"]
-    const magnitude = Math.min(Math.floor(abs.log(1000).toNumber()), 4)
+    const suffixes = ["", "M", "B", "T"]
+    const magnitude = Math.min(Math.floor(abs.log(1000000).toNumber()), 3)
 
     return formatDecimalValue(
-      num.div(new Decimal(1000).pow(magnitude)),
+      num.div(new Decimal(1000000).pow(magnitude)),
       decimals,
     ).concat(suffixes[magnitude])
   } catch {
