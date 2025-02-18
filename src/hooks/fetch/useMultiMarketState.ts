@@ -124,8 +124,6 @@ const useMultiMarketState = () => {
         fetchTokenInfo(),
       ])
 
-      console.log("marketStates", marketStates, "tokenInfo", tokenInfo)
-
       return marketStateIds.reduce(
         (acc, marketStateId, index) => {
           const item = marketStates[index]

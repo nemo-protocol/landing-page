@@ -273,6 +273,7 @@ export default function Sell() {
         setStatus("Success")
 
         await refreshData()
+        await refreshPtYt()
       } catch (errorMsg) {
         console.log("tx error", errorMsg)
         setOpen(true)
@@ -298,7 +299,10 @@ export default function Sell() {
 
   const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketState)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(
+    coinConfig,
+    marketState,
+  )
 
   const price = useMemo(
     () =>

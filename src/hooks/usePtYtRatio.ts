@@ -1,8 +1,7 @@
 import { MarketState } from "./types"
 import { useQuery } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import { PoolMetricsResult } from "./usePoolMetrics"
-import { usePoolMetrics } from "./usePoolMetrics"
+import { usePoolMetrics, PoolMetricsResult } from "./usePoolMetrics"
 
 function validateCoinInfo(coinInfo: CoinConfig) {
   const requiredFields = [
@@ -37,7 +36,7 @@ export function useCalculatePtYt(
 ) {
   const mutation = usePoolMetrics()
 
-  return useQuery<PoolMetricsResult>({
+  const query = useQuery<PoolMetricsResult>({
     queryKey: ["useCalculatePtYt", coinInfo?.marketStateId],
     queryFn: async () => {
       if (!coinInfo) {
@@ -56,4 +55,18 @@ export function useCalculatePtYt(
     },
     enabled: !!coinInfo?.decimal && !!marketState,
   })
+
+  const refresh = async () => {
+    if (coinInfo && marketState) {
+      return await mutation.refresh({
+        coinInfo,
+        marketState,
+      })
+    }
+  }
+
+  return {
+    ...query,
+    refresh,
+  }
 }

@@ -156,7 +156,7 @@ export default function SingleCoin() {
     [coinBalance, addValue],
   )
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(coinConfig, marketStateData)
   const [ptRatio, syRatio] = useMemo(() => {
     if (
       ptYtData?.ptTvl &&
@@ -620,6 +620,8 @@ export default function SingleCoin() {
         setStatus("Success")
 
         await refreshData()
+        await refreshPtYt()
+
       } catch (errorMsg) {
         setStatus("Failed")
         const { error: msg, detail } = parseErrorMessage(

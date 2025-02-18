@@ -154,7 +154,7 @@ export default function Invest() {
   const { mutateAsync: swapExactSyForPtDryRun } =
     useSwapExactSyForPtDryRun(coinConfig)
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(coinConfig, marketStateData)
 
   const { mutateAsync: calculateRatio } = useInvestRatio(coinConfig)
 
@@ -383,6 +383,8 @@ export default function Invest() {
         setSwapValue("")
 
         await refreshData()
+        await refreshPtYt()
+
       } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")

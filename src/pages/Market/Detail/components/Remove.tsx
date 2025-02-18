@@ -52,7 +52,7 @@ export default function Remove() {
 
   const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketState)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(coinConfig, marketState)
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
   const { mutateAsync: swapExactPtForSyDryRun } =
@@ -177,6 +177,7 @@ export default function Remove() {
         setStatus("Success")
 
         await refreshData()
+        await refreshPtYt()
       } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")

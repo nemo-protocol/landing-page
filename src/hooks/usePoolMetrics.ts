@@ -1,10 +1,10 @@
 import Decimal from "decimal.js"
 import { MarketState } from "./types"
 import { CoinConfig } from "@/queries/types/market"
-import { safeDivide } from "@/lib/utils"
+import { useMutation } from "@tanstack/react-query"
+import { isValidAmount, safeDivide } from "@/lib/utils"
 import useQuerySyOutDryRun from "./dryrun/useQuerySyOutDryRun"
 import useGetConversionRateDryRun from "./dryrun/useGetConversionRateDryRun"
-import { useMutation } from "@tanstack/react-query"
 
 export interface PoolMetricsResult {
   ptApy: string
@@ -20,7 +20,6 @@ export interface PoolMetricsResult {
   poolApy: string
   swapFeeApy: string
   lpPrice: string
-  timestamp: number
 }
 
 interface CalculatePoolMetricsParams {
@@ -30,18 +29,25 @@ interface CalculatePoolMetricsParams {
 
 const METRICS_CACHE_EXPIRY_TIME = 60 * 1000 // Cache expiration time: 1 minute
 
-const getMetricsFromCache = (marketStateId: string): PoolMetricsResult | null => {
+interface CachedData {
+  data: PoolMetricsResult
+  timestamp: number
+}
+
+const getMetricsFromCache = (
+  marketStateId: string,
+): PoolMetricsResult | null => {
   try {
     const cachedData = localStorage.getItem(`metrics_cache_${marketStateId}`)
     if (!cachedData) return null
-    
-    const parsedData = JSON.parse(cachedData) as PoolMetricsResult
+
+    const parsedData = JSON.parse(cachedData) as CachedData
     const now = Date.now()
-    
+
     if (now - parsedData.timestamp <= METRICS_CACHE_EXPIRY_TIME) {
-      return parsedData
+      return parsedData.data
     }
-    
+
     localStorage.removeItem(`metrics_cache_${marketStateId}`)
     return null
   } catch (error) {
@@ -52,9 +58,24 @@ const getMetricsFromCache = (marketStateId: string): PoolMetricsResult | null =>
 
 const saveMetricsToCache = (marketStateId: string, data: PoolMetricsResult) => {
   try {
-    localStorage.setItem(`metrics_cache_${marketStateId}`, JSON.stringify(data))
+    const cacheData: CachedData = {
+      data,
+      timestamp: Date.now(),
+    }
+    localStorage.setItem(
+      `metrics_cache_${marketStateId}`,
+      JSON.stringify(cacheData),
+    )
   } catch (error) {
     console.error("Error saving to cache:", error)
+  }
+}
+
+export const clearMetricsCache = (marketStateId: string) => {
+  try {
+    localStorage.removeItem(`metrics_cache_${marketStateId}`)
+  } catch (error) {
+    console.error("Error clearing cache:", error)
   }
 }
 
@@ -104,7 +125,7 @@ export function usePoolMetrics() {
   const { mutateAsync: priceVoucherFn } = useQuerySyOutDryRun()
   const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async ({
       coinInfo,
       marketState,
@@ -115,14 +136,8 @@ export function usePoolMetrics() {
         return cachedResult
       }
 
-      console.log(
-        "coinInfo no cache",
-        coinInfo.marketStateId,
-        coinInfo.coinType,
-      )
-
       // If lpSupply is 0, return zero values without making RPC calls
-      if (marketState.lpSupply === "0") {
+      if (!isValidAmount(marketState.lpSupply)) {
         const zeroResult: PoolMetricsResult = {
           ptPrice: "0",
           ytPrice: "0",
@@ -137,7 +152,6 @@ export function usePoolMetrics() {
           syTvl: "0",
           swapFeeApy: "0",
           lpPrice: "0",
-          timestamp: Date.now(),
         }
         saveMetricsToCache(coinInfo.marketStateId, zeroResult)
         return zeroResult
@@ -160,6 +174,7 @@ export function usePoolMetrics() {
         conversionRate,
         "decimal",
       )
+
       const ptPrice = safeDivide(
         new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
         ptIn,
@@ -251,7 +266,6 @@ export function usePoolMetrics() {
           .div(marketState.lpSupply)
           .mul(10 ** Number(coinInfo.decimal))
           .toString(),
-        timestamp: Date.now(),
       }
 
       // Save to cache
@@ -260,4 +274,15 @@ export function usePoolMetrics() {
       return result
     },
   })
+
+  // Add refresh method that clears cache before mutation
+  const refresh = async (params: CalculatePoolMetricsParams) => {
+    clearMetricsCache(params.coinInfo.marketStateId)
+    return mutation.mutateAsync(params)
+  }
+
+  return {
+    ...mutation,
+    refresh,
+  }
 }

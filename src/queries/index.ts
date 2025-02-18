@@ -2,7 +2,7 @@ import { nemoApi } from "./request"
 import { MarketState } from "@/hooks/types"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { useQuery, UseQueryResult, useMutation } from "@tanstack/react-query"
-import { handleInfinityValues, isValidAmount } from "@/lib/utils"
+import { handleInfinityValues } from "@/lib/utils"
 import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
 import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
 import {
@@ -227,24 +227,10 @@ export function useCoinInfoList<T extends boolean = true>(
       const results = await Promise.all(
         coinList.map(async (coinInfo) => {
           const marketState = marketStates?.[coinInfo.marketStateId]
-          if (!isValidAmount(marketState?.lpSupply))
-            return {
-              ...coinInfo,
-              ptPrice: "0",
-              ytPrice: "0",
-              ptApy: "0",
-              ytApy: "0",
-              tvl: "0",
-              poolApy: "0",
-              ptTvl: "0",
-              syTvl: "0",
-              marketState,
-              feeApy: "0",
-            }
 
           try {
             const metrics = await calculateMetrics({
-              coinInfo ,
+              coinInfo,
               marketState,
             })
 
