@@ -68,10 +68,11 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
           ? safeDivide(addAmount, conversionRate, "decimal").toFixed(0)
           : addAmount
 
-      const [ptValue, moveCallInfo] = await addLiquiditySinglePtDryRun({
-        netSyIn: syAmount,
-        coinData,
-      })
+      const [ptValue, addLiquiditySinglePtMoveCall] =
+        await addLiquiditySinglePtDryRun({
+          netSyIn: syAmount,
+          coinData,
+        })
 
       const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
         tx,
@@ -117,8 +118,10 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
 
       const [lpPositions, lpPositionsDebugInfo] = await fetchLpPositions()
 
+      console.log("lpPositions", lpPositions)
+
       debugInfo.moveCall = [
-        ...moveCallInfo.moveCall,
+        ...addLiquiditySinglePtMoveCall.moveCall,
         priceVoucherMoveCall,
         addLiquidityMoveCall,
         ...lpPositionsDebugInfo.moveCall,
@@ -133,7 +136,7 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
 
       tx.transferObjects([mergedPosition], address)
 
-      if (debug) {
+      if (!debug) {
         debugLog("add_liquidity_single_sy debugInfo:", debugInfo)
       }
 
