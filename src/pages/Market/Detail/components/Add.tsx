@@ -464,7 +464,7 @@ export default function SingleCoin() {
     })
 
     const yieldToken = redeemSyCoin(tx, coinConfig, remainingSyCoin)
-    const [lpPositions] = await fetchLpPositions()
+    const lpPositions = await fetchLpPositions()
     const mergedPosition = mergeAllLpPositions(
       tx,
       coinConfig,

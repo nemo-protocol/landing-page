@@ -68,16 +68,15 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
           ? safeDivide(addAmount, conversionRate, "decimal").toFixed(0)
           : addAmount
 
-      console.log("syAmount", syAmount)
-
       const [ptValue, moveCallInfo] = await addLiquiditySinglePtDryRun({
         netSyIn: syAmount,
         coinData,
       })
 
-      console.log("ptValue", ptValue)
-
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
+        tx,
+        coinConfig,
+      )
 
       const addLiquidityMoveCall = {
         target: `${coinConfig.nemoContractId}::router::add_liquidity_single_sy`,
@@ -99,10 +98,6 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
         typeArguments: [coinConfig.syCoinType],
       }
 
-      debugInfo.moveCall = [...moveCallInfo.moveCall, addLiquidityMoveCall]
-
-      console.log("debugInfo", debugInfo)
-
       const [mp] = tx.moveCall({
         target: addLiquidityMoveCall.target,
         arguments: [
@@ -120,7 +115,14 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
         typeArguments: addLiquidityMoveCall.typeArguments,
       })
 
-      const [lpPositions] = await fetchLpPositions()
+      const [lpPositions, lpPositionsDebugInfo] = await fetchLpPositions()
+
+      debugInfo.moveCall = [
+        ...moveCallInfo.moveCall,
+        priceVoucherMoveCall,
+        addLiquidityMoveCall,
+        ...lpPositionsDebugInfo.moveCall,
+      ]
 
       const mergedPosition = mergeAllLpPositions(
         tx,

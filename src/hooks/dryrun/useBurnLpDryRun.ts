@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo, LpPosition, PyPosition } from "../types"
+import type { DebugInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchLpPosition from "../useFetchLpPosition"
 import useFetchPyPosition from "../useFetchPyPosition"
@@ -36,7 +36,7 @@ export default function useBurnLpDryRun(
         throw new Error("Please select a pool")
       }
 
-      const [marketPositions] = (await fetchLpPositionAsync()) as [LpPosition[]]
+      const marketPositions = await fetchLpPositionAsync()
       const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
 
       if (!marketPositions?.length) {
