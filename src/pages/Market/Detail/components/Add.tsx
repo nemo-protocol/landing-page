@@ -50,11 +50,12 @@ import {
 import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
 import useMintLpDryRun from "@/hooks/dryrun/useMintLpDryRun"
-import useAddLiquiditySingleSyDryRun from "@/hooks/dryrun/useAddLiquiditySingleSyDryRun"
+import useAddLiquiditySingleSyDryRun from "@/hooks/dryrun/lp/useAddLiquiditySingleSyDryRun"
 import useSeedLiquidityDryRun from "@/hooks/dryrun/useSeedLiquidityDryRun"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import type { CoinData } from "@/hooks/useCoinData"
 import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
+import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -86,6 +87,9 @@ export default function SingleCoin() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
+
+  const { mutateAsync: handleAddLiquiditySingleSy } =
+    useAddLiquiditySingleSy(coinConfig)
 
   const { data: pyPositionData, refetch: refetchPyPosition } =
     usePyPositionData(
@@ -156,7 +160,10 @@ export default function SingleCoin() {
     [coinBalance, addValue],
   )
 
-  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(coinConfig, marketStateData)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(
+    coinConfig,
+    marketStateData,
+  )
   const [ptRatio, syRatio] = useMemo(() => {
     if (
       ptYtData?.ptTvl &&
@@ -467,73 +474,6 @@ export default function SingleCoin() {
     tx.transferObjects([yieldToken, mergedPosition], address)
   }
 
-  async function handleAddLiquiditySingleSy(
-    tx: Transaction,
-    addAmount: string,
-    tokenType: number,
-    coinConfig: CoinConfig,
-    coinData: CoinData[],
-    coinType: string,
-    pyPosition: TransactionArgument,
-    address: string,
-    minLpAmount: string,
-  ): Promise<void> {
-    const [splitCoin] =
-      tokenType === 0
-        ? mintSCoin(tx, coinConfig, coinData, [addAmount])
-        : splitCoinHelper(tx, coinData, [addAmount], coinType)
-
-    const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
-
-    const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-
-    const [ptValue] = await addLiquiditySingleSyDryRun({
-      addAmount,
-      tokenType,
-      coinData,
-      pyPositions: pyPositionData,
-    })
-
-    const addLiquidityMoveCall = {
-      target: `${coinConfig.nemoContractId}::router::add_liquidity_single_sy`,
-      arguments: [
-        coinConfig.version,
-        syCoin,
-        ptValue,
-        minLpAmount,
-        priceVoucher,
-        pyPosition,
-        coinConfig.pyStateId,
-        coinConfig.marketFactoryConfigId,
-        coinConfig.marketStateId,
-        "0x6",
-      ],
-      typeArguments: [coinConfig.syCoinType],
-    }
-
-    debugLog("add_liquidity_single_sy move call:", addLiquidityMoveCall)
-
-    const [mp] = tx.moveCall({
-      ...addLiquidityMoveCall,
-      arguments: [
-        tx.object(coinConfig.version),
-        syCoin,
-        tx.pure.u64(ptValue),
-        tx.pure.u64(minLpAmount),
-        priceVoucher,
-        pyPosition,
-        tx.object(coinConfig.pyStateId),
-        tx.object(coinConfig.marketFactoryConfigId),
-        tx.object(coinConfig.marketStateId),
-        tx.object("0x6"),
-      ],
-    })
-
-    const [lpPositions] = await fetchLpPositions()
-    const mergedPosition = mergeAllLpPositions(tx, coinConfig, lpPositions, mp)
-    tx.transferObjects([mergedPosition], address)
-  }
-
   async function add() {
     if (
       decimal &&
@@ -542,6 +482,7 @@ export default function SingleCoin() {
       slippage &&
       lpAmount &&
       coinConfig &&
+      conversionRate &&
       marketStateData &&
       coinData?.length &&
       !insufficientBalance
@@ -565,8 +506,6 @@ export default function SingleCoin() {
           .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
-
-        debugLog("minLpAmount", minLpAmount)
 
         if (marketStateData.lpSupply === "0") {
           await handleSeedLiquidity(
@@ -595,17 +534,18 @@ export default function SingleCoin() {
             minLpAmount,
           )
         } else {
-          await handleAddLiquiditySingleSy(
+          await handleAddLiquiditySingleSy({
             tx,
+            address,
+            coinType,
+            coinData,
             addAmount,
             tokenType,
-            coinConfig,
-            coinData,
-            coinType,
             pyPosition,
-            address,
+            coinConfig,
             minLpAmount,
-          )
+            conversionRate,
+          })
         }
 
         if (created) {
@@ -621,7 +561,6 @@ export default function SingleCoin() {
 
         await refreshData()
         await refreshPtYt()
-
       } catch (errorMsg) {
         setStatus("Failed")
         const { error: msg, detail } = parseErrorMessage(

@@ -1,13 +1,13 @@
-import { ContractError } from "../types"
-import type { DebugInfo } from "../types"
+import { debugLog } from "@/config"
+import { bcs } from "@mysten/sui/bcs"
+import { ContractError } from "../../types"
+import type { DebugInfo } from "../../types"
+import { getPriceVoucher } from "@/lib/txHelper"
 import { useMutation } from "@tanstack/react-query"
 import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { bcs } from "@mysten/sui/bcs"
-import { getPriceVoucher } from "@/lib/txHelper"
-import { debugLog } from "@/config"
 
 interface AddLiquiditySinglePtParams {
   netSyIn: string
@@ -42,7 +42,7 @@ export default function useAddLiquiditySinglePtDryRun<
       const tx = new Transaction()
       tx.setSender(address)
 
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, priceVoucherInfo] = getPriceVoucher(tx, coinConfig)
 
       const moveCallInfo = {
         target: `${coinConfig.nemoContractId}::offchain::single_liquidity_add_pt_out`,
@@ -61,10 +61,8 @@ export default function useAddLiquiditySinglePtDryRun<
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
+        moveCall: [priceVoucherInfo, moveCallInfo],
       }
-
-      debugLog("single_liquidity_add_pt_out move call:", moveCallInfo)
 
       tx.moveCall({
         target: moveCallInfo.target,
@@ -87,28 +85,28 @@ export default function useAddLiquiditySinglePtDryRun<
         }),
       })
 
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
-      }
-
-      console.log("result", result)
+      debugInfo.rawResult = result
 
       if (!result?.results?.[1]?.returnValues?.[0]) {
         const message = "Failed to get pt value"
-        debugInfo.rawResult.error = message
+        if (debugInfo.rawResult) {
+          debugInfo.rawResult.error = message
+        }
+        debugLog("single_liquidity_add_pt_out error:", debugInfo)
         throw new ContractError(message, debugInfo)
       }
 
-      const ptValue = bcs.U64.parse(
+      const ptAmount = bcs.U64.parse(
         new Uint8Array(result.results[1].returnValues[0][0]),
       )
 
-      console.log("ptValue", ptValue)
+      debugInfo.parsedOutput = ptAmount
 
-      debugInfo.parsedOutput = ptValue
+      if (!debug) {
+        debugLog("single_liquidity_add_pt_out debugInfo:", debugInfo)
+      }
 
-      return (debug ? [ptValue, debugInfo] : ptValue) as DryRunResult<T>
+      return (debug ? [ptAmount, debugInfo] : ptAmount) as DryRunResult<T>
     },
   })
 }

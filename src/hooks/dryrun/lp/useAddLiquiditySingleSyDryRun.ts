@@ -1,18 +1,14 @@
-import { ContractError } from "../types"
-import type { DebugInfo } from "../types"
+import Decimal from "decimal.js"
+import { bcs } from "@mysten/sui/bcs"
+import { ContractError } from "../../types"
 import { useMutation } from "@tanstack/react-query"
 import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
+import type { DebugInfo, PyPosition } from "../../types"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import useFetchPyPosition from "../useFetchPyPosition"
-import type { PyPosition } from "../types"
-import { bcs } from "@mysten/sui/bcs"
-import {
-  getPriceVoucher,
-  initPyPosition,
-} from "@/lib/txHelper"
-import Decimal from "decimal.js"
+import useFetchPyPosition from "../../useFetchPyPosition"
+import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 
 interface AddLiquiditySingleSyParams {
   addAmount: string
@@ -64,31 +60,16 @@ export default function useAddLiquiditySingleSyDryRun<
         pyPosition = tx.object(pyPositions[0].id)
       }
 
-      // const [splitCoin] =
-      //   tokenType === 0
-      //     ? mintSCoin(tx, coinConfig, coinData, [addAmount])
-      //     : splitCoinHelper(tx, coinData, [addAmount], coinConfig.coinType)
-
-      // const syCoin = depositSyCoin(
-      //   tx,
-      //   coinConfig,
-      //   splitCoin,
-      //   coinConfig.coinType,
-      // )
-
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
+        tx,
+        coinConfig,
+      )
 
       const moveCallInfo = {
         target: `${coinConfig.nemoContractId}::router::get_lp_out_for_single_sy_in`,
         arguments: [
-          // { name: "version", value: coinConfig.version },
           { name: "sy_coin_in", value: addAmount },
-          // { name: "min_lp_amount", value: "0" },
           { name: "price_voucher", value: "priceVoucher" },
-          // {
-          //   name: "py_position",
-          //   value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
-          // },
           { name: "py_state", value: coinConfig.pyStateId },
           {
             name: "market_factory_config",
@@ -101,7 +82,7 @@ export default function useAddLiquiditySingleSyDryRun<
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
+        moveCall: [priceVoucherMoveCall, moveCallInfo],
       }
 
       tx.moveCall({
@@ -109,7 +90,6 @@ export default function useAddLiquiditySingleSyDryRun<
         arguments: [
           tx.pure.u64(addAmount),
           priceVoucher,
-          // pyPosition,
           tx.object(coinConfig.pyStateId),
           tx.object(coinConfig.marketFactoryConfigId),
           tx.object(coinConfig.marketStateId),
@@ -129,6 +109,7 @@ export default function useAddLiquiditySingleSyDryRun<
           onlyTransactionKind: true,
         }),
       })
+
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
@@ -147,7 +128,10 @@ export default function useAddLiquiditySingleSyDryRun<
       const fee = bcs.U128.parse(
         new Uint8Array(result.results[1].returnValues[1][0]),
       )
-      const formattedFee = new Decimal(fee).div(2 ** 64).div(10 ** Number(coinConfig.decimal)).toString()
+      const formattedFee = new Decimal(fee)
+        .div(2 ** 64)
+        .div(10 ** Number(coinConfig.decimal))
+        .toString()
 
       const lpAmount = new Decimal(outputAmount.toString())
         .div(10 ** Number(coinConfig.decimal))
@@ -155,7 +139,9 @@ export default function useAddLiquiditySingleSyDryRun<
 
       debugInfo.parsedOutput = lpAmount
 
-      return (debug ? [lpAmount, debugInfo] : [lpAmount, formattedFee]) as DryRunResult<T>
+      return (
+        debug ? [lpAmount, debugInfo] : [lpAmount, formattedFee]
+      ) as DryRunResult<T>
     },
   })
 }

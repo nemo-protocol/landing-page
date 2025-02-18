@@ -926,7 +926,10 @@ export const mergeAllLpPositions = (
   marketPosition: TransactionArgument,
 ) => {
   debugLog("mergeAllLpPositions params:", {
+    tx,
+    coinConfig,
     lpPositions,
+    marketPosition,
   })
 
   if (lpPositions.length === 0) {
