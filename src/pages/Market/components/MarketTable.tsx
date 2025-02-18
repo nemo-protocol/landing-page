@@ -145,19 +145,19 @@ const MarketTable = ({ list }: MarketTableProps) => {
                     className="bg-[#1B202A] text-white border-none p-4 relative rounded-xl w-[312px]"
                   >
                     <div className="flex flex-col gap-4">
-                      <div className="flex flex-row items-start justify-between">
-                        <span className="text-sm text-left">Points</span>
-                        <div className="flex flex-col items-end gap-1.5">
-                          <span className="font-mono text-xs">
-                            {item.perPoints
-                              ? `${formatLargeNumber(item.perPoints, 6)}`
-                              : "--"}
-                          </span>
-                          <span className="text-[#96A9E4] text-xs">
-                            per LP per day
-                          </span>
+                      {item.perPoints && (
+                        <div className="flex flex-row items-start justify-between">
+                          <span className="text-sm text-left">Points</span>
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span className="font-mono text-xs">
+                              {formatLargeNumber(item.perPoints, 6)}
+                            </span>
+                            <span className="text-[#96A9E4] text-xs">
+                              per LP per day
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-left">Scaled</div>
                         <div className="relative flex flex-row gap-2">
@@ -170,8 +170,8 @@ const MarketTable = ({ list }: MarketTableProps) => {
                               </span>
                             </div>
                             <span className="font-mono text-xs">
-                              {item.scaled_pt_apy
-                                ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%`
+                              {item.scaledPtApy
+                                ? `${formatLargeNumber(item.scaledPtApy, 6)}%`
                                 : "--"}
                             </span>
                           </div>
@@ -185,8 +185,8 @@ const MarketTable = ({ list }: MarketTableProps) => {
                               </span>
                             </div>
                             <span className="font-mono text-xs">
-                              {item.scaled_underlying_apy
-                                ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%`
+                              {item.scaledUnderlyingApy
+                                ? `${formatLargeNumber(item.scaledUnderlyingApy, 6)}%`
                                 : "--"}
                             </span>
                           </div>

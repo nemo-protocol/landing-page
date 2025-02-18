@@ -151,19 +151,19 @@ const MarketItem = ({ item }: MarketItemProps) => {
                 className="bg-[#1B202A] text-white border-none p-4 relative rounded-xl w-[312px]"
               >
                 <div className="flex flex-col gap-4">
-                  <div className="flex flex-row items-start justify-between">
-                    <span className="text-sm text-left">Points</span>
-                    <div className="flex flex-col items-end gap-1.5">
-                      <span className="font-mono text-xs">
-                        {item.perPoints
-                          ? `${formatLargeNumber(item.perPoints, 6)}`
-                          : "--"}
-                      </span>
-                      <span className="text-[#96A9E4] text-xs">
-                        per LP per day
-                      </span>
+                  {item.perPoints && (
+                    <div className="flex flex-row items-start justify-between">
+                      <span className="text-sm text-left">Points</span>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <span className="font-mono text-xs">
+                          {formatLargeNumber(item.perPoints, 6)}
+                        </span>
+                        <span className="text-[#96A9E4] text-xs">
+                          per LP per day
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className="flex flex-col gap-2">
                     <div className="text-sm text-left">Scaled</div>
                     <div className="relative flex flex-row gap-2">
