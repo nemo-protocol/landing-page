@@ -74,7 +74,7 @@ function calculatePtAPY(
 
 function calculateYtAPY(
   underlyingInterestApy: number,
-  ytPrice: number,
+  ytPriceInAsset: number,
   yearsToExpiry: number,
 ): Decimal {
   if (yearsToExpiry <= 0) {
@@ -94,8 +94,7 @@ function calculateYtAPY(
   const ytReturns = interestReturns.plus(rewardsReturns)
 
   const ytReturnsAfterFee = ytReturns.mul(0.97)
-
-  return safeDivide(ytReturnsAfterFee, ytPrice, "decimal")
+  return safeDivide(ytReturnsAfterFee, ytPriceInAsset, "decimal")
     .pow(new Decimal(1).div(yearsToExpiryDecimal))
     .minus(1)
     .mul(100)
@@ -156,7 +155,11 @@ export function usePoolMetrics() {
         ptIn = "100"
         syOut = await priceVoucherFn({ ptIn, coinInfo })
       }
-
+      const underlyingPrice = safeDivide(
+        coinInfo.coinPrice,
+        conversionRate,
+        "decimal",
+      )
       const ptPrice = safeDivide(
         new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
         ptIn,
@@ -167,11 +170,6 @@ export function usePoolMetrics() {
         conversionRate,
         "decimal",
       ).sub(ptPrice)
-      const underlyingPrice = safeDivide(
-        coinInfo.coinPrice,
-        conversionRate,
-        "decimal",
-      )
 
       // Calculate metrics
       let poolApy = new Decimal(0)
@@ -200,7 +198,7 @@ export function usePoolMetrics() {
 
       const ytApy = calculateYtAPY(
         Number(coinInfo.underlyingApy),
-        Number(ytPrice),
+        safeDivide(ytPrice, coinInfo.underlyingPrice, "number"),
         yearsToExpiry,
       )
 

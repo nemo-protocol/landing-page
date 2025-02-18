@@ -1003,8 +1003,8 @@ export default function SingleCoin() {
                     <div className="flex justify-between items-center text-white/60">
                       <span>Scaled Underlying APY</span>
                       <span>
-                        {coinConfig?.underlyingApy
-                          ? `${new Decimal(coinConfig.underlyingApy).mul(syRatio).toFixed(6)} %`
+                        {ptYtData?.scaledUnderlyingApy
+                          ? `${new Decimal(ptYtData.scaledUnderlyingApy).toFixed(6)} %`
                           : "--"}
                       </span>
                     </div>
