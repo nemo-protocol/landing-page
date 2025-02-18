@@ -174,8 +174,8 @@ const MarketItem = ({ item }: MarketItemProps) => {
                           <span className="text-[#96A9E4] text-xs">PT APY</span>
                         </div>
                         <span className="font-mono text-xs">
-                          {item.scaled_pt_apy
-                            ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%`
+                          {item.scaledPtApy
+                            ? `${formatLargeNumber(item.scaledPtApy, 6)}%`
                             : "--"}
                         </span>
                       </div>
@@ -189,8 +189,8 @@ const MarketItem = ({ item }: MarketItemProps) => {
                           </span>
                         </div>
                         <span className="font-mono text-xs">
-                          {item.scaled_underlying_apy
-                            ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%`
+                          {item.scaledUnderlyingApy
+                            ? `${formatLargeNumber(item.scaledUnderlyingApy, 6)}%`
                             : "--"}
                         </span>
                       </div>
