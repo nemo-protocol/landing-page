@@ -154,14 +154,16 @@ export default function Invest() {
   const { mutateAsync: swapExactSyForPtDryRun } =
     useSwapExactSyForPtDryRun(coinConfig)
 
-  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(coinConfig, marketStateData)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(
+    coinConfig,
+    marketStateData,
+  )
 
   const { mutateAsync: calculateRatio } = useInvestRatio(coinConfig)
 
   const { mutateAsync: getApproxPtOut } = useGetApproxPtOutDryRun(coinConfig)
 
-  const { mutateAsync: getConversionRate } =
-    useGetConversionRateDryRun()
+  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
   const { data: initPtRatio } = useQueryPtRatio(coinConfig, "1000")
 
@@ -192,6 +194,15 @@ export default function Invest() {
               tradeFee,
               syAmount: newSyAmount,
             } = await queryPtOut(syAmount)
+
+            console.log(
+              "syValue",
+              syValue,
+              "ptValue",
+              ptValue,
+              "underlying value",
+              new Decimal(syValue).mul(tokenType === 0 ? rate : 1).toString(),
+            )
 
             setSyValue(syValue)
 
@@ -224,9 +235,18 @@ export default function Invest() {
                   swapAmount: actualSwapAmount,
                 })
 
-                const ptRatio = new Decimal(ptValue)
-                  .div(syValue)
-                  .mul(tokenType === 0 ? rate : 1)
+                const ptRatio = new Decimal(ptValue).div(syValue)
+
+                console.log(
+                  "show rate calc ptRatio",
+                  ptRatio.toString(),
+                  "syValue",
+                  syValue,
+                  "ptValue",
+                  ptValue,
+                )
+
+                // .mul(tokenType === 0 ? rate : 1)
                 setPtRatio(ptRatio)
                 setPtValue(newPtValue)
               } else {
@@ -384,7 +404,6 @@ export default function Invest() {
 
         await refreshData()
         await refreshPtYt()
-
       } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")
@@ -446,6 +465,15 @@ export default function Invest() {
 
     const value = outputValue
     const ratio = new Decimal(ptRatio).minus(initPtRatio).mul(100)
+
+    console.log(
+      "show rate  price impact ptRatio",
+      ptRatio.toString(),
+      "initPtRatio",
+      initPtRatio.toString(),
+      "ratio",
+      ratio.toString(),
+    )
 
     return { value, ratio }
   }, [
