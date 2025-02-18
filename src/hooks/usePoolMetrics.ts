@@ -93,7 +93,6 @@ function calculateYtAPY(
 
   const ytReturns = interestReturns.plus(rewardsReturns)
 
-  const ytReturnsAfterFee = ytReturns.mul(0.97)
   const ytReturnsAfterFee = ytReturns.mul(0.965)
   return safeDivide(ytReturnsAfterFee, ytPriceInAsset, "decimal")
     .pow(new Decimal(1).div(yearsToExpiryDecimal))
