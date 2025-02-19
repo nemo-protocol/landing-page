@@ -141,3 +141,7 @@ export function getTreasury(coinType: string) {
 }
 
 export const DEFAULT_Address = '0x0000000000000000000000000000000000000000000000000000000000000001'
+
+export const SSBUCK = {
+  VAULT: "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+} as const

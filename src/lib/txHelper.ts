@@ -4,7 +4,7 @@ import { MoveCallInfo } from "@/hooks/types"
 import { LpPosition } from "@/hooks/types"
 import { CoinData } from "@/hooks/useCoinData"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
-import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury } from "./constants"
+import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury, SSBUCK } from "./constants"
 import {
   Transaction,
   TransactionResult,
@@ -21,6 +21,36 @@ export const getPriceVoucher = <T extends boolean = true>(
   : TransactionArgument => {
   let moveCall: MoveCallInfo
   switch (coinConfig.coinType) {
+    case "0xbb3c69274544353d283ddb204d55de12bfff71cc0742505dbd7090902dd3c77a::st_sbuck::ST_SBUCK": {
+      moveCall = {
+        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_ssbuck`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinConfig.priceOracleConfigId,
+          },
+          { 
+            name: "vault", 
+            value: SSBUCK.VAULT 
+          },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
+      }
+      if (!returnDebugInfo) {
+        debugLog(`[${caller}] get_price_voucher_from_ssbuck move call:`, moveCall)
+      }
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
+    }
     case "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT": {
       moveCall = {
         target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_volo`,
@@ -874,12 +904,12 @@ export const redeemPy = <T extends boolean = false>(
       tx.pure.u64(
         new Decimal(ytRedeemValue)
           .mul(10 ** Number(coinConfig.decimal))
-          .toString(),
+          .toString()
       ),
       tx.pure.u64(
         new Decimal(ptRedeemValue)
           .mul(10 ** Number(coinConfig.decimal))
-          .toString(),
+          .toString()
       ),
       priceVoucher,
       pyPosition,
