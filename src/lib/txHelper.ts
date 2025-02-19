@@ -298,6 +298,45 @@ export const mintSCoin = <T extends boolean = false>(
         ? [sCoins, moveCallInfos]
         : sCoins) as unknown as MintSCoinResult<T>
     }
+    case "Bucket": {
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        const moveCall = {
+          target: `0x1798f84ee72176114ddbf5525a6d964c5f8ea1b3738d08d50d0d3de4cf584884::bucket_protocol::buck_to_sbuck`,
+          arguments: [
+            { 
+              name: "bucket_protocol", 
+              value: "0x9e3dab13212b27f5434416939db5dec6a319d15b89a84fd074d03ece6350d3df" 
+            },
+            { 
+              name: "flask", 
+              value: "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8" 
+            },
+            { name: "clock", value: "0x6" },
+            { name: "coin", value: amounts[i] },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`bucket buck_to_sbuck move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object("0x9e3dab13212b27f5434416939db5dec6a319d15b89a84fd074d03ece6350d3df"),
+            tx.object("0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8"),
+            tx.object("0x6"),
+            splitCoins[i],
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        sCoins.push(sCoin)
+      }
+
+      return (debug ? [sCoins, moveCallInfos] : sCoins) as unknown as MintSCoinResult<T>
+    }
     case "Aftermath": {
       const sCoins: TransactionArgument[] = []
 
