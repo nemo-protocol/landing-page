@@ -4,7 +4,13 @@ import { MoveCallInfo } from "@/hooks/types"
 import { LpPosition } from "@/hooks/types"
 import { CoinData } from "@/hooks/useCoinData"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
-import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury, SSBUCK } from "./constants"
+import {
+  SCALLOP,
+  AFTERMATH,
+  VALIDATORS,
+  getTreasury,
+  SSBUCK,
+} from "./constants"
 import {
   Transaction,
   TransactionResult,
@@ -21,24 +27,31 @@ export const getPriceVoucher = <T extends boolean = true>(
   : TransactionArgument => {
   let moveCall: MoveCallInfo
   switch (coinConfig.coinType) {
-    case "0xbb3c69274544353d283ddb204d55de12bfff71cc0742505dbd7090902dd3c77a::st_sbuck::ST_SBUCK": {
+    case "0xd01d27939064d79e4ae1179cd11cfeeff23943f32b1a842ea1a1e15a0045d77d::st_sbuck::ST_SBUCK": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_ssbuck`,
+        target: `${coinConfig.oraclePackageId}::buck::get_price_voucher_from_ssbuck`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
           },
-          { 
-            name: "vault", 
-            value: SSBUCK.VAULT 
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
+          },
+          {
+            name: "vault",
+            value: SSBUCK.VAULT,
           },
           { name: "clock", value: "0x6" },
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
       if (!returnDebugInfo) {
-        debugLog(`[${caller}] get_price_voucher_from_ssbuck move call:`, moveCall)
+        debugLog(
+          `[${caller}] get_price_voucher_from_ssbuck move call:`,
+          moveCall,
+        )
       }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
@@ -53,11 +66,15 @@ export const getPriceVoucher = <T extends boolean = true>(
     }
     case "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_volo`,
+        target: `${coinConfig.oraclePackageId}::volo::get_price_voucher_from_volo`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           { name: "native_pool", value: coinConfig.nativePool },
           { name: "metadata", value: coinConfig.metadataId },
@@ -81,11 +98,15 @@ export const getPriceVoucher = <T extends boolean = true>(
     }
     case "0x83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_spring`,
+        target: `${coinConfig.oraclePackageId}::spring::get_price_voucher_from_spring`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           { name: "lst_info", value: coinConfig.lstInfoId },
           { name: "sy_state", value: coinConfig.syStateId },
@@ -111,11 +132,15 @@ export const getPriceVoucher = <T extends boolean = true>(
     }
     case "0xf325ce1300e8dac124071d3152c5c5ee6174914f8bc2161e88329cf579246efc::afsui::AFSUI": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_aftermath`,
+        target: `${coinConfig.oraclePackageId}::aftermath::get_price_voucher_from_aftermath`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           {
             name: "aftermath_staked_sui_vault",
@@ -145,11 +170,15 @@ export const getPriceVoucher = <T extends boolean = true>(
     }
     case "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_haSui`,
+        target: `${coinConfig.oraclePackageId}::haedal::get_price_voucher_from_haSui`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           { name: "haedal_staking", value: coinConfig.haedalStakeingId },
           { name: "sy_state", value: coinConfig.syStateId },
@@ -175,11 +204,15 @@ export const getPriceVoucher = <T extends boolean = true>(
     }
     default: {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
+        target: `${coinConfig.oraclePackageId}::scallop::get_price_voucher_from_x_oracle`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           { name: "provider_version", value: coinConfig.providerVersion },
           { name: "provider_market", value: coinConfig.providerMarket },
@@ -298,20 +331,22 @@ export const mintSCoin = <T extends boolean = false>(
         ? [sCoins, moveCallInfos]
         : sCoins) as unknown as MintSCoinResult<T>
     }
-    case "Bucket": {
+    case "Strater": {
       const sCoins: TransactionArgument[] = []
 
       for (let i = 0; i < amounts.length; i++) {
         const moveCall = {
-          target: `0x1798f84ee72176114ddbf5525a6d964c5f8ea1b3738d08d50d0d3de4cf584884::bucket_protocol::buck_to_sbuck`,
+          target: `0xec01ce9920fb2a645f0dee9a8c139af837541a6073fc3e546d08299cc0276068::buck::buck_to_sbuck`,
           arguments: [
-            { 
-              name: "bucket_protocol", 
-              value: "0x9e3dab13212b27f5434416939db5dec6a319d15b89a84fd074d03ece6350d3df" 
+            {
+              name: "bucket_protocol",
+              value:
+                "0x9e3dab13212b27f5434416939db5dec6a319d15b89a84fd074d03ece6350d3df",
             },
-            { 
-              name: "flask", 
-              value: "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8" 
+            {
+              name: "flask",
+              value:
+                "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8",
             },
             { name: "clock", value: "0x6" },
             { name: "coin", value: amounts[i] },
@@ -324,8 +359,12 @@ export const mintSCoin = <T extends boolean = false>(
         const [sCoin] = tx.moveCall({
           target: moveCall.target,
           arguments: [
-            tx.object("0x9e3dab13212b27f5434416939db5dec6a319d15b89a84fd074d03ece6350d3df"),
-            tx.object("0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8"),
+            tx.object(
+              "0x9e3dab13212b27f5434416939db5dec6a319d15b89a84fd074d03ece6350d3df",
+            ),
+            tx.object(
+              "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8",
+            ),
             tx.object("0x6"),
             splitCoins[i],
           ],
@@ -335,7 +374,9 @@ export const mintSCoin = <T extends boolean = false>(
         sCoins.push(sCoin)
       }
 
-      return (debug ? [sCoins, moveCallInfos] : sCoins) as unknown as MintSCoinResult<T>
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Aftermath": {
       const sCoins: TransactionArgument[] = []
@@ -477,7 +518,11 @@ export const mintSCoin = <T extends boolean = false>(
                 "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
             },
             { name: "coin", value: amounts[i] },
-            {name: "address", value: "0x0000000000000000000000000000000000000000000000000000000000000000"}
+            {
+              name: "address",
+              value:
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            },
           ],
           typeArguments: [],
         }
@@ -494,7 +539,9 @@ export const mintSCoin = <T extends boolean = false>(
               "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
             ),
             splitCoins[i],
-            tx.object("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            tx.object(
+              "0x0000000000000000000000000000000000000000000000000000000000000000",
+            ),
           ],
           typeArguments: moveCall.typeArguments,
         })
@@ -943,12 +990,12 @@ export const redeemPy = <T extends boolean = false>(
       tx.pure.u64(
         new Decimal(ytRedeemValue)
           .mul(10 ** Number(coinConfig.decimal))
-          .toString()
+          .toString(),
       ),
       tx.pure.u64(
         new Decimal(ptRedeemValue)
           .mul(10 ** Number(coinConfig.decimal))
-          .toString()
+          .toString(),
       ),
       priceVoucher,
       pyPosition,
@@ -974,7 +1021,7 @@ export const getPrice = (
   priceVoucher: TransactionArgument,
 ) => {
   const moveCall = {
-    target: `${coinConfig.nemoContractId}::oracle::get_price`,
+    target: `${coinConfig.oracleVoucherPackageId}::oracle_voucher::get_price`,
     arguments: ["priceVoucher"],
     typeArguments: [coinConfig.syCoinType],
   }

@@ -37,7 +37,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
       )
 
       const moveCallInfo = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price`,
+        target: `${coinConfig.oracleVoucherPackageId}::oracle_voucher::get_price`,
         arguments: [{ name: "price_voucher", value: "priceVoucher" }],
         typeArguments: [coinConfig.syCoinType],
       }

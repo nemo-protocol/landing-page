@@ -33,6 +33,9 @@ export interface BaseCoinInfo {
   underlyingCoinLogo: string
   version: string
   perPoints: string
+  oraclePackageId: string
+  oracleTicket: string
+  oracleVoucherPackageId: string
 }
 
 export interface CoinInfoWithMetrics extends BaseCoinInfo {
