@@ -336,16 +336,16 @@ export const mintSCoin = <T extends boolean = false>(
 
       for (let i = 0; i < amounts.length; i++) {
         const fromBalanceMoveCall = {
-          target: `0x2::coin::from_balance`,
+          target: `0x2::coin::into_balance`,
           arguments: [{ name: "balance", value: amounts[i] }],
           typeArguments: [
-            "0x1798f84ee72176114ddbf5525a6d964c5f8ea1b3738d08d50d0d3de4cf584884::sbuck::SBUCK",
+            coinConfig.underlyingCoinType,
           ],
         }
         moveCallInfos.push(fromBalanceMoveCall)
         debugLog(`coin::from_balance move call:`, fromBalanceMoveCall)
 
-        const [coin] = tx.moveCall({
+        const [sBalance] = tx.moveCall({
           target: fromBalanceMoveCall.target,
           arguments: [splitCoins[i]],
           typeArguments: fromBalanceMoveCall.typeArguments,
@@ -372,7 +372,7 @@ export const mintSCoin = <T extends boolean = false>(
         moveCallInfos.push(moveCall)
         debugLog(`bucket buck_to_sbuck move call:`, moveCall)
 
-        const [sCoin] = tx.moveCall({
+        const [sbsBalance] = tx.moveCall({
           target: moveCall.target,
           arguments: [
             tx.object(
@@ -382,12 +382,16 @@ export const mintSCoin = <T extends boolean = false>(
               "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8",
             ),
             tx.object("0x6"),
-            coin,
+            sBalance,
           ],
           typeArguments: moveCall.typeArguments,
         })
-
-        sCoins.push(sCoin)
+        const [sbsCoin] = tx.moveCall({
+          target: `0x2::coin::from_balance`,
+          arguments: [sbsBalance],
+          typeArguments: ["0x1798f84ee72176114ddbf5525a6d964c5f8ea1b3738d08d50d0d3de4cf584884::sbuck::SBUCK"],
+        })
+        sCoins.push(sbsCoin)
       }
 
       return (debug
