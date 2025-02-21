@@ -352,20 +352,18 @@ export const mintSCoin = <T extends boolean = false>(
         })
 
         const moveCall = {
-          target: `0xec01ce9920fb2a645f0dee9a8c139af837541a6073fc3e546d08299cc0276068::buck::buck_to_sbuck`,
+          target: `0x75fe358d87679b30befc498a8dae1d28ca9eed159ab6f2129a654a8255e5610e::sbuck_saving_vault::deposit`,
           arguments: [
             {
-              name: "bucket_protocol",
+              name: "bucket_vault",
               value:
-                "0x9e3dab13212b27f5434416939db5dec6a319d15b89a84fd074d03ece6350d3df",
+                "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
             },
             {
-              name: "flask",
-              value:
-                "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8",
+              name: "balance",
+              value: amounts[i]
             },
             { name: "clock", value: "0x6" },
-            { name: "coin", value: "coin" },
           ],
           typeArguments: [],
         }
@@ -376,20 +374,17 @@ export const mintSCoin = <T extends boolean = false>(
           target: moveCall.target,
           arguments: [
             tx.object(
-              "0x9e3dab13212b27f5434416939db5dec6a319d15b89a84fd074d03ece6350d3df",
+              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
             ),
-            tx.object(
-              "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8",
-            ),
-            tx.object("0x6"),
             sBalance,
+            tx.object("0x6"),
           ],
           typeArguments: moveCall.typeArguments,
         })
         const [sbsCoin] = tx.moveCall({
           target: `0x2::coin::from_balance`,
           arguments: [sbsBalance],
-          typeArguments: ["0x1798f84ee72176114ddbf5525a6d964c5f8ea1b3738d08d50d0d3de4cf584884::sbuck::SBUCK"],
+          typeArguments: [coinConfig.coinType],
         })
         sCoins.push(sbsCoin)
       }
