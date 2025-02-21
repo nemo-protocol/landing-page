@@ -44,7 +44,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
 
       tx.moveCall({
         target: moveCallInfo.target,
-        arguments: [tx.object(priceVoucher)],
+        arguments: [priceVoucher],
         typeArguments: moveCallInfo.typeArguments,
       })
 
@@ -63,6 +63,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
       debugInfo.rawResult = result
 
       if (result?.error) {
+        debugLog("useGetConversionRateDryRun error", debugInfo)
         throw new ContractError(result.error, debugInfo)
       }
 
