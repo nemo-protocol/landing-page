@@ -335,6 +335,22 @@ export const mintSCoin = <T extends boolean = false>(
       const sCoins: TransactionArgument[] = []
 
       for (let i = 0; i < amounts.length; i++) {
+        const fromBalanceMoveCall = {
+          target: `0x2::coin::from_balance`,
+          arguments: [{ name: "balance", value: amounts[i] }],
+          typeArguments: [
+            "0x1798f84ee72176114ddbf5525a6d964c5f8ea1b3738d08d50d0d3de4cf584884::sbuck::SBUCK",
+          ],
+        }
+        moveCallInfos.push(fromBalanceMoveCall)
+        debugLog(`coin::from_balance move call:`, fromBalanceMoveCall)
+
+        const [coin] = tx.moveCall({
+          target: fromBalanceMoveCall.target,
+          arguments: [splitCoins[i]],
+          typeArguments: fromBalanceMoveCall.typeArguments,
+        })
+
         const moveCall = {
           target: `0xec01ce9920fb2a645f0dee9a8c139af837541a6073fc3e546d08299cc0276068::buck::buck_to_sbuck`,
           arguments: [
@@ -349,7 +365,7 @@ export const mintSCoin = <T extends boolean = false>(
                 "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8",
             },
             { name: "clock", value: "0x6" },
-            { name: "coin", value: amounts[i] },
+            { name: "coin", value: "coin" },
           ],
           typeArguments: [],
         }
@@ -366,7 +382,7 @@ export const mintSCoin = <T extends boolean = false>(
               "0xc6ecc9731e15d182bc0a46ebe1754a779a4bfb165c201102ad51a36838a1a7b8",
             ),
             tx.object("0x6"),
-            splitCoins[i],
+            coin,
           ],
           typeArguments: moveCall.typeArguments,
         })
