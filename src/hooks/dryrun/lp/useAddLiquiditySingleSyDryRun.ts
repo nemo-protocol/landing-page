@@ -122,11 +122,11 @@ export default function useAddLiquiditySingleSyDryRun<
       }
 
       const outputAmount = bcs.U64.parse(
-        new Uint8Array(result.results[1].returnValues[0][0]),
+        new Uint8Array(result.results[2].returnValues[0][0]),
       )
 
       const fee = bcs.U128.parse(
-        new Uint8Array(result.results[1].returnValues[1][0]),
+        new Uint8Array(result.results[2].returnValues[1][0]),
       )
       const formattedFee = new Decimal(fee)
         .div(2 ** 64)
