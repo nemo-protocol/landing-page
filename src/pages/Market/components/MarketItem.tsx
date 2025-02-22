@@ -227,12 +227,12 @@ const MarketItem = ({ item }: MarketItemProps) => {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <img
-                                    src={reward.logo}
+                                    src={reward.tokenLogo}
                                     alt=""
                                     className="size-4"
                                   />
                                   <span className="font-mono text-xs">
-                                    {Number(reward.apy).toFixed(6)}%
+                                    {`${formatLargeNumber(reward.apy, 6)}%`}
                                   </span>
                                 </div>
                               </div>

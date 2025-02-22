@@ -1,21 +1,30 @@
-import { MarketState } from "./types"
+import { MarketState } from "../types"
 import { useSuiClient } from "@mysten/dapp-kit"
 import { useQuery } from "@tanstack/react-query"
-import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { safeDivide } from "@/lib/utils"
+import { getTokenDecimal } from "@/lib/utils"
 import { useTokenInfo } from "@/queries"
 
 interface PoolRewarderInfo {
   total_reward: string
   end_time: string
   last_reward_time: string
+  reward_harvested: string
+  reward_debt: string
   reward_token: {
     type: string
     fields: {
       name: string
     }
   }
+  acc_per_share: string
+  active: boolean
+  emission_per_second: string
+  id: {
+    id: string
+  }
+  owner: string
+  start_time: string
 }
 
 interface RawMarketState {
@@ -40,48 +49,29 @@ interface RawMarketState {
   }
 }
 
-const calculateDurationInDays = (startTime: string, endTime: string): number => {
-  const start = dayjs(parseInt(startTime))
-  const end = dayjs(parseInt(endTime))
-  return end.diff(start, "day")
-}
+const calculateRewardMetrics = (
+  emissionPerSecond: string,
+  tokenType: string,
+  tokenPrice: string,
+  tokenLogo: string,
+) => {
+  const decimal = getTokenDecimal(tokenType)
 
-const calculateDailyEmission = (totalReward: string, durationInDays: number): string => {
-  if (durationInDays === 0) return "0"
-  return safeDivide(totalReward, durationInDays, "string")
-}
+  // Calculate daily emission from emission_per_second
+  const dailyEmission = new Decimal(emissionPerSecond)
+    .mul(60 * 60 * 24)
+    .div(new Decimal(10).pow(decimal))
+    .toString()
 
-const calculateAPY = (dailyYieldRate: string): string => {
-  const rate = new Decimal(dailyYieldRate)
-  return rate.plus(1).pow(365).minus(1).toString()
-}
-
-const calculateRewardMetrics = (rewarder: PoolRewarderInfo, tokenData: { price: string; logo: string }) => {
-  const durationInDays = calculateDurationInDays(
-    rewarder.last_reward_time,
-    rewarder.end_time,
-  )
-
-  const tokenPrice = new Decimal(tokenData.price || "0")
-  const dailyEmission = calculateDailyEmission(rewarder.total_reward, durationInDays)
-
-  const rewardTvl = new Decimal(rewarder.total_reward).mul(tokenPrice).toString()
+  // Calculate daily value
   const dailyValue = new Decimal(dailyEmission).mul(tokenPrice).toString()
-  const dailyYieldRate = safeDivide(dailyValue, rewardTvl, "string")
-  const apy = calculateAPY(dailyYieldRate)
 
   return {
-    totalReward: rewarder.total_reward,
-    durationInDays,
+    tokenType,
+    tokenLogo,
     dailyEmission,
-    rewardTokenType: rewarder.reward_token.fields.name,
-    tokenType: `0x${rewarder.reward_token.fields.name}`,
-    tokenPrice: tokenPrice.toString(),
-    logo: tokenData.logo,
     dailyValue,
-    rewardTvl,
-    dailyYieldRate,
-    apy,
+    apy: "",
   }
 }
 
@@ -109,18 +99,52 @@ const useMultiMarketState = (marketStateIds?: string[]) => {
         const { fields } = item.data?.content as unknown as {
           fields: RawMarketState
         }
-        
-        const rewardMetrics = fields.reward_pool?.fields.rewarders.fields.contents.map(
-          (entry) => {
+
+        // Group rewarders by tokenType and sum their emission_per_second
+        const groupedRewarders = (
+          fields.reward_pool?.fields.rewarders.fields.contents || []
+        ).reduce(
+          (acc, entry) => {
             const rewarder = entry.fields.value.fields
-            const tokenFullName = `0x${rewarder.reward_token.fields.name}`
+            const tokenType = rewarder.reward_token.fields.name
+
+            if (!acc[tokenType]) {
+              acc[tokenType] = {
+                emissionPerSecond: "0",
+                tokenType,
+              }
+            }
+
+            acc[tokenType].emissionPerSecond = new Decimal(
+              acc[tokenType].emissionPerSecond,
+            )
+              .plus(rewarder.emission_per_second)
+              .toString()
+
+            return acc
+          },
+          {} as {
+            [key: string]: { emissionPerSecond: string; tokenType: string }
+          },
+        )
+
+        // Calculate metrics for each grouped rewarder
+        const rewardMetrics = Object.values(groupedRewarders).map(
+          (groupedRewarder) => {
+            const tokenFullName = `0x${groupedRewarder.tokenType}`
             const tokenData = tokenInfo?.[tokenFullName] || {
               price: "0",
               logo: "",
             }
-            return calculateRewardMetrics(rewarder, tokenData)
-          }
-        ) || []
+
+            return calculateRewardMetrics(
+              groupedRewarder.emissionPerSecond,
+              groupedRewarder.tokenType,
+              tokenData.price,
+              tokenData.logo,
+            )
+          },
+        )
 
         const state: MarketState = {
           totalSy: fields?.total_sy,
@@ -138,4 +162,4 @@ const useMultiMarketState = (marketStateIds?: string[]) => {
   })
 }
 
-export default useMultiMarketState 
+export default useMultiMarketState

@@ -48,16 +48,10 @@ export interface PyPosition {
 }
 
 export interface RewardMetrics {
-  totalReward: string
-  durationInDays: number
-  dailyEmission: string
-  rewardTokenType: string
   tokenType: string
-  tokenPrice: string
-  logo: string
+  tokenLogo: string
+  dailyEmission: string
   dailyValue: string
-  rewardTvl: string
-  dailyYieldRate: string
   apy: string
 }
 

@@ -20,6 +20,7 @@ export interface PoolMetricsResult {
   poolApy: string
   swapFeeApy: string
   lpPrice: string
+  marketState: MarketState
 }
 
 interface CalculatePoolMetricsParams {
@@ -152,6 +153,7 @@ export function usePoolMetrics() {
           syTvl: "0",
           swapFeeApy: "0",
           lpPrice: "0",
+          marketState,
         }
         saveMetricsToCache(coinInfo.marketStateId, zeroResult)
         return zeroResult
@@ -244,28 +246,50 @@ export function usePoolMetrics() {
         .pow(expiryRate)
         .minus(1)
         .mul(100)
+
+      // Calculate reward APYs
+      if (marketState.rewardMetrics) {
+        marketState.rewardMetrics = marketState.rewardMetrics.map((rewardMetric) => ({
+          ...rewardMetric,
+          apy: safeDivide(rewardMetric.dailyValue, tvl.toString(), "decimal")
+            .plus(1)
+            .pow(365)
+            .minus(1)
+            .mul(100)
+            .toString()
+        }))
+      }
+
+      // Sum up all reward APYs
+      const incentiveApy = marketState.rewardMetrics?.reduce(
+        (sum, metric) => sum.plus(metric.apy || "0"),
+        new Decimal(0)
+      ) || new Decimal(0)
+
       poolApy = scaledUnderlyingApy
         .add(scaledPtApy)
         .add(apyIncentive)
         .add(swapFeeApy)
+        .add(incentiveApy)
 
       const result: PoolMetricsResult = {
-        ptApy: ptApy.toFixed(6),
-        ytApy: ytApy.toFixed(6),
-        scaledUnderlyingApy: scaledUnderlyingApy.toFixed(6),
-        scaledPtApy: scaledPtApy.toFixed(6),
-        incentiveApy: "",
+        ptApy: ptApy.toString(),
+        ytApy: ytApy.toString(),
+        scaledUnderlyingApy: scaledUnderlyingApy.toString(),
+        scaledPtApy: scaledPtApy.toString(),
+        incentiveApy: incentiveApy.toString(),
         tvl: tvl.toString(),
         ptTvl: ptTvl.toString(),
         syTvl: syTvl.toString(),
         ptPrice: ptPrice.toString(),
         ytPrice: ytPrice.toString(),
-        poolApy: poolApy.toFixed(6),
-        swapFeeApy: swapFeeApy.toFixed(6),
+        poolApy: poolApy.toString(),
+        swapFeeApy: swapFeeApy.toString(),
         lpPrice: tvl
           .div(marketState.lpSupply)
           .mul(10 ** Number(coinInfo.decimal))
           .toString(),
+        marketState,
       }
 
       // Save to cache

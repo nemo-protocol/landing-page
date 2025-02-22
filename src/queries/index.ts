@@ -237,7 +237,6 @@ export function useCoinInfoList<T extends boolean = true>(
             return {
               ...coinInfo,
               ...metrics,
-              marketState,
             }
           } catch (error) {
             return {

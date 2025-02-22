@@ -685,11 +685,11 @@ export default function Item({
                   <div className="flex flex-col items-center w-24">
                     <div className="flex items-center gap-2">
                       {marketState?.rewardMetrics?.[selectedRewardIndex]
-                        ?.logo && (
+                        ?.tokenLogo && (
                         <img
                           src={
                             marketState?.rewardMetrics?.[selectedRewardIndex]
-                              ?.logo
+                              ?.tokenLogo
                           }
                           alt="reward token"
                           className="w-4 h-4"
@@ -728,7 +728,7 @@ export default function Item({
                           >
                             <span>
                               Claim{" "}
-                              {metric.rewardTokenType ?? `Reward ${index + 1}`}
+                              {metric.tokenType ?? `Reward ${index + 1}`}
                             </span>
                           </DropdownMenuItem>
                         ))}
@@ -754,11 +754,11 @@ export default function Item({
                   <div className="flex flex-col items-center w-24">
                     <div className="flex items-center gap-2">
                       {marketState?.rewardMetrics?.[selectedRewardIndex]
-                        ?.logo && (
+                        ?.tokenLogo && (
                         <img
                           src={
                             marketState?.rewardMetrics?.[selectedRewardIndex]
-                              ?.logo
+                              ?.tokenLogo
                           }
                           alt="reward token"
                           className="w-4 h-4"
@@ -797,7 +797,7 @@ export default function Item({
                           >
                             <span>
                               Claim{" "}
-                              {metric.rewardTokenType ?? `Reward ${index + 1}`}
+                              {metric.tokenType ?? `Reward ${index + 1}`}
                             </span>
                           </DropdownMenuItem>
                         ))}
