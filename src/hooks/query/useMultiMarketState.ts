@@ -72,6 +72,7 @@ const calculateRewardMetrics = (
     dailyEmission,
     dailyValue,
     apy: "",
+    tokenPrice,
   }
 }
 

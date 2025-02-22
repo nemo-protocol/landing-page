@@ -67,6 +67,7 @@ const calculateRewardMetrics = (
   const dailyValue = new Decimal(dailyEmission).mul(tokenPrice).toString()
 
   return {
+    tokenPrice,
     tokenType,
     tokenLogo,
     dailyEmission,

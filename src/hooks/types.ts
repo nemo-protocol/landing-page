@@ -53,6 +53,7 @@ export interface RewardMetrics {
   dailyEmission: string
   dailyValue: string
   apy: string
+  tokenPrice: string
 }
 
 export interface MarketState {

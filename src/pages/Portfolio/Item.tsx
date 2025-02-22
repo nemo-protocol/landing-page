@@ -39,6 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import useQueryClaimLpReward from "@/hooks/useQueryClaimLpReward"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -130,6 +131,17 @@ export default function Item({
   })
 
   const [selectedRewardIndex, setSelectedRewardIndex] = useState(0)
+
+  const {
+    data: lpReward,
+    isLoading: isLpRewardLoading,
+    refetch: refetchLpReward,
+  } = useQueryClaimLpReward(coinConfig, {
+    lpBalance,
+    lpPositions,
+    marketState,
+    rewardIndex: selectedRewardIndex,
+  })
 
   useEffect(() => {
     if (isConnected) {
@@ -680,24 +692,11 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
-              {isClaimLoading ? (
+              {isLpRewardLoading ? (
                 <div className="flex items-center gap-x-2">
                   <div className="flex flex-col items-center w-24">
-                    <div className="flex items-center gap-2">
-                      {marketState?.rewardMetrics?.[selectedRewardIndex]
-                        ?.tokenLogo && (
-                        <img
-                          src={
-                            marketState?.rewardMetrics?.[selectedRewardIndex]
-                              ?.tokenLogo
-                          }
-                          alt="reward token"
-                          className="w-4 h-4"
-                        />
-                      )}
-                      <span className="text-white text-sm break-all">0</span>
-                    </div>
-                    <span className="text-white/50 text-xs">$0</span>
+                    <Skeleton className="h-5 w-16 mb-1" />
+                    <Skeleton className="h-4 w-12" />
                   </div>
                   {marketState?.rewardMetrics &&
                   marketState?.rewardMetrics?.length > 1 ? (
@@ -727,8 +726,7 @@ export default function Item({
                             className="flex items-center gap-2"
                           >
                             <span>
-                              Claim{" "}
-                              {metric.tokenType ?? `Reward ${index + 1}`}
+                              Claim {metric.tokenType ?? `Reward ${index + 1}`}
                             </span>
                           </DropdownMenuItem>
                         ))}
@@ -764,9 +762,32 @@ export default function Item({
                           className="w-4 h-4"
                         />
                       )}
-                      <span className="text-white text-sm break-all">0</span>
+                      <span className="text-white text-sm break-all flex items-center gap-x-1">
+                        <SmallNumDisplay value={lpReward || "0"} />
+                        <RefreshButton
+                          onRefresh={refetchLpReward}
+                          className="shrink-0"
+                        />
+                      </span>
                     </div>
-                    <span className="text-white/50 text-xs">$0</span>
+                    <span className="text-white/50 text-xs">
+                      $
+                      <SmallNumDisplay
+                        value={
+                          lpReward &&
+                          marketState?.rewardMetrics?.[selectedRewardIndex]
+                            ?.tokenPrice
+                            ? formatDecimalValue(
+                                new Decimal(lpReward).mul(
+                                  marketState.rewardMetrics[selectedRewardIndex]
+                                    .tokenPrice,
+                                ),
+                                Number(coinConfig?.decimal),
+                              )
+                            : "0"
+                        }
+                      />
+                    </span>
                   </div>
                   {marketState?.rewardMetrics &&
                   marketState?.rewardMetrics?.length > 1 ? (
@@ -796,8 +817,7 @@ export default function Item({
                             className="flex items-center gap-2"
                           >
                             <span>
-                              Claim{" "}
-                              {metric.tokenType ?? `Reward ${index + 1}`}
+                              Claim {metric.tokenType ?? `Reward ${index + 1}`}
                             </span>
                           </DropdownMenuItem>
                         ))}
