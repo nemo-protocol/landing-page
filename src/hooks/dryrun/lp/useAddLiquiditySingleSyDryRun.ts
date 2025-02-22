@@ -9,6 +9,8 @@ import type { DebugInfo, PyPosition } from "../../types"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchPyPosition from "../../useFetchPyPosition"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
+import useGetConversionRateDryRun from "../../dryrun/useGetConversionRateDryRun"
+import { safeDivide } from "@/lib/utils"
 
 interface AddLiquiditySingleSyParams {
   addAmount: string
@@ -27,11 +29,13 @@ export default function useAddLiquiditySingleSyDryRun<
   const client = useSuiClient()
   const { address } = useWallet()
   const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
+  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun(true)
 
   return useMutation({
     mutationFn: async ({
       coinData,
       addAmount,
+      tokenType,
       pyPositions: inputPyPositions,
     }: AddLiquiditySingleSyParams): Promise<DryRunResult<T>> => {
       if (!address) {
@@ -43,6 +47,12 @@ export default function useAddLiquiditySingleSyDryRun<
       if (!coinData?.length) {
         throw new Error("No available coins")
       }
+
+      const [rate] = await getConversionRate(coinConfig)
+      
+      const syAmount = tokenType === 0 
+        ? safeDivide(addAmount, rate, "decimal").toFixed(0)
+        : addAmount
 
       const [pyPositions] = (
         inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
@@ -68,7 +78,7 @@ export default function useAddLiquiditySingleSyDryRun<
       const moveCallInfo = {
         target: `${coinConfig.nemoContractId}::router::get_lp_out_for_single_sy_in`,
         arguments: [
-          { name: "sy_coin_in", value: addAmount },
+          { name: "sy_coin_in", value: syAmount },
           { name: "price_voucher", value: "priceVoucher" },
           { name: "py_state", value: coinConfig.pyStateId },
           {
@@ -88,7 +98,7 @@ export default function useAddLiquiditySingleSyDryRun<
       tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
-          tx.pure.u64(addAmount),
+          tx.pure.u64(syAmount),
           priceVoucher,
           tx.object(coinConfig.pyStateId),
           tx.object(coinConfig.marketFactoryConfigId),
@@ -121,21 +131,42 @@ export default function useAddLiquiditySingleSyDryRun<
         throw new ContractError(message, debugInfo)
       }
 
+      console.log("result", result)
+
       const outputAmount = bcs.U64.parse(
         new Uint8Array(result.results[2].returnValues[0][0]),
       )
 
+      console.log("outputAmount", outputAmount)
+
+      const lpAmount = new Decimal(outputAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
+        .toFixed()
+
+      console.log("lpAmount", lpAmount)
       const fee = bcs.U128.parse(
         new Uint8Array(result.results[2].returnValues[1][0]),
       )
+
       const formattedFee = new Decimal(fee)
         .div(2 ** 64)
         .div(10 ** Number(coinConfig.decimal))
         .toString()
 
-      const lpAmount = new Decimal(outputAmount.toString())
+      console.log("fee", fee)
+      console.log("formattedFee", formattedFee)
+
+      const a = bcs.U128.parse(
+        new Uint8Array(result.results[2].returnValues[2][0]),
+      )
+
+      const b = new Decimal(a)
+        .div(2 ** 64)
         .div(10 ** Number(coinConfig.decimal))
-        .toFixed()
+        .toString()
+
+      console.log("a", a)
+      console.log("b", b)
 
       debugInfo.parsedOutput = lpAmount
 

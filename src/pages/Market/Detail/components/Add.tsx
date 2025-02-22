@@ -294,11 +294,12 @@ export default function SingleCoin() {
               )
             } else {
               const [lpAmount, lpFeeAmount] = await addLiquiditySingleSyDryRun({
-                addAmount: inputAmount,
-                tokenType,
                 coinData,
+                tokenType,
+                addAmount: inputAmount,
                 pyPositions: pyPositionData,
               })
+
               setLpAmount(lpAmount)
               setLpFeeAmount(lpFeeAmount)
               setYtAmount(undefined)
@@ -503,10 +504,13 @@ export default function SingleCoin() {
           pyPosition = tx.object(pyPositionData[0].id)
         }
 
+        console.log("lpAmount", lpAmount)
+
         const minLpAmount = new Decimal(lpAmount)
           .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
+        console.log("minLpAmount", minLpAmount)
 
         if (marketStateData.lpSupply === "0") {
           await handleSeedLiquidity(
@@ -612,7 +616,9 @@ export default function SingleCoin() {
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07]">
             <div className="flex flex-col items-center gap-y-4">
-              <h2 className="text-center text-xl" onClick={test}>Add Liquidity</h2>
+              <h2 className="text-center text-xl" onClick={test}>
+                Add Liquidity
+              </h2>
 
               <TransactionStatusDialog
                 open={open}
