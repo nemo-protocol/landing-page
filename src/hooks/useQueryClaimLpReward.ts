@@ -5,7 +5,7 @@ import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { useQuery } from "@tanstack/react-query"
 import { ContractError, LpPosition, MarketState, DebugInfo } from "./types"
-import { isValidAmount } from "@/lib/utils"
+import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { debugLog } from "@/config"
 
 interface ClaimLpRewardParams {
@@ -138,13 +138,12 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
       }
 
       const decimal = Number(coinConfig.decimal)
-      const formattedAmount = new Decimal(rewardAmount)
-        .div(new Decimal(10).pow(decimal))
-        .toFixed(decimal)
+      const rewardValue = formatDecimalValue(
+        new Decimal(rewardAmount).div(new Decimal(10).pow(decimal)),
+        decimal,
+      )
 
-      return (
-        debug ? [formattedAmount, debugInfo] : formattedAmount
-      ) as DryRunResult<T>
+      return (debug ? [rewardValue, debugInfo] : rewardValue) as DryRunResult<T>
     },
   })
 }

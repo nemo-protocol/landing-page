@@ -384,6 +384,8 @@ export default function Item({
         setTxId(digest)
         setOpen(true)
         setStatus("Success")
+        // Refresh LP reward data after successful claim
+        await refetchLpReward()
       } catch (error) {
         setOpen(true)
         setStatus("Failed")
