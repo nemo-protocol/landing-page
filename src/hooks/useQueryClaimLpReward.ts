@@ -81,7 +81,7 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         moveCall: [moveCallInfo],
       }
 
-      const [marketPosition] = tx.moveCall({
+      const [coin] = tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
           tx.object(coinConfig.version),
@@ -92,7 +92,11 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         typeArguments: [coinConfig.syCoinType, rewardMetric.tokenType],
       })
 
-      tx.transferObjects([marketPosition], address)
+      tx.moveCall({
+        target: `0x2::coin::value`,
+        arguments: [coin],
+        typeArguments: [rewardMetric.tokenType],
+      })
 
       const result = await client.devInspectTransactionBlock({
         sender: address,
@@ -115,16 +119,16 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
 
       console.log("result", result)
 
-      if (!result?.results?.[0]?.returnValues?.[0]) {
+      if (!result?.results?.[1]?.returnValues?.[0]) {
         const message = "Failed to get reward amount"
         if (debugInfo.rawResult) {
           debugInfo.rawResult.error = message
         }
         debugLog("claim_reward error:", debugInfo)
-        return "0"
+        throw new ContractError(message, debugInfo)
       }
 
-      const [[balanceBytes]] = result.results[0].returnValues
+      const [[balanceBytes]] = result.results[1].returnValues
       const rewardAmount = bcs.U64.parse(new Uint8Array(balanceBytes))
 
       debugInfo.parsedOutput = rewardAmount
@@ -135,11 +139,12 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
 
       const decimal = Number(coinConfig.decimal)
       const formattedAmount = new Decimal(rewardAmount)
-        .div(new Decimal(2).pow(64))
         .div(new Decimal(10).pow(decimal))
         .toFixed(decimal)
 
-      return (debug ? [formattedAmount, debugInfo] : formattedAmount) as DryRunResult<T>
+      return (
+        debug ? [formattedAmount, debugInfo] : formattedAmount
+      ) as DryRunResult<T>
     },
   })
 }

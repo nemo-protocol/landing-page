@@ -365,7 +365,7 @@ export default function Item({
           throw new Error("No reward token type found")
         }
 
-        const [marketPosition] = tx.moveCall({
+        const [coin] = tx.moveCall({
           target: `${coinConfig?.nemoContractId}::market::claim_reward`,
           arguments: [
             tx.object(coinConfig.version),
@@ -376,7 +376,7 @@ export default function Item({
           typeArguments: [coinConfig.syCoinType, rewardMetric.tokenType],
         })
 
-        tx.transferObjects([marketPosition], address)
+        tx.transferObjects([coin], address)
 
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
