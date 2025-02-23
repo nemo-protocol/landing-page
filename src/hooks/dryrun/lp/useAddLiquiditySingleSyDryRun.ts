@@ -49,10 +49,11 @@ export default function useAddLiquiditySingleSyDryRun<
       }
 
       const [rate] = await getConversionRate(coinConfig)
-      
-      const syAmount = tokenType === 0 
-        ? safeDivide(addAmount, rate, "decimal").toFixed(0)
-        : addAmount
+
+      const syAmount =
+        tokenType === 0
+          ? safeDivide(addAmount, rate, "decimal").toFixed(0)
+          : addAmount
 
       const [pyPositions] = (
         inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
@@ -131,10 +132,12 @@ export default function useAddLiquiditySingleSyDryRun<
         throw new ContractError(message, debugInfo)
       }
 
+      const index = created ? 2 : 1
+
       console.log("result", result)
 
       const outputAmount = bcs.U64.parse(
-        new Uint8Array(result.results[2].returnValues[0][0]),
+        new Uint8Array(result.results[index].returnValues[0][0]),
       )
 
       console.log("outputAmount", outputAmount)
@@ -144,29 +147,19 @@ export default function useAddLiquiditySingleSyDryRun<
         .toFixed()
 
       console.log("lpAmount", lpAmount)
+
       const fee = bcs.U128.parse(
-        new Uint8Array(result.results[2].returnValues[1][0]),
+        new Uint8Array(result.results[index].returnValues[1][0]),
       )
+
+      console.log("fee", fee)
 
       const formattedFee = new Decimal(fee)
         .div(2 ** 64)
         .div(10 ** Number(coinConfig.decimal))
         .toString()
 
-      console.log("fee", fee)
       console.log("formattedFee", formattedFee)
-
-      const a = bcs.U128.parse(
-        new Uint8Array(result.results[2].returnValues[2][0]),
-      )
-
-      const b = new Decimal(a)
-        .div(2 ** 64)
-        .div(10 ** Number(coinConfig.decimal))
-        .toString()
-
-      console.log("a", a)
-      console.log("b", b)
 
       debugInfo.parsedOutput = lpAmount
 
