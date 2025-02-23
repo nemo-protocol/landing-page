@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import useQueryClaimLpReward from "@/hooks/useQueryClaimLpReward"
+import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -142,6 +143,8 @@ export default function Item({
     marketState,
     rewardIndex: selectedRewardIndex,
   })
+
+  const { mutateAsync: claimLpRewardMutation } = useClaimLpReward(coinConfig)
 
   useEffect(() => {
     if (isConnected) {
@@ -355,32 +358,22 @@ export default function Item({
 
   async function claimLpReward(rewardIndex: number = selectedRewardIndex) {
     debugLog("claimLpReward", lpPositions, marketState)
-    if (coinConfig?.coinType && address && lpBalance && lpPositions?.length) {
+    if (coinConfig?.coinType && address && lpBalance && lpPositions?.length && marketState?.rewardMetrics?.[rewardIndex]) {
       try {
         setClaimLoading(true)
         const tx = new Transaction()
 
-        const rewardMetric = marketState?.rewardMetrics?.[rewardIndex]
-        if (!rewardMetric?.tokenType) {
-          throw new Error("No reward token type found")
-        }
-
-        const [coin] = tx.moveCall({
-          target: `${coinConfig?.nemoContractId}::market::claim_reward`,
-          arguments: [
-            tx.object(coinConfig.version),
-            tx.object(coinConfig.marketStateId),
-            tx.object(lpPositions[0].id.id),
-            tx.object("0x6"),
-          ],
-          typeArguments: [coinConfig.syCoinType, rewardMetric.tokenType],
+        await claimLpRewardMutation({
+          tx,
+          coinConfig,
+          lpPositions,
+          rewardMetric: marketState.rewardMetrics[rewardIndex],
         })
-
-        tx.transferObjects([coin], address)
-
+        
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
         })
+
         setTxId(digest)
         setOpen(true)
         setStatus("Success")

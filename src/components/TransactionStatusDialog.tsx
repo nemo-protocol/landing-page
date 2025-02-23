@@ -22,6 +22,7 @@ interface TransactionStatusDialogProps {
   onClose: () => void
 }
 
+// TODO: T0: add global toast
 const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
   open,
   status,

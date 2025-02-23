@@ -50,10 +50,8 @@ export interface PyPosition {
 export interface RewardMetrics {
   tokenType: string
   tokenLogo: string
-  dailyEmission: string
-  dailyValue: string
-  apy: string
   tokenPrice: string
+  dailyEmission: string
 }
 
 export interface MarketState {

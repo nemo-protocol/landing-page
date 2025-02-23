@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { MarketState } from "./types"
-import { CoinConfig } from "@/queries/types/market"
+import { CoinConfig, Incentive } from "@/queries/types/market"
 import { useMutation } from "@tanstack/react-query"
 import { isValidAmount, safeDivide } from "@/lib/utils"
 import useQuerySyOutDryRun from "./dryrun/useQuerySyOutDryRun"
@@ -21,6 +21,7 @@ export interface PoolMetricsResult {
   swapFeeApy: string
   lpPrice: string
   marketState: MarketState
+  incentives: Incentive[]
 }
 
 interface CalculatePoolMetricsParams {
@@ -154,6 +155,7 @@ export function usePoolMetrics() {
           swapFeeApy: "0",
           lpPrice: "0",
           marketState,
+          incentives: [],
         }
         saveMetricsToCache(coinInfo.marketStateId, zeroResult)
         return zeroResult
@@ -248,23 +250,33 @@ export function usePoolMetrics() {
         .mul(100)
 
       // Calculate reward APYs
-      if (marketState.rewardMetrics) {
-        marketState.rewardMetrics = marketState.rewardMetrics.map((rewardMetric) => ({
-          ...rewardMetric,
-          apy: safeDivide(rewardMetric.dailyValue, tvl.toString(), "decimal")
-            .plus(1)
-            .pow(365)
-            .minus(1)
-            .mul(100)
-            .toString()
-        }))
-      }
+
+      const incentives = marketState?.rewardMetrics
+        ? marketState.rewardMetrics.map(
+            ({ tokenPrice, tokenType, dailyEmission, tokenLogo }) => ({
+              tokenLogo,
+              tokenType,
+              tokenPrice,
+              apy: safeDivide(
+                new Decimal(tokenPrice).mul(dailyEmission),
+                tvl,
+                "decimal",
+              )
+                .plus(1)
+                .pow(365)
+                .minus(1)
+                .mul(100)
+                .toString(),
+            }),
+          )
+        : []
 
       // Sum up all reward APYs
-      const incentiveApy = marketState.rewardMetrics?.reduce(
-        (sum, metric) => sum.plus(metric.apy || "0"),
-        new Decimal(0)
-      ) || new Decimal(0)
+      const incentiveApy =
+        incentives?.reduce(
+          (sum, incentive) => sum.plus(incentive.apy),
+          new Decimal(0),
+        ) || new Decimal(0)
 
       poolApy = scaledUnderlyingApy
         .add(scaledPtApy)
@@ -290,6 +302,7 @@ export function usePoolMetrics() {
           .mul(10 ** Number(coinInfo.decimal))
           .toString(),
         marketState,
+        incentives,
       }
 
       // Save to cache

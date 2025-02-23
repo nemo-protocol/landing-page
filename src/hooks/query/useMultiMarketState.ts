@@ -63,15 +63,10 @@ const calculateRewardMetrics = (
     .div(new Decimal(10).pow(decimal))
     .toString()
 
-  // Calculate daily value
-  const dailyValue = new Decimal(dailyEmission).mul(tokenPrice).toString()
-
   return {
     tokenType,
     tokenLogo,
     dailyEmission,
-    dailyValue,
-    apy: "",
     tokenPrice,
   }
 }
@@ -106,31 +101,33 @@ const useMultiMarketState = (marketStateIds?: string[]) => {
         const groupedRewarders = (
           fields.reward_pool?.fields.rewarders.fields.contents || []
         )
-        .filter(entry => Number(entry.fields.value.fields.end_time) > currentTime)
-        .reduce(
-          (acc, entry) => {
-            const rewarder = entry.fields.value.fields
-            const tokenType = rewarder.reward_token.fields.name
+          .filter(
+            (entry) => Number(entry.fields.value.fields.end_time) > currentTime,
+          )
+          .reduce(
+            (acc, entry) => {
+              const rewarder = entry.fields.value.fields
+              const tokenType = rewarder.reward_token.fields.name
 
-            if (!acc[tokenType]) {
-              acc[tokenType] = {
-                emissionPerSecond: "0",
-                tokenType,
+              if (!acc[tokenType]) {
+                acc[tokenType] = {
+                  emissionPerSecond: "0",
+                  tokenType,
+                }
               }
-            }
 
-            acc[tokenType].emissionPerSecond = new Decimal(
-              acc[tokenType].emissionPerSecond,
-            )
-              .plus(rewarder.emission_per_second)
-              .toString()
+              acc[tokenType].emissionPerSecond = new Decimal(
+                acc[tokenType].emissionPerSecond,
+              )
+                .plus(rewarder.emission_per_second)
+                .toString()
 
-            return acc
-          },
-          {} as {
-            [key: string]: { emissionPerSecond: string; tokenType: string }
-          },
-        )
+              return acc
+            },
+            {} as {
+              [key: string]: { emissionPerSecond: string; tokenType: string }
+            },
+          )
 
         // Calculate metrics for each grouped rewarder
         const rewardMetrics = Object.values(groupedRewarders).map(

@@ -200,11 +200,14 @@ const MarketTable = ({ list }: MarketTableProps) => {
                             : "--"}
                         </span>
                       </div>
-                      {(item.marketState?.rewardMetrics || []).length > 0 && (
+                      {item.incentives.length > 0 && (
                         <div className="flex flex-col gap-2">
                           <div className="text-sm text-left">Incentive APY</div>
-                          {(item.marketState?.rewardMetrics || []).map((reward, index) => (
-                            <div key={index} className="relative flex flex-row gap-2">
+                          {item.incentives.map((incentive, index) => (
+                            <div
+                              key={index}
+                              className="relative flex flex-row gap-2"
+                            >
                               <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
                               <div className="flex flex-1 flex-row items-start justify-between gap-4">
                                 <div className="flex flex-row items-center gap-1.5">
@@ -214,12 +217,12 @@ const MarketTable = ({ list }: MarketTableProps) => {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <img
-                                    src={reward.tokenLogo}
+                                    src={incentive.tokenLogo}
                                     alt=""
                                     className="size-4"
                                   />
                                   <span className="font-mono text-xs">
-                                    {Number(reward.apy).toFixed(6)}%
+                                    {Number(incentive.apy).toFixed(6)}%
                                   </span>
                                 </div>
                               </div>

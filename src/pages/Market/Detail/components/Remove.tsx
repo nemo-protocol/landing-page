@@ -52,7 +52,10 @@ export default function Remove() {
 
   const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
 
-  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(coinConfig, marketState)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(
+    coinConfig,
+    marketState,
+  )
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
   const { mutateAsync: swapExactPtForSyDryRun } =
@@ -151,7 +154,7 @@ export default function Remove() {
     ])
   }, [refetchCoinConfig, refetchLpPosition, refetchPyPosition])
 
-  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
+  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig, marketState)
 
   async function remove() {
     if (

@@ -38,6 +38,12 @@ export interface BaseCoinInfo {
   oracleVoucherPackageId: string
 }
 
+export interface Incentive {
+  apy: string
+  tokenType: string
+  tokenLogo: string
+}
+
 export interface CoinInfoWithMetrics extends BaseCoinInfo {
   ptPrice: string
   ytPrice: string
@@ -55,6 +61,7 @@ export interface CoinInfoWithMetrics extends BaseCoinInfo {
   incentive: string
   totalApy: string
   feeApy: string
+  incentives: Incentive[]
 }
 
 export interface CoinConfig extends BaseCoinInfo {
