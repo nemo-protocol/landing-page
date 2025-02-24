@@ -5,8 +5,8 @@ import { CoinConfig } from "@/queries/types/market"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { Transaction } from "@mysten/sui/transactions"
 import { LpPosition, PyPosition, MarketState } from "@/hooks/types"
-import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
-import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
+import useBurnLpDryRun from "@/hooks/dryRun/useBurnLpDryRun"
+import useSwapExactPtForSyDryRun from "@/hooks/dryRun/useSwapExactPtForSyDryRun"
 import useClaimLpReward from "./useClaimLpReward"
 import {
   initPyPosition,

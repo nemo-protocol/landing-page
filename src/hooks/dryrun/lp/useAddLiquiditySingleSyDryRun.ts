@@ -9,7 +9,7 @@ import type { DebugInfo, PyPosition } from "../../types"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchPyPosition from "../../useFetchPyPosition"
 import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
-import useGetConversionRateDryRun from "../../dryrun/useGetConversionRateDryRun"
+import useGetConversionRateDryRun from "../useGetConversionRateDryRun"
 import { safeDivide } from "@/lib/utils"
 
 interface AddLiquiditySingleSyParams {

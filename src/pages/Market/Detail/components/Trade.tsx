@@ -34,7 +34,7 @@ import {
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import useGetApproxYtOutDryRun from "@/hooks/dryrun/useGetApproxYtOutDryRun"
+import useGetApproxYtOutDryRun from "@/hooks/dryRun/useGetApproxYtOutDryRun"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import useInputLoadingState from "@/hooks/useInputLoadingState"

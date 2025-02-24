@@ -9,7 +9,7 @@ import {
 } from "@/lib/txHelper"
 import { debugLog } from "@/config"
 import { safeDivide } from "@/lib/utils"
-import useAddLiquiditySinglePtDryRun from "@/hooks/dryrun/lp/useAddLiquiditySinglePtDryRun"
+import useAddLiquiditySinglePtDryRun from "@/hooks/dryRun/lp/useAddLiquiditySinglePtDryRun"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
 import { useMutation } from "@tanstack/react-query"
 import type { DebugInfo } from "../types"

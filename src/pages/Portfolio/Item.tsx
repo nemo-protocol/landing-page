@@ -113,7 +113,7 @@ export default function Item({
   const [redeemLoading, setRedeemLoading] = useState(false)
   const [claimLoading, setClaimLoading] = useState(false)
 
-  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
+  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig, marketState)
 
   // TODO: yt price optimization
   const { data: ptYtData, isLoading: isPtYtLoading } = useCalculatePtYt(
@@ -358,7 +358,13 @@ export default function Item({
 
   async function claimLpReward(rewardIndex: number = selectedRewardIndex) {
     debugLog("claimLpReward", lpPositions, marketState)
-    if (coinConfig?.coinType && address && lpBalance && lpPositions?.length && marketState?.rewardMetrics?.[rewardIndex]) {
+    if (
+      coinConfig?.coinType &&
+      address &&
+      lpBalance &&
+      lpPositions?.length &&
+      marketState?.rewardMetrics?.[rewardIndex]
+    ) {
       try {
         setClaimLoading(true)
         const tx = new Transaction()
@@ -369,7 +375,7 @@ export default function Item({
           lpPositions,
           rewardMetric: marketState.rewardMetrics[rewardIndex],
         })
-        
+
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
         })

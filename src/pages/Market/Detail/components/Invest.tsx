@@ -47,9 +47,9 @@ import useMarketStateData from "@/hooks/useMarketStateData"
 import useInvestRatio from "@/hooks/actions/useInvestRatio"
 import { CoinConfig } from "@/queries/types/market"
 import { ContractError } from "@/hooks/types"
-import useGetApproxPtOutDryRun from "@/hooks/dryrun/useGetApproxPtOutDryRun"
-import useSwapExactSyForPtDryRun from "@/hooks/dryrun/useSwapExactSyForPtDryRun"
-import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
+import useGetApproxPtOutDryRun from "@/hooks/dryRun/useGetApproxPtOutDryRun"
+import useSwapExactSyForPtDryRun from "@/hooks/dryRun/useSwapExactSyForPtDryRun"
+import useGetConversionRateDryRun from "@/hooks/dryRun/useGetConversionRateDryRun"
 import useQueryPtRatio from "@/hooks/useQueryPtRatio"
 
 export default function Invest() {

@@ -1,14 +1,14 @@
+import Decimal from "decimal.js"
+import { debugLog } from "@/config"
+import { bcs } from "@mysten/sui/bcs"
+import { ContractError } from "../types"
+import type { DebugInfo } from "../types"
+import { getPriceVoucher } from "@/lib/txHelper"
+import { DEFAULT_Address } from "@/lib/constants"
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import type { BaseCoinInfo } from "@/queries/types/market"
-import type { DebugInfo } from "../types"
-import { ContractError } from "../types"
-import { getPriceVoucher } from "@/lib/txHelper"
-import { bcs } from "@mysten/sui/bcs"
-import { DEFAULT_Address } from "@/lib/constants"
-import Decimal from "decimal.js"
-import { debugLog } from "@/config"
 
 type DryRunResult<T extends boolean> = T extends true
   ? [string, DebugInfo]
@@ -68,7 +68,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
       }
 
       if (!result?.results?.[result.results.length - 1]?.returnValues?.[0]) {
-        const message = "Failed to get PT amount"
+        const message = "Failed to get conversion rate"
         debugInfo.rawResult = {
           error: message,
         }
@@ -89,7 +89,9 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
       debugInfo.parsedOutput = formattedConversionRate
       debugInfo.result = formattedConversionRate
 
-      debugLog("useGetConversionRateDryRun", debugInfo)
+      if (!debug) {
+        debugLog("useGetConversionRateDryRun", debugInfo)
+      }
 
       return (
         debug ? [formattedConversionRate, debugInfo] : formattedConversionRate

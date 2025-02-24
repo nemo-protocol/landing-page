@@ -49,13 +49,13 @@ import {
 } from "@/components/ui/select"
 import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
-import useMintLpDryRun from "@/hooks/dryrun/useMintLpDryRun"
-import useAddLiquiditySingleSyDryRun from "@/hooks/dryrun/lp/useAddLiquiditySingleSyDryRun"
-import useSeedLiquidityDryRun from "@/hooks/dryrun/useSeedLiquidityDryRun"
+import useMintLpDryRun from "@/hooks/dryRun/useMintLpDryRun"
+import useAddLiquiditySingleSyDryRun from "@/hooks/dryRun/lp/useAddLiquiditySingleSyDryRun"
+import useSeedLiquidityDryRun from "@/hooks/dryRun/useSeedLiquidityDryRun"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import type { CoinData } from "@/hooks/useCoinData"
-import useGetConversionRateDryRun from "@/hooks/dryrun/useGetConversionRateDryRun"
 import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
+import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -77,7 +77,6 @@ export default function SingleCoin() {
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isCalcLpLoading, setIsCalcLpLoading] = useState(false)
   const [ratio, setRatio] = useState<string>()
-  const [conversionRate, setConversionRate] = useState<string>()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -87,6 +86,8 @@ export default function SingleCoin() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
+
+  const { data: conversionRate } = useQueryConversionRate(coinConfig)
 
   const { mutateAsync: handleAddLiquiditySingleSy } =
     useAddLiquiditySingleSy(coinConfig)
@@ -181,18 +182,6 @@ export default function SingleCoin() {
     }
     return ["0", "0"]
   }, [ptYtData])
-
-  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
-
-  useEffect(() => {
-    async function initConversionRate() {
-      const rate = await getConversionRate(coinConfig)
-      setConversionRate(rate)
-    }
-    if (coinConfig) {
-      initConversionRate()
-    }
-  }, [getConversionRate, coinConfig])
 
   const { isLoading } = useInputLoadingState(
     addValue,
