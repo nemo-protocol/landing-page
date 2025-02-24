@@ -16,7 +16,7 @@ import {
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import ActionButton from "@/components/ActionButton"
-import useRedeemPYDryRun from "@/hooks/dryrun/useRedeemPYDryRun"
+import useRedeemPYDryRun from "@/hooks/dryRun/useRedeemPYDryRun"
 import { debounce, formatDecimalValue } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import useMarketStateData from "@/hooks/useMarketStateData"

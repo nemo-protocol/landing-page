@@ -7,6 +7,11 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface TransactionStatusDialogProps {
   open: boolean
@@ -17,6 +22,7 @@ interface TransactionStatusDialogProps {
   onClose: () => void
 }
 
+// TODO: T0: add global toast
 const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
   open,
   status,
@@ -25,6 +31,40 @@ const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
   message,
   onClose,
 }) => {
+  const ViewDetailsPopover = () => (
+    <Popover>
+      <PopoverTrigger className="text-[#8FB5FF] underline">
+        View details
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-2 bg-[#1A1B23] border-none rounded-xl">
+        <div className="flex flex-col gap-2">
+          <a
+            className="text-white hover:text-[#8FB5FF] transition-colors"
+            href={`https://suivision.xyz/txblock/${txId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/10">
+              <img src="/images/logo/suivision.svg" alt="SuiVision" className="w-4 h-4" />
+              <span>SuiVision</span>
+            </div>
+          </a>
+          <a
+            className="text-white hover:text-[#8FB5FF] transition-colors"
+            href={`https://suiscan.xyz/${network}/tx/${txId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/10">
+              <img src="/images/logo/suiscan.png" alt="Suiscan" className="w-4 h-4" />
+              <span>Suiscan</span>
+            </div>
+          </a>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+
   return (
     <AlertDialog open={open}>
       <AlertDialogContent className="bg-[#0e0f15] border-none rounded-3xl">
@@ -44,29 +84,15 @@ const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
             )}
             {status === "Success" && (
               <div className="py-2 flex flex-col gap-y-1 items-center">
-                <p className=" text-white/50">Transaction submitted!</p>
-                <a
-                  className="text-[#8FB5FF] underline"
-                  href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                  target="_blank"
-                >
-                  View details
-                </a>
+                <p className="text-white/50">Transaction submitted!</p>
+                <ViewDetailsPopover />
               </div>
             )}
             {status === "Failed" && (
               <div className="py-2 flex flex-col gap-y-1 items-center">
-                <p className=" text-red-400">Transaction Error</p>
+                <p className="text-red-400">Transaction Error</p>
                 <p className="text-red-500 max-w-[446px] break-words whitespace-pre-wrap">{message}</p>
-                {txId && (
-                  <a
-                    className="text-red-500 underline"
-                    href={`https://suiscan.xyz/${network}/tx/${txId}`}
-                    target="_blank"
-                  >
-                    View details
-                  </a>
-                )}
+                {txId && <ViewDetailsPopover />}
               </div>
             )}
           </AlertDialogDescription>

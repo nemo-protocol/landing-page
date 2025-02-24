@@ -19,8 +19,6 @@ export interface BaseCoinInfo {
   metadataId: string
   nativePool: string
   priceOracleConfigId: string
-  aftermathSafeId: string
-  aftermathStakedSuiVaultId: string
   haedalStakeingId: string
   decimal: string
   underlyingApy: string
@@ -35,6 +33,15 @@ export interface BaseCoinInfo {
   underlyingCoinLogo: string
   version: string
   perPoints: string
+  oraclePackageId: string
+  oracleTicket: string
+  oracleVoucherPackageId: string
+}
+
+export interface Incentive {
+  apy: string
+  tokenType: string
+  tokenLogo: string
 }
 
 export interface CoinInfoWithMetrics extends BaseCoinInfo {
@@ -49,12 +56,12 @@ export interface CoinInfoWithMetrics extends BaseCoinInfo {
   marketState: MarketState
   scaledApy: string
   underlyingApy: string
-  scaled_underlying_apy: string
-  scaled_pt_apy: string
-  incentiveApy: string
+  scaledUnderlyingApy: string
+  scaledPtApy: string
   incentive: string
   totalApy: string
   feeApy: string
+  incentives: Incentive[]
 }
 
 export interface CoinConfig extends BaseCoinInfo {
@@ -104,4 +111,13 @@ export interface PointItem {
   address: string
   pointsPerDay: string
   totalPoints: string
+}
+
+export interface TokenInfo {
+  logo: string
+  price: string
+}
+
+export interface TokenInfoMap {
+  [key: string]: TokenInfo
 }

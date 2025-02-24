@@ -1,12 +1,12 @@
+import { bcs } from "@mysten/sui/bcs"
+import { ContractError } from "./types"
+import type { DebugInfo } from "./types"
+import { getPriceVoucher } from "@/lib/txHelper"
+import { DEFAULT_Address } from "@/lib/constants"
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { ContractError } from "./types"
+import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import type { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "./types"
-import { bcs } from "@mysten/sui/bcs"
-import { getPriceVoucher } from "@/lib/txHelper"
-// import { debugLog } from "@/config"
 
 interface MoveCallInfo {
   target: string
@@ -17,15 +17,13 @@ interface MoveCallInfo {
 export default function useQueryPriceVoucher(
   coinConfig?: CoinConfig,
   debug: boolean = false,
+  caller?: string,
 ) {
   const client = useSuiClient()
-  const { address } = useWallet()
+  const address = DEFAULT_Address
 
   return useMutation({
     mutationFn: async (): Promise<string | [string, DebugInfo]> => {
-      if (!address) {
-        throw new Error("Please connect wallet first")
-      }
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
@@ -33,10 +31,10 @@ export default function useQueryPriceVoucher(
       const tx = new Transaction()
       tx.setSender(address)
 
-      const [, moveCallInfo] = getPriceVoucher(tx, coinConfig)
+      const [, moveCallInfo] = getPriceVoucher(tx, coinConfig, caller)
 
       const debugInfo: DebugInfo = {
-        moveCall: moveCallInfo as MoveCallInfo,
+        moveCall: [moveCallInfo as MoveCallInfo],
       }
 
       const result = await client.devInspectTransactionBlock({
@@ -54,7 +52,10 @@ export default function useQueryPriceVoucher(
       }
 
       if (result?.error) {
-        throw new ContractError(result.error, debugInfo)
+        throw new ContractError(
+          "useQueryPriceVoucher error: " + result.error,
+          debugInfo,
+        )
       }
 
       if (!result?.results?.[0]?.returnValues?.[0]) {
@@ -66,6 +67,7 @@ export default function useQueryPriceVoucher(
       const outputVoucher = bcs.U128.parse(
         new Uint8Array(result.results[0].returnValues[0][0]),
       ).toString()
+
       debugInfo.parsedOutput = outputVoucher
 
       return debug ? [outputVoucher, debugInfo] : outputVoucher
@@ -76,10 +78,10 @@ export default function useQueryPriceVoucher(
 export function useQueryPriceVoucherWithCoinInfo(
   coinConfig?: BaseCoinInfo,
   debug: boolean = false,
+  caller?: string,
 ) {
   const client = useSuiClient()
-  const address =
-    "0x0000000000000000000000000000000000000000000000000000000000000001"
+  const address = DEFAULT_Address
 
   return useMutation({
     mutationFn: async (): Promise<
@@ -92,7 +94,11 @@ export function useQueryPriceVoucherWithCoinInfo(
       const tx = new Transaction()
       tx.setSender(address)
 
-      const [priceVoucher, moveCallInfo] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, moveCallInfo] = getPriceVoucher(
+        tx,
+        coinConfig,
+        caller,
+      )
       tx.moveCall({
         target: `${coinConfig.nemoContractId}::router::get_pt_out_for_exact_sy_in_with_price_voucher`,
         arguments: [
@@ -107,7 +113,7 @@ export function useQueryPriceVoucherWithCoinInfo(
         typeArguments: [coinConfig.syCoinType],
       })
       const debugInfo: DebugInfo = {
-        moveCall: moveCallInfo as MoveCallInfo,
+        moveCall: [moveCallInfo as MoveCallInfo],
       }
 
       const result = await client.devInspectTransactionBlock({

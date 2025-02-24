@@ -55,35 +55,44 @@ export default function useSwapExactPtForSyDryRun(
       // Get price voucher
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-      const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::market::swap_exact_pt_for_sy`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            {
-              name: "redeem_value",
-              value: new Decimal(redeemValue)
-                .mul(10 ** Number(coinConfig.decimal))
-                .toFixed(0),
-            },
-            {
-              name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id,
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "market_factory_config",
-              value: coinConfig.marketFactoryConfigId,
-            },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::market::swap_exact_pt_for_sy`,
+        arguments: [
+          { name: "version", value: coinConfig.version },
+          {
+            name: "redeem_value",
+            value: new Decimal(redeemValue)
+              .mul(10 ** Number(coinConfig.decimal))
+              .toFixed(0),
+          },
+          {
+            name: "py_position",
+            value: created ? "pyPosition" : pyPositions[0].id,
+          },
+          { name: "py_state", value: coinConfig.pyStateId },
+          { name: "price_voucher", value: "priceVoucher" },
+          {
+            name: "market_factory_config",
+            value: coinConfig.marketFactoryConfigId,
+          },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
       }
 
-      swapExactPtForSy(tx, coinConfig, redeemValue, pyPosition, priceVoucher)
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+      }
+
+      swapExactPtForSy(
+        tx,
+        coinConfig,
+        redeemValue,
+        pyPosition,
+        priceVoucher,
+        "0",
+      )
 
       if (created) {
         tx.transferObjects([pyPosition], address)
@@ -115,7 +124,7 @@ export default function useSwapExactPtForSyDryRun(
 
       const syAmount = result.events[0].parsedJson.sy_amount as string
 
-    //   console.log("syAmount", syAmount)
+      //   console.log("syAmount", syAmount)
 
       debugInfo.parsedOutput = JSON.stringify({ syAmount })
 

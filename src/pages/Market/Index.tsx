@@ -18,8 +18,14 @@ export default function Home() {
   const { data: list, isLoading } = useCoinInfoList()
   const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
     const savedViewMode = localStorage.getItem("marketViewMode")
-    return (savedViewMode === "table" || savedViewMode === "grid") ? savedViewMode : "grid"
+    return savedViewMode === "table" || savedViewMode === "grid"
+      ? savedViewMode
+      : "grid"
   })
+
+  useEffect(() => {
+    console.log("list", list)
+  }, [list])
 
   useEffect(() => {
     localStorage.setItem("marketViewMode", viewMode)

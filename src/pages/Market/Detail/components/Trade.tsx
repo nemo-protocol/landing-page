@@ -34,6 +34,7 @@ import {
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
 import { useWallet } from "@nemoprotocol/wallet-kit"
+import useGetApproxYtOutDryRun from "@/hooks/dryRun/useGetApproxYtOutDryRun"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
@@ -49,6 +50,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { formatLargeNumber } from "@/lib/utils"
 
 export default function Trade() {
   const [txId, setTxId] = useState("")
@@ -61,6 +63,7 @@ export default function Trade() {
   const [slippage, setSlippage] = useState("0.5")
   const [message, setMessage] = useState<string>()
   const [ytValue, setYtValue] = useState<string>()
+  const [ytFeeValue, setYtFeeValue] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
   const [errorDetail, setErrorDetail] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
@@ -146,6 +149,7 @@ export default function Trade() {
 
   const { mutateAsync: calculateRatio } = useTradeRatio(coinConfig)
   const { mutateAsync: queryYtOut } = useQueryYtOutBySyInWithVoucher(coinConfig)
+  const getApproxYtOutDryRun = useGetApproxYtOutDryRun(coinConfig)
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -185,9 +189,9 @@ export default function Trade() {
               .div(tokenType === 0 ? conversionRate : 1)
               .mul(10 ** decimal)
               .toFixed(0)
-            const ytValue = await queryYtOut(swapAmount)
+            const [ytValue, ytFeeValue] = await queryYtOut(swapAmount)
             setYtValue(ytValue)
-
+            setYtFeeValue(ytFeeValue)
             const ytRatio = new Decimal(ytValue).div(value).toFixed(4)
             setRatio(ytRatio)
           } catch (error) {
@@ -197,12 +201,14 @@ export default function Trade() {
             setError(msg)
             setErrorDetail(detail)
             setYtValue(undefined)
+            setYtFeeValue(undefined)
             setRatio("")
           } finally {
             setIsCalcYtLoading(false)
           }
         } else {
           setYtValue(undefined)
+          setYtFeeValue(undefined)
           setRatio("")
           setError(undefined)
         }
@@ -220,7 +226,10 @@ export default function Trade() {
     }
   }, [swapValue, decimal, coinConfig, debouncedGetYtOut])
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketStateData)
+  const { data: ptYtData, refetch: refetchPtYt } = useCalculatePtYt(
+    coinConfig,
+    marketStateData,
+  )
 
   const hasLiquidity = useMemo(() => {
     return isValidAmount(marketStateData?.lpSupply)
@@ -299,12 +308,14 @@ export default function Trade() {
         setIsSwapping(true)
         const tx = new Transaction()
 
-        const syCoinAmount = new Decimal(swapValue)
+        const swapAmount = new Decimal(swapValue).mul(10 ** decimal).toFixed(0)
+
+        const syAmount = new Decimal(swapAmount)
           .div(tokenType === 0 ? conversionRate : 1)
-          .mul(10 ** decimal)
           .toFixed(0)
 
-        const [ytOut] = await queryYtOut(syCoinAmount)
+        const [ytOut] = await queryYtOut(syAmount)
+
         const minYtOut = new Decimal(ytOut)
           .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
@@ -312,10 +323,8 @@ export default function Trade() {
 
         const [splitCoin] =
           tokenType === 0
-            ? mintSCoin(tx, coinConfig, coinData, [
-                new Decimal(swapValue).mul(10 ** decimal).toFixed(0),
-              ])
-            : splitCoinHelper(tx, coinData, [syCoinAmount], coinType)
+            ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
+            : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
@@ -329,11 +338,26 @@ export default function Trade() {
         }
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+
+        const { approxYtOut, netSyTokenization } =
+          await getApproxYtOutDryRun.mutateAsync({
+            netSyIn: syAmount,
+            minYtOut,
+          })
+
+        console.log(
+          "approxYtOut, netSyTokenization",
+          approxYtOut,
+          netSyTokenization,
+        )
+
         tx.moveCall({
           target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_yt`,
           arguments: [
             tx.object(coinConfig.version),
             tx.pure.u64(minYtOut),
+            tx.pure.u64(approxYtOut),
+            tx.pure.u64(netSyTokenization),
             syCoin,
             priceVoucher,
             pyPosition,
@@ -351,11 +375,12 @@ export default function Trade() {
           arguments: [
             coinConfig.version,
             minYtOut,
+            approxYtOut,
+            netSyTokenization,
             "syCoin",
             "priceVoucher",
             "pyPosition",
             coinConfig.pyStateId,
-            coinConfig.syStateId,
             coinConfig.yieldFactoryConfigId,
             coinConfig.marketFactoryConfigId,
             coinConfig.marketStateId,
@@ -378,6 +403,7 @@ export default function Trade() {
         setSwapValue("")
 
         await refreshData()
+        await refetchPtYt()
       } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")
@@ -563,7 +589,7 @@ export default function Trade() {
               <span>Leveraged Yield APY</span>
               <span className="underline">
                 {ptYtData?.ytApy
-                  ? `${new Decimal(ptYtData.ytApy).toFixed(6)} %`
+                  ? `${formatLargeNumber(ptYtData.ytApy, 6)} %`
                   : "--"}
               </span>
             </div>
@@ -592,21 +618,7 @@ export default function Trade() {
               }
             }}
             isRatioLoading={isRatioLoading}
-            tradeFee={
-              !!swapValue &&
-              !!conversionRate &&
-              !!coinConfig?.feeRate &&
-              !!coinConfig?.coinPrice
-                ? new Decimal(coinConfig.feeRate)
-                    .mul(
-                      tokenType === 0
-                        ? new Decimal(swapValue).mul(conversionRate)
-                        : swapValue,
-                    )
-                    .mul(coinConfig.coinPrice)
-                    .toString()
-                : undefined
-            }
+            tradeFee={ytFeeValue}
             targetCoinName={`YT ${coinConfig?.coinName}`}
           />
           <ActionButton

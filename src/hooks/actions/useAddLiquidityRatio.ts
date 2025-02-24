@@ -2,7 +2,6 @@ import { useRef } from "react"
 import Decimal from "decimal.js"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import { useWallet } from "@nemoprotocol/wallet-kit"
 import useQueryLpOutFromMintLp from "../useQueryLpOutFromMintLp"
 import { splitSyAmount } from "@/lib/utils"
 import useFetchObject from "@/hooks/useFetchObject.ts"
@@ -14,24 +13,18 @@ export function useAddLiquidityRatio(
   marketState?: MarketState,
 ) {
   const lastPowerRef = useRef(0)
-  const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
-  const { mutateAsync: exchangeRateFun } = useFetchObject(
-    coinConfig?.pyStateId,
-    false,
-  )
+  const { mutateAsync: exchangeRateFun } = useFetchObject()
   const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
     coinConfig,
     false,
+    "useAddLiquidityRatio",
   )
 
   return useMutation({
     mutationFn: async () => {
       if (!coinConfig) {
         throw new Error("Please select a pool")
-      }
-      if (!address) {
-        throw new Error("Please connect wallet first")
       }
       if (!marketState) {
         throw new Error("not found market")
@@ -40,8 +33,9 @@ export function useAddLiquidityRatio(
         objectId: coinConfig.pyStateId,
         options: { showContent: true },
       })
+
       const priceVoucher = await priceVoucherFun()
-      const decimal = 3
+      const decimal = 5
 
       const calculateRatio = async (
         power = lastPowerRef.current,
@@ -53,6 +47,7 @@ export function useAddLiquidityRatio(
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
 
           const parsedData = JSON.parse(exchangeRate.toString())
+
           const { syValue, ptValue } = splitSyAmount(
             baseAmount,
             marketState.lpSupply,
@@ -61,10 +56,12 @@ export function useAddLiquidityRatio(
             parsedData?.content?.fields?.py_index_stored?.fields?.value,
             priceVoucher.toString(),
           )
+
           const lpAmount =
             marketState.lpSupply == "0"
               ? (Math.sqrt(Number(ptValue) * Number(syValue)) - 1000).toString()
               : (await queryLpOut({ ptValue, syValue }))[0]
+
           const ratio = new Decimal(lpAmount).div(baseAmount).toString()
 
           lastPowerRef.current = power

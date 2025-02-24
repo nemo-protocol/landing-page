@@ -1,22 +1,23 @@
+import Decimal from "decimal.js"
 import { ContractError } from "../types"
 import type { DebugInfo } from "../types"
-import { useMutation } from "@tanstack/react-query"
+import type { PyPosition } from "../types"
 import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
+import useFetchPyPosition from "../useFetchPyPosition"
+import { useCalculateLpOut } from "../useCalculateLpOut"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import useFetchPyPosition from "../useFetchPyPosition"
-import type { PyPosition } from "../types"
-import { useCalculateLpOut } from "../useCalculateLpOut"
+import { useMutation, UseMutationResult } from "@tanstack/react-query"
+import { BaseDryRunResult, createDryRunResult } from "../types/dryRun"
 import {
+  mintPY,
   mintSCoin,
   depositSyCoin,
-  getPriceVoucher,
   initPyPosition,
-  mintPY,
+  getPriceVoucher,
   splitCoinHelper,
 } from "@/lib/txHelper"
-import Decimal from "decimal.js"
 
 interface MintLpParams {
   addAmount: string
@@ -25,14 +26,15 @@ interface MintLpParams {
   pyPositions?: PyPosition[]
 }
 
-type DryRunResult<T extends boolean> = T extends true
-  ? [{ lpAmount: string; ytAmount: string }, DebugInfo]
-  : { lpAmount: string; ytAmount: string }
+interface MintLpResult {
+  lpAmount: string
+  ytAmount: string
+}
 
 export default function useMintLpDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
   debug: T = false as T,
-) {
+): UseMutationResult<BaseDryRunResult<MintLpResult, T>, Error, MintLpParams> {
   const client = useSuiClient()
   const { address } = useWallet()
   const { mutateAsync: calculateLpOut } = useCalculateLpOut(coinConfig)
@@ -44,7 +46,7 @@ export default function useMintLpDryRun<T extends boolean = false>(
       addAmount,
       tokenType,
       pyPositions: inputPyPositions,
-    }: MintLpParams): Promise<DryRunResult<T>> => {
+    }: MintLpParams): Promise<BaseDryRunResult<MintLpResult, T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -54,6 +56,8 @@ export default function useMintLpDryRun<T extends boolean = false>(
       if (!coinData?.length) {
         throw new Error("No available coins")
       }
+
+      console.log("inputPyPositions", inputPyPositions)
 
       const [pyPositions] = (
         inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
@@ -114,29 +118,31 @@ export default function useMintLpDryRun<T extends boolean = false>(
 
       const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
 
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::market::mint_lp`,
+        arguments: [
+          { name: "version", value: coinConfig.version },
+          { name: "sy_coin", value: "syCoin" },
+          { name: "pt_amount", value: "pt_amount" },
+          { name: "min_lp_amount", value: "0" },
+          { name: "price_voucher", value: "priceVoucherForMintLp" },
+          {
+            name: "py_position",
+            value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
+          },
+          { name: "py_state", value: coinConfig.pyStateId },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
+
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::market::mint_lp`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "sy_coin", value: "syCoin" },
-            { name: "pt_amount", value: "pt_amount" },
-            { name: "min_lp_amount", value: "0" },
-            { name: "price_voucher", value: "priceVoucherForMintLp" },
-            {
-              name: "py_position",
-              value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.object(coinConfig.version),
           syCoin,
@@ -185,9 +191,7 @@ export default function useMintLpDryRun<T extends boolean = false>(
 
       debugInfo.parsedOutput = lpAmount
 
-      return (
-        debug ? [{ lpAmount, ytAmount }, debugInfo] : { lpAmount, ytAmount }
-      ) as DryRunResult<T>
+      return createDryRunResult({ lpAmount, ytAmount }, debug, debugInfo)
     },
   })
 }

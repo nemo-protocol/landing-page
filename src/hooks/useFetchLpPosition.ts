@@ -6,29 +6,43 @@ import { useWallet } from "@nemoprotocol/wallet-kit"
 import { type CoinConfig } from "@/queries/types/market"
 import { type SuiObjectResponse } from "@mysten/sui/client"
 
-const useFetchLpPosition = (
+type DryRunResult<T extends boolean> = T extends true
+  ? [LpPosition[], DebugInfo]
+  : LpPosition[]
+
+export default function useFetchLpPosition<T extends boolean = false>(
   coinConfig?: CoinConfig,
-  debug: boolean = false,
-) => {
+  debug: T = false as T,
+) {
   const suiClient = useSuiClient()
   const { address } = useWallet()
 
-  return useMutation<[LpPosition[], DebugInfo?], Error>({
-    mutationFn: async () => {
-      if (!address || !coinConfig) {
-        throw new Error("Missing required parameters")
+  return useMutation({
+    mutationFn: async (): Promise<DryRunResult<T>> => {
+      if (!coinConfig) {
+        throw new Error("Please select a pool")
+      }
+
+      if (!address) {
+        throw new Error("Please connect wallet first")
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: "get_lp_market_position",
-          arguments: [
-            { name: "address", value: address },
-            { name: "market_state_id", value: coinConfig.marketStateId },
-            { name: "maturity", value: coinConfig.maturity },
-          ],
-          typeArguments: coinConfig.marketPositionTypeList,
-        },
+        moveCall: [
+          {
+            target: "query lp positions",
+            arguments: [
+              { name: "address", value: address },
+              {
+                name: "marketPositionTypeList",
+                value: coinConfig.marketPositionTypeList.join(" "),
+              },
+              { name: "maturity", value: coinConfig.maturity },
+              { name: "marketStateId", value: coinConfig.marketStateId },
+            ],
+            typeArguments: [],
+          },
+        ],
       }
 
       const response = await suiClient.getOwnedObjects({
@@ -86,9 +100,7 @@ const useFetchLpPosition = (
             .toString(),
         }))
 
-      return debug ? [positions, debugInfo] : [positions]
+      return (debug ? [positions, debugInfo] : positions) as DryRunResult<T>
     },
   })
 }
-
-export default useFetchLpPosition

@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo, LpPosition, PyPosition } from "../types"
+import type { DebugInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchLpPosition from "../useFetchLpPosition"
 import useFetchPyPosition from "../useFetchPyPosition"
@@ -36,7 +36,7 @@ export default function useBurnLpDryRun(
         throw new Error("Please select a pool")
       }
 
-      const [marketPositions] = (await fetchLpPositionAsync()) as [LpPosition[]]
+      const marketPositions = await fetchLpPositionAsync()
       const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
 
       if (!marketPositions?.length) {
@@ -71,25 +71,27 @@ export default function useBurnLpDryRun(
 
       console.log("mergedPosition", mergedPosition)
 
+      const moveCallInfo = {
+        target: `${effectiveConfig.nemoContractId}::market::burn_lp`,
+        arguments: [
+          { name: "lp_amount", value: lpAmount },
+          {
+            name: "py_position",
+            value: created ? "pyPosition" : pyPositions[0].id,
+          },
+          { name: "market", value: "market" },
+          { name: "market_position", value: marketPositions[0].id.id },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [effectiveConfig.syCoinType],
+      }
+
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${effectiveConfig.nemoContractId}::market::burn_lp`,
-          arguments: [
-            { name: "lp_amount", value: lpAmount },
-            {
-              name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id,
-            },
-            { name: "market", value: "market" },
-            { name: "market_position", value: marketPositions[0].id.id },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [effectiveConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.object(effectiveConfig.version),
           tx.pure.u64(lpAmount),
@@ -98,7 +100,7 @@ export default function useBurnLpDryRun(
           mergedPosition,
           tx.object("0x6"),
         ],
-        typeArguments: debugInfo.moveCall.typeArguments,
+        typeArguments: moveCallInfo.typeArguments,
       })
 
       const result = await client.devInspectTransactionBlock({

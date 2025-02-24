@@ -91,7 +91,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
       target: config.target,
     })
 
-    if (!coinConfig && config.target !== "get_object") {
+    if (!coinConfig) {
       console.log("No coinConfig provided")
       return
     }
@@ -107,20 +107,6 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
       config.target === "get_py_position"
     ) {
       input = undefined as QueryInputMap[T]
-    } else if (config.target === "get_object") {
-      input = {
-        objectId:
-          "0xee465d6ebb7459e81555e6e09917f9821d23c836030a7be0282cd90cf1bf854c",
-        options: {
-          showContent: true,
-          showDisplay: true,
-          showType: true,
-          showOwner: true,
-          showPreviousTransaction: true,
-          showBcs: true,
-          showStorageRebate: true,
-        },
-      } as QueryInputMap[T]
     } else if (config.target === "mint_scoin") {
       const mintInput = {
         coinData: coinData || [],
@@ -142,7 +128,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
   }
 
   useEffect(() => {
-    if ((coinConfig || config.target === "get_object") && calls.length > 0) {
+    if (coinConfig && calls.length > 0) {
       const matchingCall = calls.find(
         (call) => call.name === config.target && !call.result,
       )
@@ -156,10 +142,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
             result: {
               output: null,
               rawOutput: null,
-              coinName:
-                config.target === "get_object"
-                  ? undefined
-                  : coinConfig?.coinName,
+              coinName: coinConfig?.coinName,
               error:
                 error instanceof ContractError ? error.message : String(error),
               debugInfo:
@@ -181,10 +164,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
             result: {
               output: formattedOutput,
               rawOutput: JSON.stringify(output),
-              coinName:
-                config.target === "get_object"
-                  ? undefined
-                  : coinConfig?.coinName,
+              coinName: coinConfig?.coinName,
               debugInfo: debugInfo as DebugInfo,
             },
           }
@@ -233,14 +213,6 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
                 disabled={!coinConfig || !address || isLoading}
               >
                 {config.target}
-              </button>
-            ) : config.target === "get_object" ? (
-              <button
-                className="flex items-center justify-center h-10 bg-[#2C62D8]/10 hover:bg-[#2C62D8]/20 text-[#2C62D8] rounded-xl disabled:opacity-50 disabled:hover:bg-[#2C62D8]/10 text-sm col-span-2"
-                onClick={() => handleQuery("")}
-                disabled={!address || isLoading}
-              >
-                Get Object Info
               </button>
             ) : config.target === "mint_scoin" ? (
               <>
@@ -574,8 +546,8 @@ export default function Test() {
                         ) : (
                           <div className="space-y-2">
                             {/* Arguments */}
-                            {call.result?.debugInfo?.moveCall.arguments.map(
-                              (arg) => (
+                            {call.result?.debugInfo?.moveCall[0]?.arguments.map(
+                              (arg: { name: string; value: string }) => (
                                 <div
                                   key={arg.name}
                                   className="grid grid-cols-[180px,1fr] gap-2 items-start"
@@ -639,14 +611,16 @@ export default function Test() {
                               </span>
                               <div className="text-white/80 break-all flex items-center gap-2">
                                 <span className="break-all">
-                                  {call.result?.debugInfo?.moveCall.typeArguments.join(
-                                    ", ",
+                                  {call.result?.debugInfo?.moveCall.map(
+                                    (moveCall) => moveCall.typeArguments.join(
+                                      ", ",
+                                    ),
                                   )}
                                 </span>
                                 <button
                                   onClick={() =>
                                     handleCopy(
-                                      call.result?.debugInfo?.moveCall.typeArguments.join(
+                                      call.result?.debugInfo?.moveCall[0]?.typeArguments.join(
                                         ", ",
                                       ) || "",
                                       `${call.timestamp}-type_arguments`,

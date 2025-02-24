@@ -18,11 +18,14 @@ interface SellPtParams {
   sellValue: string
   receivingType: "underlying" | "sy"
   pyPositions?: PyPosition[]
+  minSyOut: string
 }
 
+type Result = { outputValue: string; syAmount: string }
+
 type DryRunResult<T extends boolean> = T extends true
-  ? [string, DebugInfo]
-  : string
+  ? [Result, DebugInfo]
+  : Result
 
 export default function useSellPtDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
@@ -33,6 +36,7 @@ export default function useSellPtDryRun<T extends boolean = false>(
 
   return useMutation({
     mutationFn: async ({
+      minSyOut,
       sellValue,
       receivingType,
       pyPositions: inputPyPositions,
@@ -62,12 +66,14 @@ export default function useSellPtDryRun<T extends boolean = false>(
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-      const syCoin = swapExactPtForSy(
+      const [syCoin, moveCallInfo] = swapExactPtForSy(
         tx,
         coinConfig,
         sellValue,
         pyPosition,
         priceVoucher,
+        minSyOut,
+        true,
       )
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
@@ -84,25 +90,7 @@ export default function useSellPtDryRun<T extends boolean = false>(
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::market::swap_exact_pt_for_sy`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "pt_amount", value: sellValue },
-            { name: "min_sy_out", value: "0" },
-            { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "py_position",
-              value: inputPyPositions?.length
-                ? inputPyPositions[0].id
-                : "pyPosition",
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       const result = await client.devInspectTransactionBlock({
@@ -118,10 +106,14 @@ export default function useSellPtDryRun<T extends boolean = false>(
         results: result?.results,
       }
 
-      console.log("result", result)
-
       if (result?.error) {
         throw new ContractError(result.error, debugInfo)
+      }
+
+      if (!result?.events?.[1]?.parsedJson) {
+        const message = "Failed to get sy amount"
+        debugInfo.rawResult.error = message
+        throw new ContractError(message, debugInfo)
       }
 
       if (!result?.events?.[result.events.length - 1]?.parsedJson) {
@@ -130,16 +122,26 @@ export default function useSellPtDryRun<T extends boolean = false>(
         throw new ContractError(message, debugInfo)
       }
 
-      const syAmount = result.events[result.events.length - 1].parsedJson
-        .withdraw_amount as string
+      const outputAmount =
+        receivingType === "underlying"
+          ? result.events[result.events.length - 1].parsedJson.withdraw_amount
+          : result.events[result.events.length - 1].parsedJson.amount_out
+
+      const syAmount = result.events[1].parsedJson.amount_out
 
       const decimal = Number(coinConfig.decimal)
 
-      const syOut = new Decimal(syAmount).div(10 ** decimal).toString()
+      const outputValue = new Decimal(outputAmount)
+        .div(10 ** decimal)
+        .toString()
 
-      debugInfo.parsedOutput = syOut
+      debugInfo.parsedOutput = outputValue
 
-      return (debug ? [syOut, debugInfo] : syOut) as DryRunResult<T>
+      return (
+        debug
+          ? [{ outputValue, syAmount }, debugInfo]
+          : { outputValue, syAmount }
+      ) as DryRunResult<T>
     },
   })
 }

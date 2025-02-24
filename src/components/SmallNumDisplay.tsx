@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils"
 import React from "react"
 
 interface SmallNumDisplayProps {
@@ -24,7 +25,7 @@ const SmallNumDisplay: React.FC<SmallNumDisplayProps> = ({
     const remainingDigits = decimalPart.slice(zeroCount)
 
     return (
-      <span className={className}>
+      <span className={cn("shrink-0", className)}>
         {integerPart}.0<sub>{zeroCount}</sub>
         {remainingDigits}
       </span>

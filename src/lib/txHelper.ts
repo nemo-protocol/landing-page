@@ -1,31 +1,80 @@
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
-import { DebugInfo } from "@/hooks/types"
+import { MoveCallInfo } from "@/hooks/types"
 import { LpPosition } from "@/hooks/types"
 import { CoinData } from "@/hooks/useCoinData"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
 import {
+  SCALLOP,
+  AFTERMATH,
+  VALIDATORS,
+  getTreasury,
+  SSBUCK,
+} from "./constants"
+import {
   Transaction,
-  TransactionArgument,
   TransactionResult,
+  TransactionArgument,
 } from "@mysten/sui/transactions"
-import { SCALLOP, AFTERMATH, VALIDATORS, getTreasury } from "./constants"
 
-export type MoveCallInfo = DebugInfo["moveCall"]
-
-export const getPriceVoucher = (
+export const getPriceVoucher = <T extends boolean = true>(
   tx: Transaction,
   coinConfig: BaseCoinInfo,
-): [TransactionArgument, MoveCallInfo] => {
+  caller: string = "default",
+  returnDebugInfo: T = true as T,
+): T extends true
+  ? [TransactionArgument, MoveCallInfo]
+  : TransactionArgument => {
   let moveCall: MoveCallInfo
   switch (coinConfig.coinType) {
-    case "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT": {
+    case "0xd01d27939064d79e4ae1179cd11cfeeff23943f32b1a842ea1a1e15a0045d77d::st_sbuck::ST_SBUCK": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_volo`,
+        target: `${coinConfig.oraclePackageId}::buck::get_price_voucher_from_ssbuck`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
+          },
+          {
+            name: "vault",
+            value: SSBUCK.VAULT,
+          },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
+      }
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_ssbuck move call:`,
+          moveCall,
+        )
+      }
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
+    }
+    case "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT": {
+      moveCall = {
+        target: `${coinConfig.oraclePackageId}::volo::get_price_voucher_from_volo`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           { name: "native_pool", value: coinConfig.nativePool },
           { name: "metadata", value: coinConfig.metadataId },
@@ -33,89 +82,137 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType],
       }
-      debugLog("get_price_voucher_from_volo move call:", moveCall)
+      if (!returnDebugInfo) {
+        debugLog(`[${caller}] get_price_voucher_from_volo move call:`, moveCall)
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
     case "0x83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_spring`,
+        target: `${coinConfig.oraclePackageId}::spring::get_price_voucher_from_spring`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           { name: "lst_info", value: coinConfig.lstInfoId },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
-        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
-      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_spring move call:`,
+          moveCall,
+        )
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
     case "0xf325ce1300e8dac124071d3152c5c5ee6174914f8bc2161e88329cf579246efc::afsui::AFSUI": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_aftermath`,
+        target: `${coinConfig.oraclePackageId}::aftermath::get_price_voucher_from_aftermath`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
           },
-          { name: "aftermath_safe", value: coinConfig.aftermathSafeId },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
+          },
           {
             name: "aftermath_staked_sui_vault",
-            value: coinConfig.aftermathStakedSuiVaultId,
+            value: AFTERMATH.STAKED_SUI_VAULT,
           },
+          { name: "aftermath_safe", value: AFTERMATH.SAFE },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
-        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
-      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_spring move call:`,
+          moveCall,
+        )
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
     case "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI": {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_haSui`,
+        target: `${coinConfig.oraclePackageId}::haedal::get_price_voucher_from_haSui`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           { name: "haedal_staking", value: coinConfig.haedalStakeingId },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
-        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
-      debugLog("get_price_voucher_from_spring move call:", moveCall)
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_spring move call:`,
+          moveCall,
+        )
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
     default: {
       moveCall = {
-        target: `${coinConfig.nemoContractId}::oracle::get_price_voucher_from_x_oracle`,
+        target: `${coinConfig.oraclePackageId}::scallop::get_price_voucher_from_x_oracle`,
         arguments: [
           {
             name: "price_oracle_config",
             value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
           },
           { name: "provider_version", value: coinConfig.providerVersion },
           { name: "provider_market", value: coinConfig.providerMarket },
@@ -124,14 +221,22 @@ export const getPriceVoucher = (
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
       }
-      debugLog("get_price_voucher_from_x_oracle move call:", moveCall)
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_x_oracle move call:`,
+          moveCall,
+        )
+      }
       const [priceVoucher] = tx.moveCall({
         target: moveCall.target,
         arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
         typeArguments: moveCall.typeArguments,
       })
-
-      return [priceVoucher, moveCall]
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
     }
   }
 }
@@ -171,7 +276,6 @@ export const mintSCoin = <T extends boolean = false>(
   )
 
   let moveCall: MoveCallInfo
-  const results: TransactionArgument[] = []
   const moveCallInfos: MoveCallInfo[] = []
 
   switch (coinConfig.underlyingProtocol) {
@@ -227,41 +331,243 @@ export const mintSCoin = <T extends boolean = false>(
         ? [sCoins, moveCallInfos]
         : sCoins) as unknown as MintSCoinResult<T>
     }
-    case "Aftermath": {
-      moveCall = {
-        target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_stake`,
-        arguments: [
-          { name: "staked_sui_vault", value: AFTERMATH.STAKED_SUI_VAULT },
-          { name: "safe", value: AFTERMATH.SAFE },
-          { name: "system_state", value: AFTERMATH.SYSTEM_STATE },
-          { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
-          { name: "coin", value: amounts[0] },
-          { name: "validator", value: VALIDATORS.MYSTEN_2 },
-          { name: "clock", value: AFTERMATH.CLOCK },
-        ],
-        typeArguments: [],
+    case "Strater": {
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        const fromBalanceMoveCall = {
+          target: `0x2::coin::into_balance`,
+          arguments: [{ name: "balance", value: amounts[i] }],
+          typeArguments: [
+            coinConfig.underlyingCoinType,
+          ],
+        }
+        moveCallInfos.push(fromBalanceMoveCall)
+        debugLog(`coin::from_balance move call:`, fromBalanceMoveCall)
+
+        const [sBalance] = tx.moveCall({
+          target: fromBalanceMoveCall.target,
+          arguments: [splitCoins[i]],
+          typeArguments: fromBalanceMoveCall.typeArguments,
+        })
+
+        const moveCall = {
+          target: `0x75fe358d87679b30befc498a8dae1d28ca9eed159ab6f2129a654a8255e5610e::sbuck_saving_vault::deposit`,
+          arguments: [
+            {
+              name: "bucket_vault",
+              value:
+                "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+            },
+            {
+              name: "balance",
+              value: amounts[i]
+            },
+            { name: "clock", value: "0x6" },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`bucket buck_to_sbuck move call:`, moveCall)
+
+        const [sbsBalance] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(
+              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+            ),
+            sBalance,
+            tx.object("0x6"),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+        const [sbsCoin] = tx.moveCall({
+          target: `0x2::coin::from_balance`,
+          arguments: [sbsBalance],
+          typeArguments: [coinConfig.coinType],
+        })
+        sCoins.push(sbsCoin)
       }
-      debugLog(`aftermath request_stake move call:`, moveCall)
 
-      const [sCoin] = tx.moveCall({
-        target: moveCall.target,
-        arguments: [
-          tx.object(AFTERMATH.STAKED_SUI_VAULT),
-          tx.object(AFTERMATH.SAFE),
-          tx.object(AFTERMATH.SYSTEM_STATE),
-          tx.object(AFTERMATH.REFERRAL_VAULT),
-          splitCoins[0],
-          tx.pure.address(VALIDATORS.MYSTEN_2),
-          tx.object(AFTERMATH.CLOCK),
-        ],
-        typeArguments: moveCall.typeArguments,
-      })
-
-      results.push(sCoin)
       return (debug
-        ? [results, moveCallInfos]
-        : results) as unknown as MintSCoinResult<T>
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
     }
+    case "Aftermath": {
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        moveCall = {
+          target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_stake`,
+          arguments: [
+            { name: "staked_sui_vault", value: AFTERMATH.STAKED_SUI_VAULT },
+            { name: "safe", value: AFTERMATH.SAFE },
+            { name: "system_state", value: AFTERMATH.SYSTEM_STATE },
+            { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
+            { name: "coin", value: amounts[i] },
+            { name: "validator", value: VALIDATORS.MYSTEN_2 },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`aftermath request_stake move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(AFTERMATH.STAKED_SUI_VAULT),
+            tx.object(AFTERMATH.SAFE),
+            tx.object(AFTERMATH.SYSTEM_STATE),
+            tx.object(AFTERMATH.REFERRAL_VAULT),
+            splitCoins[i],
+            tx.pure.address(VALIDATORS.MYSTEN_2),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        sCoins.push(sCoin)
+      }
+
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
+    }
+    case "SpringSui": {
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        moveCall = {
+          target: `0x82e6f4f75441eae97d2d5850f41a09d28c7b64a05b067d37748d471f43aaf3f7::liquid_staking::mint`,
+          arguments: [
+            {
+              name: "liquid_staking_info",
+              value:
+                "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b",
+            },
+            { name: "sui_system_state", value: "0x5" },
+            { name: "coin", value: amounts[i] },
+          ],
+          typeArguments: [coinConfig.coinType],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`spring_sui mint move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(
+              "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b",
+            ),
+            tx.object("0x5"),
+            splitCoins[i],
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        sCoins.push(sCoin)
+      }
+
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
+    }
+    case "Volo": {
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        const moveCall = {
+          target: `0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::native_pool::stake_non_entry`,
+          arguments: [
+            {
+              name: "native_pool",
+              value:
+                "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf",
+            },
+            {
+              name: "metadata",
+              value:
+                "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
+            },
+            { name: "sui_system_state", value: "0x5" },
+            { name: "coin", value: amounts[i] },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`volo stake move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(
+              "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf",
+            ),
+            tx.object(
+              "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
+            ),
+            tx.object("0x5"),
+            splitCoins[i],
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        sCoins.push(sCoin)
+      }
+
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
+    }
+    case "Haedal": {
+      const sCoins: TransactionArgument[] = []
+
+      for (let i = 0; i < amounts.length; i++) {
+        const moveCall = {
+          target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_stake_coin`,
+          arguments: [
+            { name: "sui_system_state", value: "0x5" },
+
+            {
+              name: "staking",
+              value:
+                "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
+            },
+            { name: "coin", value: amounts[i] },
+            {
+              name: "address",
+              value:
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`Haedal stake move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(
+              "0x0000000000000000000000000000000000000000000000000000000000000005",
+            ),
+            tx.object(
+              "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
+            ),
+            splitCoins[i],
+            tx.object(
+              "0x0000000000000000000000000000000000000000000000000000000000000000",
+            ),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+        sCoins.push(sCoin)
+      }
+
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
+    }
+
     default:
       throw new Error(
         "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
@@ -574,15 +880,43 @@ export const burnLp = (
   return syCoin
 }
 
-export const swapExactPtForSy = (
+export const swapExactPtForSy = <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
   redeemValue: string,
   pyPosition: TransactionArgument,
   priceVoucher: TransactionArgument,
-) => {
-  const [syCoin] = tx.moveCall({
+  minSyOut: string,
+  returnDebugInfo?: T,
+): T extends true ? [TransactionResult, MoveCallInfo] : TransactionResult => {
+  const debugInfo: MoveCallInfo = {
     target: `${coinConfig.nemoContractId}::market::swap_exact_pt_for_sy`,
+    arguments: [
+      { name: "version", value: coinConfig.version },
+      {
+        name: "pt_amount",
+        value: new Decimal(redeemValue)
+          .mul(10 ** Number(coinConfig.decimal))
+          .toFixed(0),
+      },
+      { name: "min_sy_out", value: minSyOut },
+      { name: "py_position", value: "pyPosition" },
+      { name: "py_state", value: coinConfig.pyStateId },
+      { name: "price_voucher", value: "priceVoucher" },
+      {
+        name: "market_factory_config",
+        value: coinConfig.marketFactoryConfigId,
+      },
+      { name: "market_state", value: coinConfig.marketStateId },
+      { name: "clock", value: "0x6" },
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  }
+
+  debugLog("swap_exact_pt_for_sy move call:", debugInfo)
+
+  const txMoveCall = {
+    target: debugInfo.target,
     arguments: [
       tx.object(coinConfig.version),
       tx.pure.u64(
@@ -590,6 +924,7 @@ export const swapExactPtForSy = (
           .mul(10 ** Number(coinConfig.decimal))
           .toFixed(0),
       ),
+      tx.pure.u64(minSyOut),
       pyPosition,
       tx.object(coinConfig.pyStateId),
       priceVoucher,
@@ -597,10 +932,14 @@ export const swapExactPtForSy = (
       tx.object(coinConfig.marketStateId),
       tx.object("0x6"),
     ],
-    typeArguments: [coinConfig.syCoinType],
-  })
-  console.log("redeemValue", redeemValue)
-  return syCoin
+    typeArguments: debugInfo.typeArguments,
+  }
+
+  const result = tx.moveCall(txMoveCall)
+
+  return (returnDebugInfo ? [result, debugInfo] : result) as T extends true
+    ? [TransactionResult, MoveCallInfo]
+    : TransactionResult
 }
 
 export const swapExactYtForSy = (
@@ -697,7 +1036,7 @@ export const getPrice = (
   priceVoucher: TransactionArgument,
 ) => {
   const moveCall = {
-    target: `${coinConfig.nemoContractId}::oracle::get_price`,
+    target: `${coinConfig.oracleVoucherPackageId}::oracle_voucher::get_price`,
     arguments: ["priceVoucher"],
     typeArguments: [coinConfig.syCoinType],
   }
@@ -718,7 +1057,10 @@ export const mergeAllLpPositions = (
   marketPosition: TransactionArgument,
 ) => {
   debugLog("mergeAllLpPositions params:", {
+    tx,
+    coinConfig,
     lpPositions,
+    marketPosition,
   })
 
   if (lpPositions.length === 0) {
@@ -752,4 +1094,60 @@ export const mergeAllLpPositions = (
   }
 
   return tx.object(lpPositions[0].id.id)
+}
+
+export const swapExactSyForPt = <T extends boolean = false>(
+  tx: Transaction,
+  coinConfig: CoinConfig,
+  syCoin: TransactionArgument,
+  priceVoucher: TransactionArgument,
+  pyPosition: TransactionArgument,
+  minPtOut: string,
+  approxPtOut: string,
+  returnDebugInfo?: T,
+): T extends true ? MoveCallInfo : void => {
+  const debugInfo: MoveCallInfo = {
+    target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_pt`,
+    arguments: [
+      { name: "version", value: coinConfig.version },
+      { name: "min_pt_out", value: minPtOut },
+      { name: "approx_pt_out", value: approxPtOut },
+      { name: "sy_coin", value: "syCoin" },
+      { name: "price_voucher", value: "priceVoucher" },
+      { name: "py_position", value: "pyPosition" },
+      { name: "py_state", value: coinConfig.pyStateId },
+      {
+        name: "market_factory_config",
+        value: coinConfig.marketFactoryConfigId,
+      },
+      { name: "market_state", value: coinConfig.marketStateId },
+      { name: "clock", value: "0x6" },
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  }
+
+  debugLog("swap_exact_sy_for_pt move call:", debugInfo)
+
+  const txMoveCall = {
+    target: debugInfo.target,
+    arguments: [
+      tx.object(coinConfig.version),
+      tx.pure.u64(minPtOut),
+      tx.pure.u64(approxPtOut),
+      syCoin,
+      priceVoucher,
+      pyPosition,
+      tx.object(coinConfig.pyStateId),
+      tx.object(coinConfig.marketFactoryConfigId),
+      tx.object(coinConfig.marketStateId),
+      tx.object("0x6"),
+    ],
+    typeArguments: debugInfo.typeArguments,
+  }
+
+  tx.moveCall(txMoveCall)
+
+  return (returnDebugInfo ? debugInfo : undefined) as T extends true
+    ? MoveCallInfo
+    : void
 }

@@ -6,11 +6,11 @@ import useQueryYtOutBySyInWithVoucher from "./useQueryYtOutBySyInWithVoucher"
 import useQuerySyOutFromYtInWithVoucher from "./useQuerySyOutFromYtInWithVoucher"
 import useQuerySyOutFromPtInWithVoucher from "./useQuerySyOutFromPtInWithVoucher"
 import useQueryPriceVoucher from "./useQueryPriceVoucher"
-import useBurnLpMutation from "./dryrun/useBurnLpDryRun"
+import useBurnLpMutation from "./dryRun/useBurnLpDryRun"
 import useFetchLpPosition from "./useFetchLpPosition"
 import useFetchPyPosition from "./useFetchPyPosition"
 import type { DebugInfo } from "./types"
-import useFetchObject from "./useFetchObject"
+// import useFetchObject from "./useFetchObject"
 import useMintSCoin from "./actions/useMintSCoin"
 import { CoinData } from "./useCoinData"
 
@@ -40,7 +40,7 @@ export type QueryInputMap = {
   SY_OUT_BY_YT_IN: string
   SY_OUT_BY_PT_IN: string
   PRICE_VOUCHER: void
-  GET_OBJECT: GetObjectParams
+  // GET_OBJECT: GetObjectParams
   SY_OUT_FROM_BURN_LP: string
   LP_MARKET_POSITION: void
   PY_POSITION: void
@@ -53,10 +53,10 @@ export const QUERY_CONFIGS = {
     target: "mint_scoin",
     hook: useMintSCoin,
   },
-  GET_OBJECT: {
-    target: "get_object",
-    hook: useFetchObject,
-  },
+  // GET_OBJECT: {
+  //   target: "get_object",
+  //   hook: useFetchObject,
+  // },
   PT_OUT_BY_SY_IN: {
     target: "get_pt_out_for_exact_sy_in_with_price_voucher",
     hook: useQueryPtOutBySyInWithVoucher,

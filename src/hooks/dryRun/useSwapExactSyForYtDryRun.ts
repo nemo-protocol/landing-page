@@ -66,33 +66,35 @@ export default function useSwapExactSyForYtDryRun(
       // Get price voucher
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_yt`,
+        arguments: [
+          { name: "version", value: coinConfig.version },
+          { name: "min_yt_out", value: minYtOut },
+          { name: "sy_coin", value: "syCoin" },
+          { name: "price_voucher", value: "priceVoucher" },
+          {
+            name: "py_position",
+            value: created ? "pyPosition" : pyPositions[0].id,
+          },
+          { name: "py_state", value: coinConfig.pyStateId },
+          { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
+          {
+            name: "market_factory_config",
+            value: coinConfig.marketFactoryConfigId,
+          },
+          { name: "market", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
+
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::router::swap_exact_sy_for_yt`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "min_yt_out", value: minYtOut },
-            { name: "sy_coin", value: "syCoin" },
-            { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "py_position",
-              value: created ? "pyPosition" : pyPositions[0].id,
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
-            {
-              name: "market_factory_config",
-              value: coinConfig.marketFactoryConfigId,
-            },
-            { name: "market", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [moveCallInfo],
       }
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
           tx.object(coinConfig.version),
           tx.pure.u64(minYtOut),
@@ -105,7 +107,7 @@ export default function useSwapExactSyForYtDryRun(
           tx.object(coinConfig.marketStateId),
           tx.object("0x6"),
         ],
-        typeArguments: debugInfo.moveCall.typeArguments,
+        typeArguments: moveCallInfo.typeArguments,
       })
 
       if (created) {

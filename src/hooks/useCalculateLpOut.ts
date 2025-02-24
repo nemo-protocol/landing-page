@@ -12,13 +12,11 @@ export function useCalculateLpOut(coinConfig?: CoinConfig) {
   const { address } = useWallet()
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
   const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
-  const { mutateAsync: exchangeRateFun } = useFetchObject(
-    coinConfig?.pyStateId,
-    false,
-  )
+  const { mutateAsync: exchangeRateFun } = useFetchObject()
   const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
     coinConfig,
     false,
+    "useCalculateLpOut",
   )
   return useMutation({
     mutationFn: async (syAmount: string) => {

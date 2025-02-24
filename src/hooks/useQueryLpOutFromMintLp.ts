@@ -6,6 +6,7 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 
+// TODO: optimize the mutation
 export default function useQueryLpOutFromMintLp(
   coinConfig?: CoinConfig,
   debug: boolean = false,
@@ -29,7 +30,7 @@ export default function useQueryLpOutFromMintLp(
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: {
+        moveCall: [{
           target: `${coinConfig.nemoContractId}::router::get_lp_out_from_mint_lp`,
           arguments: [
             { name: "pt_value", value: ptValue },
@@ -37,19 +38,19 @@ export default function useQueryLpOutFromMintLp(
             { name: "market_state_id", value: coinConfig.marketStateId },
           ],
           typeArguments: [coinConfig.syCoinType],
-        },
+        }],
       }
 
       const tx = new Transaction()
       tx.setSender(address)
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: debugInfo.moveCall[0].target,
         arguments: [
           tx.pure.u64(ptValue),
           tx.pure.u64(syValue),
           tx.object(coinConfig.marketStateId),
         ],
-        typeArguments: debugInfo.moveCall.typeArguments,
+        typeArguments: debugInfo.moveCall[0].typeArguments,
       })
 
       const result = await client.devInspectTransactionBlock({

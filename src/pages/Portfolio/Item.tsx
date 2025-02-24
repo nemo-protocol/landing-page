@@ -33,6 +33,22 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
 import RefreshButton from "@/components/RefreshButton"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import useQueryClaimLpReward from "@/hooks/useQueryClaimLpReward"
+import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
+
+interface LoadingButtonProps {
+  loading: boolean
+  disabled: boolean
+  buttonText: string | JSX.Element
+  loadingText: string
+  onClick: () => void
+}
 
 const LoadingButton = ({
   onClick,
@@ -40,13 +56,7 @@ const LoadingButton = ({
   disabled,
   buttonText,
   loadingText,
-}: {
-  loading: boolean
-  disabled: boolean
-  buttonText: string
-  loadingText: string
-  onClick: () => void
-}) => (
+}: LoadingButtonProps) => (
   <button
     onClick={onClick}
     disabled={disabled || loading}
@@ -100,9 +110,10 @@ export default function Item({
   const { updatePortfolio } = usePortfolio()
   const isConnected = useMemo(() => !!address, [address])
 
-  const [loading, setLoading] = useState(false)
+  const [redeemLoading, setRedeemLoading] = useState(false)
+  const [claimLoading, setClaimLoading] = useState(false)
 
-  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
+  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig, marketState)
 
   // TODO: yt price optimization
   const { data: ptYtData, isLoading: isPtYtLoading } = useCalculatePtYt(
@@ -119,6 +130,21 @@ export default function Item({
     pyPositions,
     tokenType: selectType === "yt" ? 1 : 0,
   })
+
+  const [selectedRewardIndex, setSelectedRewardIndex] = useState(0)
+
+  const {
+    data: lpReward,
+    isLoading: isLpRewardLoading,
+    refetch: refetchLpReward,
+  } = useQueryClaimLpReward(coinConfig, {
+    lpBalance,
+    lpPositions,
+    marketState,
+    rewardIndex: selectedRewardIndex,
+  })
+
+  const { mutateAsync: claimLpRewardMutation } = useClaimLpReward(coinConfig)
 
   useEffect(() => {
     if (isConnected) {
@@ -168,7 +194,7 @@ export default function Item({
   async function claim() {
     if (coinConfig?.coinType && address && ytBalance) {
       try {
-        setLoading(true)
+        setClaimLoading(true)
         const tx = new Transaction()
 
         let pyPosition
@@ -230,7 +256,7 @@ export default function Item({
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
       } finally {
-        setLoading(false)
+        setClaimLoading(false)
       }
     }
   }
@@ -238,7 +264,7 @@ export default function Item({
   async function redeemPY() {
     if (coinConfig?.coinType && address && isValidAmount(ptBalance)) {
       try {
-        setLoading(true)
+        setRedeemLoading(true)
         const tx = new Transaction()
 
         let pyPosition
@@ -294,7 +320,7 @@ export default function Item({
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
       } finally {
-        setLoading(false)
+        setRedeemLoading(false)
       }
     }
   }
@@ -308,7 +334,7 @@ export default function Item({
       lpPositions?.length
     ) {
       try {
-        setLoading(true)
+        setRedeemLoading(true)
         const { digest } = await redeemLp({
           lpAmount: lpBalance,
           coinConfig,
@@ -325,7 +351,46 @@ export default function Item({
         setStatus("Failed")
         setMessage((error as Error)?.message ?? error)
       } finally {
-        setLoading(false)
+        setRedeemLoading(false)
+      }
+    }
+  }
+
+  async function claimLpReward(rewardIndex: number = selectedRewardIndex) {
+    debugLog("claimLpReward", lpPositions, marketState)
+    if (
+      coinConfig?.coinType &&
+      address &&
+      lpBalance &&
+      lpPositions?.length &&
+      marketState?.rewardMetrics?.[rewardIndex]
+    ) {
+      try {
+        setClaimLoading(true)
+        const tx = new Transaction()
+
+        await claimLpRewardMutation({
+          tx,
+          coinConfig,
+          lpPositions,
+          rewardMetric: marketState.rewardMetrics[rewardIndex],
+        })
+
+        const { digest } = await signAndExecuteTransaction({
+          transaction: tx,
+        })
+
+        setTxId(digest)
+        setOpen(true)
+        setStatus("Success")
+        // Refresh LP reward data after successful claim
+        await refetchLpReward()
+      } catch (error) {
+        setOpen(true)
+        setStatus("Failed")
+        setMessage((error as Error)?.message ?? error)
+      } finally {
+        setClaimLoading(false)
       }
     }
   }
@@ -391,7 +456,7 @@ export default function Item({
               alt=""
               className="size-6 sm:size-10"
             />
-            <div className="flex flex-col md:flex-row md:items-center gap-2">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 flex-wrap">
               <span>PT {coinConfig.underlyingCoinName}</span>
               <span className="text-white/50 text-xs">
                 {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
@@ -454,7 +519,7 @@ export default function Item({
               </div>
             ) : (
               <LoadingButton
-                loading={loading}
+                loading={redeemLoading}
                 disabled={!ptBalance || ptBalance === "0"}
                 onClick={redeemPY}
                 loadingText="Redeeming"
@@ -476,7 +541,7 @@ export default function Item({
                 alt=""
                 className="size-10"
               />
-              <div className="flex items-center gap-x-1">
+              <div className="flex items-center gap-x-1 flex-wrap">
                 <span>YT {coinConfig.underlyingCoinName}</span>
                 <span className="text-white/50 text-xs">
                   {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
@@ -512,11 +577,11 @@ export default function Item({
                 </>
               )}
             </TableCell>
-            <TableCell className="text-center">
+            <TableCell className="text-center md:px-6">
               <SmallNumDisplay value={ytBalance} />
             </TableCell>
             <TableCell className="text-center">
-              <div className="flex items-center gap-x-2 justify-center">
+              <div className="flex items-center gap-x-2">
                 {isClaimLoading ? (
                   <div className="flex items-center gap-x-2">
                     <div className="flex flex-col items-center w-24">
@@ -527,7 +592,7 @@ export default function Item({
                   </div>
                 ) : (
                   <>
-                    <div className="flex flex-col items-center w-24">
+                    <div className="flex flex-col items-center flex-1">
                       <span className="text-white text-sm break-all flex items-center gap-x-1">
                         <SmallNumDisplay value={ytReward || 0} />
                         <RefreshButton onRefresh={refetchYtReward} />
@@ -550,7 +615,7 @@ export default function Item({
                     </div>
                     <LoadingButton
                       onClick={claim}
-                      loading={loading}
+                      loading={claimLoading}
                       buttonText="Claim"
                       loadingText="Claiming"
                       disabled={!isValidAmount(ytBalance)}
@@ -628,27 +693,151 @@ export default function Item({
           </TableCell>
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
-              {isClaimLoading ? (
+              {isLpRewardLoading ? (
                 <div className="flex items-center gap-x-2">
                   <div className="flex flex-col items-center w-24">
                     <Skeleton className="h-5 w-16 mb-1" />
                     <Skeleton className="h-4 w-12" />
                   </div>
-                  <Skeleton className="h-8 w-24 rounded-3xl" />
+                  {marketState?.rewardMetrics &&
+                  marketState?.rewardMetrics?.length > 1 ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <LoadingButton
+                          onClick={() => {}}
+                          loading={claimLoading}
+                          buttonText="Claim"
+                          loadingText="Claiming"
+                          disabled={
+                            !lpBalance ||
+                            lpBalance === "0" ||
+                            !lpPositions?.length ||
+                            !marketState?.rewardMetrics?.length
+                          }
+                        />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {marketState?.rewardMetrics?.map((metric, index) => (
+                          <DropdownMenuItem
+                            key={metric.tokenType}
+                            onClick={() => {
+                              setSelectedRewardIndex(index)
+                              claimLpReward(index)
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <span>
+                              Claim {metric.tokenType ?? `Reward ${index + 1}`}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <LoadingButton
+                      onClick={() => claimLpReward()}
+                      loading={claimLoading}
+                      buttonText="Claim"
+                      loadingText="Claiming"
+                      disabled={
+                        !lpBalance ||
+                        lpBalance === "0" ||
+                        !lpPositions?.length ||
+                        !marketState?.rewardMetrics?.length
+                      }
+                    />
+                  )}
                 </div>
               ) : (
                 <>
                   <div className="flex flex-col items-center w-24">
-                    <span className="text-white text-sm break-all">0</span>
-                    <span className="text-white/50 text-xs">$0</span>
+                    <div className="flex items-center gap-2">
+                      {marketState?.rewardMetrics?.[selectedRewardIndex]
+                        ?.tokenLogo && (
+                        <img
+                          src={
+                            marketState?.rewardMetrics?.[selectedRewardIndex]
+                              ?.tokenLogo
+                          }
+                          alt="reward token"
+                          className="w-4 h-4"
+                        />
+                      )}
+                      <span className="text-white text-sm break-all flex items-center gap-x-1">
+                        <SmallNumDisplay value={lpReward || "0"} />
+                        <RefreshButton
+                          onRefresh={refetchLpReward}
+                          className="shrink-0"
+                        />
+                      </span>
+                    </div>
+                    <span className="text-white/50 text-xs">
+                      $
+                      <SmallNumDisplay
+                        value={
+                          lpReward &&
+                          marketState?.rewardMetrics?.[selectedRewardIndex]
+                            ?.tokenPrice
+                            ? formatDecimalValue(
+                                new Decimal(lpReward).mul(
+                                  marketState.rewardMetrics[selectedRewardIndex]
+                                    .tokenPrice,
+                                ),
+                                Number(coinConfig?.decimal),
+                              )
+                            : "0"
+                        }
+                      />
+                    </span>
                   </div>
-                  <LoadingButton
-                    onClick={() => {}}
-                    loading={loading}
-                    buttonText="Claim"
-                    loadingText="Claiming"
-                    disabled={true}
-                  />
+                  {marketState?.rewardMetrics &&
+                  marketState?.rewardMetrics?.length > 1 ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <LoadingButton
+                          onClick={() => {}}
+                          loading={claimLoading}
+                          buttonText="Claim"
+                          loadingText="Claiming"
+                          disabled={
+                            !lpBalance ||
+                            lpBalance === "0" ||
+                            !lpPositions?.length ||
+                            !marketState?.rewardMetrics?.length
+                          }
+                        />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {marketState?.rewardMetrics?.map((metric, index) => (
+                          <DropdownMenuItem
+                            key={metric.tokenType}
+                            onClick={() => {
+                              setSelectedRewardIndex(index)
+                              claimLpReward(index)
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <span>
+                              Claim {metric.tokenType ?? `Reward ${index + 1}`}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <LoadingButton
+                      onClick={() => claimLpReward()}
+                      loading={claimLoading}
+                      buttonText="Claim"
+                      loadingText="Claiming"
+                      disabled={
+                        !lpBalance ||
+                        lpBalance === "0" ||
+                        !lpPositions?.length ||
+                        !marketState?.rewardMetrics?.length
+                      }
+                    />
+                  )}
                 </>
               )}
             </div>
@@ -673,7 +862,7 @@ export default function Item({
               </div>
             ) : (
               <LoadingButton
-                loading={loading}
+                loading={redeemLoading}
                 disabled={!lpBalance || lpBalance === "0"}
                 onClick={redeemLP}
                 loadingText="Redeeming"

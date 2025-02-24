@@ -19,15 +19,17 @@ const useFetchPyPosition = (
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: "get_py_position",
-          arguments: [
-            { name: "address", value: address },
-            { name: "py_state_id", value: coinConfig.pyStateId },
-            { name: "maturity", value: coinConfig.maturity },
-          ],
-          typeArguments: coinConfig.pyPositionTypeList,
-        },
+        moveCall: [
+          {
+            target: "suiClient_getOwnedObjects",
+            arguments: [
+              { name: "owner", value: address },
+              { name: "maturity", value: coinConfig.maturity },
+              { name: "pyStateId", value: coinConfig.pyStateId },
+            ],
+            typeArguments: coinConfig.pyPositionTypeList,
+          },
+        ],
       }
 
       const response = await suiClient.getOwnedObjects({
@@ -43,7 +45,7 @@ const useFetchPyPosition = (
       })
 
       debugInfo.rawResult = {
-        results: response,
+        results: [response],
       }
 
       const positions = response.data
@@ -62,6 +64,11 @@ const useFetchPyPosition = (
             )?.fields,
         )
         .filter((item) => !!item)
+        .filter(
+          (item) =>
+            item.expiry === coinConfig.maturity &&
+            item.py_state_id === coinConfig.pyStateId,
+        )
         .map(
           ({ expiry, id, pt_balance, yt_balance, py_state_id }) =>
             ({
@@ -71,11 +78,6 @@ const useFetchPyPosition = (
               ytBalance: yt_balance,
               pyStateId: py_state_id,
             }) as PyPosition,
-        )
-        .filter(
-          (item) =>
-            item.maturity === coinConfig.maturity &&
-            item.pyStateId === coinConfig.pyStateId,
         )
 
       return debug ? [positions, debugInfo] : [positions]

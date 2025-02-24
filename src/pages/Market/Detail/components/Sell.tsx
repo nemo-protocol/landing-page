@@ -34,8 +34,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import SlippageSetting from "@/components/SlippageSetting"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
-import useSellPtDryRun from "@/hooks/dryrun/useSellPtDryRun"
-import useSellYtDryRun from "@/hooks/dryrun/useSellYtDryRun"
+import useSellPtDryRun from "@/hooks/dryRun/useSellPtDryRun"
+// import useSellYtDryRun from "@/hooks/dryrun/useSellYtDryRun"
 import { ContractError } from "@/hooks/types"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import {
@@ -92,7 +92,7 @@ export default function Sell() {
     useQuerySyOutFromYtInWithVoucher(coinConfig)
 
   const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
-  const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)
+  // const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)
 
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
@@ -101,16 +101,19 @@ export default function Sell() {
           // TODO: optimize this code to be more efficient
           try {
             const amount = new Decimal(value).mul(10 ** decimal).toString()
-            const syOut =
+            const { outputValue } =
               tokenType === "yt"
-                ? await querySyOutFromYt(amount)
+                ? await querySyOutFromYt(amount).then((outputValue) => ({
+                    outputValue,
+                  }))
                 : await sellPtDryRun({
+                    minSyOut: "0",
                     receivingType,
                     sellValue: value,
                     pyPositions: pyPositionData,
                   })
 
-            const syAmount = new Decimal(syOut)
+            const syAmount = new Decimal(outputValue)
               .mul(
                 receivingType === "underlying" && tokenType === "yt"
                   ? coinConfig.conversionRate
@@ -208,12 +211,26 @@ export default function Sell() {
 
         const amount = new Decimal(redeemValue).mul(10 ** decimal).toString()
 
-        const syOut = tokenType === "yt" ? await querySyOutFromYt(amount) : 0
+        // 计算预期输出
+        const { syAmount } = await (tokenType === "yt"
+          ? querySyOutFromYt(amount).then((syValue) => ({
+              syAmount: new Decimal(syValue).mul(10 ** decimal).toFixed(0),
+            }))
+          : sellPtDryRun({
+              receivingType,
+              sellValue: redeemValue,
+              pyPositions: pyPositionData,
+              minSyOut: "0",
+            }))
 
-        const minSyOut = new Decimal(syOut)
-          .mul(10 ** decimal)
+        console.log("swap_exact_pt_for_sy", "syAmount", syAmount)
+
+        // 计算最小输出（考虑滑点）
+        const minSyOut = new Decimal(syAmount)
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)
+
+        console.log("swap_exact_pt_for_sy", "minSyOut", minSyOut)
 
         const syCoin =
           tokenType === "pt"
@@ -223,6 +240,7 @@ export default function Sell() {
                 redeemValue,
                 pyPosition,
                 priceVoucher,
+                minSyOut,
               )
             : swapExactYtForSy(
                 tx,
@@ -255,6 +273,7 @@ export default function Sell() {
         setStatus("Success")
 
         await refreshData()
+        await refreshPtYt()
       } catch (errorMsg) {
         console.log("tx error", errorMsg)
         setOpen(true)
@@ -280,7 +299,10 @@ export default function Sell() {
 
   const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketState)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(
+    coinConfig,
+    marketState,
+  )
 
   const price = useMemo(
     () =>
@@ -305,22 +327,6 @@ export default function Sell() {
     },
     [decimal, coinConfig],
   )
-
-  const handleSell = async () => {
-    const result = await (tokenType === "yt"
-      ? sellYtDryRun({
-          slippage,
-          receivingType,
-          sellValue: redeemValue,
-          pyPositions: pyPositionData,
-        })
-      : sellPtDryRun({
-          receivingType,
-          sellValue: redeemValue,
-          pyPositions: pyPositionData,
-        }))
-    console.log("result", result)
-  }
 
   const btnDisabled = useMemo(() => {
     return ["", undefined].includes(redeemValue)
@@ -369,9 +375,7 @@ export default function Sell() {
   return (
     <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-4">
-        <h2 className="text-center text-xl" onClick={handleSell}>
-          Sell
-        </h2>
+        <h2 className="text-center text-xl">Sell</h2>
         <div className="flex justify-end w-full">
           <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
         </div>

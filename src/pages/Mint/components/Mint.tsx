@@ -18,7 +18,7 @@ import {
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import ActionButton from "@/components/ActionButton"
-import useMintPYDryRun from "@/hooks/dryrun/useMintPYDryRun"
+import useMintPYDryRun from "@/hooks/dryRun/useMintPYDryRun"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ContractError } from "@/hooks/types"

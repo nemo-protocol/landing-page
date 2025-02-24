@@ -110,7 +110,7 @@ export default function useMintPYDryRun(
       console.log("mint_py dry run result:", result)
 
       const dryRunDebugInfo: DebugInfo = {
-        moveCall: debugInfo,
+        moveCall: [debugInfo],
         rawResult: {
           error: result?.error,
           results: result?.results,

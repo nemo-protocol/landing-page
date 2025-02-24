@@ -78,7 +78,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
                     <span>
                       {item.ytApy
                         ? Number(item.ytApy) > 0
-                          ? `+${formatLargeNumber(item.ytApy, 6)}%`
+                          ? `${formatLargeNumber(item.ytApy, 6)}%`
                           : `${formatLargeNumber(item.ytApy, 6)}%`
                         : "--"}
                     </span>
@@ -130,11 +130,13 @@ const MarketTable = ({ list }: MarketTableProps) => {
                         {item.poolApy
                           ? `${formatLargeNumber(item.poolApy, 6)}%`
                           : "--"}
-                        <img
-                          src="/images/market/gift.png"
-                          alt=""
-                          className="size-4"
-                        />
+                        {(item.marketState?.rewardMetrics || []).length > 0 && (
+                          <img
+                            src="/images/market/gift.png"
+                            alt=""
+                            className="size-4"
+                          />
+                        )}
                       </div>
                     </div>
                   </TooltipTrigger>
@@ -143,19 +145,19 @@ const MarketTable = ({ list }: MarketTableProps) => {
                     className="bg-[#1B202A] text-white border-none p-4 relative rounded-xl w-[312px]"
                   >
                     <div className="flex flex-col gap-4">
-                      <div className="flex flex-row items-start justify-between">
-                        <span className="text-sm text-left">Points</span>
-                        <div className="flex flex-col items-end gap-1.5">
-                          <span className="font-mono text-xs">
-                            {item.perPoints
-                              ? `${formatLargeNumber(item.perPoints, 6)}`
-                              : "--"}
-                          </span>
-                          <span className="text-[#96A9E4] text-xs">
-                            per LP per day
-                          </span>
+                      {item.perPoints && (
+                        <div className="flex flex-row items-start justify-between">
+                          <span className="text-sm text-left">Points</span>
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span className="font-mono text-xs">
+                              {formatLargeNumber(item.perPoints, 6)}
+                            </span>
+                            <span className="text-[#96A9E4] text-xs">
+                              per LP per day
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-left">Scaled</div>
                         <div className="relative flex flex-row gap-2">
@@ -168,8 +170,8 @@ const MarketTable = ({ list }: MarketTableProps) => {
                               </span>
                             </div>
                             <span className="font-mono text-xs">
-                              {item.scaled_pt_apy
-                                ? `${formatLargeNumber(item.scaled_pt_apy, 6)}%`
+                              {item.scaledPtApy
+                                ? `${formatLargeNumber(item.scaledPtApy, 6)}%`
                                 : "--"}
                             </span>
                           </div>
@@ -183,8 +185,8 @@ const MarketTable = ({ list }: MarketTableProps) => {
                               </span>
                             </div>
                             <span className="font-mono text-xs">
-                              {item.scaled_underlying_apy
-                                ? `${formatLargeNumber(item.scaled_underlying_apy, 6)}%`
+                              {item.scaledUnderlyingApy
+                                ? `${formatLargeNumber(item.scaledUnderlyingApy, 6)}%`
                                 : "--"}
                             </span>
                           </div>
@@ -198,27 +200,34 @@ const MarketTable = ({ list }: MarketTableProps) => {
                             : "--"}
                         </span>
                       </div>
-                      {item.incentiveApy && (
+                      {item.incentives.length > 0 && (
                         <div className="flex flex-col gap-2">
                           <div className="text-sm text-left">Incentive APY</div>
-                          <div className="relative flex flex-row gap-2">
-                            <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
-                            <div className="flex flex-1 flex-row items-start justify-between gap-4">
-                              <div className="flex flex-row items-center gap-1.5">
-                                <span className="text-[#96A9E4] text-xs">
-                                  Incentive
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <img
-                                  src={item.providerLogo}
-                                  alt=""
-                                  className="size-4"
-                                />
-                                <span className="font-mono text-xs">0%</span>
+                          {item.incentives.map((incentive, index) => (
+                            <div
+                              key={index}
+                              className="relative flex flex-row gap-2"
+                            >
+                              <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
+                              <div className="flex flex-1 flex-row items-start justify-between gap-4">
+                                <div className="flex flex-row items-center gap-1.5">
+                                  <span className="text-[#96A9E4] text-xs">
+                                    Incentive
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <img
+                                    src={incentive.tokenLogo}
+                                    alt=""
+                                    className="size-4"
+                                  />
+                                  <span className="font-mono text-xs">
+                                    {Number(incentive.apy).toFixed(6)}%
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          ))}
                         </div>
                       )}
                       <div className="flex flex-row items-center justify-between gap-4">

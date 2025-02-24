@@ -1,11 +1,11 @@
 import { ContractError } from "../types"
-import type { DebugInfo } from "../types"
+import type { DebugInfo, MoveCallInfo } from "../types"
 import { CoinData } from "@/hooks/useCoinData"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { TransactionResult } from "@mysten/sui/transactions"
-import { mintSCoin, type MoveCallInfo } from "@/lib/txHelper"
+import { mintSCoin } from "@/lib/txHelper"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 
@@ -55,31 +55,30 @@ export default function useMintSCoin<T extends boolean = false>(
         const message = "Failed to mint SCoin"
         throw new ContractError(message, {
           moveCall: debug
-            ? (result as [TransactionArgument[], MoveCallInfo[]])[1][0]
-            : {
+            ? [(result as [TransactionArgument[], MoveCallInfo[]])[1][0]]
+            : [{
                 target: "",
                 arguments: [],
                 typeArguments: [],
-              },
+              }],
           rawResult: {
             error: "Transaction failed",
-            results: txResult?.effects,
+            results: txResult?.effects ? [txResult.effects] : [],
           },
         })
       }
 
-      return debug
-        ? ([
-            coins,
-            {
-              moveCall: (result as [TransactionArgument[], MoveCallInfo[]])[1][0],
-              rawResult: {
-                error: undefined,
-                results: txResult?.effects,
-              },
-            },
-          ] as MintSCoinResult<T>)
-        : (coins as MintSCoinResult<T>)
+      const debugInfo: DebugInfo = {
+        moveCall: [(result as [TransactionArgument[], MoveCallInfo[]])[1][0]],
+        rawResult: {
+          error: undefined,
+          results: txResult?.effects ? [txResult.effects] : [],
+        },
+      }
+
+      return (debug
+        ? [coins, debugInfo]
+        : coins) as MintSCoinResult<T>
     },
   })
 }

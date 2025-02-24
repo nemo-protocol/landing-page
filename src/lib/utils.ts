@@ -236,7 +236,7 @@ export const safeDivide = <T extends "string" | "number" | "decimal">(
     if (!isValidAmount(denominator)) {
       return (
         returnType === "string"
-          ? ""
+          ? "0"
           : returnType === "number"
             ? 0
             : new Decimal(0)
@@ -255,7 +255,7 @@ export const safeDivide = <T extends "string" | "number" | "decimal">(
   } catch {
     return (
       returnType === "string"
-        ? ""
+        ? "0"
         : returnType === "number"
           ? 0
           : new Decimal(0)
@@ -279,18 +279,32 @@ export const formatLargeNumber = (
     const num = new Decimal(value)
     const abs = num.abs()
 
-    if (abs.lessThan(1000)) {
+    // Return infinity symbol if value exceeds 1000T
+    if (abs.greaterThanOrEqualTo(new Decimal("1e15"))) {
+      return "∞"
+    }
+
+    if (abs.lessThan(1000000)) {
       return formatDecimalValue(num, decimals)
     }
 
-    const suffixes = ["", "K", "M", "B", "T"]
-    const magnitude = Math.min(Math.floor(abs.log(1000).toNumber()), 4)
+    const suffixes = ["", "M", "B", "T"]
+    const magnitude = Math.min(Math.floor(abs.log(1000000).toNumber()), 3)
 
     return formatDecimalValue(
-      num.div(new Decimal(1000).pow(magnitude)),
+      num.div(new Decimal(1000000).pow(magnitude)),
       decimals,
     ).concat(suffixes[magnitude])
   } catch {
     return "0"
+  }
+}
+
+export const getTokenDecimal = (tokenType: string): number => {
+  switch (tokenType) {
+    case "0000000000000000000000000000000000000000000000000000000000000002::sui::SUI":
+      return 9
+    default:
+      return 9
   }
 }

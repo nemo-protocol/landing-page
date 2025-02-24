@@ -1,19 +1,16 @@
-import { ContractError } from "../types"
-import type { DebugInfo } from "../types"
+import Decimal from "decimal.js"
+import { bcs } from "@mysten/sui/bcs"
+import { ContractError } from "../../types"
 import { useMutation } from "@tanstack/react-query"
 import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
+import type { DebugInfo, PyPosition } from "../../types"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import useFetchPyPosition from "../useFetchPyPosition"
-import type { PyPosition } from "../types"
-import {
-  mintSCoin,
-  depositSyCoin,
-  getPriceVoucher,
-  initPyPosition,
-  splitCoinHelper,
-} from "@/lib/txHelper"
+import useFetchPyPosition from "../../useFetchPyPosition"
+import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
+import useGetConversionRateDryRun from "../useGetConversionRateDryRun"
+import { safeDivide } from "@/lib/utils"
 
 interface AddLiquiditySingleSyParams {
   addAmount: string
@@ -24,7 +21,7 @@ interface AddLiquiditySingleSyParams {
 
 type DryRunResult<T extends boolean> = T extends true
   ? [string, DebugInfo]
-  : string
+  : [string, string]
 
 export default function useAddLiquiditySingleSyDryRun<
   T extends boolean = false,
@@ -32,6 +29,7 @@ export default function useAddLiquiditySingleSyDryRun<
   const client = useSuiClient()
   const { address } = useWallet()
   const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
+  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun(true)
 
   return useMutation({
     mutationFn: async ({
@@ -50,6 +48,13 @@ export default function useAddLiquiditySingleSyDryRun<
         throw new Error("No available coins")
       }
 
+      const [rate] = await getConversionRate(coinConfig)
+
+      const syAmount =
+        tokenType === 0
+          ? safeDivide(addAmount, rate, "decimal").toFixed(0)
+          : addAmount
+
       const [pyPositions] = (
         inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
       ) as [PyPosition[]]
@@ -66,52 +71,36 @@ export default function useAddLiquiditySingleSyDryRun<
         pyPosition = tx.object(pyPositions[0].id)
       }
 
-      const [splitCoin] =
-        tokenType === 0
-          ? mintSCoin(tx, coinConfig, coinData, [addAmount])
-          : splitCoinHelper(tx, coinData, [addAmount], coinConfig.coinType)
-
-      const syCoin = depositSyCoin(
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
         tx,
         coinConfig,
-        splitCoin,
-        coinConfig.coinType,
       )
 
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::router::get_lp_out_for_single_sy_in`,
+        arguments: [
+          { name: "sy_coin_in", value: syAmount },
+          { name: "price_voucher", value: "priceVoucher" },
+          { name: "py_state", value: coinConfig.pyStateId },
+          {
+            name: "market_factory_config",
+            value: coinConfig.marketFactoryConfigId,
+          },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
 
       const debugInfo: DebugInfo = {
-        moveCall: {
-          target: `${coinConfig.nemoContractId}::router::add_liquidity_single_sy`,
-          arguments: [
-            { name: "version", value: coinConfig.version },
-            { name: "sy_coin", value: "syCoin" },
-            { name: "min_lp_amount", value: "0" },
-            { name: "price_voucher", value: "priceVoucher" },
-            {
-              name: "py_position",
-              value: pyPositions?.length ? pyPositions[0].id : "pyPosition",
-            },
-            { name: "py_state", value: coinConfig.pyStateId },
-            {
-              name: "market_factory_config",
-              value: coinConfig.marketFactoryConfigId,
-            },
-            { name: "market_state", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        },
+        moveCall: [priceVoucherMoveCall, moveCallInfo],
       }
 
       tx.moveCall({
-        target: debugInfo.moveCall.target,
+        target: moveCallInfo.target,
         arguments: [
-          tx.object(coinConfig.version),
-          syCoin,
-          tx.pure.u64(0),
+          tx.pure.u64(syAmount),
           priceVoucher,
-          pyPosition,
           tx.object(coinConfig.pyStateId),
           tx.object(coinConfig.marketFactoryConfigId),
           tx.object(coinConfig.marketStateId),
@@ -137,18 +126,46 @@ export default function useAddLiquiditySingleSyDryRun<
         results: result?.results,
       }
 
-      if (!result?.events?.[result?.events?.length - 1]?.parsedJson) {
+      if (!result?.results?.[1]?.returnValues?.[0]) {
         const message = "Failed to get add liquidity data"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const lpAmount = result.events[result.events.length - 1].parsedJson
-        .lp_amount as string
+      const index = created ? 2 : 1
+
+      console.log("result", result)
+
+      const outputAmount = bcs.U64.parse(
+        new Uint8Array(result.results[index].returnValues[0][0]),
+      )
+
+      console.log("outputAmount", outputAmount)
+
+      const lpAmount = new Decimal(outputAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
+        .toFixed()
+
+      console.log("lpAmount", lpAmount)
+
+      const fee = bcs.U128.parse(
+        new Uint8Array(result.results[index].returnValues[1][0]),
+      )
+
+      console.log("fee", fee)
+
+      const formattedFee = new Decimal(fee)
+        .div(2 ** 64)
+        .div(10 ** Number(coinConfig.decimal))
+        .toString()
+
+      console.log("formattedFee", formattedFee)
 
       debugInfo.parsedOutput = lpAmount
 
-      return (debug ? [lpAmount, debugInfo] : lpAmount) as DryRunResult<T>
+      return (
+        debug ? [lpAmount, debugInfo] : [lpAmount, formattedFee]
+      ) as DryRunResult<T>
     },
   })
 }

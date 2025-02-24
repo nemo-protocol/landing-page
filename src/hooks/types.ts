@@ -1,17 +1,20 @@
+export interface MoveCallInfo {
+  target: string
+  arguments: {
+    name: string
+    value: string
+  }[]
+  typeArguments: string[]
+}
+
 export interface DebugInfo {
-  moveCall: {
-    target: string
-    arguments: {
-      name: string
-      value: string
-    }[]
-    typeArguments: string[]
-  }
+  moveCall: MoveCallInfo[]
   rawResult?: {
     error?: string
-    results?: unknown
+    results?: unknown[]
   }
-  parsedOutput?: string
+  parsedOutput?: unknown
+  result?: string
 }
 
 export class ContractError extends Error {
@@ -44,9 +47,17 @@ export interface PyPosition {
   pyStateId: string
 }
 
+export interface RewardMetrics {
+  tokenType: string
+  tokenLogo: string
+  tokenPrice: string
+  dailyEmission: string
+}
+
 export interface MarketState {
   totalSy: string
   totalPt: string
   lpSupply: string
   marketCap: string
+  rewardMetrics?: RewardMetrics[]
 }

@@ -1,8 +1,8 @@
 import { nemoApi } from "./request"
 import { MarketState } from "@/hooks/types"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import { useQuery, UseQueryResult } from "@tanstack/react-query"
-import { handleInfinityValues, isValidAmount } from "@/lib/utils"
+import { useQuery, UseQueryResult, useMutation } from "@tanstack/react-query"
+import { handleInfinityValues } from "@/lib/utils"
 import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
 import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
 import {
@@ -12,6 +12,7 @@ import {
   PortfolioItem,
   FixedReturnItem,
   CoinInfoWithMetrics,
+  TokenInfoMap,
 } from "./types/market"
 
 interface CoinInfoListParams {
@@ -226,20 +227,6 @@ export function useCoinInfoList<T extends boolean = true>(
       const results = await Promise.all(
         coinList.map(async (coinInfo) => {
           const marketState = marketStates?.[coinInfo.marketStateId]
-          if (!isValidAmount(marketState?.lpSupply))
-            return {
-              ...coinInfo,
-              ptPrice: "0",
-              ytPrice: "0",
-              ptApy: "0",
-              ytApy: "0",
-              tvl: "0",
-              poolApy: "0",
-              ptTvl: "0",
-              syTvl: "0",
-              marketState,
-              feeApy: "0",
-            }
 
           try {
             const metrics = await calculateMetrics({
@@ -250,10 +237,8 @@ export function useCoinInfoList<T extends boolean = true>(
             return {
               ...coinInfo,
               ...metrics,
-              marketState,
             }
           } catch (error) {
-            // console.log("error", index, marketStateIds[index], marketState)
             return {
               ...coinInfo,
               ptPrice: "",
@@ -291,5 +276,15 @@ export function useRewardWithAddress(userAddress?: string) {
     // FIXME： queryKey dose not work
     queryKey: ["RewardWithAddress"],
     queryFn: () => getRewardWithAddress(userAddress),
+  })
+}
+
+export const getTokenInfo = async (): Promise<TokenInfoMap> => {
+  return nemoApi<TokenInfoMap>("/api/v1/market/info").get()
+}
+
+export const useTokenInfo = () => {
+  return useMutation<TokenInfoMap, Error>({
+    mutationFn: getTokenInfo,
   })
 }

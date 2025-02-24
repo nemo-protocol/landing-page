@@ -15,11 +15,11 @@ import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useParams, useNavigate } from "react-router-dom"
-import useBurnLpDryRun from "@/hooks/dryrun/useBurnLpDryRun"
+import useBurnLpDryRun from "@/hooks/dryRun/useBurnLpDryRun"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import TransactionStatusDialog from "@/components/TransactionStatusDialog"
-import useSwapExactPtForSyDryRun from "@/hooks/dryrun/useSwapExactPtForSyDryRun"
+import useSwapExactPtForSyDryRun from "@/hooks/dryRun/useSwapExactPtForSyDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { ContractError } from "@/hooks/types"
 
@@ -52,7 +52,10 @@ export default function Remove() {
 
   const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
 
-  const { data: ptYtData } = useCalculatePtYt(coinConfig, marketState)
+  const { data: ptYtData, refresh: refreshPtYt } = useCalculatePtYt(
+    coinConfig,
+    marketState,
+  )
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
   const { mutateAsync: swapExactPtForSyDryRun } =
@@ -151,7 +154,7 @@ export default function Remove() {
     ])
   }, [refetchCoinConfig, refetchLpPosition, refetchPyPosition])
 
-  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig)
+  const { mutateAsync: redeemLp } = useRedeemLp(coinConfig, marketState)
 
   async function remove() {
     if (
@@ -177,6 +180,7 @@ export default function Remove() {
         setStatus("Success")
 
         await refreshData()
+        await refreshPtYt()
       } catch (errorMsg) {
         setOpen(true)
         setStatus("Failed")
