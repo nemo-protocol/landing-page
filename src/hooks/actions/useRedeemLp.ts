@@ -147,10 +147,11 @@ export default function useRedeemLp(
     },
     [
       address,
+      marketState,
       burnLpDryRun,
-      signAndExecuteTransaction,
-      swapExactPtForSyDryRun,
       claimLpRewardMutation,
+      swapExactPtForSyDryRun,
+      signAndExecuteTransaction,
     ],
   )
 
