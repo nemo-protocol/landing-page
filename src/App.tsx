@@ -29,7 +29,7 @@ function App() {
       try {
         const response = await fetch("https://api.country.is/")
         const data: CountryResponse = await response.json()
-        if (data.country === "CN") {
+        if (["CN", "HK", "SG"].includes(data.country)) {
           setIsBlocked(true)
         }
       } catch (error) {
@@ -41,7 +41,7 @@ function App() {
     checkCountry()
   }, [])
 
-  if (isBlocked || error) {
+  if (isBlocked) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#08080C]">
         <motion.div
