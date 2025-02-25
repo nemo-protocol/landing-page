@@ -29,7 +29,8 @@ function App() {
       try {
         const response = await fetch("https://api.country.is/")
         const data: CountryResponse = await response.json()
-        if (["CN", "HK", "SG"].includes(data.country)) {
+        const restrictedRegions = import.meta.env.VITE_RESTRICTED_REGIONS?.split(",") || []
+        if (restrictedRegions.includes(data.country)) {
           setIsBlocked(true)
         }
       } catch (error) {
