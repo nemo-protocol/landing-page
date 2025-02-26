@@ -85,6 +85,11 @@ export default function useAddLiquiditySinglePtDryRun<
         }),
       })
 
+      if (result.error) {
+        debugLog("single_liquidity_add_pt_out error:", debugInfo)
+        throw new ContractError(result.error, debugInfo)
+      }
+
       debugInfo.rawResult = result
 
       if (!result?.results?.[1]?.returnValues?.[0]) {
