@@ -750,7 +750,7 @@ export default function Item({
                 </div>
               ) : (
                 <>
-                  <div className="flex flex-col items-center w-24">
+                  <div className="flex flex-col items-center">
                     <div className="flex items-center gap-2">
                       {marketState?.rewardMetrics?.[selectedRewardIndex]
                         ?.tokenLogo && (
