@@ -430,9 +430,9 @@ export default function Trade() {
 
   return (
     <div className="w-full md:w-[650px] lg:w-full flex flex-col lg:flex-row gap-5">
-      <div className="lg:w-[500px] bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] shrink-0">
-        <div className="flex flex-col items-center gap-y-4">
-          <h2 className="text-center text-xl">Trade</h2>
+      <div className="lg:w-[500px] bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07] shrink-0">
+        <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
+          <h2 className="text-center text-base sm:text-xl">Trade</h2>
           {/* TODO: add into global */}
           <TransactionStatusDialog
             open={open}
@@ -473,7 +473,7 @@ export default function Trade() {
                   setTokenType(Number(value))
                 }}
               >
-                <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-base w-fit">
+                <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
                   <SelectValue placeholder="Select token type" />
                 </SelectTrigger>
                 <SelectContent className="border-none outline-none bg-[#0E0F16]">
@@ -495,8 +495,8 @@ export default function Trade() {
               </Select>
             }
           />
-          <ChevronsDown className="size-6" />
-          <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
+          <ChevronsDown className="size-5 sm:size-6" />
+          <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
             {/* FIXME: loading issue */}
             <div className="flex flex-col items-end gap-y-1">
               <div className="flex items-center justify-between w-full">
@@ -629,7 +629,7 @@ export default function Trade() {
           />
         </div>
       </div>
-      <div className="grow space-y-5 bg-[#12121B] rounded-3xl p-6 border border-white/[0.07] @container">
+      <div className="grow space-y-5 bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07] @container">
         <h3>HOW YT WORKS</h3>
         <div className="border border-[#2D2D48] px-[29px] py-[35px] flex items-center gap-4 rounded-xl flex-col @[630px]:flex-row">
           <div className="flex items-start gap-x-4 shrink-0">
@@ -709,8 +709,8 @@ export default function Trade() {
 
         <img src="/images/market/yt_desc.png" alt="yt" className="w-full" />
         <div className="border border-[#2D2D48] grid grid-cols-3 rounded-xl">
-          <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
-            <div className="text-white/60 text-xs">Underlying Protocol</div>
+          <div className="flex flex-col-reverse sm:flex-col items-start py-4 px-2.5 gap-2.5">
+            <div className="text-white/60 text-xs h-12 sm:h-auto">Underlying Protocol</div>
             <div className="flex items-center gap-x-1">
               <img
                 className="size-3.5"
@@ -720,16 +720,16 @@ export default function Trade() {
               <div className="text-xs">{coinConfig?.underlyingProtocol}</div>
             </div>
           </div>
-          <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
-            <div className="text-white/60 text-xs">Underlying APY</div>
+          <div className="flex flex-col-reverse sm:flex-col items-start py-4 px-2.5 gap-2.5">
+            <div className="text-white/60 text-xs h-12 sm:h-auto">Underlying APY</div>
             <div className="text-[#2DF4DD] text-xs">
               {coinConfig?.underlyingApy
                 ? `${new Decimal(coinConfig.underlyingApy).mul(100).toFixed(2)} %`
                 : "--"}
             </div>
           </div>
-          <div className="flex flex-col items-start py-4 pl-[22px] gap-2.5">
-            <div className="text-white/60 text-xs">7D Avg. Underlying APY</div>
+          <div className="flex flex-col-reverse sm:flex-col items-start py-4 px-2.5 gap-2.5">
+            <div className="text-white/60 text-xs h-12 sm:h-auto">7D Avg. Underlying APY</div>
             <div className="text-[#2DF4DD] text-xs">
               {coinConfig?.sevenAvgUnderlyingApy
                 ? `${new Decimal(coinConfig.sevenAvgUnderlyingApy).mul(100).toFixed(2)} %`

@@ -486,9 +486,9 @@ export default function Invest() {
   ])
 
   return (
-    <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
-      <div className="flex flex-col items-center gap-y-4">
-        <h2 className="text-center text-xl">Invest</h2>
+    <div className="w-full bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
+      <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
+        <h2 className="text-center text-base sm:text-xl">Invest</h2>
         {/* TODO: add global */}
         <TransactionStatusDialog
           open={open}
@@ -526,7 +526,7 @@ export default function Invest() {
                 setTokenType(Number(value))
               }}
             >
-              <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-base w-fit">
+              <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
                 <SelectValue placeholder="Select token type" />
               </SelectTrigger>
               <SelectContent className="border-none outline-none bg-[#0E0F16]">
@@ -542,8 +542,8 @@ export default function Invest() {
             </Select>
           }
         />
-        <ChevronsDown className="size-6" />
-        <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
+        <ChevronsDown className="size-5 sm:size-6" />
+        <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
           {/* FIXME: loading issue */}
           <div className="flex flex-col items-end gap-y-1">
             <div className="flex items-center justify-between w-full">
@@ -626,7 +626,7 @@ export default function Invest() {
                 <img
                   src={coinConfig?.coinLogo}
                   alt={coinConfig?.coinName}
-                  className="size-10"
+                  className="size-8 sm:size-[28px]"
                 />
               </div>
             </div>
@@ -640,13 +640,13 @@ export default function Invest() {
                 : "--"}
             </span>
           </div>
-          <div className="flex items-center justify-between mt-6 h-[28px]">
+          <div className="flex items-center justify-between mt-6 h-[24px] sm:h-[28px]">
             <span className="flex items-center gap-x-1">
               <span>Fixed Return</span>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Info className="size-3 cursor-pointer" />
+                    <Info className="size-2.5 sm:size-3 cursor-pointer" />
                   </TooltipTrigger>
                   <TooltipContent className="bg-[#20283C] rounded-md border-none">
                     <p>
@@ -679,12 +679,12 @@ export default function Invest() {
                 <img
                   src={coinConfig?.underlyingCoinLogo}
                   alt={coinConfig?.underlyingCoinName}
-                  className="size-[28px]"
+                  className="size-8 sm:size-[28px]"
                 />
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between mt-2 text-white/60 text-xs">
+          <div className="flex items-center justify-between mt-2 text-white/60 text-[10px] sm:text-xs">
             <span>
               After{" "}
               {dayjs(

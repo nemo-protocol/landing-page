@@ -58,40 +58,40 @@ export default function AmountInput({
     <div className="w-full">
       <div
         className={cn(
-          "rounded-lg border border-[#2D2D48] px-3 py-4",
+          "rounded-lg border border-[#2D2D48] px-2 sm:px-3 py-3 sm:py-4",
           className,
         )}
       >
-        <div className="flex items-center justify-between h-12">
-          <div className="flex items-center rounded-xl gap-x-2 bg-[#0E0F16] shrink-0">
-            <div className="flex items-center gap-x-4">
+        <div className="flex items-center justify-between h-auto sm:h-12">
+          <div className="flex items-center rounded-xl gap-x-1 sm:gap-x-2 bg-[#0E0F16] shrink-0">
+            <div className="flex items-center gap-x-2 sm:gap-x-4">
               {isConfigLoading ? (
-                <Skeleton className="size-12 rounded-full bg-[#2D2D48]" />
+                <Skeleton className="size-8 sm:size-12 rounded-full bg-[#2D2D48]" />
               ) : (
-                <img src={coinLogo} alt={coinName} className="size-12" />
+                <img src={coinLogo} alt={coinName} className="size-8 sm:size-12" />
               )}
 
-              <div className="space-y-1">
-                <div className="h-6 flex items-center gap-x-2">
+              <div className="space-y-0.5 sm:space-y-1">
+                <div className="h-5 sm:h-6 flex items-center gap-x-1 sm:gap-x-2">
                   {isConfigLoading ? (
-                    <Skeleton className="h-full w-12 bg-[#2D2D48]" />
+                    <Skeleton className="h-full w-10 sm:w-12 bg-[#2D2D48]" />
                   ) : (
                     coinNameComponent
                   )}
                   {maturity && (
-                    <span className="text-sm text-white/60">
+                    <span className="text-xs sm:text-sm text-white/60">
                       {dayjs(parseInt(maturity)).format("DD MMM YYYY")}
                     </span>
                   )}
                 </div>
                 <div>
                   {isBalanceLoading || isConfigLoading ? (
-                    <Skeleton className="h-4 w-40 bg-[#2D2D48]" />
+                    <Skeleton className="h-3 sm:h-4 w-28 sm:w-40 bg-[#2D2D48]" />
                   ) : (
                     <button
                       disabled={disabled}
                       className={cn(
-                        "flex items-center gap-x-1",
+                        "flex items-center gap-x-1 text-xs sm:text-sm",
                         disabled
                           ? "cursor-not-allowed "
                           : " cursor-pointer hover:underline",
@@ -113,7 +113,7 @@ export default function AmountInput({
                         }
                       }}
                     >
-                      <Wallet className="size-3.5" />
+                      <Wallet className="size-3 sm:size-3.5" />
                       {isConnected
                         ? `${formatDecimalValue(coinBalance, decimal)} ${coinName}`
                         : "--"}
@@ -124,7 +124,7 @@ export default function AmountInput({
             </div>
           </div>
 
-          <div className="grow space-y-1">
+          <div className="grow space-y-0.5 sm:space-y-1 ml-2 sm:ml-0">
             <input
               min={0}
               type="number"
@@ -136,38 +136,38 @@ export default function AmountInput({
                 e.target instanceof HTMLElement && e.target.blur()
               }
               className={cn(
-                "bg-transparent outline-none grow text-right min-w-0 placeholder:text-3xl p-0 text-3xl font-bold w-full",
+                "bg-transparent outline-none grow text-right min-w-0 placeholder:text-xl sm:placeholder:text-3xl p-0 text-xl sm:text-3xl font-bold w-full",
                 disabled && "cursor-not-allowed",
               )}
             />
             <div className="flex items-end">
               {amount ? (
                 isLoading ? (
-                  <Skeleton className="h-4 w-20 ml-auto bg-[#2D2D48]" />
+                  <Skeleton className="h-3 sm:h-4 w-16 sm:w-20 ml-auto bg-[#2D2D48]" />
                 ) : (
-                  <span className="text-xs text-white/80 ml-auto">
+                  <span className="text-[10px] sm:text-xs text-white/80 ml-auto">
                     $
                     {formatDecimalValue(new Decimal(price || 0).mul(amount), 6)}
                   </span>
                 )
               ) : (
-                <span className="text-xs text-white/80 ml-auto">$0</span>
+                <span className="text-[10px] sm:text-xs text-white/80 ml-auto">$0</span>
               )}
             </div>
           </div>
         </div>
       </div>
       {error && (
-        <div className="space-x-1">
-          <span className="text-red-500 break-words">{error}</span>
+        <div className="space-x-1 mt-1 sm:mt-2">
+          <span className="text-xs sm:text-sm text-red-500 break-words">{error}</span>
           {errorDetail && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <Info className="size-3.5 text-red-500" />
-              </TooltipTrigger>
-              <TooltipContent className="bg-[#0E0F16] text-white w-[500px]">
-                <p>{errorDetail}</p>
+                  <Info className="size-3 sm:size-3.5 text-red-500" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#0E0F16] text-white text-xs sm:text-sm w-[280px] sm:w-[500px]">
+                  <p>{errorDetail}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -175,7 +175,7 @@ export default function AmountInput({
         </div>
       )}
       {warning && (
-        <div className="mt-2 text-sm text-yellow-500 break-words">
+        <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-yellow-500 break-words">
           {warning}
         </div>
       )}

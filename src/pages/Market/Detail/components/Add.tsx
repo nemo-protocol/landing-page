@@ -588,10 +588,10 @@ export default function SingleCoin() {
   }
 
   return (
-    <div className="w-full md:w-[500px] lg:w-full bg-[#0E0F16] rounded-[40px] p-4 lg:p-8 border border-white/[0.07]">
-      <div className="grid grid-cols-1 lg:grid-cols-[500px_1fr] gap-8">
+    <div className="w-full md:w-[500px] lg:w-full bg-[#0E0F16] rounded-xl md:rounded-2xl xl:rounded-[40px] p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
+      <div className="grid grid-cols-1 lg:grid-cols-[500px_1fr] gap-4 sm:gap-8">
         {/* Left Panel */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <PoolSelect
             coinType={coinType}
             maturity={maturity}
@@ -603,9 +603,9 @@ export default function SingleCoin() {
           />
 
           {/* Add Liquidity Panel */}
-          <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07]">
-            <div className="flex flex-col items-center gap-y-4">
-              <h2 className="text-center text-xl" onClick={test}>
+          <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
+            <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
+              <h2 className="text-center text-base sm:text-xl" onClick={test}>
                 Add Liquidity
               </h2>
 
@@ -647,7 +647,7 @@ export default function SingleCoin() {
                       setTokenType(Number(value))
                     }}
                   >
-                    <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-base w-fit">
+                    <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
                       <SelectValue placeholder="Select token type" />
                     </SelectTrigger>
                     <SelectContent className="border-none outline-none bg-[#0E0F16]">
@@ -670,17 +670,17 @@ export default function SingleCoin() {
                 }
               />
 
-              <ChevronsDown className="size-6" />
+              <ChevronsDown className="size-5 sm:size-6" />
 
-              <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
+              <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
                 <div className="flex flex-col items-end gap-y-1">
-                  <div className="flex items-center justify-between w-full h-[28px]">
+                  <div className="flex items-center justify-between w-full h-[24px] sm:h-[28px]">
                     <span>LP Position</span>
-                    <span className="flex items-center gap-x-1.5">
+                    <span className="flex items-center gap-x-1 sm:gap-x-1.5">
                       {!addValue ? (
                         "--"
                       ) : isCalcLpLoading ? (
-                        <Skeleton className="h-7 w-48 bg-[#2D2D48]" />
+                        <Skeleton className="h-6 sm:h-7 w-36 sm:w-48 bg-[#2D2D48]" />
                       ) : !decimal ? (
                         "--"
                       ) : (
@@ -691,7 +691,7 @@ export default function SingleCoin() {
                             <img
                               src={coinConfig.coinLogo}
                               alt={coinConfig.coinName}
-                              className="size-[28px]"
+                              className="size-[24px] sm:size-[28px]"
                             />
                           )}
                         </>
@@ -708,13 +708,13 @@ export default function SingleCoin() {
                             .mul(10 ** (decimal || 0))
                             .toString(),
                         ))) && (
-                    <div className="flex items-center justify-between w-full h-[28px] text-sm text-white/60">
+                    <div className="flex items-center justify-between w-full h-[24px] sm:h-[28px] text-xs sm:text-sm text-white/60">
                       <span>YT Receive</span>
-                      <span className="flex items-center gap-x-1.5">
+                      <span className="flex items-center gap-x-1 sm:gap-x-1.5">
                         {!addValue ? (
                           "--"
                         ) : isCalcLpLoading ? (
-                          <Skeleton className="h-5 w-32 bg-[#2D2D48]" />
+                          <Skeleton className="h-4 sm:h-5 w-24 sm:w-32 bg-[#2D2D48]" />
                         ) : !decimal ? (
                           "--"
                         ) : (
@@ -728,7 +728,7 @@ export default function SingleCoin() {
                   )}
                 </div>
 
-                <hr className="border-t border-[#2D2D48] my-6" />
+                <hr className="border-t border-[#2D2D48] my-4 sm:my-6" />
 
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-x-1">
@@ -736,17 +736,17 @@ export default function SingleCoin() {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Info className="size-3 cursor-pointer" />
+                          <Info className="size-2.5 sm:size-3 cursor-pointer" />
                         </TooltipTrigger>
                         <TooltipContent className="bg-[#20283C] rounded-md border-none">
-                          <p>
+                          <p className="text-xs sm:text-sm">
                             Total APY includes trading fees and farming rewards.
                           </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </span>
-                  <span className="underline">
+                  <span className="underline text-xs sm:text-sm">
                     {ptYtData?.poolApy
                       ? `${Number(ptYtData.poolApy).toFixed(6)}%`
                       : "--"}
@@ -783,37 +783,37 @@ export default function SingleCoin() {
         {/* Right Panel */}
         <div>
           {/* Right Panel Header */}
-          <div className="grid grid-cols-3 mb-4 lg:mb-5">
+          <div className="grid grid-cols-3 mb-3 sm:mb-4 lg:mb-5">
             <div className="text-center">
-              <p className="text-lg lg:text-xl font-normal">
+              <p className="text-sm sm:text-lg lg:text-xl font-normal">
                 {ptYtData?.tvl
                   ? `$${formatDecimalValue(ptYtData?.tvl || 0, 2)}`
                   : "--"}
               </p>
-              <p className="text-xs lg:text-sm text-white/60">TVL</p>
+              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">TVL</p>
             </div>
             <div className="text-center">
-              <p className="text-lg lg:text-xl font-normal">
+              <p className="text-sm sm:text-lg lg:text-xl font-normal">
                 {dayjs(Number(coinConfig?.maturity ?? 0)).format("MMM DD YYYY")}
               </p>
-              <p className="text-xs lg:text-sm text-white/60">Maturity</p>
+              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">Maturity</p>
             </div>
             <div className="text-center">
-              <p className="text-lg lg:text-xl font-normal">
+              <p className="text-sm sm:text-lg lg:text-xl font-normal">
                 {ptYtData?.poolApy
                   ? `${Number(ptYtData.poolApy).toFixed(6)}%`
                   : "--"}
               </p>
-              <p className="text-xs lg:text-sm text-white/60">Total APY</p>
+              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">Total APY</p>
             </div>
           </div>
 
-          <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07]">
-            <div className="space-y-3 lg:space-y-4">
+          <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4">
               {/* Pool Capacity */}
               {isValidAmount(marketStateData?.marketCap) && (
-                <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-4 lg:p-6 relative">
-                  <h3 className="text-lg lg:text-xl font-normal mb-6 lg:mb-8">
+                <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-6 relative">
+                  <h3 className="text-base sm:text-lg lg:text-xl font-normal mb-4 sm:mb-6 lg:mb-8">
                     Pool Capacity
                   </h3>
                   <TooltipProvider>
@@ -837,7 +837,7 @@ export default function SingleCoin() {
 
                       {/* Tooltip with bottom alignment and arrow */}
                       <TooltipContent
-                        className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-3 text-sm relative mb-2"
+                        className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-2 sm:p-3 text-xs sm:text-sm relative mb-2"
                         side="top"
                         align="end"
                         sideOffset={5}
@@ -868,16 +868,16 @@ export default function SingleCoin() {
               )}
 
               {/* Pool Ratio */}
-              <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-4 lg:p-6">
-                <h3 className="text-lg lg:text-xl font-normal mb-6 lg:mb-8">
+              <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-6">
+                <h3 className="text-sm sm:text-lg lg:text-xl font-normal mb-4 sm:mb-6 lg:mb-8">
                   Pool Ratio
                 </h3>
-                <div className="mb-4 cursor-pointer">
+                <div className="mb-3 sm:mb-4 cursor-pointer">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div>
-                          <div className="flex justify-between mb-4">
+                          <div className="flex justify-between mb-3 sm:mb-4 text-xs sm:text-sm">
                             <span>
                               PT {coinConfig?.coinName} {ptRatio}%
                             </span>
@@ -893,13 +893,13 @@ export default function SingleCoin() {
                         </div>
                       </TooltipTrigger>
                       <TooltipContent
-                        className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-3 text-sm relative mb-2"
+                        className="bg-[#12121B] border border-[#2D2D48] rounded-lg p-2 sm:p-3 text-xs sm:text-sm relative mb-2"
                         side="top"
                         align="end"
                         sideOffset={5}
                       >
                         <div className="text-white space-y-1">
-                          <div className="flex justify-between items-center gap-x-4">
+                          <div className="flex justify-between items-center gap-x-2 sm:gap-x-4">
                             <span>
                               {marketStateData?.totalPt && decimal
                                 ? `${formatDecimalValue(
@@ -917,7 +917,7 @@ export default function SingleCoin() {
                                 : "--"}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center gap-x-4">
+                          <div className="flex justify-between items-center gap-x-2 sm:gap-x-4">
                             <span>
                               {marketStateData?.totalSy && decimal
                                 ? `${formatDecimalValue(
@@ -943,19 +943,19 @@ export default function SingleCoin() {
               </div>
 
               {/* APY Information */}
-              <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-4 lg:p-6">
-                <div className="space-y-6">
+              <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div className="flex justify-between items-center">
-                    <span className="text-xl">Total APY</span>
-                    <span className="text-xl text-white">
+                    <span className="text-base sm:text-xl">Total APY</span>
+                    <span className="text-base sm:text-xl text-white">
                       {ptYtData?.poolApy
                         ? `${Number(ptYtData.poolApy).toFixed(6)}%`
                         : "--"}
                     </span>
                   </div>
                   <div className="h-[1px] bg-[#2D2D48]" />
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center text-white/60">
+                  <div className="space-y-2 sm:space-y-4">
+                    <div className="flex justify-between items-center text-white/60 text-xs sm:text-sm">
                       <span>Scaled Underlying APY</span>
                       <span>
                         {ptYtData?.scaledUnderlyingApy
@@ -963,7 +963,7 @@ export default function SingleCoin() {
                           : "--"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-white/60">
+                    <div className="flex justify-between items-center text-white/60 text-xs sm:text-sm">
                       <span>Scaled PT APY</span>
                       <span>
                         {ptYtData?.scaledPtApy
@@ -971,7 +971,7 @@ export default function SingleCoin() {
                           : "--"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-white/60">
+                    <div className="flex justify-between items-center text-white/60 text-xs sm:text-sm">
                       <span>Swap Fee APY</span>
                       <span>
                         {ptYtData?.swapFeeApy
@@ -981,7 +981,7 @@ export default function SingleCoin() {
                     </div>
                     {ptYtData?.incentiveApy &&
                       isValidAmount(ptYtData.incentiveApy) && (
-                        <div className="flex justify-between items-center text-white/60">
+                        <div className="flex justify-between items-center text-white/60 text-xs sm:text-sm">
                           <span>Incentive APY</span>
                           <span>{`${new Decimal(ptYtData.incentiveApy).toFixed(6)} %`}</span>
                         </div>

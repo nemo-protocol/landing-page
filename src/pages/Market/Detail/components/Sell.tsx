@@ -373,9 +373,9 @@ export default function Sell() {
   ])
 
   return (
-    <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
-      <div className="flex flex-col items-center gap-y-4">
-        <h2 className="text-center text-xl">Sell</h2>
+    <div className="w-full bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
+      <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
+        <h2 className="text-center text-base sm:text-xl">Sell</h2>
         <div className="flex justify-end w-full">
           <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
         </div>
@@ -415,7 +415,7 @@ export default function Sell() {
                 setTargetValue("")
               }}
             >
-              <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-base w-fit">
+              <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
                 <SelectValue placeholder="Select token type" />
               </SelectTrigger>
               <SelectContent className="border-none outline-none bg-[#0E0F16]">
@@ -431,18 +431,18 @@ export default function Sell() {
             </Select>
           }
         />
-        <ChevronsDown className="size-6" />
-        <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
-          <div className="flex flex-col items-end gap-y-1">
-            <div className="flex items-center justify-between w-full h-[28px]">
+        <ChevronsDown className="size-5 sm:size-6" />
+        <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
+          <div className="flex flex-col items-end gap-y-0.5 sm:gap-y-1">
+            <div className="flex items-center justify-between w-full h-[24px] sm:h-[28px]">
               <span>Receiving</span>
               <span>
                 {isLoading ? (
-                  <Skeleton className="h-7 w-48 bg-[#2D2D48]" />
+                  <Skeleton className="h-6 sm:h-7 w-36 sm:w-48 bg-[#2D2D48]" />
                 ) : !decimal || !isValidAmount(targetValue) ? (
                   "--"
                 ) : (
-                  <div className="flex items-center gap-x-1.5">
+                  <div className="flex items-center gap-x-1 sm:gap-x-1.5">
                     <span>≈ {formatDecimalValue(targetValue, decimal)}</span>
                     <Select
                       value={receivingType}
@@ -456,7 +456,7 @@ export default function Sell() {
                         setTargetValue(newTargetValue)
                       }}
                     >
-                      <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-base w-fit">
+                      <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
                         <SelectValue>
                           <div className="flex items-center gap-x-1">
                             <span>
@@ -478,7 +478,7 @@ export default function Sell() {
                                     ? coinConfig?.underlyingCoinName
                                     : coinConfig?.coinName
                                 }
-                                className="size-5"
+                                className="size-4 sm:size-5"
                               />
                             )}
                           </div>
@@ -496,7 +496,7 @@ export default function Sell() {
                                 <img
                                   src={coinConfig.underlyingCoinLogo}
                                   alt={coinConfig.underlyingCoinName}
-                                  className="size-5"
+                                  className="size-4 sm:size-5"
                                 />
                               )}
                             </div>
@@ -511,7 +511,7 @@ export default function Sell() {
                                 <img
                                   src={coinConfig.coinLogo}
                                   alt={coinConfig.coinName}
-                                  className="size-5"
+                                  className="size-4 sm:size-5"
                                 />
                               )}
                             </div>
@@ -524,17 +524,17 @@ export default function Sell() {
               </span>
             </div>
             {isLoading ? (
-              <div className="text-xs">
-                <Skeleton className="h-4 w-32 bg-[#2D2D48]" />
+              <div className="text-[10px] sm:text-xs">
+                <Skeleton className="h-3 sm:h-4 w-24 sm:w-32 bg-[#2D2D48]" />
               </div>
             ) : priceImpact ? (
-              <div className="flex items-center gap-x-1 text-xs">
+              <div className="flex items-center gap-x-1 text-[10px] sm:text-xs">
                 {priceImpact.ratio.gt(5) && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Info
-                          className={`size-3 cursor-pointer ${
+                          className={`size-2.5 sm:size-3 cursor-pointer ${
                             priceImpact.ratio.gt(15)
                               ? "text-red-500"
                               : priceImpact.ratio.gt(5)
@@ -543,7 +543,7 @@ export default function Sell() {
                           }`}
                         />
                       </TooltipTrigger>
-                      <TooltipContent className="bg-[#12121B] max-w-[500px]">
+                      <TooltipContent className="bg-[#12121B] max-w-[280px] sm:max-w-[500px] text-xs sm:text-sm">
                         <p>
                           Price Impact Alert: Price impact is too high. Please
                           consider adjusting the transaction size.
@@ -553,7 +553,7 @@ export default function Sell() {
                   </TooltipProvider>
                 )}
                 <span
-                  className={`text-xs ${
+                  className={`text-[10px] sm:text-xs ${
                     priceImpact.ratio.gt(15)
                       ? "text-red-500"
                       : priceImpact.ratio.gt(5)
@@ -564,7 +564,7 @@ export default function Sell() {
                   ${formatDecimalValue(priceImpact.value, 4)}
                 </span>
                 <span
-                  className={`text-xs ${
+                  className={`text-[10px] sm:text-xs ${
                     priceImpact.ratio.gt(15)
                       ? "text-red-500"
                       : priceImpact.ratio.gt(5)

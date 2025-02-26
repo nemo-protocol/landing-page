@@ -196,7 +196,7 @@ export default function Remove() {
   }
 
   return (
-    <div className="w-full bg-[#12121B] rounded-3xl p-6 border border-white/[0.07]">
+    <div className="w-full bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
       <TransactionStatusDialog
         open={open}
         status={status}
@@ -208,8 +208,8 @@ export default function Remove() {
           setOpen(false)
         }}
       />
-      <div className="flex flex-col items-center gap-y-4">
-        <div className="w-full mb-4">
+      <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
+        <div className="w-full mb-2 sm:mb-4">
           <PoolSelect
             coinType={coinType}
             maturity={maturity}
@@ -221,8 +221,8 @@ export default function Remove() {
           />
         </div>
 
-        <div className="bg-[#12121B] rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/[0.07] flex flex-col items-center gap-y-4 w-full">
-          <h2 className="text-center text-xl">Remove Liquidity</h2>
+        <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07] flex flex-col items-center gap-y-3 sm:gap-y-4 w-full">
+          <h2 className="text-center text-base sm:text-xl">Remove Liquidity</h2>
 
           <AmountInput
             error={error}
@@ -241,19 +241,19 @@ export default function Remove() {
             isConfigLoading={isConfigLoading}
             coinName={`LP ${coinConfig?.coinName}`}
             coinNameComponent={
-              <span className="text-base">LP {coinConfig?.coinName}</span>
+              <span className="text-sm sm:text-base">LP {coinConfig?.coinName}</span>
             }
           />
 
-          <ChevronsDown className="size-6" />
+          <ChevronsDown className="size-5 sm:size-6" />
 
-          <div className="rounded-xl border border-[#2D2D48] px-4 py-6 w-full text-sm">
-            <div className="flex flex-col items-end gap-y-1">
-              <div className="flex items-center justify-between w-full h-[28px]">
+          <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
+            <div className="flex flex-col items-end gap-y-0.5 sm:gap-y-1">
+              <div className="flex items-center justify-between w-full h-[24px] sm:h-[28px]">
                 <span>Receiving</span>
-                <span className="flex items-center gap-x-1.5 h-7">
+                <span className="flex items-center gap-x-1 sm:gap-x-1.5 h-6 sm:h-7">
                   {isInputLoading ? (
-                    <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+                    <Skeleton className="h-6 sm:h-7 w-[140px] sm:w-[180px] bg-[#2D2D48]" />
                   ) : !lpValue ? (
                     "--"
                   ) : (
@@ -264,14 +264,14 @@ export default function Remove() {
                         <img
                           src={coinConfig.coinLogo}
                           alt={coinConfig.coinName}
-                          className="size-7"
+                          className="size-6 sm:size-7"
                         />
                       )}
                     </>
                   )}
                 </span>
               </div>
-              <div className="text-xs text-white/60">
+              <div className="text-[10px] sm:text-xs text-white/60">
                 {coinConfig?.maturity
                   ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
                   : "--"}

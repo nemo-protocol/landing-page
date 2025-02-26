@@ -1,6 +1,6 @@
 import Item from "./Item"
 import { motion } from "framer-motion"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import Loading from "@/components/Loading"
 import { isValidAmount } from "@/lib/utils"
 import { PortfolioItem } from "@/queries/types/market"
@@ -10,6 +10,7 @@ import useAllLpPositions from "@/hooks/fetch/useAllLpPositions"
 import useAllPyPositions from "@/hooks/fetch/useAllPyPositions"
 import { Link, useParams, useNavigate } from "react-router-dom"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
+import { MobileList } from "./MobileList"
 import {
   Table,
   TableRow,
@@ -29,7 +30,15 @@ export default function List({ list, isLoading }: ListProps) {
   const { address } = useWallet()
   const [slippage, setSlippage] = useState("0.5")
   const [openConnect, setOpenConnect] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const isConnected = useMemo(() => !!address, [address])
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const { data: pyPositionsMap = {}, isLoading: isPositionsLoading } =
     useAllPyPositions(list)
 
@@ -83,13 +92,13 @@ export default function List({ list, isLoading }: ListProps) {
 
   return (
     <motion.div
-      className="w-full transition-all duration-200 ease-in-out"
+      className="w-full transition-all duration-200 ease-in-out space-y-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-x-4 mb-6">
+        <div className="flex items-center gap-x-4">
           {["pt", "yt", "lp"].map((type) => (
             <span
               key={type}
@@ -107,135 +116,111 @@ export default function List({ list, isLoading }: ListProps) {
         </div>
         <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
       </div>
-      <div
-        className="rounded-3xl border border-white/5 overflow-hidden"
-        style={{
-          background: "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
-        }}
-      >
-        <Table>
-          <TableHeader
-            style={{
-              background:
-                "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
-            }}
-          >
-            <TableRow className="text-white/80 text-xs">
-              <TableHead>Assets</TableHead>
-              <TableHead className="text-center">Type</TableHead>
-              <TableHead className="text-center">Value</TableHead>
-              <TableHead className="text-center">Amount</TableHead>
-              {selectType === "yt" && (
-                <TableHead className="text-center">Accrued Yield</TableHead>
-              )}
-              {selectType === "lp" && (
-                <TableHead className="text-center">Incentive</TableHead>
-              )}
-              <TableHead className="text-center">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          {isConnected && isDataLoading ? (
-            <TableBody>
-              <TableRow>
-                <td colSpan={selectType === "yt" ? 6 : 5} className="py-[60px]">
-                  <Loading />
-                </td>
-              </TableRow>
-            </TableBody>
-          ) : (
+
+      {isConnected && isDataLoading ? (
+        <div className="py-[60px] flex justify-center">
+          <Loading />
+        </div>
+      ) : (
+        <>
+          {isConnected ? (
             <>
-              {isConnected && (
-                <>
-                  <TableBody className={selectType === "pt" ? "" : "hidden"}>
-                    {filteredLists.pt?.map((item) => (
-                      <Item
-                        {...item}
-                        id={item.id}
-                        key={item.id}
-                        selectType="pt"
-                        marketState={marketStates?.[item.marketStateId]}
-                        ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
-                        ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
-                        lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
-                        pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
-                        lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
-                      />
-                    ))}
-                  </TableBody>
-                  <TableBody className={selectType === "yt" ? "" : "hidden"}>
-                    {filteredLists.yt?.map((item) => (
-                      <Item
-                        {...item}
-                        id={item.id}
-                        key={item.id}
-                        selectType="yt"
-                        marketState={marketStates?.[item.marketStateId]}
-                        ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
-                        ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
-                        lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
-                        pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
-                        lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
-                      />
-                    ))}
-                  </TableBody>
-                  <TableBody className={selectType === "lp" ? "" : "hidden"}>
-                    {filteredLists.lp?.map((item) => (
-                      <Item
-                        {...item}
-                        id={item.id}
-                        key={item.id}
-                        selectType="lp"
-                        marketState={marketStates?.[item.marketStateId]}
-                        ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
-                        ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
-                        lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
-                        pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
-                        lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
-                      />
-                    ))}
-                  </TableBody>
-                </>
+              {/* Mobile View */}
+              {isMobile ? (
+                <MobileList
+                  list={filteredList}
+                  selectType={selectType}
+                  pyPositionsMap={pyPositionsMap}
+                  lpPositionsMap={lpPositionsMap}
+                  marketStates={marketStates}
+                />
+              ) : (
+                /* Desktop View */
+                <div
+                  className="rounded-3xl border border-white/5 overflow-hidden"
+                  style={{
+                    background: "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
+                  }}
+                >
+                  <Table>
+                    <TableHeader
+                      style={{
+                        background:
+                          "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
+                      }}
+                    >
+                      <TableRow className="text-white/80 text-xs">
+                        <TableHead>Assets</TableHead>
+                        <TableHead className="text-center">Type</TableHead>
+                        <TableHead className="text-center">Value</TableHead>
+                        <TableHead className="text-center">Amount</TableHead>
+                        {selectType === "yt" && (
+                          <TableHead className="text-center">Accrued Yield</TableHead>
+                        )}
+                        {selectType === "lp" && (
+                          <TableHead className="text-center">Incentive</TableHead>
+                        )}
+                        <TableHead className="text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredList.map((item) => (
+                        <Item
+                          key={item.id}
+                          {...item}
+                          selectType={selectType}
+                          marketState={marketStates?.[item.marketStateId]}
+                          ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
+                          ytBalance={pyPositionsMap?.[item.id]?.ytBalance}
+                          lpBalance={lpPositionsMap?.[item.id]?.lpBalance}
+                          pyPositions={pyPositionsMap?.[item.id]?.pyPositions}
+                          lpPositions={lpPositionsMap?.[item.id]?.lpPositions}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </>
+          ) : (
+            <div className="flex flex-col items-center w-full justify-center gap-y-4 py-[30px]">
+              <img
+                src="/images/svg/wallet-no-connect.svg"
+                alt="Wallet no connect"
+                className="size-[120px]"
+              />
+              <span className="text-white/60">
+                Please connect your wallet first.
+              </span>
+              <ConnectModal
+                open={openConnect}
+                onOpenChange={(isOpen) => setOpenConnect(isOpen)}
+                children={
+                  <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
+                    Connect Wallet
+                  </button>
+                }
+              />
+            </div>
           )}
-        </Table>
-        {!isConnected && (
-          <div className="flex flex-col items-center w-full justify-center gap-y-4 py-[30px]">
-            <img
-              src="/images/svg/wallet-no-connect.svg"
-              alt="Wallet no connect"
-              className="size-[120px]"
-            />
-            <span className="text-white/60">
-              Please connect your wallet first.
-            </span>
-            <ConnectModal
-              open={openConnect}
-              onOpenChange={(isOpen) => setOpenConnect(isOpen)}
-              children={
-                <button className="px-4 py-2 rounded-full bg-[#0F60FF]">
-                  Connect Wallet
-                </button>
-              }
-            />
-          </div>
-        )}
-        {!isDataLoading && !filteredList?.length && isConnected && (
-          <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px] py-[30px]">
-            <img
-              src="/images/png/empty.png"
-              alt="No Data"
-              className="size-[120px]"
-            />
-            <span className="text-white/60">
-              You don't have any position yet
-            </span>
-            <Link to="/market" className="px-4 py-2 rounded-full bg-[#0F60FF]">
-              <span className="text-white">View Markets</span>
-            </Link>
-          </div>
-        )}
-      </div>
+
+          {!isDataLoading && !filteredList?.length && isConnected && (
+            <div className="flex flex-col items-center w-full justify-center gap-y-4 mt-[30px] py-[30px]">
+              <img
+                src="/images/png/empty.png"
+                alt="No Data"
+                className="size-[120px]"
+              />
+              <span className="text-white/60">
+                You don't have any position yet
+              </span>
+              <Link to="/market" className="px-4 py-2 rounded-full bg-[#0F60FF]">
+                <span className="text-white">View Markets</span>
+              </Link>
+            </div>
+          )}
+        </>
+      )}
     </motion.div>
   )
 }
