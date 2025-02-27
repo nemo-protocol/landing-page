@@ -178,6 +178,7 @@ const MarketTable = ({ list }: MarketTableProps) => {
                         </div>
                         <div className="relative flex flex-row gap-2">
                           <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
+                          <div className="absolute -bottom-1 left-0 top-0 w-[1px] bg-[#41517A]"></div>
                           <div className="flex flex-1 flex-row items-start justify-between gap-4">
                             <div className="flex flex-row items-center gap-1.5">
                               <span className="text-[#96A9E4] text-xs">
@@ -187,6 +188,21 @@ const MarketTable = ({ list }: MarketTableProps) => {
                             <span className="font-mono text-xs">
                               {item.scaledUnderlyingApy
                                 ? `${formatLargeNumber(item.scaledUnderlyingApy, 6)}%`
+                                : "--"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="relative flex flex-row gap-2">
+                          <div className="-mt-1 h-3 w-3 rounded-bl-md border-b border-l border-[#41517A]"></div>
+                          <div className="flex flex-1 flex-row items-start justify-between gap-4">
+                            <div className="flex flex-row items-center gap-1.5">
+                              <span className="text-[#96A9E4] text-xs">
+                                Swap Fee APY
+                              </span>
+                            </div>
+                            <span className="font-mono text-xs">
+                              {item.swapFeeApy
+                                ? `${formatLargeNumber(item.swapFeeApy, 6)}%`
                                 : "--"}
                             </span>
                           </div>

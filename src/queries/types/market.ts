@@ -62,6 +62,7 @@ export interface CoinInfoWithMetrics extends BaseCoinInfo {
   totalApy: string
   feeApy: string
   incentives: Incentive[]
+  swapFeeApy: string
 }
 
 export interface CoinConfig extends BaseCoinInfo {

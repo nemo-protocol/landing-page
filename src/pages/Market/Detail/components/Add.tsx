@@ -216,6 +216,7 @@ export default function SingleCoin() {
     try {
       setIsCalcLpLoading(true)
       const newRatio = await calculateRatio()
+      console.log("newRatio", newRatio)
       setRatio(
         tokenType === 0
           ? new Decimal(newRatio).mul(conversionRate || 0).toString()
@@ -505,7 +506,6 @@ export default function SingleCoin() {
           .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)
-        console.log("minLpAmount", minLpAmount)
 
         if (marketStateData.lpSupply === "0") {
           console.log("handleSeedLiquidity")

@@ -1,10 +1,11 @@
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
+import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
+import { DEFAULT_Address } from "@/lib/constants"
 
 // TODO: optimize the mutation
 export default function useQueryLpOutFromMintLp(
@@ -12,7 +13,7 @@ export default function useQueryLpOutFromMintLp(
   debug: boolean = false,
 ) {
   const client = useSuiClient()
-  const { address } = useWallet()
+  const address = DEFAULT_Address
 
   return useMutation({
     mutationFn: async ({
@@ -30,15 +31,17 @@ export default function useQueryLpOutFromMintLp(
       }
 
       const debugInfo: DebugInfo = {
-        moveCall: [{
-          target: `${coinConfig.nemoContractId}::router::get_lp_out_from_mint_lp`,
-          arguments: [
-            { name: "pt_value", value: ptValue },
-            { name: "sy_value", value: syValue },
-            { name: "market_state_id", value: coinConfig.marketStateId },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        }],
+        moveCall: [
+          {
+            target: `${coinConfig.nemoContractId}::router::get_lp_out_from_mint_lp`,
+            arguments: [
+              { name: "pt_value", value: ptValue },
+              { name: "sy_value", value: syValue },
+              { name: "market_state_id", value: coinConfig.marketStateId },
+            ],
+            typeArguments: [coinConfig.syCoinType],
+          },
+        ],
       }
 
       const tx = new Transaction()

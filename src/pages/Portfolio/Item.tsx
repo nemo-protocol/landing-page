@@ -457,7 +457,7 @@ export default function Item({
               className="size-6 sm:size-10"
             />
             <div className="flex flex-col md:flex-row md:items-center gap-2 flex-wrap">
-              <span>PT {coinConfig.underlyingCoinName}</span>
+              <span>PT {coinConfig.coinName}</span>
               <span className="text-white/50 text-xs">
                 {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
               </span>
@@ -542,7 +542,7 @@ export default function Item({
                 className="size-10"
               />
               <div className="flex items-center gap-x-1 flex-wrap">
-                <span>YT {coinConfig.underlyingCoinName}</span>
+                <span>YT {coinConfig.coinName}</span>
                 <span className="text-white/50 text-xs">
                   {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
                 </span>
@@ -657,8 +657,8 @@ export default function Item({
               alt=""
               className="size-10"
             />
-            <div className="flex items-center gap-x-1">
-              <span>LP {coinConfig.underlyingCoinName}</span>
+            <div className="flex items-center gap-x-1 flex-wrap">
+              <span>LP {coinConfig.coinName}</span>
               <span className="text-white/50 text-xs">
                 {dayjs(parseInt(coinConfig?.maturity)).format("MMM DD YYYY")}
               </span>

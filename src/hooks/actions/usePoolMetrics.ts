@@ -251,11 +251,17 @@ export function usePoolMetrics() {
         "decimal",
       )
       const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
+
+      console.log("swapFeeRateForLpHolder", swapFeeRateForLpHolder.toString())
+      console.log("expiryRate", expiryRate.toString())
+
       swapFeeApy = swapFeeRateForLpHolder
         .add(1)
         .pow(expiryRate)
         .minus(1)
         .mul(100)
+
+      console.log("swapFeeApy", swapFeeApy.toString())
 
       // Calculate reward APYs
 
