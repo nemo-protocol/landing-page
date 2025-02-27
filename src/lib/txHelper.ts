@@ -10,6 +10,7 @@ import {
   VALIDATORS,
   getTreasury,
   SSBUCK,
+  ALPAHFI,
 } from "./constants"
 import {
   Transaction,
@@ -567,7 +568,42 @@ export const mintSCoin = <T extends boolean = false>(
         ? [sCoins, moveCallInfos]
         : sCoins) as unknown as MintSCoinResult<T>
     }
+    case "AlphaFi": {
+      const sCoins: TransactionArgument[] = []
 
+      for (let i = 0; i < amounts.length; i++) {
+        moveCall = {
+          target: `${ALPAHFI.PACKAGE_ID}::liquid_staking::mint`,
+          arguments: [
+            {
+              name: "liquid_staking_info",
+              value: ALPAHFI.LIQUID_STAKING_INFO,
+            },
+            { name: "sui_system_state", value: "0x5" },
+            { name: "coin", value: amounts[i] },
+          ],
+          typeArguments: [coinConfig.coinType],
+        }
+        moveCallInfos.push(moveCall)
+        debugLog(`alphaFi mint move call:`, moveCall)
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(ALPAHFI.LIQUID_STAKING_INFO),
+            tx.object("0x5"),
+            splitCoins[i],
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        sCoins.push(sCoin)
+      }
+
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
+    }
     default:
       throw new Error(
         "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,

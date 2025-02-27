@@ -434,7 +434,7 @@ export default function SingleCoin() {
         coinConfig.version,
         syCoin,
         pt_amount,
-        tx.pure.u64(minLpAmount),
+        (minLpAmount),
         priceVoucherForMintLp,
         pyPosition,
         coinConfig.pyStateId,
@@ -508,6 +508,8 @@ export default function SingleCoin() {
         console.log("minLpAmount", minLpAmount)
 
         if (marketStateData.lpSupply === "0") {
+          console.log("handleSeedLiquidity")
+
           await handleSeedLiquidity(
             tx,
             addAmount,
@@ -522,6 +524,7 @@ export default function SingleCoin() {
         } else if (
           new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
         ) {
+          console.log("handleMintLp")
           await handleMintLp(
             tx,
             addAmount,
@@ -534,6 +537,7 @@ export default function SingleCoin() {
             minLpAmount,
           )
         } else {
+          console.log("handleAddLiquiditySingleSy")
           await handleAddLiquiditySingleSy({
             tx,
             address,

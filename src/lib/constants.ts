@@ -149,3 +149,8 @@ export const SSBUCK = {
 export const Time = {
   CONVERSION_RATE_REFRESH_INTERVAL: 1000 * 20,
 } as const
+
+export const ALPAHFI = {
+  PACKAGE_ID: "0x059f94b85c07eb74d2847f8255d8cc0a67c9a8dcc039eabf9f8b9e23a0de2700",
+  LIQUID_STAKING_INFO: "0x1adb343ab351458e151bc392fbf1558b3332467f23bda45ae67cd355a57fd5f5",
+} as const
