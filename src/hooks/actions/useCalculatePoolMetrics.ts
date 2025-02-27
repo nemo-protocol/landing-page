@@ -1,7 +1,7 @@
 import { MarketState } from "../types"
 import { useMutation } from "@tanstack/react-query"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
-import { usePoolMetrics } from "../usePoolMetrics"
+import { usePoolMetrics } from "./usePoolMetrics"
 
 interface CalculatePoolMetricsParams {
   coinInfo: BaseCoinInfo

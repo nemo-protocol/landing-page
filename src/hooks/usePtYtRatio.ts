@@ -1,7 +1,7 @@
 import { MarketState } from "./types"
 import { useQuery } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import { usePoolMetrics, PoolMetricsResult } from "./usePoolMetrics"
+import { usePoolMetrics, PoolMetricsResult } from "./actions/usePoolMetrics"
 
 function validateCoinInfo(coinInfo: CoinConfig) {
   const requiredFields = [

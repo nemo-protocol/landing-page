@@ -3,24 +3,37 @@ import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "./types"
-import { ContractError } from "./types"
+import type { DebugInfo } from "../../types"
+import { ContractError } from "../../types"
 import { getPriceVoucher } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
 
-type DryRunResult<T extends boolean> = T extends true
-  ? [string, DebugInfo]
-  : string
+interface SyOutByYtInResult {
+  syValue: string
+  syAmount: string
+}
 
-export default function useQuerySyOutFromYtInWithVoucher<
-  T extends boolean = false,
->(coinConfig?: CoinConfig, debug: T = false as T) {
+type DryRunResult<T extends boolean> = T extends true
+  ? [SyOutByYtInResult, DebugInfo]
+  : SyOutByYtInResult
+
+export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
+  outerCoinConfig?: CoinConfig,
+  debug: T = false as T,
+) {
   const client = useSuiClient()
   const { address } = useWallet()
 
   return useMutation({
-    mutationFn: async (ytAmount: string): Promise<DryRunResult<T>> => {
+    mutationFn: async ({
+      ytAmount,
+      innerCoinConfig,
+    }: {
+      ytAmount: string
+      innerCoinConfig?: CoinConfig
+    }): Promise<DryRunResult<T>> => {
+      const coinConfig = outerCoinConfig || innerCoinConfig
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -35,21 +48,23 @@ export default function useQuerySyOutFromYtInWithVoucher<
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
       const debugInfo: DebugInfo = {
-        moveCall: [{
-          target: `${coinConfig.nemoContractId}::router::get_sy_amount_out_for_exact_yt_in_with_price_voucher`,
-          arguments: [
-            { name: "exact_yt_in", value: ytAmount },
-            { name: "price_voucher", value: "priceVoucher" },
-            { name: "py_state", value: coinConfig.pyStateId },
-            {
-              name: "market_factory_config",
-              value: coinConfig.marketFactoryConfigId,
-            },
-            { name: "market", value: coinConfig.marketStateId },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [coinConfig.syCoinType],
-        }],
+        moveCall: [
+          {
+            target: `${coinConfig.nemoContractId}::router::get_sy_amount_out_for_exact_yt_in_with_price_voucher`,
+            arguments: [
+              { name: "exact_yt_in", value: ytAmount },
+              { name: "price_voucher", value: "priceVoucher" },
+              { name: "py_state", value: coinConfig.pyStateId },
+              {
+                name: "market_factory_config",
+                value: coinConfig.marketFactoryConfigId,
+              },
+              { name: "market", value: coinConfig.marketStateId },
+              { name: "clock", value: "0x6" },
+            ],
+            typeArguments: [coinConfig.syCoinType],
+          },
+        ],
       }
 
       debugLog(
@@ -94,19 +109,18 @@ export default function useQuerySyOutFromYtInWithVoucher<
         throw new ContractError(message, debugInfo)
       }
 
-      const outputAmount = bcs.U64.parse(
+      const syAmount = bcs.U64.parse(
         new Uint8Array(result.results[1].returnValues[0][0]),
       )
 
-      const formattedAmount = new Decimal(outputAmount.toString())
+      const syValue = new Decimal(syAmount.toString())
         .div(10 ** Number(coinConfig.decimal))
         .toFixed()
 
-      debugInfo.parsedOutput = formattedAmount
+      debugInfo.parsedOutput = syAmount
 
-      return (
-        debug ? [formattedAmount, debugInfo] : formattedAmount
-      ) as DryRunResult<T>
+      const resultObj = { syValue, syAmount }
+      return (debug ? [resultObj, debugInfo] : resultObj) as DryRunResult<T>
     },
   })
 }

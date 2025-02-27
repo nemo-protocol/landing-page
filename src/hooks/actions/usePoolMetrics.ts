@@ -1,10 +1,10 @@
 import Decimal from "decimal.js"
-import { MarketState } from "./types"
+import { MarketState } from "../types"
 import { useMutation } from "@tanstack/react-query"
 import { isValidAmount, safeDivide } from "@/lib/utils"
-import useQuerySyOutDryRun from "./dryRun/useQuerySyOutDryRun"
 import { CoinConfig, Incentive } from "@/queries/types/market"
-import useGetConversionRateDryRun from "./dryRun/useGetConversionRateDryRun"
+import useGetConversionRateDryRun from "../dryRun/useGetConversionRateDryRun"
+import useQuerySyOutByYtInDryRun from "@/hooks//dryRun/yt/useQuerySyOutByYtInDryRun"
 
 export interface PoolMetricsResult {
   ptApy: string
@@ -124,7 +124,10 @@ function calculateYtAPY(
 }
 
 export function usePoolMetrics() {
-  const { mutateAsync: priceVoucherFn } = useQuerySyOutDryRun()
+  const { mutateAsync: querySyOutByYtIn } = useQuerySyOutByYtInDryRun(
+    undefined,
+    false,
+  )
   const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
   const mutation = useMutation({
@@ -164,31 +167,40 @@ export function usePoolMetrics() {
       // Make RPC calls to get prices
       const conversionRate = await getConversionRate(coinInfo)
 
-      let ptIn = "1000000"
+      let ytIn = "1000000"
       let syOut: string
 
       try {
-        syOut = await priceVoucherFn({ ptIn, coinInfo })
+        const { syAmount } = await querySyOutByYtIn({
+          ytAmount: ytIn,
+          innerCoinConfig: coinInfo,
+        })
+        syOut = syAmount
       } catch (error) {
-        ptIn = "100"
-        syOut = await priceVoucherFn({ ptIn, coinInfo })
+        ytIn = "100"
+        const { syAmount } = await querySyOutByYtIn({
+          ytAmount: ytIn,
+          innerCoinConfig: coinInfo,
+        })
+        syOut = syAmount
       }
+
       const underlyingPrice = safeDivide(
         coinInfo.coinPrice,
         conversionRate,
         "decimal",
       )
 
-      const ptPrice = safeDivide(
+      const ytPrice = safeDivide(
         new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
-        ptIn,
+        ytIn,
         "decimal",
       )
-      const ytPrice = safeDivide(
+      const ptPrice = safeDivide(
         new Decimal(coinInfo.coinPrice),
         conversionRate,
         "decimal",
-      ).sub(ptPrice)
+      ).sub(ytPrice)
 
       // Calculate metrics
       let poolApy = new Decimal(0)

@@ -13,7 +13,7 @@ import {
   redeemSyCoin,
   burnSCoin,
 } from "@/lib/txHelper"
-import useQuerySyOutFromYtInWithVoucher from "../useQuerySyOutFromYtInWithVoucher"
+import useQuerySyOutFromYtInWithVoucher from "./yt/useQuerySyOutByYtInDryRun"
 
 interface SellYtParams {
   sellValue: string
@@ -64,21 +64,20 @@ export default function useSellYtDryRun<T extends boolean = false>(
 
       const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-      const amount = new Decimal(sellValue)
+      const ytAmount = new Decimal(sellValue)
         .mul(new Decimal(10).pow(coinConfig.decimal))
         .toString()
 
-      const [syOut] = await querySyOutFromYt(amount)
+      const { syAmount: syOutAmount } = await querySyOutFromYt({ ytAmount })
 
-      const minSyOut = new Decimal(syOut)
-        .mul(10 ** Number(coinConfig.decimal))
+      const minSyOut = new Decimal(syOutAmount)
         .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
         .toFixed(0)
 
       const syCoin = swapExactYtForSy(
         tx,
         coinConfig,
-        amount,
+        ytAmount,
         pyPosition,
         priceVoucher,
         minSyOut,
@@ -101,7 +100,7 @@ export default function useSellYtDryRun<T extends boolean = false>(
         target: `${coinConfig.nemoContractId}::router::swap_exact_yt_for_sy`,
         arguments: [
           { name: "version", value: coinConfig.version },
-          { name: "amount", value: amount },
+          { name: "yt_amount", value: ytAmount },
           { name: "min_sy_out", value: minSyOut },
           {
             name: "py_position",
