@@ -264,6 +264,8 @@ export default function SingleCoin() {
               setYtAmount(
                 new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
               )
+
+              setRatio(new Decimal(lpAmount).div(inputAmount).toString())
             } else if (
               marketStateData &&
               new Decimal(marketStateData.totalSy).mul(0.4).lt(inputAmount)
@@ -281,6 +283,8 @@ export default function SingleCoin() {
               setYtAmount(
                 new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
               )
+
+              setRatio(new Decimal(lpAmount).div(inputAmount).toString())
             } else {
               const [lpAmount, lpFeeAmount] = await addLiquiditySingleSyDryRun({
                 coinData,
@@ -292,6 +296,8 @@ export default function SingleCoin() {
               setLpAmount(lpAmount)
               setLpFeeAmount(lpFeeAmount)
               setYtAmount(undefined)
+
+              setRatio(new Decimal(lpAmount).div(inputAmount).toString())
             }
           } catch (error) {
             try {
@@ -790,13 +796,17 @@ export default function SingleCoin() {
                   ? `$${formatDecimalValue(ptYtData?.tvl || 0, 2)}`
                   : "--"}
               </p>
-              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">TVL</p>
+              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">
+                TVL
+              </p>
             </div>
             <div className="text-center">
               <p className="text-sm sm:text-lg lg:text-xl font-normal">
                 {dayjs(Number(coinConfig?.maturity ?? 0)).format("MMM DD YYYY")}
               </p>
-              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">Maturity</p>
+              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">
+                Maturity
+              </p>
             </div>
             <div className="text-center">
               <p className="text-sm sm:text-lg lg:text-xl font-normal">
@@ -804,7 +814,9 @@ export default function SingleCoin() {
                   ? `${Number(ptYtData.poolApy).toFixed(6)}%`
                   : "--"}
               </p>
-              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">Total APY</p>
+              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">
+                Total APY
+              </p>
             </div>
           </div>
 

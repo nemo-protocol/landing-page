@@ -34,7 +34,8 @@ export function useCalculatePtYt(
   coinInfo?: CoinConfig,
   marketState?: MarketState,
 ) {
-  const mutation = usePoolMetrics()
+  const { mutateAsync: calculateMetrics, refresh: refreshMetrics } =
+    usePoolMetrics()
 
   const query = useQuery<PoolMetricsResult>({
     queryKey: ["useCalculatePtYt", coinInfo?.marketStateId],
@@ -48,7 +49,7 @@ export function useCalculatePtYt(
 
       validateCoinInfo(coinInfo)
 
-      return mutation.mutateAsync({
+      return calculateMetrics({
         coinInfo,
         marketState,
       })
@@ -58,7 +59,7 @@ export function useCalculatePtYt(
 
   const refresh = async () => {
     if (coinInfo && marketState) {
-      return await mutation.refresh({
+      return await refreshMetrics({
         coinInfo,
         marketState,
       })

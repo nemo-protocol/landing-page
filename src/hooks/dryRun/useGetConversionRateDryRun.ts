@@ -52,50 +52,54 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
         moveCall: [priceVoucherMoveCallInfo, moveCallInfo],
       }
 
-      const result = await client.devInspectTransactionBlock({
-        sender: address,
-        transactionBlock: await tx.build({
-          client: client,
-          onlyTransactionKind: true,
-        }),
-      })
+      try {
+        const result = await client.devInspectTransactionBlock({
+          sender: address,
+          transactionBlock: await tx.build({
+            client: client,
+            onlyTransactionKind: true,
+          }),
+        })
 
-      debugInfo.rawResult = result
+        debugInfo.rawResult = result
 
-      if (result?.error) {
-        debugLog("useGetConversionRateDryRun error", debugInfo)
-        throw new ContractError(result.error, debugInfo)
-      }
-
-      if (!result?.results?.[result.results.length - 1]?.returnValues?.[0]) {
-        const message = "Failed to get conversion rate"
-        debugInfo.rawResult = {
-          error: message,
+        if (result?.error) {
+          debugLog("useGetConversionRateDryRun error", debugInfo)
+          throw new ContractError(result.error, debugInfo)
         }
-        debugLog("useGetConversionRateDryRun error", debugInfo)
-        throw new ContractError(message, debugInfo)
+
+        if (!result?.results?.[result.results.length - 1]?.returnValues?.[0]) {
+          const message = "Failed to get conversion rate"
+          debugInfo.rawResult = {
+            error: message,
+          }
+          debugLog("useGetConversionRateDryRun error", debugInfo)
+          throw new ContractError(message, debugInfo)
+        }
+
+        const conversionRate = bcs.U128.parse(
+          new Uint8Array(
+            result.results[result.results.length - 1].returnValues[0][0],
+          ),
+        )
+
+        const formattedConversionRate = new Decimal(conversionRate)
+          .div(Math.pow(2, 64))
+          .toFixed()
+
+        debugInfo.parsedOutput = formattedConversionRate
+        debugInfo.result = formattedConversionRate
+
+        if (!debug) {
+          debugLog("useGetConversionRateDryRun", debugInfo)
+        }
+
+        return (
+          debug ? [formattedConversionRate, debugInfo] : formattedConversionRate
+        ) as DryRunResult<T>
+      } catch (error) {
+        throw new ContractError((error as Error).message, debugInfo)
       }
-
-      const conversionRate = bcs.U128.parse(
-        new Uint8Array(
-          result.results[result.results.length - 1].returnValues[0][0],
-        ),
-      )
-
-      const formattedConversionRate = new Decimal(conversionRate)
-        .div(Math.pow(2, 64))
-        .toFixed()
-
-      debugInfo.parsedOutput = formattedConversionRate
-      debugInfo.result = formattedConversionRate
-
-      if (!debug) {
-        debugLog("useGetConversionRateDryRun", debugInfo)
-      }
-
-      return (
-        debug ? [formattedConversionRate, debugInfo] : formattedConversionRate
-      ) as DryRunResult<T>
     },
   })
 }

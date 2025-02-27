@@ -650,6 +650,7 @@ export default function Item({
         )}
       {["lp", "all"].includes(selectType) && !lpRedeemed && (
         <TableRow className="cursor-pointer">
+          {/* Assets */}
           <TableCell className="flex items-center gap-x-3">
             <img
               src={coinConfig.underlyingCoinLogo}
@@ -663,7 +664,11 @@ export default function Item({
               </span>
             </div>
           </TableCell>
+
+          {/* Type */}
           <TableCell className="text-center">LP</TableCell>
+
+          {/* Value */}
           <TableCell className="text-center space-x-1">
             {isPtYtLoading ? (
               <Skeleton className="h-6 w-20 mx-auto" />
@@ -688,9 +693,13 @@ export default function Item({
               </>
             )}
           </TableCell>
+
+          {/* Amount */}
           <TableCell className="text-center">
             <SmallNumDisplay value={lpBalance} />
           </TableCell>
+
+          {/* Accrued Yield */}
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
               {isLpRewardLoading ? (
@@ -842,6 +851,8 @@ export default function Item({
               )}
             </div>
           </TableCell>
+
+          {/* Actions */}
           <TableCell align="center" className="text-white">
             {Number(coinConfig?.maturity || Infinity) > Date.now() ? (
               <div className="flex md:flex-row flex-col items-center gap-2 justify-center">

@@ -160,7 +160,7 @@ export function usePoolMetrics() {
           marketState,
           incentives: [],
         }
-        saveMetricsToCache(coinInfo.marketStateId, zeroResult)
+        // saveMetricsToCache(coinInfo.marketStateId, zeroResult)
         return zeroResult
       }
 
@@ -196,11 +196,7 @@ export function usePoolMetrics() {
         ytIn,
         "decimal",
       )
-      const ptPrice = safeDivide(
-        new Decimal(coinInfo.coinPrice),
-        conversionRate,
-        "decimal",
-      ).sub(ytPrice)
+      const ptPrice = underlyingPrice.sub(ytPrice)
 
       // Calculate metrics
       let poolApy = new Decimal(0)

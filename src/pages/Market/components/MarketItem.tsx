@@ -208,7 +208,7 @@ const MarketItem = ({ item }: MarketItemProps) => {
                       </>
                     )}
                   </div>
-                  {item.incentives.length > 0 && (
+                  {item.incentives && item.incentives.length > 0 && (
                     <div className="flex flex-col gap-2">
                       <div className="text-sm text-left">Incentive APY</div>
                       {item.incentives?.map((incentive, index) => (
