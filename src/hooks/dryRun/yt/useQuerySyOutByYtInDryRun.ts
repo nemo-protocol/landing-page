@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
-import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
+import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../../types"
@@ -8,6 +8,7 @@ import { ContractError } from "../../types"
 import { getPriceVoucher } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
+import { DEFAULT_Address } from "@/lib/constants"
 
 interface SyOutByYtInResult {
   syValue: string
@@ -23,7 +24,7 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
   debug: T = false as T,
 ) {
   const client = useSuiClient()
-  const { address } = useWallet()
+  const address = DEFAULT_Address
 
   return useMutation({
     mutationFn: async ({

@@ -141,8 +141,12 @@ export function usePoolMetrics() {
         return cachedResult
       }
 
+      console.log("cachedResult", cachedResult)
+
       // If lpSupply is 0, return zero values without making RPC calls
       if (!isValidAmount(marketState.lpSupply)) {
+        console.log("isValidAmount lpSupply is 0")
+
         const zeroResult: PoolMetricsResult = {
           ptPrice: "0",
           ytPrice: "0",
@@ -167,6 +171,8 @@ export function usePoolMetrics() {
       // Make RPC calls to get prices
       const conversionRate = await getConversionRate(coinInfo)
 
+      console.log("conversionRate", conversionRate)
+
       let ytIn = "1000000"
       let syOut: string
 
@@ -178,12 +184,39 @@ export function usePoolMetrics() {
         syOut = syAmount
       } catch (error) {
         ytIn = "100"
-        const { syAmount } = await querySyOutByYtIn({
-          ytAmount: ytIn,
-          innerCoinConfig: coinInfo,
-        })
-        syOut = syAmount
+        try {
+          const { syAmount } = await querySyOutByYtIn({
+            ytAmount: ytIn,
+            innerCoinConfig: coinInfo,
+          })
+          syOut = syAmount
+        } catch (error) {
+          ytIn = "10"
+          try {
+            const { syAmount } = await querySyOutByYtIn({
+              ytAmount: ytIn,
+              innerCoinConfig: coinInfo,
+            })
+            syOut = syAmount
+          } catch (error) {
+            ytIn = "1"
+
+            try {
+              const { syAmount } = await querySyOutByYtIn({
+                ytAmount: ytIn,
+                innerCoinConfig: coinInfo,
+              })
+              syOut = syAmount
+            } catch (error) {
+              console.log("error", error)
+              throw error
+            }
+          }
+        }
       }
+
+      console.log("syOut", syOut)
+      console.log("ytIn", ytIn)
 
       const underlyingPrice = safeDivide(
         coinInfo.coinPrice,
@@ -191,12 +224,17 @@ export function usePoolMetrics() {
         "decimal",
       )
 
+      console.log("underlyingPrice", underlyingPrice.toString())
+
       const ytPrice = safeDivide(
         new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
         ytIn,
         "decimal",
       )
+      console.log("ytPrice", ytPrice.toString())
+
       const ptPrice = underlyingPrice.sub(ytPrice)
+      console.log("ptPrice", ptPrice.toString())
 
       // Calculate metrics
       let poolApy = new Decimal(0)
@@ -211,23 +249,28 @@ export function usePoolMetrics() {
         .div(86400)
         .toNumber()
 
+      console.log("daysToExpiry", daysToExpiry)
+
       const ptApy = calculatePtAPY(
         Number(underlyingPrice),
         Number(ptPrice),
         daysToExpiry,
       )
+      console.log("ptApy", ptApy.toString())
 
       const yearsToExpiry = new Decimal(
         (Number(coinInfo.maturity) - Date.now()) / 1000,
       )
         .div(31536000)
         .toNumber()
+      console.log("yearsToExpiry", yearsToExpiry)
 
       const ytApy = calculateYtAPY(
         Number(coinInfo.underlyingApy),
         safeDivide(ytPrice, coinInfo.underlyingPrice, "number"),
         yearsToExpiry,
       )
+      console.log("ytApy", ytApy.toString())
 
       let scaledUnderlyingApy = new Decimal(0)
       let scaledPtApy = new Decimal(0)
