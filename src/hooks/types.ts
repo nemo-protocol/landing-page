@@ -50,14 +50,23 @@ export interface PyPosition {
 export interface RewardMetrics {
   tokenType: string
   tokenLogo: string
+  tokenName?: string
   tokenPrice: string
   dailyEmission: string
+  decimal?: string
 }
 
 export interface MarketState {
-  totalSy: string
-  totalPt: string
-  lpSupply: string
   marketCap: string
-  rewardMetrics?: RewardMetrics[]
+  totalSy: string
+  lpSupply: string
+  totalPt: string
+  rewardMetrics: {
+    tokenType: string
+    tokenLogo: string
+    dailyEmission: string
+    tokenPrice: string
+    tokenName?: string
+    decimal?: string
+  }[]
 }

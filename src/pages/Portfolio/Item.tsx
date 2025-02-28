@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import useQueryClaimLpReward from "@/hooks/useQueryClaimLpReward"
 import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
+import { ChevronDown } from "lucide-react"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -704,73 +705,68 @@ export default function Item({
             <div className="flex items-center gap-x-2 justify-center">
               {isLpRewardLoading ? (
                 <div className="flex items-center gap-x-2">
-                  <div className="flex flex-col items-center w-24">
-                    <Skeleton className="h-5 w-16 mb-1" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                  {marketState?.rewardMetrics &&
-                  marketState?.rewardMetrics?.length > 1 ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <LoadingButton
-                          onClick={() => {}}
-                          loading={claimLoading}
-                          buttonText="Claim"
-                          loadingText="Claiming"
-                          disabled={
-                            !lpBalance ||
-                            lpBalance === "0" ||
-                            !lpPositions?.length ||
-                            !marketState?.rewardMetrics?.length
-                          }
-                        />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {marketState?.rewardMetrics?.map((metric, index) => (
-                          <DropdownMenuItem
-                            key={metric.tokenType}
-                            onClick={() => {
-                              setSelectedRewardIndex(index)
-                              claimLpReward(index)
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <span>
-                              Claim {metric.tokenType ?? `Reward ${index + 1}`}
-                            </span>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <LoadingButton
-                      onClick={() => claimLpReward()}
-                      loading={claimLoading}
-                      buttonText="Claim"
-                      loadingText="Claiming"
-                      disabled={
-                        !lpBalance ||
-                        lpBalance === "0" ||
-                        !lpPositions?.length ||
-                        !marketState?.rewardMetrics?.length
-                      }
-                    />
-                  )}
+                  <Skeleton className="h-5 w-16 mb-1" />
+                  <Skeleton className="h-4 w-12" />
                 </div>
               ) : (
-                <>
+                <div className="flex items-center gap-x-2">
                   <div className="flex flex-col items-center">
                     <div className="flex items-center gap-2">
-                      {marketState?.rewardMetrics?.[selectedRewardIndex]
-                        ?.tokenLogo && (
-                        <img
-                          src={
-                            marketState?.rewardMetrics?.[selectedRewardIndex]
-                              ?.tokenLogo
-                          }
-                          alt="reward token"
-                          className="w-4 h-4"
-                        />
+                      {marketState?.rewardMetrics &&
+                      marketState?.rewardMetrics?.length > 1 ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="flex items-center gap-1">
+                            {marketState?.rewardMetrics?.[selectedRewardIndex]
+                              ?.tokenLogo && (
+                              <img
+                                src={
+                                  marketState.rewardMetrics[selectedRewardIndex]
+                                    .tokenLogo
+                                }
+                                alt="reward token"
+                                className="size-4"
+                              />
+                            )}
+                            <ChevronDown className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            {marketState?.rewardMetrics?.map((metric, index) => (
+                              <DropdownMenuItem
+                                key={index}
+                                onClick={() => {
+                                  setSelectedRewardIndex(index)
+                                  refetchLpReward()
+                                }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {metric.tokenLogo && (
+                                    <img
+                                      className="size-4"
+                                      alt={metric.tokenType}
+                                      src={metric.tokenLogo}
+                                    />
+                                  )}
+                                  <span>{metric.tokenName}</span>
+                                </div>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        marketState?.rewardMetrics?.[selectedRewardIndex]
+                          ?.tokenLogo && (
+                          <img
+                            src={
+                              marketState.rewardMetrics[selectedRewardIndex]
+                                .tokenLogo
+                            }
+                            alt={
+                              marketState.rewardMetrics[selectedRewardIndex]
+                                .tokenName
+                            }
+                            className="size-4"
+                          />
+                        )
                       )}
                       <span className="text-white text-sm break-all flex items-center gap-x-1">
                         <SmallNumDisplay value={lpReward || "0"} />
@@ -799,56 +795,20 @@ export default function Item({
                       />
                     </span>
                   </div>
-                  {marketState?.rewardMetrics &&
-                  marketState?.rewardMetrics?.length > 1 ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <LoadingButton
-                          onClick={() => {}}
-                          loading={claimLoading}
-                          buttonText="Claim"
-                          loadingText="Claiming"
-                          disabled={
-                            !lpBalance ||
-                            lpBalance === "0" ||
-                            !lpPositions?.length ||
-                            !marketState?.rewardMetrics?.length
-                          }
-                        />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {marketState?.rewardMetrics?.map((metric, index) => (
-                          <DropdownMenuItem
-                            key={metric.tokenType}
-                            onClick={() => {
-                              setSelectedRewardIndex(index)
-                              claimLpReward(index)
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <span>
-                              Claim {metric.tokenType ?? `Reward ${index + 1}`}
-                            </span>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <LoadingButton
-                      onClick={() => claimLpReward()}
-                      loading={claimLoading}
-                      buttonText="Claim"
-                      loadingText="Claiming"
-                      disabled={
-                        !lpBalance ||
-                        lpBalance === "0" ||
-                        !lpPositions?.length ||
-                        !marketState?.rewardMetrics?.length
-                      }
-                    />
-                  )}
-                </>
+                </div>
               )}
+              <LoadingButton
+                onClick={() => claimLpReward()}
+                loading={claimLoading}
+                buttonText="Claim"
+                loadingText="Claiming"
+                disabled={
+                  !lpBalance ||
+                  lpBalance === "0" ||
+                  !lpPositions?.length ||
+                  !marketState?.rewardMetrics?.length
+                }
+              />
             </div>
           </TableCell>
 

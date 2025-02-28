@@ -1,8 +1,9 @@
 import Item from "./Item"
 import { motion } from "framer-motion"
-import { useMemo, useState, useEffect } from "react"
+import { MobileList } from "./MobileList"
 import Loading from "@/components/Loading"
 import { isValidAmount } from "@/lib/utils"
+import { useMemo, useState, useEffect } from "react"
 import { PortfolioItem } from "@/queries/types/market"
 import SlippageSetting from "@/components/SlippageSetting"
 import useMultiMarketState from "@/hooks/query/useMultiMarketState"
@@ -10,7 +11,6 @@ import useAllLpPositions from "@/hooks/fetch/useAllLpPositions"
 import useAllPyPositions from "@/hooks/fetch/useAllPyPositions"
 import { Link, useParams, useNavigate } from "react-router-dom"
 import { useWallet, ConnectModal } from "@nemoprotocol/wallet-kit"
-import { MobileList } from "./MobileList"
 import {
   Table,
   TableRow,
