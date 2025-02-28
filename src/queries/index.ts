@@ -280,7 +280,19 @@ export function useRewardWithAddress(userAddress?: string) {
 }
 
 export const getTokenInfo = async (): Promise<TokenInfoMap> => {
-  return nemoApi<TokenInfoMap>("/api/v1/market/info").get()
+  const res = await nemoApi<TokenInfoMap>("/api/v1/market/info").get()
+  
+  // Filter out tokens with NaN prices
+  const filteredTokens = Object.entries(res).reduce((acc, [key, token]) => {
+    if (!isNaN(Number(token.price))) {
+      acc[key] = token
+    }
+    return acc
+  }, {} as TokenInfoMap)
+
+  console.log("filteredTokens", filteredTokens)
+
+  return filteredTokens
 }
 
 export const useTokenInfo = () => {

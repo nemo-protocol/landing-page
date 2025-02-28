@@ -117,6 +117,8 @@ export interface PointItem {
 export interface TokenInfo {
   logo: string
   price: string
+  decimal: string
+  name: string
 }
 
 export interface TokenInfoMap {
