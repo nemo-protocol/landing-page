@@ -222,7 +222,7 @@ export const getPriceVoucher = <T extends boolean = true>(
           },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
-        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
       }
       if (!returnDebugInfo) {
         debugLog(
