@@ -265,8 +265,6 @@ export default function SingleCoin() {
               setYtAmount(
                 new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
               )
-
-              setRatio(new Decimal(lpAmount).div(inputAmount).toString())
             } else if (
               marketStateData &&
               new Decimal(marketStateData.totalSy).mul(0.4).lt(inputAmount)
@@ -287,15 +285,16 @@ export default function SingleCoin() {
 
               setRatio(new Decimal(lpAmount).div(inputAmount).toString())
             } else {
-              const [lpAmount, lpFeeAmount] = await addLiquiditySingleSyDryRun({
-                coinData,
-                tokenType,
-                addAmount: inputAmount,
-                pyPositions: pyPositionData,
-              })
+              const { lpAmount, lpValue, tradeFee } =
+                await addLiquiditySingleSyDryRun({
+                  coinData,
+                  tokenType,
+                  addAmount: inputAmount,
+                  pyPositions: pyPositionData,
+                })
 
-              setLpAmount(lpAmount)
-              setLpFeeAmount(lpFeeAmount)
+              setLpAmount(lpValue)
+              setLpFeeAmount(tradeFee)
               setYtAmount(undefined)
 
               setRatio(new Decimal(lpAmount).div(inputAmount).toString())
@@ -435,7 +434,7 @@ export default function SingleCoin() {
         coinConfig.version,
         syCoin,
         pt_amount,
-        (minLpAmount),
+        minLpAmount,
         priceVoucherForMintLp,
         pyPosition,
         coinConfig.pyStateId,

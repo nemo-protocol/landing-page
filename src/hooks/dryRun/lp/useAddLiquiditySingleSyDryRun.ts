@@ -19,9 +19,15 @@ interface AddLiquiditySingleSyParams {
   pyPositions?: PyPosition[]
 }
 
+interface AddLiquiditySingleSyResult {
+  lpValue: string
+  lpAmount: string
+  tradeFee: string
+}
+
 type DryRunResult<T extends boolean> = T extends true
-  ? [string, DebugInfo]
-  : [string, string]
+  ? [AddLiquiditySingleSyResult, DebugInfo]
+  : AddLiquiditySingleSyResult
 
 export default function useAddLiquiditySingleSyDryRun<
   T extends boolean = false,
@@ -136,35 +142,29 @@ export default function useAddLiquiditySingleSyDryRun<
 
       console.log("result", result)
 
-      const outputAmount = bcs.U64.parse(
+      const lpAmount = bcs.U64.parse(
         new Uint8Array(result.results[index].returnValues[0][0]),
       )
 
-      console.log("outputAmount", outputAmount)
-
-      const lpAmount = new Decimal(outputAmount.toString())
+      const lpValue = new Decimal(lpAmount.toString())
         .div(10 ** Number(coinConfig.decimal))
         .toFixed()
 
-      console.log("lpAmount", lpAmount)
-
-      const fee = bcs.U128.parse(
+      const tradeFeeAmount = bcs.U128.parse(
         new Uint8Array(result.results[index].returnValues[1][0]),
       )
 
-      console.log("fee", fee)
-
-      const formattedFee = new Decimal(fee)
+      const tradeFee = new Decimal(tradeFeeAmount)
         .div(2 ** 64)
         .div(10 ** Number(coinConfig.decimal))
         .toString()
 
-      console.log("formattedFee", formattedFee)
-
-      debugInfo.parsedOutput = lpAmount
+      debugInfo.parsedOutput = `${lpAmount} ${tradeFeeAmount}`
 
       return (
-        debug ? [lpAmount, debugInfo] : [lpAmount, formattedFee]
+        debug
+          ? [{ lpAmount, tradeFee, lpValue }, debugInfo]
+          : { lpAmount, tradeFee, lpValue }
       ) as DryRunResult<T>
     },
   })
