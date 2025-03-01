@@ -203,6 +203,43 @@ export const getPriceVoucher = <T extends boolean = true>(
         ? [TransactionArgument, MoveCallInfo]
         : TransactionArgument
     }
+    case "0xd1b72982e40348d069bb1ff701e634c117bb5f741f44dff91e472d3b01461e55::stsui::STSUI": {
+      moveCall = {
+        target: `${coinConfig.oraclePackageId}::alphafi::get_price_voucher_from_spring`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
+          },
+          {
+            name: "lst_info",
+            value: ALPAHFI.LIQUID_STAKING_INFO,
+          },
+          { name: "sy_state", value: coinConfig.syStateId },
+        ],
+        typeArguments: [coinConfig.syCoinType, coinConfig.underlyingCoinType],
+      }
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_spring move call:`,
+          moveCall,
+        )
+      }
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
+    }
     default: {
       moveCall = {
         target: `${coinConfig.oraclePackageId}::scallop::get_price_voucher_from_x_oracle`,
