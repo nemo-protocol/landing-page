@@ -12,7 +12,6 @@ export interface BaseCoinInfo {
   cap: string
   marketStateId: string
   syCoinType: string
-  lstInfoId: string
   underlyingCoinType: string
   providerMarket: string
   providerVersion: string

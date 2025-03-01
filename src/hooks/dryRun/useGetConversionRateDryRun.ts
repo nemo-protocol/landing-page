@@ -98,6 +98,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
           debug ? [formattedConversionRate, debugInfo] : formattedConversionRate
         ) as DryRunResult<T>
       } catch (error) {
+        debugLog("useGetConversionRateDryRun error", debugInfo)
         throw new ContractError((error as Error).message, debugInfo)
       }
     },

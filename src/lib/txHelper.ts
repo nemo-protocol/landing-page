@@ -11,6 +11,7 @@ import {
   getTreasury,
   SSBUCK,
   ALPAHFI,
+  SPRING_SUI,
 } from "./constants"
 import {
   Transaction,
@@ -109,7 +110,7 @@ export const getPriceVoucher = <T extends boolean = true>(
             name: "price_ticket_cap",
             value: coinConfig.oracleTicket,
           },
-          { name: "lst_info", value: coinConfig.lstInfoId },
+          { name: "lst_info", value: SPRING_SUI.LIQUID_STAKING_INFO },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
