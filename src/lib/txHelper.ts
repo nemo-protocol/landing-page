@@ -324,7 +324,7 @@ export const mintSCoin = <T extends boolean = false>(
 
       for (let i = 0; i < amounts.length; i++) {
         const moveCall = {
-          target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::mint::mint`,
+          target: `0x83bbe0b3985c5e3857803e2678899b03f3c4a31be75006ab03faf268c014ce41::mint::mint`,
           arguments: [
             { name: "version", value: SCALLOP.VERSION_OBJECT },
             { name: "market", value: SCALLOP.MARKET_OBJECT },
@@ -671,7 +671,7 @@ export const burnSCoin = (
       })
 
       const redeemMoveCall = {
-        target: `0x3fc1f14ca1017cff1df9cd053ce1f55251e9df3019d728c7265f028bb87f0f97::redeem::redeem`,
+        target: `0x83bbe0b3985c5e3857803e2678899b03f3c4a31be75006ab03faf268c014ce41::redeem::redeem`,
         arguments: [
           SCALLOP.VERSION_OBJECT,
           SCALLOP.MARKET_OBJECT,
