@@ -149,9 +149,16 @@ const MarketTable = ({ list }: MarketTableProps) => {
                         <div className="flex flex-row items-start justify-between">
                           <span className="text-sm text-left">Points</span>
                           <div className="flex flex-col items-end gap-1.5">
-                            <span className="font-mono text-xs">
-                              {formatLargeNumber(item.perPoints, 6)}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <img
+                                src="/images/png/star.png"
+                                alt=""
+                                className="size-3"
+                              />
+                              <span className="font-mono text-xs">
+                                {formatLargeNumber(item.perPoints, 6)}
+                              </span>
+                            </div>
                             <span className="text-[#96A9E4] text-xs">
                               per LP per day
                             </span>
