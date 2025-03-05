@@ -103,10 +103,7 @@ export default function Home() {
         </div>
 
         <div
-          className={[
-            "min-h-screen lg:pt-12 flex flex-col",
-            containerStyles,
-          ].join(" ")}
+          className={["lg:pt-12 flex flex-col", containerStyles].join(" ")}
           ref={ref2}
         >
           <motion.h1
@@ -119,66 +116,110 @@ export default function Home() {
             need to maximize yield, only on{" "}
             <span className="text-[#65A2FF]">Nemo</span>.
           </motion.h1>
-          <div className="grow">
-            <div className="flex flex-col lg:flex-row items-center mt-10 justify-center gap-8">
-              <motion.img
-                alt=""
-                ref={ref5}
-                src="/images/png/nemo.png"
-                className="w-full lg:hidden max-w-[300px] mx-auto"
-                initial={{ opacity: 0, y: 50 }}
-                animate={ref5InView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5 }}
-              />
+          <div className="flex flex-col lg:flex-row items-center mt-10 justify-center gap-8">
+            <motion.img
+              alt=""
+              ref={ref5}
+              src="/images/png/nemo.png"
+              className="w-full lg:hidden max-w-[300px] mx-auto"
+              initial={{ opacity: 0, y: 50 }}
+              animate={ref5InView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5 }}
+            />
+            <motion.div
+              transition={{ duration: 0.5 }}
+              initial={{ opacity: 0, x: -50 }}
+              animate={ref3InView ? { opacity: 1, x: 0 } : {}}
+              className="flex flex-col w-full lg:w-[280px]"
+            >
+              <span
+                style={{ backgroundImage: `url(/images/png/PT.png)` }}
+                className="text-center w-12 h-[38px] lg:w-16 lg:h-[50px] flex items-center justify-center text-white bg-cover bg-no-repeat bg-center"
+              >
+                PT
+              </span>
+              <h4 className="mt-5 xs:mt-8 text-xl xs:text-2xl text-white">
+                Fixing yield, harvest definite returns
+              </h4>
+              <h6 className="mt-5 xs:mt-8 text-xs text-white/50">
+                Find your stability among volatile yields. No lock-up period
+              </h6>
+            </motion.div>
+            <motion.img
+              alt=""
+              src="/images/png/nemo.png"
+              className="hidden lg:inline-block mx-auto max-w-[400px]"
+              initial={{ opacity: 0, y: 50 }}
+              animate={ref3InView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5 }}
+            />
+            <motion.div
+              ref={ref3}
+              transition={{ duration: 0.5 }}
+              initial={{ opacity: 0, x: 50 }}
+              animate={ref3InView ? { opacity: 1, x: 0 } : {}}
+              className="flex flex-col w-full lg:w-[280px]"
+            >
+              <span
+                style={{ backgroundImage: `url(/images/png/YT.png)` }}
+                className="text-center w-12 h-[38px] lg:w-16 lg:h-[50px] flex items-center justify-center text-white bg-cover bg-no-repeat bg-center"
+              >
+                YT
+              </span>
+              <h4 className="mt-5 xs:mt-8 text-xl xs:text-2xl text-white">
+                Longing yield, generate profit from future yield
+              </h4>
+              <h6 className="mt-5 xs:mt-8 text-xs text-white/50">
+                Long yield or hedge your yield exposure, the choice is yours.
+              </h6>
+            </motion.div>
+          </div>
+
+          <motion.h2 
+            initial={{ opacity: 0, y: 30 }}
+            animate={ref4InView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5 }}
+            className="text-center text-white text-2xl md:text-4xl my-6 md:my-10"
+          >
+            Audit by
+          </motion.h2>
+
+          {/* MoveBit 部分 */}
+          <a
+            href="https://movebit.xyz/reports/20250217-Nemo-Final-Audit-Report.pdf"
+            target="_blank"
+            className="rounded-[24px] bg-gradient-to-r from-[#0040FF] to-[#002699] backdrop-blur-[11.2px] p-8 lg:p-12"
+          >
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
               <motion.div
-                transition={{ duration: 0.5 }}
                 initial={{ opacity: 0, x: -50 }}
-                animate={ref3InView ? { opacity: 1, x: 0 } : {}}
-                className="flex flex-col w-full lg:w-[280px]"
+                animate={ref4InView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.5 }}
+                className="w-full lg:w-1/3"
               >
-                <span
-                  style={{ backgroundImage: `url(/images/png/PT.png)` }}
-                  className="text-center w-12 h-[38px] lg:w-16 lg:h-[50px] flex items-center justify-center text-white bg-cover bg-no-repeat bg-center"
-                >
-                  PT
-                </span>
-                <h4 className="mt-5 xs:mt-8 text-xl xs:text-2xl text-white">
-                  Fixing yield, harvest definite returns
-                </h4>
-                <h6 className="mt-5 xs:mt-8 text-xs text-white/50">
-                  Find your stability among volatile yields. No lock-up period
-                </h6>
+                <h2 className="text-3xl md:text-4xl text-white font-medium mb-4">
+                  MoveBit
+                </h2>
+                <p className="text-white/50 text-sm md:text-base">
+                  MoveBit focuses on security audit and building the standard
+                  inMove.
+                </p>
               </motion.div>
-              <motion.img
-                alt=""
-                src="/images/png/nemo.png"
-                className="hidden lg:inline-block mx-auto max-w-[400px]"
-                initial={{ opacity: 0, y: 50 }}
-                animate={ref3InView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5 }}
-              />
               <motion.div
-                ref={ref3}
-                transition={{ duration: 0.5 }}
                 initial={{ opacity: 0, x: 50 }}
-                animate={ref3InView ? { opacity: 1, x: 0 } : {}}
-                className="flex flex-col w-full lg:w-[280px]"
+                animate={ref4InView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.5 }}
+                className="w-[307px]"
               >
-                <span
-                  style={{ backgroundImage: `url(/images/png/YT.png)` }}
-                  className="text-center w-12 h-[38px] lg:w-16 lg:h-[50px] flex items-center justify-center text-white bg-cover bg-no-repeat bg-center"
-                >
-                  YT
-                </span>
-                <h4 className="mt-5 xs:mt-8 text-xl xs:text-2xl text-white">
-                  Longing yield, generate profit from future yield
-                </h4>
-                <h6 className="mt-5 xs:mt-8 text-xs text-white/50">
-                  Long yield or hedge your yield exposure, the choice is yours.
-                </h6>
+                <img
+                  src="/images/home/movebit.png"
+                  alt="MoveBit"
+                  className="w-full max-w-[400px] mx-auto"
+                />
               </motion.div>
             </div>
-          </div>
+          </a>
+
           <motion.div
             ref={ref4}
             initial={{ opacity: 0, y: 50 }}
