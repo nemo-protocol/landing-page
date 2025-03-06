@@ -19,7 +19,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { useCoinConfig } from "@/queries"
 import { formatDecimalValue, debounce, isValidAmount } from "@/lib/utils"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { showTransactionDialog } from "@/lib/dialog"
 import { CoinConfig } from "@/queries/types/market"
 import { useCalculateLpOut } from "@/hooks/useCalculateLpOut"
 import useMarketStateData from "@/hooks/useMarketStateData"
@@ -59,20 +59,16 @@ import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
-  const [txId, setTxId] = useState("")
-  const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
   const [error, setError] = useState("")
   const [errorDetail, setErrorDetail] = useState("")
   const { coinType, maturity } = useParams()
   const [addValue, setAddValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
-  const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(0)
   const [lpAmount, setLpAmount] = useState<string>()
   const [lpFeeAmount, setLpFeeAmount] = useState<string>()
   const [ytAmount, setYtAmount] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
   const [isAdding, setIsAdding] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isCalcLpLoading, setIsCalcLpLoading] = useState(false)
@@ -558,41 +554,32 @@ export default function SingleCoin() {
         const res = await signAndExecuteTransaction({
           transaction: tx,
         })
-        setTxId(res.digest)
-        setAddValue("")
-        setStatus("Success")
 
-        await refreshData()
-        await refreshPtYt()
+        showTransactionDialog({
+          status: "Success",
+          network,
+          txId: res.digest,
+          onClose: async () => {
+            await refreshData()
+            await refreshPtYt()
+          },
+        })
+
+        setAddValue("")
       } catch (errorMsg) {
-        setStatus("Failed")
         const { error: msg, detail } = parseErrorMessage(
           (errorMsg as Error)?.message ?? "",
         )
-        setMessage(msg)
         setErrorDetail(detail)
+        showTransactionDialog({
+          status: "Failed",
+          network,
+          txId: "",
+          message: msg,
+        })
       } finally {
-        setOpen(true)
         setIsAdding(false)
       }
-    }
-  }
-
-  const test = async () => {
-    if (coinConfig && coinData && address) {
-      const addAmount = new Decimal(addValue).mul(10 ** decimal).toFixed(0)
-      const tx = new Transaction()
-      const [splitCoin] = mintSCoin(tx, coinConfig, coinData, [addAmount])
-      tx.transferObjects([splitCoin], address)
-      const res = await signAndExecuteTransaction({
-        transaction: tx,
-      })
-      setTxId(res.digest)
-      setAddValue("")
-      setStatus("Success")
-
-      await refreshData()
-      await refreshPtYt()
     }
   }
 
@@ -614,21 +601,9 @@ export default function SingleCoin() {
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
             <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
-              <h2 className="text-center text-base sm:text-xl" onClick={test}>
+              <h2 className="text-center text-base sm:text-xl">
                 Add Liquidity
               </h2>
-
-              <TransactionStatusDialog
-                open={open}
-                status={status}
-                network={network}
-                txId={txId}
-                message={message}
-                onClose={() => {
-                  setTxId("")
-                  setOpen(false)
-                }}
-              />
 
               <AmountInput
                 error={error}

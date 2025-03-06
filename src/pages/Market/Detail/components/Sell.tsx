@@ -23,7 +23,6 @@ import {
   swapExactYtForSy,
   burnSCoin,
 } from "@/lib/txHelper"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import AmountInput from "@/components/AmountInput"
 import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue, isValidAmount, safeDivide } from "@/lib/utils"
@@ -44,20 +43,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { showTransactionDialog } from "@/lib/dialog"
 
 export default function Sell() {
-  const [txId, setTxId] = useState("")
-  const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
   const [error, setError] = useState<string>()
   const [slippage, setSlippage] = useState("0.5")
-  const [message, setMessage] = useState<string>()
   const [tokenType, setTokenType] = useState("pt")
   const [redeemValue, setRedeemValue] = useState("")
   const [targetValue, setTargetValue] = useState("")
   const [isRedeeming, setIsRedeeming] = useState(false)
   const [errorDetail, setErrorDetail] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
   const { coinType, tokenType: _tokenType, maturity } = useParams()
   const [receivingType, setReceivingType] = useState<"underlying" | "sy">(
     "underlying",
@@ -264,23 +260,31 @@ export default function Sell() {
         const res = await signAndExecuteTransaction({
           transaction: tx,
         })
-        setTxId(res.digest)
-        setOpen(true)
+
+        showTransactionDialog({
+          status: "Success",
+          network,
+          txId: res.digest,
+          onClose: async () => {
+            await refreshData()
+            await refreshPtYt()
+          },
+        })
+
         setRedeemValue("")
         setTargetValue("")
-        setStatus("Success")
-
-        await refreshData()
-        await refreshPtYt()
       } catch (errorMsg) {
         console.log("tx error", errorMsg)
-        setOpen(true)
-        setStatus("Failed")
-        const { error: msg, detail } = parseErrorMessage(
+        const { error, detail } = parseErrorMessage(
           (errorMsg as Error)?.message ?? "",
         )
-        setMessage(msg)
         setErrorDetail(detail)
+        showTransactionDialog({
+          status: "Failed",
+          network,
+          txId: "",
+          message: error,
+        })
       } finally {
         setIsRedeeming(false)
       }
@@ -377,17 +381,6 @@ export default function Sell() {
         <div className="flex justify-end w-full">
           <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
         </div>
-        <TransactionStatusDialog
-          open={open}
-          status={status}
-          network={network}
-          txId={txId}
-          message={message}
-          onClose={() => {
-            setTxId("")
-            setOpen(false)
-          }}
-        />
         <AmountInput
           error={error}
           price={price}

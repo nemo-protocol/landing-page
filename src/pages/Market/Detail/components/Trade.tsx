@@ -17,7 +17,6 @@ import {
 import useCoinData from "@/hooks/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import {
   formatDecimalValue,
   isValidAmount,
@@ -51,23 +50,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { formatLargeNumber } from "@/lib/utils"
+import { showTransactionDialog } from '@/lib/dialog'
 
 export default function Trade() {
-  const [txId, setTxId] = useState("")
-  const [open, setOpen] = useState(false)
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
   const [error, setError] = useState<string>()
   const [ratio, setRatio] = useState<string>("")
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
-  const [message, setMessage] = useState<string>()
   const [ytValue, setYtValue] = useState<string>()
   const [ytFeeValue, setYtFeeValue] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
   const [errorDetail, setErrorDetail] = useState<string>()
   const [tokenType, setTokenType] = useState<number>(0) // 0-native coin, 1-wrapped coin
-  const [status, setStatus] = useState<"Success" | "Failed">()
   const [isCalcYtLoading, setIsCalcYtLoading] = useState(false)
   const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
 
@@ -397,30 +393,47 @@ export default function Trade() {
           transaction: tx,
         })
 
-        setTxId(res.digest)
-        setStatus("Success")
-        setOpen(true)
-        setSwapValue("")
+        showTransactionDialog({
+          status: 'Success',
+          network,
+          txId: res.digest,
+          onClose: async () => {
+            await refreshData()
+            await refetchPtYt()
+          }
+        })
 
-        await refreshData()
-        await refetchPtYt()
+        setSwapValue("")
       } catch (errorMsg) {
-        setOpen(true)
-        setStatus("Failed")
         const msg = (errorMsg as Error)?.message ?? error
         const gasMsg = parseGasErrorMessage(msg)
         if (gasMsg) {
-          setMessage(gasMsg)
+          showTransactionDialog({
+            status: 'Failed',
+            network,
+            txId: '',
+            message: gasMsg
+          })
         } else if (
           msg.includes(
             "Transaction failed with the following error. Dry run failed, could not automatically determine a budget: InsufficientGas in command 5",
           )
         ) {
-          setMessage("Insufficient YT in the pool.")
+          showTransactionDialog({
+            status: 'Failed',
+            network,
+            txId: '',
+            message: "Insufficient YT in the pool."
+          })
         } else {
           const { error, detail } = parseErrorMessage(msg || "")
-          setMessage(error)
           setErrorDetail(detail)
+          showTransactionDialog({
+            status: 'Failed',
+            network,
+            txId: '',
+            message: error
+          })
         }
       } finally {
         setIsSwapping(false)
@@ -433,18 +446,6 @@ export default function Trade() {
       <div className="lg:w-[500px] bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07] shrink-0">
         <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
           <h2 className="text-center text-base sm:text-xl">Trade</h2>
-          {/* TODO: add into global */}
-          <TransactionStatusDialog
-            open={open}
-            status={status}
-            network={network}
-            txId={txId}
-            message={message}
-            onClose={() => {
-              setTxId("")
-              setOpen(false)
-            }}
-          />
           <AmountInput
             price={price}
             error={error}
@@ -497,7 +498,6 @@ export default function Trade() {
           />
           <ChevronsDown className="size-5 sm:size-6" />
           <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
-            {/* FIXME: loading issue */}
             <div className="flex flex-col items-end gap-y-1">
               <div className="flex items-center justify-between w-full">
                 <span>Receiving</span>
@@ -600,7 +600,6 @@ export default function Trade() {
             slippage={slippage}
             isLoading={isLoading}
             setSlippage={setSlippage}
-            // FIXME: need to optimize
             onRefresh={async () => {
               if (conversionRate) {
                 try {

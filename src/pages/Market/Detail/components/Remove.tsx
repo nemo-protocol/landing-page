@@ -18,26 +18,22 @@ import { useParams, useNavigate } from "react-router-dom"
 import useBurnLpDryRun from "@/hooks/dryRun/useBurnLpDryRun"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { showTransactionDialog } from '@/lib/dialog'
 import useSwapExactPtForSyDryRun from "@/hooks/dryRun/useSwapExactPtForSyDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { ContractError } from "@/hooks/types"
 
 export default function Remove() {
   const navigate = useNavigate()
-  const [txId, setTxId] = useState("")
-  const [open, setOpen] = useState(false)
   const { coinType, maturity } = useParams()
   const [lpValue, setLpValue] = useState("")
   const [error, setError] = useState<string>()
   const { account: currentAccount } = useWallet()
   const [warning, setWarning] = useState<string>()
-  const [message, setMessage] = useState<string>()
   const [targetValue, setTargetValue] = useState("")
   const [isRemoving, setIsRemoving] = useState(false)
   const [errorDetail, setErrorDetail] = useState<string>()
   const [isInputLoading, setIsInputLoading] = useState(false)
-  const [status, setStatus] = useState<"Success" | "Failed">()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -157,14 +153,7 @@ export default function Remove() {
   const { mutateAsync: redeemLp } = useRedeemLp(coinConfig, marketState)
 
   async function remove() {
-    if (
-      decimal &&
-      address &&
-      coinType &&
-      coinConfig &&
-      !insufficientBalance &&
-      lppMarketPositionData?.length
-    ) {
+    if (decimal && address && coinType && coinConfig && !insufficientBalance && lppMarketPositionData?.length) {
       try {
         setIsRemoving(true)
         const { digest } = await redeemLp({
@@ -174,21 +163,26 @@ export default function Remove() {
           pyPositions: pyPositionData || [],
         })
 
-        setTxId(digest)
-        setOpen(true)
-        setLpValue("")
-        setStatus("Success")
+        showTransactionDialog({
+          status: 'Success',
+          network,
+          txId: digest,
+          onClose: async () => {
+            await refreshData()
+            await refreshPtYt()
+          }
+        })
 
-        await refreshData()
-        await refreshPtYt()
+        setLpValue("")
       } catch (errorMsg) {
-        setOpen(true)
-        setStatus("Failed")
-        const { error: msg, detail } = parseErrorMessage(
-          (errorMsg as ContractError)?.message ?? errorMsg,
-        )
-        setMessage(msg)
+        const { error: msg, detail } = parseErrorMessage((errorMsg as ContractError)?.message ?? errorMsg)
         setErrorDetail(detail)
+        showTransactionDialog({
+          status: 'Failed',
+          network,
+          txId: '',
+          message: msg
+        })
       } finally {
         setIsRemoving(false)
       }
@@ -197,17 +191,6 @@ export default function Remove() {
 
   return (
     <div className="w-full bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
-      <TransactionStatusDialog
-        open={open}
-        status={status}
-        network={network}
-        txId={txId}
-        message={message}
-        onClose={() => {
-          setTxId("")
-          setOpen(false)
-        }}
-      />
       <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
         <div className="w-full mb-2 sm:mb-4">
           <PoolSelect

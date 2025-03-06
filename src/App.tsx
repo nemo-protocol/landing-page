@@ -3,6 +3,8 @@ import { HashRouter, Route, Routes } from "react-router-dom"
 import "./App.css"
 import Loading from "@/components/Loading"
 import { motion } from "framer-motion"
+import TransactionStatusDialog from '@/components/TransactionStatusDialog'
+import { useDialogStore } from '@/lib/dialog'
 
 interface CountryResponse {
   ip: string
@@ -23,6 +25,7 @@ const WalletKit = lazy(() => import("./pages/WalletKit"))
 function App() {
   const [isBlocked, setIsBlocked] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { open, status, network, txId, message, onClose, hideDialog } = useDialogStore()
 
   useEffect(() => {
     const checkCountry = async () => {
@@ -84,29 +87,43 @@ function App() {
   }
 
   return (
-    <HashRouter>
-      <Suspense fallback={<Loading className="h-screen" />}>
-        <div className="relative">
-          <div className="min-h-screen w-full bg-transparent">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/fixed-return" element={<FixedReturn />} />
-              <Route path="/market" element={<Market />} />
-              <Route path="/mint/:action?" element={<Mint />} />
-              <Route
-                element={<Detail />}
-                path="/market/detail/:coinType/:maturity/:operation?/:tokenType?"
-              />
-              <Route path="/learn" element={<Learn />} />
-              <Route path="/points" element={<Rewards />} />
-              <Route path="/portfolio/:type?" element={<Portfolio />} />
-              <Route path="/wallet-kit" element={<WalletKit />} />
-              <Route path="/test" element={<Test />} />
-            </Routes>
+    <>
+      <HashRouter>
+        <Suspense fallback={<Loading className="h-screen" />}>
+          <div className="relative">
+            <div className="min-h-screen w-full bg-transparent">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/fixed-return" element={<FixedReturn />} />
+                <Route path="/market" element={<Market />} />
+                <Route path="/mint/:action?" element={<Mint />} />
+                <Route
+                  element={<Detail />}
+                  path="/market/detail/:coinType/:maturity/:operation?/:tokenType?"
+                />
+                <Route path="/learn" element={<Learn />} />
+                <Route path="/points" element={<Rewards />} />
+                <Route path="/portfolio/:type?" element={<Portfolio />} />
+                <Route path="/wallet-kit" element={<WalletKit />} />
+                <Route path="/test" element={<Test />} />
+              </Routes>
+            </div>
           </div>
-        </div>
-      </Suspense>
-    </HashRouter>
+        </Suspense>
+      </HashRouter>
+      
+      <TransactionStatusDialog
+        open={open}
+        status={status}
+        network={network}
+        txId={txId}
+        message={message}
+        onClose={() => {
+          hideDialog()
+          onClose?.()
+        }}
+      />
+    </>
   )
 }
 

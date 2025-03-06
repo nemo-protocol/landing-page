@@ -16,7 +16,7 @@ import {
 interface TransactionStatusDialogProps {
   open: boolean
   status?: "Success" | "Failed"
-  network: string
+  network?: string
   txId: string
   message?: string
   onClose: () => void
@@ -26,7 +26,7 @@ interface TransactionStatusDialogProps {
 const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
   open,
   status,
-  network,
+  network = "mainnet",
   txId,
   message,
   onClose,
@@ -45,7 +45,11 @@ const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
             rel="noopener noreferrer"
           >
             <div className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/10">
-              <img src="/images/logo/suivision.svg" alt="SuiVision" className="w-4 h-4" />
+              <img
+                src="/images/logo/suivision.svg"
+                alt="SuiVision"
+                className="w-4 h-4"
+              />
               <span>SuiVision</span>
             </div>
           </a>
@@ -56,7 +60,11 @@ const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
             rel="noopener noreferrer"
           >
             <div className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/10">
-              <img src="/images/logo/suiscan.png" alt="Suiscan" className="w-4 h-4" />
+              <img
+                src="/images/logo/suiscan.png"
+                alt="Suiscan"
+                className="w-4 h-4"
+              />
               <span>Suiscan</span>
             </div>
           </a>
@@ -91,7 +99,9 @@ const TransactionStatusDialog: React.FC<TransactionStatusDialogProps> = ({
             {status === "Failed" && (
               <div className="py-2 flex flex-col gap-y-1 items-center">
                 <p className="text-red-400">Transaction Error</p>
-                <p className="text-red-500 max-w-[446px] break-words whitespace-pre-wrap">{message}</p>
+                <p className="text-red-500 max-w-[446px] break-words whitespace-pre-wrap">
+                  {message}
+                </p>
                 {txId && <ViewDetailsPopover />}
               </div>
             )}

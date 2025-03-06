@@ -14,13 +14,13 @@ import {
   redeemSyCoin,
 } from "@/lib/txHelper"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
 import ActionButton from "@/components/ActionButton"
 import useRedeemPYDryRun from "@/hooks/dryRun/useRedeemPYDryRun"
 import { debounce, formatDecimalValue } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { ContractError } from "@/hooks/types"
+import { showTransactionDialog } from '@/lib/dialog'
 
 export default function Redeem({
   maturity,
@@ -29,10 +29,6 @@ export default function Redeem({
   maturity: string
   coinType: string
 }) {
-  const [txId, setTxId] = useState("")
-  const [open, setOpen] = useState(false)
-  const [message, setMessage] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
   const [redeemValue, setRedeemValue] = useState("")
   const [isRedeeming, setIsRedeeming] = useState(false)
   const [isInputLoading, setIsInputLoading] = useState(false)
@@ -180,19 +176,25 @@ export default function Redeem({
         const res = await signAndExecuteTransaction({
           transaction: tx,
         })
-        setTxId(res.digest)
-        setOpen(true)
-        setRedeemValue("")
-        setStatus("Success")
 
-        await Promise.all([refreshData(), refetchPtYtData()])
+        showTransactionDialog({
+          status: 'Success',
+          network,
+          txId: res.digest,
+          onClose: async () => {
+            await Promise.all([refreshData(), refetchPtYtData()])
+          }
+        })
+
+        setRedeemValue("")
       } catch (errorMsg) {
-        setOpen(true)
-        setStatus("Failed")
-        const { error } = parseErrorMessage(
-          (errorMsg as ContractError)?.message ?? errorMsg,
-        )
-        setMessage(error)
+        const { error } = parseErrorMessage((errorMsg as ContractError)?.message ?? errorMsg)
+        showTransactionDialog({
+          status: 'Failed',
+          network,
+          txId: '',
+          message: error
+        })
       } finally {
         setIsRedeeming(false)
       }
@@ -201,17 +203,6 @@ export default function Redeem({
 
   return (
     <div className="flex flex-col items-center">
-      <TransactionStatusDialog
-        open={open}
-        status={status}
-        network={network}
-        txId={txId}
-        message={message}
-        onClose={() => {
-          setTxId("")
-          setOpen(false)
-        }}
-      />
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
           <div className="text-white">Input</div>

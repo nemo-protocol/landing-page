@@ -16,7 +16,7 @@ import {
   depositSyCoin,
 } from "@/lib/txHelper"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { showTransactionDialog } from '@/lib/dialog'
 import ActionButton from "@/components/ActionButton"
 import useMintPYDryRun from "@/hooks/dryRun/useMintPYDryRun"
 import { debounce } from "@/lib/utils"
@@ -30,10 +30,7 @@ export default function Mint({
   maturity: string
   coinType: string
 }) {
-  const [txId, setTxId] = useState("")
-  const [open, setOpen] = useState(false)
-  const [message, setMessage] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
+
   const [isMinting, setIsMinting] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
@@ -170,19 +167,25 @@ export default function Mint({
         const res = await signAndExecuteTransaction({
           transaction: tx,
         })
-        setTxId(res.digest)
-        setOpen(true)
-        setMintValue("")
-        setStatus("Success")
 
-        await refreshData()
+        showTransactionDialog({
+          status: 'Success',
+          network,
+          txId: res.digest,
+          onClose: async () => {
+            await refreshData()
+          }
+        })
+
+        setMintValue("")
       } catch (errorMsg) {
-        setOpen(true)
-        setStatus("Failed")
-        const { error } = parseErrorMessage(
-          (errorMsg as ContractError)?.message ?? errorMsg,
-        )
-        setMessage(error)
+        const { error } = parseErrorMessage((errorMsg as ContractError)?.message ?? errorMsg)
+        showTransactionDialog({
+          status: 'Failed',
+          network,
+          txId: '',
+          message: error
+        })
       } finally {
         setIsMinting(false)
       }
@@ -191,18 +194,6 @@ export default function Mint({
 
   return (
     <div className="flex flex-col items-center">
-      <TransactionStatusDialog
-        open={open}
-        status={status}
-        network={network}
-        txId={txId}
-        message={message}
-        onClose={() => {
-          setTxId("")
-          setOpen(false)
-        }}
-      />
-
       {/* TODO: Add animation */}
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
