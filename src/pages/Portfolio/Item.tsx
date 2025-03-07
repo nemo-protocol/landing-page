@@ -453,7 +453,7 @@ export default function Item({
         <TableRow className="cursor-pointer">
           <TableCell className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <img
-              src={coinConfig.underlyingCoinLogo}
+              src={coinConfig.coinLogo}
               alt=""
               className="size-6 sm:size-10"
             />
@@ -538,7 +538,7 @@ export default function Item({
           <TableRow className="cursor-pointer">
             <TableCell className="flex items-center gap-x-3">
               <img
-                src={coinConfig.underlyingCoinLogo}
+                src={coinConfig.coinLogo}
                 alt=""
                 className="size-10"
               />
@@ -654,7 +654,7 @@ export default function Item({
           {/* Assets */}
           <TableCell className="flex items-center gap-x-3">
             <img
-              src={coinConfig.underlyingCoinLogo}
+              src={coinConfig.coinLogo}
               alt=""
               className="size-10"
             />
