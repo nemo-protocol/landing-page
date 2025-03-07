@@ -979,6 +979,34 @@ export default function SingleCoin() {
                   </div>
                 </div>
               </div>
+
+              {/* Built on section as a separate box */}
+              {coinConfig?.builtOn && coinConfig.builtOn.length > 0 && (
+                <div className="border border-[#2D2D48] rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-6">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/60 text-base sm:text-xl">
+                      Built On
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {coinConfig.builtOn.map((item, index) => (
+                        <a
+                          key={index}
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 hover:opacity-80 transition-opacity"
+                        >
+                          <img
+                            src={item.logo}
+                            alt={`${item.name} logo`}
+                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

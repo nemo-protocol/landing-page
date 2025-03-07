@@ -64,6 +64,12 @@ export interface CoinInfoWithMetrics extends BaseCoinInfo {
   swapFeeApy: string
 }
 
+interface BuiltOn {
+  name: string
+  logo: string
+  url: string
+}
+
 export interface CoinConfig extends BaseCoinInfo {
   pyStoreId: string
   pyPosition: string
@@ -85,6 +91,7 @@ export interface CoinConfig extends BaseCoinInfo {
   tradeFee: string
   feeRate: string
   yieldFactoryConfigId: string
+  builtOn?: BuiltOn[]
 }
 
 export interface PortfolioItem extends CoinConfig {
