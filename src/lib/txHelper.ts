@@ -559,7 +559,7 @@ export const mintSCoin = <T extends boolean = false>(
       if (
         amounts
           .reduce((acc, curr) => acc.add(curr), new Decimal(0))
-          .lt(new Decimal(3).mul(10 ** 9))
+          .lt(new Decimal(2.97).mul(10 ** 9))
       ) {
         throw new Error("Please invest at least 3 SUI")
       }
