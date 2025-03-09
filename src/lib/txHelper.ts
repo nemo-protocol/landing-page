@@ -377,9 +377,7 @@ export const mintSCoin = <T extends boolean = false>(
         const fromBalanceMoveCall = {
           target: `0x2::coin::into_balance`,
           arguments: [{ name: "balance", value: amounts[i] }],
-          typeArguments: [
-            coinConfig.underlyingCoinType,
-          ],
+          typeArguments: [coinConfig.underlyingCoinType],
         }
         moveCallInfos.push(fromBalanceMoveCall)
         debugLog(`coin::from_balance move call:`, fromBalanceMoveCall)
@@ -400,7 +398,7 @@ export const mintSCoin = <T extends boolean = false>(
             },
             {
               name: "balance",
-              value: amounts[i]
+              value: amounts[i],
             },
             { name: "clock", value: "0x6" },
           ],
@@ -558,6 +556,13 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Haedal": {
+      if (
+        amounts
+          .reduce((acc, curr) => acc.add(curr), new Decimal(0))
+          .lt(new Decimal(3).mul(10 ** 9))
+      ) {
+        throw new Error("Please invest at least 3 SUI")
+      }
       const sCoins: TransactionArgument[] = []
 
       for (let i = 0; i < amounts.length; i++) {
