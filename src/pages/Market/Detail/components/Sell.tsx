@@ -130,6 +130,8 @@ export default function Sell() {
           }
         } else {
           setTargetValue("")
+          setError(undefined)
+          setErrorDetail(undefined)
         }
       }, 500)
       getSyOut()

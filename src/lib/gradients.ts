@@ -15,6 +15,16 @@ export const BgGradientMap: Record<string, string> = {
     "linear-gradient(22.88deg, rgba(26, 52, 56, 0.21) 39.17%, rgba(0, 207, 179, 0.48) 105.29%)",
   "0xeb7a05a3224837c5e5503575aed0be73c091d1ce5e43aa3c3e716e0ae614608f::scallop_deep::SCALLOP_DEEP":
     "linear-gradient(315deg, #000120 11.41%, #0032B4 168.05%)",
+  "0xd1b72982e40348d069bb1ff701e634c117bb5f741f44dff91e472d3b01461e55::stsui::STSUI":
+    "linear-gradient(23deg, rgba(14, 15, 22, 0.65) 39.17%, #52337C 105.29%)",
+  "0xb14f82d8506d139eacef109688d1b71e7236bcce9b2c0ad526abcd6aa5be7de0::scallop_sb_eth::SCALLOP_SB_ETH":
+    "linear-gradient(23deg, rgba(14, 15, 22, 0.65) 39.17%, rgba(37, 114, 255, 0.19) 105.29%)",
+  "0xb1d7df34829d1513b73ba17cb7ad90c88d1e104bb65ab8f62f13e0cc103783d3::scallop_sb_usdt::SCALLOP_SB_USDT":
+    "linear-gradient(33deg, #06070E 14.35%, #0B2047 77.22%)",
+  "0x5ca17430c1d046fae9edeaa8fd76c7b4193a00d764a0ecfa9418d733ad27bc1e::scallop_sca::SCALLOP_SCA":
+    "linear-gradient(35deg, #0E0F16 14.2%, #1D0C02 103.72%)",
+  "0xd01d27939064d79e4ae1179cd11cfeeff23943f32b1a842ea1a1e15a0045d77d::st_sbuck::ST_SBUCK":
+    "linear-gradient(23deg, #161419 39.17%, #472D69 105.29%)",
 }
 
 export const getBgGradient = (coinType: string): string => {
