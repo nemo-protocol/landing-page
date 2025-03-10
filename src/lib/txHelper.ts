@@ -12,6 +12,7 @@ import {
   SSBUCK,
   ALPAHFI,
   SPRING_SUI,
+  HAEDAL,
 } from "./constants"
 import {
   Transaction,
@@ -182,7 +183,7 @@ export const getPriceVoucher = <T extends boolean = true>(
             name: "price_ticket_cap",
             value: coinConfig.oracleTicket,
           },
-          { name: "haedal_staking", value: coinConfig.haedalStakeingId },
+          { name: "haedal_staking", value: HAEDAL.HAEDAL_STAKING_ID },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
         typeArguments: [coinConfig.syCoinType, coinConfig.coinType],

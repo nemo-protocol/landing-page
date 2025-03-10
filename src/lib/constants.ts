@@ -158,3 +158,7 @@ export const ALPAHFI = {
 export const SPRING_SUI = {
   LIQUID_STAKING_INFO: "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b",
 } as const
+
+export const HAEDAL = {
+  HAEDAL_STAKING_ID: "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
+} as const

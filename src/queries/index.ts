@@ -211,10 +211,7 @@ export function useCoinInfoList<T extends boolean = true>(
     queryKey: ["coinInfoList", name, address, isShowExpiry],
     queryFn: async () => {
       const coinList = (await getCoinInfoList(params).catch(() => [])).filter(
-        ({ marketStateId }) =>
-          marketStateId ===
-          "0x7472959314b24ebfbd4da49cc36abb3da29f722746019c692407aaf6b47e9a08",
-        // ({ marketStateId }) => !!marketStateId,
+        ({ marketStateId }) => !!marketStateId,
       )
 
       if (!coinList.length) return []

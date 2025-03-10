@@ -137,7 +137,7 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         debugLog("claim_reward debugInfo:", debugInfo)
       }
 
-      const decimal = Number(coinConfig.decimal)
+      const decimal = Number(rewardMetric.decimal)
       const rewardValue = formatDecimalValue(
         new Decimal(rewardAmount).div(new Decimal(10).pow(decimal)),
         decimal,
