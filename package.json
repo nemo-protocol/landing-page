@@ -16,6 +16,7 @@
     "deploy": "test $(git branch --show-current) = main && vercel --prod || vercel --target=preview"
   },
   "dependencies": {
+    "@cetusprotocol/terminal": "^0.1.7",
     "@mysten/dapp-kit": "0.14.44",
     "@mysten/sui": "1.18.0",
     "@mysten/wallet-standard": "^0.13.4",

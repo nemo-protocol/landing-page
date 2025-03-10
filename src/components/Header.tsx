@@ -89,6 +89,19 @@ export default function Header({ className }: { className?: string }) {
           </li>
           <li className={["w-24 h-full text-center"].join(" ")}>
             <Link
+              to="/swap"
+              className={[
+                location.pathname === "/swap"
+                  ? "text-white bg-[#12121B] border-b border-b-white"
+                  : "text-white/50 bg-transparent hover:bg-[#12121B] hover:text-white",
+                "flex items-center justify-center h-full cursor-pointer",
+              ].join(" ")}
+            >
+              Swap
+            </Link>
+          </li>
+          <li className={["w-24 h-full text-center"].join(" ")}>
+            <Link
               to="/learn"
               className={[
                 location.pathname === "/learn"
@@ -147,7 +160,7 @@ export default function Header({ className }: { className?: string }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </span>
-          {currentAccount?.address ? (
+          {location.pathname === "/swap" ? null : currentAccount?.address ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-x-1 border-none outline-none">
                 <span className="text-white">

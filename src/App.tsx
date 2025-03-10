@@ -21,6 +21,7 @@ const Portfolio = lazy(() => import("./pages/Portfolio/Index"))
 const Detail = lazy(() => import("./pages/Market/Detail/Index"))
 const FixedReturn = lazy(() => import("./pages/FixedReturn/Index"))
 const WalletKit = lazy(() => import("./pages/WalletKit"))
+const Swap = lazy(() => import("./pages/Swap"))
 
 function App() {
   const [isBlocked, setIsBlocked] = useState(false)
@@ -106,6 +107,7 @@ function App() {
                 <Route path="/portfolio/:type?" element={<Portfolio />} />
                 <Route path="/wallet-kit" element={<WalletKit />} />
                 <Route path="/test" element={<Test />} />
+                <Route path="/swap" element={<Swap />} />
               </Routes>
             </div>
           </div>
