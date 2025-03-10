@@ -13,6 +13,7 @@ import {
   burnSCoin,
 } from "@/lib/txHelper"
 import Decimal from "decimal.js"
+import { bcs } from "@mysten/sui/bcs"
 
 interface SellPtParams {
   sellValue: string
@@ -41,10 +42,6 @@ export default function useSellPtDryRun<T extends boolean = false>(
       receivingType,
       pyPositions: inputPyPositions,
     }: SellPtParams): Promise<DryRunResult<T>> => {
-      console.log("sellValue", sellValue)
-      console.log("receivingType", receivingType)
-      console.log("pyPositions", inputPyPositions)
-
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -80,7 +77,11 @@ export default function useSellPtDryRun<T extends boolean = false>(
 
       if (receivingType === "underlying") {
         const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
-        tx.transferObjects([underlyingCoin], address)
+        tx.moveCall({
+          target: `0x2::coin::value`,
+          arguments: [underlyingCoin],
+          typeArguments: [coinConfig.underlyingCoinType],
+        })
       } else {
         tx.transferObjects([yieldToken], address)
       }
@@ -100,6 +101,8 @@ export default function useSellPtDryRun<T extends boolean = false>(
           onlyTransactionKind: true,
         }),
       })
+
+      console.log("result", result)
 
       debugInfo.rawResult = {
         error: result?.error,
@@ -124,7 +127,11 @@ export default function useSellPtDryRun<T extends boolean = false>(
 
       const outputAmount =
         receivingType === "underlying"
-          ? result.events[result.events.length - 1].parsedJson.withdraw_amount
+          ? bcs.U64.parse(
+              new Uint8Array(
+                result.results[result.results.length - 1].returnValues[0][0],
+              ),
+            )
           : result.events[result.events.length - 1].parsedJson.amount_out
 
       const syAmount = result.events[1].parsedJson.amount_out

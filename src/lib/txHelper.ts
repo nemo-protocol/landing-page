@@ -699,6 +699,30 @@ export const burnSCoin = (
 
       return underlyingCoin
     }
+    case "AlphaFi": {
+      const redeemMoveCall = {
+        target: `${ALPAHFI.PACKAGE_ID}::liquid_staking::redeem`,
+        arguments: [
+          ALPAHFI.LIQUID_STAKING_INFO,
+          sCoin,
+          "0x5",
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      debugLog(`alphaFi redeem move call:`, redeemMoveCall)
+
+      const [underlyingCoin] = tx.moveCall({
+        target: redeemMoveCall.target,
+        arguments: [
+          tx.object(ALPAHFI.LIQUID_STAKING_INFO),
+          sCoin,
+          tx.object("0x5"),
+        ],
+        typeArguments: redeemMoveCall.typeArguments,
+      })
+
+      return underlyingCoin
+    }
     default:
       console.error(
         "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,

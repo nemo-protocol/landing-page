@@ -156,7 +156,7 @@ export function usePoolMetrics() {
           scaledPtApy: "0",
           tvl: "0",
           poolApy: "0",
-          incentiveApy: "",
+          incentiveApy: "0",
           ptTvl: "0",
           syTvl: "0",
           swapFeeApy: "0",

@@ -2,7 +2,7 @@ import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState, useEffect, useCallback } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, Link } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
 import AmountInput from "@/components/AmountInput"
 import ActionButton from "@/components/ActionButton"
@@ -58,6 +58,7 @@ export default function Invest() {
   const [syValue, setSyValue] = useState("")
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
+  const isDev = process.env.NODE_ENV === "development"
   const [error, setError] = useState<string>()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
@@ -488,8 +489,17 @@ export default function Invest() {
   return (
     <div className="w-full bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
-        <h2 className="text-center text-base sm:text-xl">Invest</h2>
-        {/* TODO: add global */}
+        <div className="w-full relative">
+          <h2 className="text-base sm:text-xl text-center">Invest</h2>
+          {isDev && (
+            <Link
+              to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/sell/pt`}
+              className="text-sm text-white/60 hover:text-white underline transition-colors absolute right-0 top-1/2 -translate-y-1/2"
+            >
+              Sell PT
+            </Link>
+          )}
+        </div>
         <TransactionStatusDialog
           open={open}
           status={status}
@@ -544,7 +554,6 @@ export default function Invest() {
         />
         <ChevronsDown className="size-5 sm:size-6" />
         <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
-          {/* FIXME: loading issue */}
           <div className="flex flex-col items-end gap-y-1">
             <div className="flex items-center justify-between w-full">
               <span>Receiving</span>
@@ -720,19 +729,13 @@ export default function Invest() {
           slippage={slippage}
           isLoading={isLoading}
           setSlippage={setSlippage}
-          // FIXME: need to optimize
           onRefresh={async () => {
             if (conversionRate) {
               try {
                 setIsCalcPtLoading(true)
-                // const newRatio = await calculateRatio(
-                //   tokenType === 0 ? conversionRate : "1",
-                // )
-                // setRatio(newRatio)
                 setIsCalcPtLoading(false)
               } catch (error) {
                 console.error("Failed to refresh ratio:", error)
-                // setRatio("")
               } finally {
                 setIsCalcPtLoading(false)
               }
