@@ -299,12 +299,3 @@ export const formatLargeNumber = (
     return "0"
   }
 }
-
-export const getTokenDecimal = (tokenType: string): number => {
-  switch (tokenType) {
-    case "0000000000000000000000000000000000000000000000000000000000000002::sui::SUI":
-      return 9
-    default:
-      return 9
-  }
-}

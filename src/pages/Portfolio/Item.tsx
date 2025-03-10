@@ -715,7 +715,7 @@ export default function Item({
                       {marketState?.rewardMetrics &&
                       marketState?.rewardMetrics?.length > 1 ? (
                         <DropdownMenu>
-                          <DropdownMenuTrigger className="flex items-center gap-1">
+                          <DropdownMenuTrigger className="flex items-center gap-1 outline-none">
                             {marketState?.rewardMetrics?.[selectedRewardIndex]
                               ?.tokenLogo && (
                               <img
@@ -729,7 +729,7 @@ export default function Item({
                             )}
                             <ChevronDown className="h-4 w-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent>
+                          <DropdownMenuContent className="bg-black border-white/60 !p-0">
                             {marketState?.rewardMetrics?.map((metric, index) => (
                               <DropdownMenuItem
                                 key={index}
@@ -738,7 +738,7 @@ export default function Item({
                                   refetchLpReward()
                                 }}
                               >
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 cursor-pointer w-full hover:bg-white/10 py-1 px-2 rounded-md">
                                   {metric.tokenLogo && (
                                     <img
                                       className="size-4"

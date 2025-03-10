@@ -25,7 +25,7 @@ const SmallNumDisplay: React.FC<SmallNumDisplayProps> = ({
     const remainingDigits = decimalPart.slice(zeroCount)
 
     return (
-      <span className={cn("shrink-0", className)}>
+      <span className={cn("shrink-0 text-nowrap", className)}>
         {integerPart}.0<sub>{zeroCount}</sub>
         {remainingDigits}
       </span>

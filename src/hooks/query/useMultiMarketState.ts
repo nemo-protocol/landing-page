@@ -2,8 +2,8 @@ import { MarketState } from "../types"
 import { useSuiClient } from "@mysten/dapp-kit"
 import { useQuery } from "@tanstack/react-query"
 import Decimal from "decimal.js"
-import { getTokenDecimal } from "@/lib/utils"
 import { useTokenInfo } from "@/queries"
+import { TokenInfo } from "@/queries/types/market"
 
 interface PoolRewarderInfo {
   total_reward: string
@@ -52,10 +52,9 @@ interface RawMarketState {
 const calculateRewardMetrics = (
   emissionPerSecond: string,
   tokenType: string,
-  tokenPrice: string,
-  tokenLogo: string,
+  tokenData:TokenInfo
 ) => {
-  const decimal = getTokenDecimal(tokenType)
+  const decimal = tokenData.decimal
 
   // Calculate daily emission from emission_per_second
   const dailyEmission = new Decimal(emissionPerSecond)
@@ -65,9 +64,11 @@ const calculateRewardMetrics = (
 
   return {
     tokenType,
-    tokenLogo,
+    tokenLogo: tokenData.logo,
     dailyEmission,
-    tokenPrice,
+    tokenPrice: tokenData.price,
+    tokenName: tokenData.name,
+    decimal,
   }
 }
 
@@ -141,8 +142,7 @@ const useMultiMarketState = (marketStateIds?: string[]) => {
             return calculateRewardMetrics(
               groupedRewarder.emissionPerSecond,
               groupedRewarder.tokenType,
-              tokenData.price,
-              tokenData.logo,
+              tokenData,
             )
           },
         )
