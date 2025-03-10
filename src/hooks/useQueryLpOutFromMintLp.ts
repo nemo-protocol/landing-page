@@ -7,10 +7,14 @@ import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 import { DEFAULT_Address } from "@/lib/constants"
 
+type QueryReturn<TDebug extends boolean> = TDebug extends true 
+  ? [string, DebugInfo] 
+  : [string];
+
 // TODO: optimize the mutation
-export default function useQueryLpOutFromMintLp(
+export default function useQueryLpOutFromMintLp<TDebug extends boolean = false>(
   coinConfig?: CoinConfig,
-  debug: boolean = false,
+  debug: TDebug = false as TDebug,
 ) {
   const client = useSuiClient()
   const address = DEFAULT_Address
@@ -22,10 +26,7 @@ export default function useQueryLpOutFromMintLp(
     }: {
       ptValue: string
       syValue: string
-    }): Promise<[string] | [string, DebugInfo]> => {
-      if (!address) {
-        throw new Error("Please connect wallet first")
-      }
+    }): Promise<QueryReturn<TDebug>> => {
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
@@ -88,7 +89,7 @@ export default function useQueryLpOutFromMintLp(
 
       const returnValue = outputAmount.toString()
 
-      return debug ? [returnValue, debugInfo] : [returnValue]
+      return (debug ? [returnValue, debugInfo] : [returnValue]) as QueryReturn<TDebug>
     },
   })
 }

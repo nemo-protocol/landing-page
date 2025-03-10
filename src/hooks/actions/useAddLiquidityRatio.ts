@@ -1,12 +1,24 @@
 import { useRef } from "react"
 import Decimal from "decimal.js"
+import { MarketState } from "../types"
+import { splitSyAmount } from "@/lib/utils"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import useQueryLpOutFromMintLp from "../useQueryLpOutFromMintLp"
-import { splitSyAmount } from "@/lib/utils"
 import useFetchObject from "@/hooks/useFetchObject.ts"
 import { useQueryPriceVoucher } from "@/hooks/index.tsx"
-import { MarketState } from "../types"
+import useQueryLpOutFromMintLp from "../useQueryLpOutFromMintLp"
+
+interface PyStateResponse {
+  content: {
+    fields: {
+      py_index_stored: {
+        fields: {
+          value: string;
+        };
+      };
+    };
+  };
+}
 
 export function useAddLiquidityRatio(
   coinConfig?: CoinConfig,
@@ -14,7 +26,7 @@ export function useAddLiquidityRatio(
 ) {
   const lastPowerRef = useRef(0)
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
-  const { mutateAsync: exchangeRateFun } = useFetchObject()
+  const { mutateAsync: exchangeRateFun } = useFetchObject<PyStateResponse, string>()
   const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
     coinConfig,
     false,
@@ -32,6 +44,7 @@ export function useAddLiquidityRatio(
       const exchangeRate = await exchangeRateFun({
         objectId: coinConfig.pyStateId,
         options: { showContent: true },
+        format: (data) => data?.content?.fields?.py_index_stored?.fields?.value || "0",
       })
 
       const priceVoucher = await priceVoucherFun()
@@ -46,14 +59,12 @@ export function useAddLiquidityRatio(
         try {
           const baseAmount = new Decimal(10).pow(safeDecimal).toString()
 
-          const parsedData = JSON.parse(exchangeRate.toString())
-
           const { syValue, ptValue } = splitSyAmount(
             baseAmount,
             marketState.lpSupply,
             marketState.totalSy,
             marketState.totalPt,
-            parsedData?.content?.fields?.py_index_stored?.fields?.value,
+            exchangeRate,
             priceVoucher.toString(),
           )
 

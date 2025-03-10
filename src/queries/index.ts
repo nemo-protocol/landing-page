@@ -211,7 +211,10 @@ export function useCoinInfoList<T extends boolean = true>(
     queryKey: ["coinInfoList", name, address, isShowExpiry],
     queryFn: async () => {
       const coinList = (await getCoinInfoList(params).catch(() => [])).filter(
-        ({ marketStateId }) => !!marketStateId,
+        ({ marketStateId }) =>
+          marketStateId ===
+          "0x7472959314b24ebfbd4da49cc36abb3da29f722746019c692407aaf6b47e9a08",
+        // ({ marketStateId }) => !!marketStateId,
       )
 
       if (!coinList.length) return []
@@ -220,13 +223,19 @@ export function useCoinInfoList<T extends boolean = true>(
 
       const marketStateIds = coinList.map((coin) => coin.marketStateId)
 
+      console.log("marketStateIds", marketStateIds)
+
       const marketStates = await fetchMarketStates(marketStateIds).catch(
         () => ({}) as { [key: string]: MarketState },
       )
 
+      console.log("marketStates", marketStates)
+
       const results = await Promise.all(
         coinList.map(async (coinInfo) => {
           const marketState = marketStates?.[coinInfo.marketStateId]
+
+          console.log("marketState", marketState)
 
           try {
             const metrics = await calculateMetrics({
@@ -234,11 +243,14 @@ export function useCoinInfoList<T extends boolean = true>(
               marketState,
             })
 
+            console.log("metrics", metrics)
+
             return {
               ...coinInfo,
               ...metrics,
             }
           } catch (error) {
+            console.log("error", error)
             return {
               ...coinInfo,
               ptPrice: "",
@@ -281,7 +293,7 @@ export function useRewardWithAddress(userAddress?: string) {
 
 export const getTokenInfo = async (): Promise<TokenInfoMap> => {
   const res = await nemoApi<TokenInfoMap>("/api/v1/market/info").get()
-  
+
   // Filter out tokens with NaN prices
   const filteredTokens = Object.entries(res).reduce((acc, [key, token]) => {
     if (!isNaN(Number(token.price))) {

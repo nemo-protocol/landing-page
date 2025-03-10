@@ -21,7 +21,7 @@ import { formatDecimalValue, debounce, isValidAmount } from "@/lib/utils"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import { showTransactionDialog } from "@/lib/dialog"
 import { CoinConfig } from "@/queries/types/market"
-import { useCalculateLpOut } from "@/hooks/useCalculateLpOut"
+import { useEstimateLpOutDryRun } from "@/hooks/dryRun/lp/useEstimateLpOutDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import {
   mintSCoin,
@@ -49,13 +49,11 @@ import {
 } from "@/components/ui/select"
 import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
-import useMintLpDryRun from "@/hooks/dryRun/useMintLpDryRun"
-import useAddLiquiditySingleSyDryRun from "@/hooks/dryRun/lp/useAddLiquiditySingleSyDryRun"
-import useSeedLiquidityDryRun from "@/hooks/dryRun/useSeedLiquidityDryRun"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import type { CoinData } from "@/hooks/useCoinData"
 import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
 import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
+import { useCalculateLpAmount } from "@/hooks/dryRun/lp/useCalculateLpDryRun"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -71,7 +69,7 @@ export default function SingleCoin() {
   const [ytAmount, setYtAmount] = useState<string>()
   const [isAdding, setIsAdding] = useState(false)
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
-  const [isCalcLpLoading, setIsCalcLpLoading] = useState(false)
+  const [isCalculating, setIsCalculating] = useState(false)
   const [ratio, setRatio] = useState<string>()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
@@ -130,14 +128,8 @@ export default function SingleCoin() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal || 0), [coinConfig])
 
-  const { mutateAsync: calculateLpOut, isPending: isLpAmountOutLoading } =
-    useCalculateLpOut(coinConfig)
-
-  const { mutateAsync: mintLpDryRun } = useMintLpDryRun(coinConfig)
-  const { mutateAsync: addLiquiditySingleSyDryRun } =
-    useAddLiquiditySingleSyDryRun(coinConfig)
-  const { mutateAsync: seedLiquidityDryRun } =
-    useSeedLiquidityDryRun(coinConfig)
+  const { mutateAsync: estimateLpOut, isPending: isLpAmountOutLoading } =
+    useEstimateLpOutDryRun(coinConfig)
 
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
@@ -181,16 +173,16 @@ export default function SingleCoin() {
 
   const { isLoading } = useInputLoadingState(
     addValue,
-    isConfigLoading || isLpAmountOutLoading || isCalcLpLoading,
+    isConfigLoading || isLpAmountOutLoading || isCalculating,
   )
 
   const { isLoading: isRatioLoading } = useRatioLoadingState(
-    isConfigLoading || isCalcLpLoading,
+    isConfigLoading || isCalculating,
   )
 
   const btnDisabled = useMemo(() => {
-    return !isValidAmount(addValue) || insufficientBalance || isCalcLpLoading
-  }, [addValue, insufficientBalance, isCalcLpLoading])
+    return !isValidAmount(addValue) || insufficientBalance || isCalculating
+  }, [addValue, insufficientBalance, isCalculating])
 
   const btnText = useMemo(() => {
     if (insufficientBalance) {
@@ -207,10 +199,15 @@ export default function SingleCoin() {
     marketStateData,
   )
 
+  const { mutate: calculateLpAmount } = useCalculateLpAmount(
+    coinConfig,
+    marketStateData,
+  )
+
   // FIXME: update handleRefresh
   const handleRefresh = useCallback(async () => {
     try {
-      setIsCalcLpLoading(true)
+      setIsCalculating(true)
       const newRatio = await calculateRatio()
       console.log("newRatio", newRatio)
       setRatio(
@@ -222,7 +219,7 @@ export default function SingleCoin() {
       console.error("Failed to refresh ratio:", error)
       setRatio("")
     } finally {
-      setIsCalcLpLoading(false)
+      setIsCalculating(false)
     }
   }, [calculateRatio, conversionRate, tokenType])
 
@@ -243,74 +240,41 @@ export default function SingleCoin() {
   const debouncedGetLpPosition = useCallback(
     (value: string, decimal: number, config: CoinConfig | undefined) => {
       const getLpPosition = debounce(async () => {
-        if (config && decimal && isValidAmount(value) && coinData?.length) {
-          setIsCalcLpLoading(true)
+        if (
+          config &&
+          decimal &&
+          isValidAmount(value) &&
+          coinData?.length &&
+          pyPositionData &&
+          marketStateData
+        ) {
+          setIsCalculating(true)
           const inputAmount = new Decimal(value).mul(10 ** decimal).toString()
           try {
-            if (marketStateData?.lpSupply === "0") {
-              const { lpAmount, ytAmount } = await seedLiquidityDryRun({
-                addAmount: inputAmount,
+            calculateLpAmount(
+              {
+                inputAmount,
                 tokenType,
+                decimal,
                 coinData,
-                pyPositions: pyPositionData,
-              })
-
-              setLpAmount(
-                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
-              )
-              setYtAmount(
-                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
-              )
-            } else if (
-              marketStateData &&
-              new Decimal(marketStateData.totalSy).mul(0.4).lt(inputAmount)
-            ) {
-              const { lpAmount, ytAmount } = await mintLpDryRun({
-                addAmount: inputAmount,
-                tokenType,
-                coinData,
-                pyPositions: pyPositionData,
-              })
-
-              setLpAmount(
-                new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
-              )
-              setYtAmount(
-                new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
-              )
-
-              setRatio(new Decimal(lpAmount).div(inputAmount).toString())
-            } else {
-              const { lpAmount, lpValue, tradeFee } =
-                await addLiquiditySingleSyDryRun({
-                  coinData,
-                  tokenType,
-                  addAmount: inputAmount,
-                  pyPositions: pyPositionData,
-                })
-
-              setLpAmount(lpValue)
-              setLpFeeAmount(tradeFee)
-              setYtAmount(undefined)
-
-              setRatio(new Decimal(lpAmount).div(inputAmount).toString())
-            }
+                pyPositionData,
+              },
+              {
+                onSuccess: (result) => {
+                  setLpAmount(result.lpAmount)
+                  setYtAmount(result.ytAmount)
+                  setLpFeeAmount(result.lpFeeAmount)
+                  setRatio(result.ratio)
+                  setError(result.error || "")
+                  setErrorDetail(result.errorDetail || "")
+                },
+                onSettled: () => {
+                  setIsCalculating(false)
+                },
+              },
+            )
           } catch (error) {
-            try {
-              const lpOut = await calculateLpOut(inputAmount)
-              setLpAmount(lpOut.lpAmount)
-              setLpFeeAmount(undefined)
-              setYtAmount(undefined)
-            } catch (errorMsg) {
-              setLpAmount(undefined)
-              setYtAmount(undefined)
-              setLpFeeAmount(undefined)
-              const { error, detail } = parseErrorMessage(errorMsg as string)
-              setError(error)
-              setErrorDetail(detail)
-            }
-          } finally {
-            setIsCalcLpLoading(false)
+            setIsCalculating(false)
           }
         } else {
           setLpAmount(undefined)
@@ -320,16 +284,7 @@ export default function SingleCoin() {
       getLpPosition()
       return getLpPosition.cancel
     },
-    [
-      mintLpDryRun,
-      addLiquiditySingleSyDryRun,
-      seedLiquidityDryRun,
-      tokenType,
-      coinData,
-      pyPositionData,
-      marketStateData,
-      calculateLpOut,
-    ],
+    [calculateLpAmount, tokenType, coinData, pyPositionData, marketStateData],
   )
 
   useEffect(() => {
@@ -405,7 +360,7 @@ export default function SingleCoin() {
     address: string,
     minLpAmount: string,
   ): Promise<void> {
-    const lpOut = await calculateLpOut(addAmount)
+    const lpOut = await estimateLpOut(addAmount)
     const amounts = {
       syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
       sy: new Decimal(lpOut.syValue).toFixed(0),
@@ -663,7 +618,7 @@ export default function SingleCoin() {
                     <span className="flex items-center gap-x-1 sm:gap-x-1.5">
                       {!addValue ? (
                         "--"
-                      ) : isCalcLpLoading ? (
+                      ) : isCalculating ? (
                         <Skeleton className="h-6 sm:h-7 w-36 sm:w-48 bg-[#2D2D48]" />
                       ) : !decimal ? (
                         "--"
@@ -683,7 +638,7 @@ export default function SingleCoin() {
                     </span>
                   </div>
                   {(ytAmount ||
-                    (isCalcLpLoading &&
+                    (isCalculating &&
                       marketStateData &&
                       new Decimal(marketStateData.totalSy)
                         .mul(0.4)
@@ -697,7 +652,7 @@ export default function SingleCoin() {
                       <span className="flex items-center gap-x-1 sm:gap-x-1.5">
                         {!addValue ? (
                           "--"
-                        ) : isCalcLpLoading ? (
+                        ) : isCalculating ? (
                           <Skeleton className="h-4 sm:h-5 w-24 sm:w-32 bg-[#2D2D48]" />
                         ) : !decimal ? (
                           "--"
@@ -758,7 +713,7 @@ export default function SingleCoin() {
                 onClick={add}
                 btnText={btnText}
                 disabled={btnDisabled}
-                loading={isAdding || isCalcLpLoading}
+                loading={isAdding || isCalculating}
               />
             </div>
           </div>

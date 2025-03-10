@@ -1,6 +1,5 @@
 import { UseMutationResult } from "@tanstack/react-query"
 import type { CoinConfig } from "@/queries/types/market"
-import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
 import useQueryPtOutBySyInWithVoucher from "./useQueryPtOutBySyInWithVoucher"
 import useQueryYtOutBySyInWithVoucher from "./useQueryYtOutBySyInWithVoucher"
 import useQuerySyOutFromYtInWithVoucher from "./dryRun/yt/useQuerySyOutByYtInDryRun"
@@ -10,7 +9,6 @@ import useBurnLpMutation from "./dryRun/useBurnLpDryRun"
 import useFetchLpPosition from "./useFetchLpPosition"
 import useFetchPyPosition from "./useFetchPyPosition"
 import type { DebugInfo } from "./types"
-// import useFetchObject from "./useFetchObject"
 import useMintSCoin from "./actions/useMintSCoin"
 import { CoinData } from "./useCoinData"
 
@@ -40,7 +38,6 @@ export type QueryInputMap = {
   SY_OUT_BY_YT_IN: string
   SY_OUT_BY_PT_IN: string
   PRICE_VOUCHER: void
-  // GET_OBJECT: GetObjectParams
   SY_OUT_FROM_BURN_LP: string
   LP_MARKET_POSITION: void
   PY_POSITION: void
@@ -53,10 +50,6 @@ export const QUERY_CONFIGS = {
     target: "mint_scoin",
     hook: useMintSCoin,
   },
-  // GET_OBJECT: {
-  //   target: "get_object",
-  //   hook: useFetchObject,
-  // },
   PT_OUT_BY_SY_IN: {
     target: "get_pt_out_for_exact_sy_in_with_price_voucher",
     hook: useQueryPtOutBySyInWithVoucher,
@@ -64,10 +57,6 @@ export const QUERY_CONFIGS = {
   YT_OUT_BY_SY_IN: {
     target: "get_yt_out_for_exact_sy_in_with_price_voucher",
     hook: useQueryYtOutBySyInWithVoucher,
-  },
-  LP_OUT_FROM_MINT: {
-    target: "get_lp_out_from_mint_lp",
-    hook: useQueryLpOutFromMintLp,
   },
   SY_OUT_BY_YT_IN: {
     target: "get_sy_amount_out_for_exact_yt_in_with_price_voucher",
@@ -99,7 +88,7 @@ export const QUERY_CONFIGS = {
   },
 } as const
 
-export default function useQueryButton<T extends keyof QueryInputMap>(
+export default function useQueryButton<T extends keyof typeof QUERY_CONFIGS>(
   queryType: T,
   coinConfig?: CoinConfig,
   debug = false,

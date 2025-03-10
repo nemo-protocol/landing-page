@@ -60,21 +60,20 @@ export const splitSyAmount = (
   lpSupply: string,
   totalSy: string,
   totalPt: string,
-  exchange_rate: string,
-  py_index_stored: string,
+  exchangeRate: string,
+  pyIndexStored: string,
 ) => {
   const result = getMintLpParameter(
     syAmount,
     lpSupply,
     totalSy,
     totalPt,
-    exchange_rate,
-    py_index_stored,
+    exchangeRate,
+    pyIndexStored,
   )
   const syForPtValue = result?.syForPt.toFixed(0) || "1"
   const syValue = result?.syDesired.toFixed(0) || "1"
   const ptValue = result?.pt.toFixed(0) || "1"
-  // console.log("ptValue syValue", syForPtValue, ptValue, syValue)
   return { syForPtValue, syValue, ptValue }
 }
 
@@ -83,15 +82,15 @@ function getMintLpParameter(
   lpSupply: string,
   totalSy: string,
   totalPt: string,
-  exchange_rate: string,
-  py_index_stored: string,
+  exchangeRate: string,
+  pyIndexStored: string,
 ): { syForPt: number; syDesired: number; pt: number } | null {
   const total_sy = Number(syAmount)
   const lp_supply = Number(lpSupply)
   const total_sy_reserve = Number(totalSy)
   const total_pt_reserve = Number(totalPt)
-  const exchange_rate_num = Number(exchange_rate)
-  const py_index_stored_num = Number(py_index_stored)
+  const exchange_rate_num = Number(exchangeRate)
+  const py_index_stored_num = Number(pyIndexStored)
   if (lpSupply == "0") {
     const syIn = new Decimal(syAmount).div(2).toString()
     const max_rate = get_max_rate(exchange_rate_num, py_index_stored_num)

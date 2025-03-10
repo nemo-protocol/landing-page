@@ -1,11 +1,11 @@
-import { ContractError } from "../types"
-import type { DebugInfo, PyPosition } from "../types"
+import { ContractError } from "../../types"
+import type { DebugInfo, PyPosition } from "../../types"
 import { useMutation } from "@tanstack/react-query"
 import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import useFetchPyPosition from "../useFetchPyPosition"
+import useFetchPyPosition from "../../useFetchPyPosition"
 import {
   mintSCoin,
   depositSyCoin,
@@ -19,6 +19,7 @@ interface SeedLiquidityParams {
   tokenType: number
   coinData: CoinData[]
   pyPositions?: PyPosition[]
+  coinConfig: CoinConfig
 }
 
 type DryRunResult<T extends boolean> = T extends true
@@ -39,6 +40,7 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
       addAmount,
       tokenType,
       pyPositions: inputPyPositions,
+      coinConfig,
     }: SeedLiquidityParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
@@ -135,6 +137,8 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
           onlyTransactionKind: true,
         }),
       })
+
+      console.log("result", result)
 
       debugInfo.rawResult = {
         error: result?.error,

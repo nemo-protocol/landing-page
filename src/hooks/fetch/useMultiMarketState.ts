@@ -98,30 +98,42 @@ const useMultiMarketState = () => {
 
           // Group rewarders by tokenType and sum their emission_per_second
           const currentTime = Date.now()
-          const groupedRewarders = (fields.reward_pool?.fields.rewarders.fields.contents || [])
-            .filter(entry => Number(entry.fields.value.fields.end_time) > currentTime)
-            .reduce((acc, entry) => {
-              const rewarder = entry.fields.value.fields
-              const tokenType = rewarder.reward_token.fields.name
-              
-              if (!acc[tokenType]) {
-                acc[tokenType] = {
-                  emissionPerSecond: "0",
-                  tokenType,
+          const groupedRewarders = (
+            fields.reward_pool?.fields.rewarders.fields.contents || []
+          )
+            .filter(
+              (entry) =>
+                Number(entry.fields.value.fields.end_time) > currentTime,
+            )
+            .reduce(
+              (acc, entry) => {
+                const rewarder = entry.fields.value.fields
+                const tokenType = rewarder.reward_token.fields.name
+
+                if (!acc[tokenType]) {
+                  acc[tokenType] = {
+                    emissionPerSecond: "0",
+                    tokenType,
+                  }
                 }
-              }
-              
-              acc[tokenType].emissionPerSecond = new Decimal(acc[tokenType].emissionPerSecond)
-                .plus(rewarder.emission_per_second)
-                .toString()
-              
-              return acc
-            }, {} as { [key: string]: { emissionPerSecond: string; tokenType: string } })
+
+                acc[tokenType].emissionPerSecond = new Decimal(
+                  acc[tokenType].emissionPerSecond,
+                )
+                  .plus(rewarder.emission_per_second)
+                  .toString()
+
+                return acc
+              },
+              {} as {
+                [key: string]: { emissionPerSecond: string; tokenType: string }
+              },
+            )
 
           // Calculate metrics for each grouped rewarder
-          const rewardMetrics = Object.values(groupedRewarders)
-            .map((groupedRewarder) => {
-              const tokenFullName = `0x${groupedRewarder.tokenType}`
+          const rewardMetrics = Object.values(groupedRewarders).map(
+            ({ tokenType, emissionPerSecond }) => {
+              const tokenFullName = `0x${tokenType}`
               const tokenData = tokenInfo?.[tokenFullName] || {
                 price: "0",
                 logo: "",
@@ -130,11 +142,12 @@ const useMultiMarketState = () => {
               }
 
               return calculateRewardMetrics(
-                groupedRewarder.emissionPerSecond,
-                groupedRewarder.tokenType,
-                tokenData
+                emissionPerSecond,
+                tokenType,
+                tokenData,
               )
-            })
+            },
+          )
 
           const state: MarketState = {
             totalSy: fields?.total_sy,

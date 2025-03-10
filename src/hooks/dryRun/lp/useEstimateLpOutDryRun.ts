@@ -1,47 +1,60 @@
 import Decimal from "decimal.js"
 import { splitSyAmount } from "@/lib/utils"
+import { MarketState } from "@/hooks/types"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import { useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchObject from "@/hooks/useFetchObject.ts"
 import { useQueryPriceVoucher } from "@/hooks/index.tsx"
-import useMarketStateData from "@/hooks/useMarketStateData.ts"
-import useQueryLpOutFromMintLp from "./useQueryLpOutFromMintLp"
+import useQueryLpOutFromMintLp from "../../useQueryLpOutFromMintLp"
 
-export function useCalculateLpOut(coinConfig?: CoinConfig) {
-  const { address } = useWallet()
+// 定义响应数据类型
+interface PyStateResponse {
+  content: {
+    fields: {
+      py_index_stored: {
+        fields: {
+          value: string;
+        };
+      };
+    };
+  };
+}
+
+export function useEstimateLpOutDryRun(
+  coinConfig?: CoinConfig,
+  marketState?: MarketState,
+) {
   const { mutateAsync: queryLpOut } = useQueryLpOutFromMintLp(coinConfig)
-  const { data: marketState } = useMarketStateData(coinConfig?.marketStateId)
-  const { mutateAsync: exchangeRateFun } = useFetchObject()
+  const { mutateAsync: exchangeRateFun } = useFetchObject<PyStateResponse, string>()
   const { mutateAsync: priceVoucherFun } = useQueryPriceVoucher(
     coinConfig,
     false,
-    "useCalculateLpOut",
+    "useEstimateLpOutDryRun",
   )
+
   return useMutation({
     mutationFn: async (syAmount: string) => {
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
-      if (!address) {
-        throw new Error("Please connect wallet first")
-      }
       if (!marketState) {
-        // console.log(marketState)
-        throw new Error("not found market")
+        throw new Error("Market state is required")
       }
+
       const exchangeRate = await exchangeRateFun({
         objectId: coinConfig.pyStateId,
         options: { showContent: true },
+        format: (data) => data?.content?.fields?.py_index_stored?.fields?.value || "0",
       })
+
       const priceVoucher = await priceVoucherFun()
-      const parsedData = JSON.parse(exchangeRate.toString())
+
       const { syForPtValue, syValue, ptValue } = splitSyAmount(
         syAmount,
         marketState.lpSupply,
         marketState.totalSy,
         marketState.totalPt,
-        parsedData?.content?.fields?.py_index_stored?.fields?.value,
+        exchangeRate,
         priceVoucher.toString(),
       )
 

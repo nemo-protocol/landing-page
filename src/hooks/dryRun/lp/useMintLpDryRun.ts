@@ -1,15 +1,15 @@
 import Decimal from "decimal.js"
-import { ContractError } from "../types"
-import type { DebugInfo } from "../types"
-import type { PyPosition } from "../types"
+import { ContractError } from "../../types"
+import type { DebugInfo } from "../../types"
+import type { PyPosition } from "../../types"
 import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
-import useFetchPyPosition from "../useFetchPyPosition"
-import { useCalculateLpOut } from "../useCalculateLpOut"
+import useFetchPyPosition from "../../useFetchPyPosition"
+import { useEstimateLpOutDryRun } from "./useEstimateLpOutDryRun"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { useMutation, UseMutationResult } from "@tanstack/react-query"
-import { BaseDryRunResult, createDryRunResult } from "../types/dryRun"
+import { BaseDryRunResult, createDryRunResult } from "../../types/dryRun"
 import {
   mintPY,
   mintSCoin,
@@ -24,6 +24,7 @@ interface MintLpParams {
   tokenType: number
   coinData: CoinData[]
   pyPositions?: PyPosition[]
+  coinConfig: CoinConfig
 }
 
 interface MintLpResult {
@@ -37,7 +38,7 @@ export default function useMintLpDryRun<T extends boolean = false>(
 ): UseMutationResult<BaseDryRunResult<MintLpResult, T>, Error, MintLpParams> {
   const client = useSuiClient()
   const { address } = useWallet()
-  const { mutateAsync: calculateLpOut } = useCalculateLpOut(coinConfig)
+  const { mutateAsync: estimateLpOut } = useEstimateLpOutDryRun(coinConfig)
   const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
 
   return useMutation({
@@ -46,6 +47,7 @@ export default function useMintLpDryRun<T extends boolean = false>(
       addAmount,
       tokenType,
       pyPositions: inputPyPositions,
+      coinConfig,
     }: MintLpParams): Promise<BaseDryRunResult<MintLpResult, T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
@@ -76,7 +78,7 @@ export default function useMintLpDryRun<T extends boolean = false>(
       }
 
       // Calculate LP output
-      const lpOut = await calculateLpOut(addAmount)
+      const lpOut = await estimateLpOut(addAmount)
       const amounts = {
         syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
         sy: new Decimal(lpOut.syValue).toFixed(0),

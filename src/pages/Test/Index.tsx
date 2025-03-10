@@ -99,9 +99,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
     const timestamp = Date.now()
 
     let input: QueryInputMap[T]
-    if (config.target === "get_lp_out_from_mint_lp") {
-      input = { ptValue: amount, syValue: amount } as QueryInputMap[T]
-    } else if (
+    if (
       config.target === "get_price_voucher" ||
       config.target === "get_lp_market_position" ||
       config.target === "get_py_position"
@@ -261,9 +259,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
                   onClick={() => handleQuery("0.001")}
                   disabled={!coinConfig || !address || isLoading}
                 >
-                  {config.target === "get_lp_out_from_mint_lp"
-                    ? "1:1 Input"
-                    : "0.001 Input"}
+                  0.001 Input
                 </button>
 
                 <div className="flex h-10 bg-black/20 rounded-xl overflow-hidden">
@@ -272,11 +268,7 @@ function QueryButton<T extends keyof typeof QUERY_CONFIGS>({
                     value={customAmount}
                     onChange={(e) => setCustomAmount(e.target.value)}
                     className="w-20 px-3 bg-transparent text-white/90 text-sm focus:outline-none disabled:opacity-50"
-                    placeholder={
-                      config.target === "get_lp_out_from_mint_lp"
-                        ? "1:1"
-                        : "Amount"
-                    }
+                    placeholder="Amount"
                     disabled={!coinConfig || !address}
                   />
                   <button
