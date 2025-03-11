@@ -180,9 +180,26 @@ export default function SingleCoin() {
     isConfigLoading || isCalculating,
   )
 
+  const minValue = useMemo(
+    () =>
+      marketStateData && conversionRate
+        ? new Decimal(marketStateData.totalSy)
+            .mul(0.4)
+            .mul(tokenType === 0 ? conversionRate : 1)
+            .div(10 ** decimal)
+            .toFixed(decimal)
+        : 0,
+    [marketStateData, decimal, tokenType, conversionRate],
+  )
+
   const btnDisabled = useMemo(() => {
-    return !isValidAmount(addValue) || insufficientBalance || isCalculating
-  }, [addValue, insufficientBalance, isCalculating])
+    return (
+      !isValidAmount(addValue) ||
+      insufficientBalance ||
+      isCalculating ||
+      new Decimal(addValue).lt(minValue)
+    )
+  }, [addValue, insufficientBalance, isCalculating, minValue])
 
   const btnText = useMemo(() => {
     if (insufficientBalance) {
@@ -191,8 +208,11 @@ export default function SingleCoin() {
     if (addValue === "") {
       return "Please enter an amount"
     }
+    if (new Decimal(addValue).lt(minValue)) {
+      return `Minimum ${minValue} ${tokenType === 0 ? coinConfig?.underlyingCoinName : coinConfig?.coinName}`
+    }
     return "Add"
-  }, [insufficientBalance, addValue, coinName])
+  }, [insufficientBalance, addValue, coinName, minValue, tokenType, coinConfig])
 
   const { mutateAsync: calculateRatio } = useAddLiquidityRatio(
     coinConfig,
@@ -240,6 +260,7 @@ export default function SingleCoin() {
   const debouncedGetLpPosition = useCallback(
     (value: string, decimal: number, config: CoinConfig | undefined) => {
       const getLpPosition = debounce(async () => {
+        setError("")
         if (
           config &&
           decimal &&
@@ -349,18 +370,6 @@ export default function SingleCoin() {
     tx.transferObjects([lp], address)
   }
 
-  const minValue = useMemo(
-    () =>
-      marketStateData && conversionRate
-        ? new Decimal(marketStateData.totalSy)
-            .mul(0.4)
-            .mul(tokenType === 0 ? conversionRate : 1)
-            .div(10 ** decimal)
-            .toFixed(decimal)
-        : 0,
-    [marketStateData, decimal, tokenType, conversionRate],
-  )
-
   async function handleMintLp(
     tx: Transaction,
     addAmount: string,
@@ -447,17 +456,6 @@ export default function SingleCoin() {
       coinData?.length &&
       !insufficientBalance
     ) {
-      if (addValue < minValue) {
-        setError(
-          "Please at least add " +
-            minValue +
-            " " +
-            (tokenType === 0
-              ? coinConfig?.underlyingCoinName
-              : coinConfig?.coinName),
-        )
-        return
-      }
       try {
         setIsAdding(true)
         const addAmount = new Decimal(addValue).mul(10 ** decimal).toFixed(0)
