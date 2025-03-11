@@ -128,11 +128,11 @@ export default function SingleCoin() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal || 0), [coinConfig])
 
-  const { mutateAsync: estimateLpOut, isPending: isLpAmountOutLoading } =
-    useEstimateLpOutDryRun(coinConfig)
-
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
+
+  const { mutateAsync: estimateLpOut, isPending: isLpAmountOutLoading } =
+    useEstimateLpOutDryRun(coinConfig, marketStateData)
 
   const coinBalance = useMemo(() => {
     if (coinData?.length) {

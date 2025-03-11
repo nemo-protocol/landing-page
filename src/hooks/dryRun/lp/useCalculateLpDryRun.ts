@@ -30,7 +30,7 @@ export function useCalculateLpAmount(
   coinConfig: CoinConfig | undefined,
   marketState: MarketState | undefined,
 ): UseMutationResult<CalculateLpAmountResult, Error, CalculateLpAmountParams> {
-  const { mutateAsync: mintLpDryRun } = useMintLpDryRun(coinConfig)
+  const { mutateAsync: mintLpDryRun } = useMintLpDryRun(coinConfig, marketState)
   const { mutateAsync: seedLiquidityDryRun } =
     useSeedLiquidityDryRun(coinConfig)
   const { mutateAsync: estimateLpOut } = useEstimateLpOutDryRun(

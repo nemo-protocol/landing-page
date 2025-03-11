@@ -1,6 +1,6 @@
 import Decimal from "decimal.js"
 import { ContractError } from "../../types"
-import type { DebugInfo } from "../../types"
+import type { DebugInfo, MarketState } from "../../types"
 import type { PyPosition } from "../../types"
 import type { CoinData } from "@/hooks/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
@@ -34,11 +34,15 @@ interface MintLpResult {
 
 export default function useMintLpDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
+  marketState?: MarketState,
   debug: T = false as T,
 ): UseMutationResult<BaseDryRunResult<MintLpResult, T>, Error, MintLpParams> {
   const client = useSuiClient()
   const { address } = useWallet()
-  const { mutateAsync: estimateLpOut } = useEstimateLpOutDryRun(coinConfig)
+  const { mutateAsync: estimateLpOut } = useEstimateLpOutDryRun(
+    coinConfig,
+    marketState,
+  )
   const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
 
   return useMutation({
