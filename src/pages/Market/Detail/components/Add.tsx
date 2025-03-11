@@ -349,6 +349,18 @@ export default function SingleCoin() {
     tx.transferObjects([lp], address)
   }
 
+  const minValue = useMemo(
+    () =>
+      marketStateData && conversionRate
+        ? new Decimal(marketStateData.totalSy)
+            .mul(0.4)
+            .mul(tokenType === 0 ? conversionRate : 1)
+            .div(10 ** decimal)
+            .toFixed(decimal)
+        : 0,
+    [marketStateData, decimal, tokenType, conversionRate],
+  )
+
   async function handleMintLp(
     tx: Transaction,
     addAmount: string,
@@ -435,6 +447,17 @@ export default function SingleCoin() {
       coinData?.length &&
       !insufficientBalance
     ) {
+      if (addValue < minValue) {
+        setError(
+          "Please at least add " +
+            minValue +
+            " " +
+            (tokenType === 0
+              ? coinConfig?.underlyingCoinName
+              : coinConfig?.coinName),
+        )
+        return
+      }
       try {
         setIsAdding(true)
         const addAmount = new Decimal(addValue).mul(10 ** decimal).toFixed(0)
@@ -609,6 +632,14 @@ export default function SingleCoin() {
                 }
               />
 
+              {!error && (
+                <p className="text-xs sm:text-sm text-white/60 w-full text-orange-400">
+                  Please at least add {minValue}{" "}
+                  {tokenType === 0
+                    ? coinConfig?.underlyingCoinName
+                    : coinConfig?.coinName}
+                </p>
+              )}
               <ChevronsDown className="size-5 sm:size-6" />
 
               <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
