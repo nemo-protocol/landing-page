@@ -22,6 +22,47 @@ import { useWallet } from "@nemoprotocol/wallet-kit"
 import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 import { Transaction } from "@mysten/sui/transactions"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
+import Loading from "@/components/Loading"
+import { useState } from "react"
+
+interface LoadingButtonProps {
+  loading: boolean
+  disabled: boolean
+  buttonText: string | JSX.Element
+  loadingText: string
+  onClick: () => void
+  className?: string
+}
+
+const LoadingButton = ({
+  onClick,
+  loading,
+  disabled,
+  buttonText,
+  loadingText,
+  className,
+}: LoadingButtonProps) => (
+  <button
+    onClick={onClick}
+    disabled={disabled || loading}
+    className={[
+      "rounded-3xl h-8",
+      loading ? "bg-transparent w-32" : "w-24",
+      !loading &&
+        (disabled ? "bg-[#0F60FF]/50 cursor-not-allowed" : "bg-[#0F60FF]"),
+      className,
+    ].join(" ")}
+  >
+    {loading ? (
+      <div className="flex items-center justify-center gap-2.5">
+        <Loading className="h-4 w-4" />
+        <span className="text-sm whitespace-nowrap">{loadingText}</span>
+      </div>
+    ) : (
+      buttonText
+    )}
+  </button>
+)
 
 interface MobileCardProps {
   item: PortfolioItem
@@ -95,6 +136,8 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   const { data: ptYtData } = useCalculatePtYt(item, marketState)
 
   const { mutateAsync: claimLpRewardMutation } = useClaimLpReward(item)
+
+  const [claimLoading, setClaimLoading] = useState(false)
 
   async function claimLpReward(rewardIndex: number = selectedRewardIndex) {
     if (
@@ -239,34 +282,40 @@ export const MobileCard: React.FC<MobileCardProps> = ({
         },
       ] as ItemType[],
       actions: (
-        <div className="flex gap-2">
-          {Number(item.maturity || Infinity) > Date.now() ? (
-            <>
-              <Link
-                to={`/market/detail/${item.coinType}/${item.maturity}/swap/yt`}
-                className="flex-1"
-              >
-                <button className="w-full rounded-3xl bg-[#00B795] h-7 text-xs text-white">
-                  Buy
-                </button>
-              </Link>
-              <Link
-                to={`/market/detail/${item.coinType}/${item.maturity}/sell/yt`}
-                className="flex-1"
-              >
-                <button className="w-full rounded-3xl bg-[#FF7474] h-7 text-xs text-white">
-                  Sell
-                </button>
-              </Link>
-            </>
-          ) : (
-            <button
-              className="w-full rounded-3xl bg-[#0F60FF] h-7 text-xs text-white"
-              disabled={!isValidAmount(ytBalance)}
+        <div className="flex flex-col gap-2 w-full">
+          <LoadingButton
+            className="w-full text-xs"
+            loading={claimLoading}
+            disabled={Number(item.maturity) > Date.now() || !isValidAmount(ytBalance)}
+            onClick={async () => {
+              try {
+                setClaimLoading(true)
+                await claimLpReward(selectedRewardIndex)
+              } finally {
+                setClaimLoading(false)
+              }
+            }}
+            buttonText="Claim"
+            loadingText="Claiming"
+          />
+          <div className="flex gap-2 w-full">
+            <Link
+              to={`/market/detail/${item.coinType}/${item.maturity}/swap/yt`}
+              className="flex-1"
             >
-              Claim
-            </button>
-          )}
+              <button className="w-full rounded-3xl bg-[#00B795] h-8 text-sm text-white">
+                Buy
+              </button>
+            </Link>
+            <Link
+              to={`/market/detail/${item.coinType}/${item.maturity}/sell/yt`}
+              className="flex-1"
+            >
+              <button className="w-full rounded-3xl bg-[#FF7474] h-8 text-sm text-white">
+                Sell
+              </button>
+            </Link>
+          </div>
         </div>
       ),
     }
