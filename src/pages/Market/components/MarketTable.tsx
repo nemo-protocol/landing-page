@@ -128,13 +128,20 @@ const MarketTable = ({ list }: MarketTableProps) => {
                       <span>Pool APY</span>
                       <div className="flex flex-row items-center gap-1.5">
                         {item.poolApy
-                          ? `${formatLargeNumber(item.poolApy, 6)}%`
+                          ? `${formatLargeNumber(item.poolApy, 2)}%`
                           : "--"}
                         {(item.marketState?.rewardMetrics || []).length > 0 && (
                           <img
                             src="/images/market/gift.png"
                             alt=""
                             className="size-4"
+                          />
+                        )}
+                        {item.perPoints && (
+                          <img
+                            src="/images/png/star.png"
+                            alt=""
+                            className="size-3.5"
                           />
                         )}
                       </div>
@@ -214,14 +221,6 @@ const MarketTable = ({ list }: MarketTableProps) => {
                             </span>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-row items-start justify-between">
-                        <span className="text-sm text-left">Fee APY</span>
-                        <span className="font-mono text-xs">
-                          {item.feeApy
-                            ? `${formatLargeNumber(item.feeApy, 6)}%`
-                            : "--"}
-                        </span>
                       </div>
                       {item.incentives.length > 0 && (
                         <div className="flex flex-col gap-2">
