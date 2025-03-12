@@ -78,13 +78,13 @@ const MarketTable = ({ list }: MarketTableProps) => {
                     <span>
                       {item.ytApy
                         ? Number(item.ytApy) > 0
-                          ? `${formatLargeNumber(item.ytApy, 6)}%`
-                          : `${formatLargeNumber(item.ytApy, 6)}%`
+                          ? `${formatLargeNumber(item.ytApy, 2)}%`
+                          : `${formatLargeNumber(item.ytApy, 2)}%`
                         : "--"}
                     </span>
                     <span className="text-xs text-right">
                       $
-                      {item.ytPrice ? formatLargeNumber(item.ytPrice, 6) : "--"}
+                      {item.ytPrice ? formatLargeNumber(item.ytPrice, 4) : "--"}
                     </span>
                   </div>
                 </div>
@@ -103,12 +103,12 @@ const MarketTable = ({ list }: MarketTableProps) => {
                   <div className="flex flex-col items-end">
                     <span>
                       {item.ptApy
-                        ? `${formatLargeNumber(item.ptApy, 6)}%`
+                        ? `${formatLargeNumber(item.ptApy, 2)}%`
                         : "--"}
                     </span>
                     <span className="text-xs">
                       $
-                      {item.ptPrice ? formatLargeNumber(item.ptPrice, 6) : "--"}
+                      {item.ptPrice ? formatLargeNumber(item.ptPrice, 4) : "--"}
                     </span>
                   </div>
                 </div>

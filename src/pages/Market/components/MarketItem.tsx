@@ -88,11 +88,11 @@ const MarketItem = ({ item }: MarketItemProps) => {
                 <span className="text-white text-sm">YT</span>
                 <div className="flex flex-col items-end">
                   <span className="text-sm text-white">
-                    {item.ytApy ? `${formatLargeNumber(item.ytApy, 6)}%` : "--"}
+                    {item.ytApy ? `${formatLargeNumber(item.ytApy, 2)}%` : "--"}
                   </span>
                   <span className="text-xs text-white">
                     {item.ytPrice
-                      ? `$${formatLargeNumber(item.ytPrice, 6)}`
+                      ? `$${formatLargeNumber(item.ytPrice, 4)}`
                       : "--"}
                   </span>
                 </div>
@@ -108,11 +108,11 @@ const MarketItem = ({ item }: MarketItemProps) => {
                 <span className="text-sm">PT</span>
                 <div className="flex flex-col items-end">
                   <span className="text-sm">
-                    {item.ptApy ? `${formatLargeNumber(item.ptApy, 6)}%` : "--"}
+                    {item.ptApy ? `${formatLargeNumber(item.ptApy, 2)}%` : "--"}
                   </span>
                   <span className="text-xs">
                     {item.ptPrice
-                      ? `$${formatLargeNumber(item.ptPrice, 6)}`
+                      ? `$${formatLargeNumber(item.ptPrice, 4)}`
                       : "--"}
                   </span>
                 </div>
@@ -134,7 +134,7 @@ const MarketItem = ({ item }: MarketItemProps) => {
                   <span>+ POOL APY</span>
                   <div className="flex flex-row items-center gap-1.5">
                     {item.poolApy
-                      ? `${formatLargeNumber(item.poolApy, 6)}%`
+                      ? `${formatLargeNumber(item.poolApy, 2)}%`
                       : "--"}
                     {item.marketState.rewardMetrics?.length ? (
                       <img
