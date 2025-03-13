@@ -6,6 +6,22 @@ import usePortfolio from "@/hooks/usePortfolio"
 import Decimal from "decimal.js"
 import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
+import CountUp from 'react-countup'
+
+// 创建一个滚动数字组件
+const AnimatedNumber = ({ value, className = "" }) => {
+  return (
+    <span className={className}>
+      $<CountUp 
+        end={value} 
+        separator="," 
+        decimals={2}
+        duration={1.5}
+        preserveValue={true}
+      />
+    </span>
+  );
+};
 
 export default function Portfolio() {
   const { data: list, isLoading } = usePortfolioList()
@@ -59,9 +75,10 @@ export default function Portfolio() {
                 <div className="flex items-start justify-between">
                   <div className="flex flex-col gap-1">
                     <span className="text-white/60 text-xs">Current balance</span>
-                    <span className="text-white text-lg">
-                      ${balance.toLocaleString()}
-                    </span>
+                    <AnimatedNumber 
+                      value={balance} 
+                      className="text-white text-lg" 
+                    />
                   </div>
                   <img src="/images/svg/balance.svg" alt="balance" className="size-10" />
                 </div>
@@ -78,9 +95,10 @@ export default function Portfolio() {
                     <span className="text-white/60 text-xs">
                       My Claimable Yield & Rewards
                     </span>
-                    <span className="text-white text-lg">
-                      ${reward.toLocaleString()}
-                    </span>
+                    <AnimatedNumber 
+                      value={reward} 
+                      className="text-white text-lg" 
+                    />
                   </div>
                   <img src="/images/svg/reward.svg" alt="reward" className="size-10" />
                 </div>
@@ -102,9 +120,10 @@ export default function Portfolio() {
                 >
                   <div className="flex flex-col gap-y-2">
                     <span className="text-white/60 text-[10px] sm:text-xs">Current balance</span>
-                    <span className="text-white text-lg sm:text-2xl">
-                      ${balance.toLocaleString()}
-                    </span>
+                    <AnimatedNumber 
+                      value={balance} 
+                      className="text-white text-lg sm:text-2xl" 
+                    />
                   </div>
                   <img src="/images/svg/balance.svg" alt="balance" className="size-[48px] sm:size-[58px]" />
                 </motion.div>
@@ -124,9 +143,10 @@ export default function Portfolio() {
                       My Claimable Yield & Rewards
                     </span>
                     <div className="flex items-center gap-x-2">
-                      <span className="text-white text-lg sm:text-2xl">
-                        ${reward.toLocaleString()}
-                      </span>
+                      <AnimatedNumber 
+                        value={reward} 
+                        className="text-white text-lg sm:text-2xl" 
+                      />
                       <button className="rounded-3xl bg-[#0F60FF] py-1 px-2 text-xs hidden">
                         Claim All
                       </button>
