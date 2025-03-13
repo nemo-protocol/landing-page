@@ -7,11 +7,18 @@ import Decimal from "decimal.js"
 import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
 import CountUp from 'react-countup'
+import { cn } from "@/lib/utils"
 
 // 创建一个滚动数字组件
-const AnimatedNumber = ({ value, className = "" }) => {
+const AnimatedNumber = ({ 
+  value,
+  className = "" 
+}: {
+  value: number;
+  className?: string;
+}) => {
   return (
-    <span className={className}>
+    <span className={cn(className)}>
       $<CountUp 
         end={value} 
         separator="," 
