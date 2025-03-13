@@ -109,8 +109,6 @@ export default function Sell() {
                     pyPositions: pyPositionData,
                   })
 
-            console.log("outputValue", outputValue)
-
             const targetValue = new Decimal(outputValue)
               .mul(
                 receivingType === "underlying" && tokenType === "yt"

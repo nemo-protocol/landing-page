@@ -23,7 +23,15 @@ import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 import { Transaction } from "@mysten/sui/transactions"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import Loading from "@/components/Loading"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import usePortfolio from "@/hooks/usePortfolio"
+import {
+  burnSCoin,
+  redeemSyCoin,
+  getPriceVoucher,
+  initPyPosition,
+} from "@/lib/txHelper"
+import { debugLog } from "@/config"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -105,6 +113,8 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
   const { address } = useWallet()
+  const { updatePortfolio } = usePortfolio()
+  const isConnected = !!address
   const ptBalance = pyPositionsMap?.[item.id]?.ptBalance
   const ytBalance = pyPositionsMap?.[item.id]?.ytBalance
   const lpBalance = lpPositionsMap?.[item.id]?.lpBalance
@@ -139,6 +149,114 @@ export const MobileCard: React.FC<MobileCardProps> = ({
 
   const [claimLoading, setClaimLoading] = useState(false)
 
+  // Add portfolio update effect
+  useEffect(() => {
+    if (isConnected) {
+      updatePortfolio(
+        item.id,
+        new Decimal(ptBalance || 0)
+          .mul(
+            ptYtData?.ptPrice && isValidAmount(ptYtData?.ptPrice)
+              ? ptYtData.ptPrice
+              : 0,
+          )
+          .add(
+            new Decimal(ytBalance || 0).mul(
+              ptYtData?.ytPrice && isValidAmount(ptYtData?.ytPrice)
+                ? ptYtData.ytPrice
+                : 0,
+            ),
+          )
+          .add(
+            new Decimal(lpBalance || 0).mul(
+              ptYtData?.lpPrice && isValidAmount(ptYtData?.lpPrice)
+                ? ptYtData.lpPrice
+                : 0,
+            ),
+          )
+          .toNumber(),
+        new Decimal(ytReward && isValidAmount(ytReward) ? ytReward : "0")
+          .mul(item?.underlyingPrice ?? 0)
+          .toNumber(),
+      )
+    }
+  }, [
+    ytReward,
+    ptBalance,
+    ytBalance,
+    lpBalance,
+    isConnected,
+    item.id,
+    updatePortfolio,
+    ptYtData?.ptPrice,
+    ptYtData?.lpPrice,
+    ptYtData?.ytPrice,
+    item.coinPrice,
+    item.underlyingPrice,
+  ])
+
+  async function claimYtReward() {
+    if (item?.coinType && address && ytBalance) {
+      try {
+        const tx = new Transaction()
+
+        let pyPosition
+        let created = false
+        if (!pyPositionsMap?.[item.id]?.pyPositions?.length) {
+          created = true
+          pyPosition = initPyPosition(tx, item)
+        } else {
+          pyPosition = tx.object(pyPositionsMap[item.id].pyPositions[0].id)
+        }
+
+        const [priceVoucher] = getPriceVoucher(tx, item)
+
+        const redeemMoveCall = {
+          target: `${item?.nemoContractId}::yield_factory::redeem_due_interest`,
+          arguments: [
+            address,
+            "pyPosition",
+            item?.pyStateId,
+            "priceVoucher",
+            item?.yieldFactoryConfigId,
+            "0x6",
+          ],
+          typeArguments: [item?.syCoinType],
+        }
+        debugLog("redeem_due_interest move call:", redeemMoveCall)
+
+        const [syCoin] = tx.moveCall({
+          ...redeemMoveCall,
+          arguments: [
+            tx.object(item.version),
+            pyPosition,
+            tx.object(item?.pyStateId),
+            priceVoucher,
+            tx.object(item?.yieldFactoryConfigId),
+            tx.object("0x6"),
+          ],
+        })
+
+        const yieldToken = redeemSyCoin(tx, item, syCoin)
+        const underlyingCoin = burnSCoin(tx, item, yieldToken)
+        tx.transferObjects([underlyingCoin], address)
+
+        if (created) {
+          tx.transferObjects([pyPosition], address)
+        }
+
+        const { digest } = await signAndExecuteTransaction({
+          transaction: tx,
+        })
+
+        console.log("Claim successful:", digest)
+        await refetchYtReward()
+      } catch (error) {
+        console.error("Claim failed:", error)
+      }
+    }
+  }
+
   async function claimLpReward(rewardIndex: number = selectedRewardIndex) {
     if (
       item.coinType &&
@@ -159,7 +277,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
         const { digest } = await signAndExecuteTransaction({
           transaction: tx,
         })
-        // 处理成功逻辑
+
         console.log("Claim successful:", digest)
         await refetchLpReward()
       } catch (error) {
@@ -286,11 +404,11 @@ export const MobileCard: React.FC<MobileCardProps> = ({
           <LoadingButton
             className="w-full text-xs"
             loading={claimLoading}
-            disabled={Number(item.maturity) > Date.now() || !isValidAmount(ytBalance)}
+            disabled={!isValidAmount(ytReward) || !isValidAmount(ytBalance)}
             onClick={async () => {
               try {
                 setClaimLoading(true)
-                await claimLpReward(selectedRewardIndex)
+                await claimYtReward()
               } finally {
                 setClaimLoading(false)
               }
