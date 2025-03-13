@@ -16,13 +16,13 @@ import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
 
 interface SellPtParams {
-  sellValue: string
-  receivingType: "underlying" | "sy"
-  pyPositions?: PyPosition[]
   minSyOut: string
+  ptAmount: string
+  pyPositions?: PyPosition[]
+  receivingType: "underlying" | "sy"
 }
 
-type Result = { outputValue: string; syAmount: string }
+type Result = { outputValue: string; outputAmount: string; syAmount: string }
 
 type DryRunResult<T extends boolean> = T extends true
   ? [Result, DebugInfo]
@@ -38,7 +38,7 @@ export default function useSellPtDryRun<T extends boolean = false>(
   return useMutation({
     mutationFn: async ({
       minSyOut,
-      sellValue,
+      ptAmount,
       receivingType,
       pyPositions: inputPyPositions,
     }: SellPtParams): Promise<DryRunResult<T>> => {
@@ -66,7 +66,7 @@ export default function useSellPtDryRun<T extends boolean = false>(
       const [syCoin, moveCallInfo] = swapExactPtForSy(
         tx,
         coinConfig,
-        sellValue,
+        ptAmount,
         pyPosition,
         priceVoucher,
         minSyOut,
@@ -83,7 +83,12 @@ export default function useSellPtDryRun<T extends boolean = false>(
           typeArguments: [coinConfig.underlyingCoinType],
         })
       } else {
-        tx.transferObjects([yieldToken], address)
+        // tx.transferObjects([yieldToken], address)
+        tx.moveCall({
+          target: `0x2::coin::value`,
+          arguments: [yieldToken],
+          typeArguments: [coinConfig.coinType],
+        })
       }
 
       if (created) {
@@ -102,8 +107,6 @@ export default function useSellPtDryRun<T extends boolean = false>(
         }),
       })
 
-      console.log("result", result)
-
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
@@ -113,26 +116,25 @@ export default function useSellPtDryRun<T extends boolean = false>(
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.events?.[1]?.parsedJson) {
+      if (
+        result.results[result.results.length - 1].returnValues[0][1] !== "u64"
+      ) {
+        const message = "Failed to get output amount"
+        debugInfo.rawResult.error = message
+        throw new ContractError(message, debugInfo)
+      }
+
+      if (!result.events[1].parsedJson.amount_out) {
         const message = "Failed to get sy amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      if (!result?.events?.[result.events.length - 1]?.parsedJson) {
-        const message = "Failed to get sell PT data"
-        debugInfo.rawResult.error = message
-        throw new ContractError(message, debugInfo)
-      }
-
-      const outputAmount =
-        receivingType === "underlying"
-          ? bcs.U64.parse(
-              new Uint8Array(
-                result.results[result.results.length - 1].returnValues[0][0],
-              ),
-            )
-          : result.events[result.events.length - 1].parsedJson.amount_out
+      const outputAmount = bcs.U64.parse(
+        new Uint8Array(
+          result.results[result.results.length - 1].returnValues[0][0],
+        ),
+      )
 
       const syAmount = result.events[1].parsedJson.amount_out
 
@@ -140,15 +142,13 @@ export default function useSellPtDryRun<T extends boolean = false>(
 
       const outputValue = new Decimal(outputAmount)
         .div(10 ** decimal)
-        .toString()
+        .toFixed(decimal)
 
       debugInfo.parsedOutput = outputValue
 
-      return (
-        debug
-          ? [{ outputValue, syAmount }, debugInfo]
-          : { outputValue, syAmount }
-      ) as DryRunResult<T>
+      const resultObj = { outputValue, outputAmount, syAmount }
+
+      return (debug ? [resultObj, debugInfo] : resultObj) as DryRunResult<T>
     },
   })
 }

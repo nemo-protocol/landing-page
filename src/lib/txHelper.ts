@@ -703,11 +703,7 @@ export const burnSCoin = (
     case "AlphaFi": {
       const redeemMoveCall = {
         target: `${ALPAHFI.PACKAGE_ID}::liquid_staking::redeem`,
-        arguments: [
-          ALPAHFI.LIQUID_STAKING_INFO,
-          sCoin,
-          "0x5",
-        ],
+        arguments: [ALPAHFI.LIQUID_STAKING_INFO, sCoin, "0x5"],
         typeArguments: [coinConfig.coinType],
       }
       debugLog(`alphaFi redeem move call:`, redeemMoveCall)
@@ -987,7 +983,7 @@ export const burnLp = (
 export const swapExactPtForSy = <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
-  redeemValue: string,
+  ptAmount: string,
   pyPosition: TransactionArgument,
   priceVoucher: TransactionArgument,
   minSyOut: string,
@@ -997,12 +993,7 @@ export const swapExactPtForSy = <T extends boolean = false>(
     target: `${coinConfig.nemoContractId}::market::swap_exact_pt_for_sy`,
     arguments: [
       { name: "version", value: coinConfig.version },
-      {
-        name: "pt_amount",
-        value: new Decimal(redeemValue)
-          .mul(10 ** Number(coinConfig.decimal))
-          .toFixed(0),
-      },
+      { name: "pt_amount", value: ptAmount },
       { name: "min_sy_out", value: minSyOut },
       { name: "py_position", value: "pyPosition" },
       { name: "py_state", value: coinConfig.pyStateId },
@@ -1023,11 +1014,7 @@ export const swapExactPtForSy = <T extends boolean = false>(
     target: debugInfo.target,
     arguments: [
       tx.object(coinConfig.version),
-      tx.pure.u64(
-        new Decimal(redeemValue)
-          .mul(10 ** Number(coinConfig.decimal))
-          .toFixed(0),
-      ),
+      tx.pure.u64(ptAmount),
       tx.pure.u64(minSyOut),
       pyPosition,
       tx.object(coinConfig.pyStateId),

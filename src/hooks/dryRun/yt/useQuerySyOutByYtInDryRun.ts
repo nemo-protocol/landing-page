@@ -94,6 +94,8 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
         }),
       })
 
+      console.log("result", result)
+
       // Record raw result
       debugInfo.rawResult = {
         error: result?.error,
@@ -104,8 +106,10 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.results?.[1]?.returnValues?.[0]) {
-        const message = "Failed to get SY amount"
+      if (
+        result.results[result.results.length - 1].returnValues[0][1] !== "u64"
+      ) {
+        const message = "Failed to get sy amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }

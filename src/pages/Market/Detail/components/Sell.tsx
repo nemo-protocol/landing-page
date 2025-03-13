@@ -96,27 +96,31 @@ export default function Sell() {
         if (isValidAmount(value) && decimal && coinConfig?.conversionRate) {
           // TODO: optimize this code to be more efficient
           try {
-            const ytAmount = new Decimal(value).mul(10 ** decimal).toString()
+            const inputAmount = new Decimal(value).mul(10 ** decimal).toString()
             const { outputValue } =
               tokenType === "yt"
-                ? await querySyOutByYtIn({ ytAmount }).then(({ syAmount }) => ({
-                    outputValue: syAmount,
+                ? await querySyOutByYtIn({
+                    ytAmount: inputAmount,
+                  }).then(({ syValue }) => ({
+                    outputValue: syValue,
                   }))
                 : await sellPtDryRun({
                     minSyOut: "0",
                     receivingType,
-                    sellValue: value,
+                    ptAmount: inputAmount,
                     pyPositions: pyPositionData,
                   })
 
-            const targetValue = new Decimal(outputValue)
-              .mul(
-                receivingType === "underlying" && tokenType === "yt"
-                  ? coinConfig.conversionRate
-                  : 1,
-              )
-              .div(10 ** decimal)
-              .toFixed(decimal)
+            const targetValue =
+              tokenType === "yt"
+                ? new Decimal(outputValue)
+                    .mul(
+                      receivingType === "underlying" && tokenType === "yt"
+                        ? coinConfig.conversionRate
+                        : 1,
+                    )
+                    .toFixed(decimal)
+                : outputValue
 
             setTargetValue(targetValue)
 
@@ -209,16 +213,18 @@ export default function Sell() {
 
         const [priceVoucher] = getPriceVoucher(tx, coinConfig)
 
-        const ytAmount = new Decimal(redeemValue).mul(10 ** decimal).toString()
+        const inputAmount = new Decimal(redeemValue)
+          .mul(10 ** decimal)
+          .toString()
 
         // 计算预期输出
         const { syAmount } = await (tokenType === "yt"
-          ? querySyOutByYtIn({ ytAmount })
+          ? querySyOutByYtIn({ ytAmount: inputAmount })
           : sellPtDryRun({
-              receivingType,
-              sellValue: redeemValue,
-              pyPositions: pyPositionData,
               minSyOut: "0",
+              receivingType,
+              ptAmount: inputAmount,
+              pyPositions: pyPositionData,
             }))
 
         console.log("swap_exact_pt_for_sy", "syAmount", syAmount)
