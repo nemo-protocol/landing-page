@@ -45,52 +45,54 @@ export default function Home() {
           <Header />
         </div>
       </div>
-      <div className="py-10 relative px-6 xl:px-0 xl:max-w-[1200px] xl:mx-auto">
+      <div className="py-6 sm:py-10 relative px-4 sm:px-6 xl:px-0 xl:max-w-[1200px] xl:mx-auto">
         <h3
           onClick={() => navigate("/market")}
-          className="text-lg text-white flex items-center gap-x-2 cursor-pointer"
+          className="text-base sm:text-lg text-white flex items-center gap-x-2 cursor-pointer"
         >
-          <ArrowLeft />
+          <ArrowLeft className="size-4 sm:size-5" />
           <span>Back</span>
         </h3>
-        <div className="mt-9 flex xl:flex-row flex-col gap-x-8 justify-center">
+        <div className="mt-6 sm:mt-9 flex xl:flex-row flex-col gap-6 xl:gap-x-8 justify-center">
           <Mint />
-          <div className="grow flex xl:flex-col flex-col-reverse gap-y-5 hidden">
-            <div className="w-full md:px-10 md:py-6 flex items-center justify-between bg-[#0E0F16] rounded-3xl flex-col md:flex-row gap-y-5 md:gap-y-0">
-              <div className="flex items-center gap-x-4 w-full md:w-auto">
-                <img src="/images/svg/sSUI.svg" alt="" className="size-[60px]" />
+          <div className="grow flex xl:flex-col flex-col-reverse gap-y-4 sm:gap-y-5 hidden">
+            <div className="w-full p-4 sm:px-10 sm:py-6 flex items-start sm:items-center justify-between bg-[#0E0F16] rounded-2xl sm:rounded-3xl flex-col sm:flex-row gap-y-4 sm:gap-y-0">
+              <div className="flex items-center gap-x-4 w-full sm:w-auto">
+                <img src="/images/svg/sSUI.svg" alt="" className="size-[48px] sm:size-[60px]" />
                 <div className="flex flex-col">
-                  <span className="text-white text-lg">PT sSUI</span>
+                  <span className="text-white text-base sm:text-lg">PT sSUI</span>
                   <span className="text-white text-xs">
                     28 Aug 2024 <span className="text-[#2DF4DD]">41 DAYS</span>
                   </span>
                 </div>
               </div>
-              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
-                <span className="text-white text-lg">$232,523,76.36</span>
-                <span className="text-white/50 text-xs">TVL</span>
-              </div>
-              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
-                <span className="text-white text-lg">Apr 24 2025</span>
-                <span className="text-white/50 text-xs">Maturity</span>
-              </div>
-              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
-                <span className="text-white text-lg">3.56%</span>
-                <span className="text-white/50 text-xs">Underlying APY</span>
-              </div>
-              <div className="flex flex-row-reverse md:flex-col gap-y-2 items-center justify-between md:justify-center w-full md:w-auto">
-                <span className="text-white text-lg">6.66%</span>
-                <span className="text-white/50 text-xs">Fixed APY</span>
+              <div className="grid grid-cols-2 sm:flex sm:flex-row gap-4 sm:gap-x-8 w-full sm:w-auto">
+                <div className="flex flex-col gap-y-1 sm:gap-y-2 items-start sm:items-center justify-center">
+                  <span className="text-white text-base sm:text-lg">$232,523,76.36</span>
+                  <span className="text-white/50 text-xs">TVL</span>
+                </div>
+                <div className="flex flex-col gap-y-1 sm:gap-y-2 items-start sm:items-center justify-center">
+                  <span className="text-white text-base sm:text-lg">Apr 24 2025</span>
+                  <span className="text-white/50 text-xs">Maturity</span>
+                </div>
+                <div className="flex flex-col gap-y-1 sm:gap-y-2 items-start sm:items-center justify-center">
+                  <span className="text-white text-base sm:text-lg">3.56%</span>
+                  <span className="text-white/50 text-xs">Underlying APY</span>
+                </div>
+                <div className="flex flex-col gap-y-1 sm:gap-y-2 items-start sm:items-center justify-center">
+                  <span className="text-white text-base sm:text-lg">6.66%</span>
+                  <span className="text-white/50 text-xs">Fixed APY</span>
+                </div>
               </div>
             </div>
-            <div className="bg-[#0E0F16] rounded-3xl md:p-7.5">
+            <div className="bg-[#0E0F16] rounded-2xl sm:rounded-3xl p-4 sm:p-7.5">
               <div>
-                <div className="flex items-center gap-x-7">
+                <div className="flex items-center gap-x-5 sm:gap-x-7">
                   <span
                     onClick={() => setTab("Details")}
                     className={[
                       tab === "Details" ? "text-white" : "text-white/40",
-                      "cursor-pointer",
+                      "cursor-pointer text-sm sm:text-base",
                     ].join(" ")}
                   >
                     Details
@@ -99,19 +101,19 @@ export default function Home() {
                     onClick={() => setTab("Calculator")}
                     className={[
                       tab === "Calculator" ? "text-white" : "text-white/40",
-                      "cursor-pointer",
+                      "cursor-pointer text-sm sm:text-base",
                     ].join(" ")}
                   >
                     Calculator
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-x-4 mt-7">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-y-4 sm:gap-y-0 mt-4 sm:mt-7">
+                  <div className="flex items-center gap-x-3 sm:gap-x-4">
                     <span
                       onClick={() => setTimeRange("1h")}
                       className={[
-                        timeRange === "1h" ? "rounded-[20px] bg-[#1E212B]" : "",
-                        "py-1 px-2 cursor-pointer",
+                        timeRange === "1h" ? "rounded-[16px] sm:rounded-[20px] bg-[#1E212B]" : "",
+                        "py-1 px-2 cursor-pointer text-sm",
                       ].join(" ")}
                     >
                       1h
@@ -119,8 +121,8 @@ export default function Home() {
                     <span
                       onClick={() => setTimeRange("1D")}
                       className={[
-                        timeRange === "1D" ? "rounded-[20px] bg-[#1E212B]" : "",
-                        "py-1 px-2 cursor-pointer",
+                        timeRange === "1D" ? "rounded-[16px] sm:rounded-[20px] bg-[#1E212B]" : "",
+                        "py-1 px-2 cursor-pointer text-sm",
                       ].join(" ")}
                     >
                       1D
@@ -128,19 +130,19 @@ export default function Home() {
                     <span
                       onClick={() => setTimeRange("1W")}
                       className={[
-                        timeRange === "1W" ? "rounded-[20px] bg-[#1E212B]" : "",
-                        "py-1 px-2 cursor-pointer",
+                        timeRange === "1W" ? "rounded-[16px] sm:rounded-[20px] bg-[#1E212B]" : "",
+                        "py-1 px-2 cursor-pointer text-sm",
                       ].join(" ")}
                     >
                       1W
                     </span>
                   </div>
-                  <div className="bg-[#242632] rounded-[30px] text-sm">
+                  <div className="bg-[#242632] rounded-[24px] sm:rounded-[30px] text-xs sm:text-sm">
                     <span
                       onClick={() => setType("APY")}
                       className={[
-                        type === "APY" && "bg-[#0F60FF] rounded-[30px]",
-                        "py-1 px-3.5 cursor-pointer",
+                        type === "APY" && "bg-[#0F60FF] rounded-[24px] sm:rounded-[30px]",
+                        "py-1 px-2.5 sm:px-3.5 cursor-pointer",
                       ].join(" ")}
                     >
                       APY
@@ -148,8 +150,8 @@ export default function Home() {
                     <span
                       onClick={() => setType("Price")}
                       className={[
-                        type === "Price" && "bg-[#0F60FF] rounded-[30px]",
-                        "py-1 px-3.5 cursor-pointer",
+                        type === "Price" && "bg-[#0F60FF] rounded-[24px] sm:rounded-[30px]",
+                        "py-1 px-2.5 sm:px-3.5 cursor-pointer",
                       ].join(" ")}
                     >
                       Price
@@ -157,7 +159,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <ChartContainer config={chartConfig} className="mt-14">
+              <ChartContainer config={chartConfig} className="mt-8 sm:mt-14">
                 <LineChart
                   accessibilityLayer
                   data={chartData}
