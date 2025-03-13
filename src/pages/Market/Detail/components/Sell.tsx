@@ -109,14 +109,18 @@ export default function Sell() {
                     pyPositions: pyPositionData,
                   })
 
-            const syAmount = new Decimal(outputValue)
+            console.log("outputValue", outputValue)
+
+            const targetValue = new Decimal(outputValue)
               .mul(
                 receivingType === "underlying" && tokenType === "yt"
                   ? coinConfig.conversionRate
                   : 1,
               )
-              .toString()
-            setTargetValue(syAmount)
+              .div(10 ** decimal)
+              .toFixed(decimal)
+
+            setTargetValue(targetValue)
 
             setError(undefined)
           } catch (errorMsg) {
