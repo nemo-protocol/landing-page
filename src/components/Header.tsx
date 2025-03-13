@@ -35,8 +35,9 @@ export default function Header({ className }: { className?: string }) {
   return (
     <header className={cn("h-16 shrink-0", className)}>
       <div className=" w-full h-full mx-auto flex items-center justify-between text-xs">
-        <Link to="/" className="flex gap-x-2">
+        <Link to="/" className="flex gap-x-2 items-center">
           <img src="/images/svg/logo.svg" alt="logo" className="w-30 h-auto" />
+          <span className="text-[#44E0C3] border border-[#44E0C3] py-1 px-2 rounded-full text-xs scale-75 origin-left">Beta</span>
         </Link>
 
         <ul className="md:flex items-center text-sm hidden h-full">

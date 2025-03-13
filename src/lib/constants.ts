@@ -106,6 +106,12 @@ export const SCALLOP = {
       treasury:
         "0x58bdf6a9752e3a60144d0b70e8608d630dfd971513e2b2bfa7282f5eaa7d04d8",
     },
+    {
+      coinType:
+        "0xd285cbbf54c87fd93cd15227547467bb3e405da8bbf2ab99f83f323f88ac9a65::scallop_usdy::SCALLOP_USDY",
+      treasury:
+        "0xc8c5339fb10d9ad96f235fb312bda54df351549a3302e7fa7fd5d1725481604f",
+    },
   ],
 } as const
 
@@ -140,7 +146,8 @@ export function getTreasury(coinType: string) {
   return treasury
 }
 
-export const DEFAULT_Address = '0x0000000000000000000000000000000000000000000000000000000000000001'
+export const DEFAULT_Address =
+  "0x0000000000000000000000000000000000000000000000000000000000000001"
 
 export const SSBUCK = {
   VAULT: "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
@@ -151,14 +158,18 @@ export const Time = {
 } as const
 
 export const ALPAHFI = {
-  PACKAGE_ID: "0x059f94b85c07eb74d2847f8255d8cc0a67c9a8dcc039eabf9f8b9e23a0de2700",
-  LIQUID_STAKING_INFO: "0x1adb343ab351458e151bc392fbf1558b3332467f23bda45ae67cd355a57fd5f5",
+  PACKAGE_ID:
+    "0x059f94b85c07eb74d2847f8255d8cc0a67c9a8dcc039eabf9f8b9e23a0de2700",
+  LIQUID_STAKING_INFO:
+    "0x1adb343ab351458e151bc392fbf1558b3332467f23bda45ae67cd355a57fd5f5",
 } as const
 
 export const SPRING_SUI = {
-  LIQUID_STAKING_INFO: "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b",
+  LIQUID_STAKING_INFO:
+    "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b",
 } as const
 
 export const HAEDAL = {
-  HAEDAL_STAKING_ID: "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
+  HAEDAL_STAKING_ID:
+    "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
 } as const
