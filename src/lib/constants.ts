@@ -112,6 +112,36 @@ export const SCALLOP = {
       treasury:
         "0xc8c5339fb10d9ad96f235fb312bda54df351549a3302e7fa7fd5d1725481604f",
     },
+    {
+      coinType:
+        "0x6711551c1e7652a270d9fbf0eee25d99594c157cde3cb5fbb49035eb59b1b001::scallop_fdusd::SCALLOP_FDUSD",
+      treasury:
+        "0xdad9bc6293e694f67a5274ea51b596e0bdabfafc585ae6d7e82888e65f1a03e0",
+    },
+    {
+      coinType:
+        "0x0a228d1c59071eccf3716076a1f71216846ee256d9fb07ea11fb7c1eb56435a5::scallop_musd::SCALLOP_MUSD",
+      treasury:
+        "0xadfd554635ccc87e992f23ca838f0f16c14874e324a1b79b77f6bfe118edea9f",
+    },
+    {
+      coinType:
+        "0x9a2376943f7d22f88087c259c5889925f332ca4347e669dc37d54c2bf651af3c::scallop_ha_sui::SCALLOP_HA_SUI",
+      treasury:
+        "0x404ccc1404d74a90eb6f9c9d4b6cda6d417fb03189f80d9070a35e5dab1df0f5",
+    },
+    {
+      coinType:
+        "0x00671b1fa2a124f5be8bdae8b91ee711462c5d9e31bda232e70fd9607b523c88::scallop_af_sui::SCALLOP_AF_SUI",
+      treasury:
+        "0x55f4dfe9e40bc4cc11c70fcb1f3daefa2bdc330567c58d4f0792fbd9f9175a62",
+    },
+    {
+      coinType:
+        "0xe1a1cc6bcf0001a015eab84bcc6713393ce20535f55b8b6f35c142e057a25fbe::scallop_v_sui::SCALLOP_V_SUI",
+      treasury:
+        "0xc06688ee1af25abc286ffb1d18ce273d1d5907cd1064c25f4e8ca61ea989c1d1",
+    },
   ],
 } as const
 
