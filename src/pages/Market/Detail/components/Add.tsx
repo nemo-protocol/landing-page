@@ -694,8 +694,6 @@ export default function SingleCoin() {
                 </div>
               </div>
 
-              <span>ratio:{ratio}</span>
-
               <TradeInfo
                 ratio={ratio}
                 slippage={slippage}
