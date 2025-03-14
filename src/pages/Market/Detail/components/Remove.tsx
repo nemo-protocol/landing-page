@@ -106,12 +106,15 @@ export default function Remove() {
           setIsInputLoading(true)
           try {
             const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
+
             const [{ syAmount: ptToSy }] =
               await swapExactPtForSyDryRun(ptAmount)
+
             const syValue = new Decimal(syAmount)
               .add(ptToSy)
               .div(10 ** decimal)
-              .toString()
+              .toFixed(decimal)
+
             setTargetValue(syValue)
           } catch (error) {
             const [{ syAmount, ptAmount }] = await burnLpDryRun(value)

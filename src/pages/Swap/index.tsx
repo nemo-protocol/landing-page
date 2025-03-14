@@ -13,11 +13,11 @@ const SwapPage: FC = () => {
         </div>
       </div>
       <div className="w-full flex items-center justify-center">
-        <WalletProvider>
+        <WalletProvider autoConnect>
           <CetusSwap
             initProps={{
-              displayMode: "Integrated",
               independentWallet: true,
+              displayMode: "Integrated",
             }}
           />
         </WalletProvider>

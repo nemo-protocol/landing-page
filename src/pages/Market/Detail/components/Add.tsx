@@ -181,11 +181,7 @@ export default function SingleCoin() {
   )
 
   const btnDisabled = useMemo(() => {
-    return (
-      !isValidAmount(addValue) ||
-      insufficientBalance ||
-      isCalculating 
-    )
+    return !isValidAmount(addValue) || insufficientBalance || isCalculating
   }, [addValue, insufficientBalance, isCalculating])
 
   const btnText = useMemo(() => {
@@ -697,6 +693,8 @@ export default function SingleCoin() {
                   </span>
                 </div>
               </div>
+
+              <span>ratio:{ratio}</span>
 
               <TradeInfo
                 ratio={ratio}

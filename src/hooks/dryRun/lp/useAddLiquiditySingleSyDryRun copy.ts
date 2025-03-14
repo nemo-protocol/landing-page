@@ -1,4 +1,5 @@
 import Decimal from "decimal.js"
+import { bcs } from "@mysten/sui/bcs"
 import { ContractError } from "../../types"
 import { useMutation } from "@tanstack/react-query"
 import type { CoinData } from "@/hooks/useCoinData"
@@ -7,10 +8,9 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo, PyPosition } from "../../types"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchPyPosition from "../../useFetchPyPosition"
-import { initPyPosition } from "@/lib/txHelper"
+import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
 import useGetConversionRateDryRun from "../useGetConversionRateDryRun"
-import { formatDecimalValue } from "@/lib/utils"
-import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
+import { safeDivide } from "@/lib/utils"
 
 interface AddLiquiditySingleSyParams {
   addAmount: string
@@ -36,10 +36,6 @@ export default function useAddLiquiditySingleSyDryRun<
   const { address } = useWallet()
   const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
   const { mutateAsync: getConversionRate } = useGetConversionRateDryRun(true)
-  const { mutateAsync: addLiquiditySingleSy } = useAddLiquiditySingleSy(
-    coinConfig,
-    true,
-  )
 
   return useMutation({
     mutationFn: async ({
@@ -60,6 +56,11 @@ export default function useAddLiquiditySingleSyDryRun<
 
       const [rate] = await getConversionRate(coinConfig)
 
+      const syAmount =
+        tokenType === 0
+          ? safeDivide(addAmount, rate, "decimal").toFixed(0)
+          : addAmount
+
       const [pyPositions] = (
         inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
       ) as [PyPosition[]]
@@ -76,29 +77,51 @@ export default function useAddLiquiditySingleSyDryRun<
         pyPosition = tx.object(pyPositions[0].id)
       }
 
-      // 构造 minLpAmount，在干运行中设为 0
-      const minLpAmount = "0"
-
-      // 调用 useAddLiquiditySingleSy 中的逻辑
-      const addLiquiditySingleSyDebugInfo = await addLiquiditySingleSy({
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
         tx,
-        address,
-        coinData,
-        addAmount,
-        tokenType,
-        pyPosition,
         coinConfig,
-        minLpAmount,
-        conversionRate: rate,
-        coinType: coinConfig.coinType,
+      )
+
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::router::get_lp_out_for_single_sy_in`,
+        arguments: [
+          { name: "sy_coin_in", value: syAmount },
+          { name: "price_voucher", value: "priceVoucher" },
+          { name: "py_state", value: coinConfig.pyStateId },
+          {
+            name: "market_factory_config",
+            value: coinConfig.marketFactoryConfigId,
+          },
+          { name: "market_state", value: coinConfig.marketStateId },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
+
+      console.log("addLiquiditySingleSyDryRun moveCallInfo", moveCallInfo)
+
+
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherMoveCall, moveCallInfo],
+      }
+
+      tx.moveCall({
+        target: moveCallInfo.target,
+        arguments: [
+          tx.pure.u64(syAmount),
+          priceVoucher,
+          tx.object(coinConfig.pyStateId),
+          tx.object(coinConfig.marketFactoryConfigId),
+          tx.object(coinConfig.marketStateId),
+          tx.object("0x6"),
+        ],
+        typeArguments: [coinConfig.syCoinType],
       })
 
-      // 如果创建了新的 pyPosition，需要将其转移给用户
       if (created) {
         tx.transferObjects([pyPosition], address)
       }
 
-      // 执行干运行
       const result = await client.devInspectTransactionBlock({
         sender: address,
         transactionBlock: await tx.build({
@@ -107,43 +130,24 @@ export default function useAddLiquiditySingleSyDryRun<
         }),
       })
 
-      // 创建 debugInfo 对象
-      const debugInfo: DebugInfo = {
-        moveCall: addLiquiditySingleSyDebugInfo?.moveCall || [],
-        rawResult: {
-          error: result?.error,
-          results: result?.results,
-        },
-        parsedOutput: "",
+      debugInfo.rawResult = {
+        error: result?.error,
+        results: result?.results,
       }
 
-      // 检查结果
-      if (!result?.events?.[result.events.length - 1]?.parsedJson?.lp_amount) {
-        const message = "Failed to get lp amount"
-        // 更新 error 信息
-        debugInfo.rawResult = {
-          ...debugInfo.rawResult,
-          error: message,
-        }
+      if (!result?.results?.[1]?.returnValues?.[0]) {
+        const message = "Failed to get add liquidity data"
+        debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      // 检查结果
-      if (!result?.events?.[result.events.length - 2]?.parsedJson?.reserve_fee?.value) {
-        const message = "Failed to get reserve fee"
-        // 更新 error 信息
-        debugInfo.rawResult = {
-          ...debugInfo.rawResult,
-          error: message,
-        }
-        throw new ContractError(message, debugInfo)
-      }
+      const index = created ? 2 : 1
 
       console.log("useAddLiquiditySingleSyDryRun result", result)
 
-      // 解析 LP 数量
-      const lpAmount =
-        result?.events?.[result.events.length - 1]?.parsedJson?.lp_amount
+      const lpAmount = bcs.U64.parse(
+        new Uint8Array(result.results[index].returnValues[0][0]),
+      )
 
       console.log("useAddLiquiditySingleSyDryRun lpAmount", lpAmount)
 
@@ -153,23 +157,21 @@ export default function useAddLiquiditySingleSyDryRun<
         .div(10 ** decimal)
         .toFixed(decimal)
 
-      // 在干运行中，我们不能直接获取 tradeFee，设置为 0
-      const tradeFee = formatDecimalValue(
-        new Decimal(result?.events?.[result.events.length - 2]?.parsedJson?.reserve_fee?.value)
-          .div(2 ** 64)
-          .div(10 ** decimal),
-        decimal,
+      const tradeFeeAmount = bcs.U128.parse(
+        new Uint8Array(result.results[index].returnValues[1][0]),
       )
 
-      console.log("useAddLiquiditySingleSyDryRun tradeFee", tradeFee)
+      const tradeFee = new Decimal(tradeFeeAmount)
+        .div(2 ** 64)
+        .div(10 ** decimal)
+        .toString()
 
-      // 更新 parsedOutput
-      debugInfo.parsedOutput = `${lpAmount}`
+      debugInfo.parsedOutput = `${lpAmount} ${tradeFeeAmount}`
 
       return (
         debug
-          ? [{ lpAmount: lpAmount.toString(), tradeFee, lpValue }, debugInfo]
-          : { lpAmount: lpAmount.toString(), tradeFee, lpValue }
+          ? [{ lpAmount, tradeFee, lpValue }, debugInfo]
+          : { lpAmount, tradeFee, lpValue }
       ) as DryRunResult<T>
     },
   })
