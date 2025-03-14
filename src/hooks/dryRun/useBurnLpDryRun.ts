@@ -15,24 +15,27 @@ type BurnLpResult = {
 }
 
 export default function useBurnLpDryRun(
-  coinConfig?: CoinConfig,
+  outerCoinConfig?: CoinConfig,
   debug: boolean = false,
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
-  const { mutateAsync: fetchLpPositionAsync } = useFetchLpPosition(coinConfig)
-  const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
+  const { mutateAsync: fetchLpPositionAsync } =
+    useFetchLpPosition(outerCoinConfig)
+  const { mutateAsync: fetchPyPositionAsync } =
+    useFetchPyPosition(outerCoinConfig)
 
   return useMutation({
     mutationFn: async (
       lpValue: string,
-      config?: CoinConfig,
+      innerConfig?: CoinConfig,
     ): Promise<[BurnLpResult] | [BurnLpResult, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
-      const effectiveConfig = config || coinConfig
-      if (!effectiveConfig) {
+
+      const coinConfig = innerConfig || outerCoinConfig
+      if (!coinConfig) {
         throw new Error("Please select a pool")
       }
 
@@ -51,17 +54,17 @@ export default function useBurnLpDryRun(
       let created = false
       if (!pyPositions?.length) {
         created = true
-        pyPosition = initPyPosition(tx, effectiveConfig)
+        pyPosition = initPyPosition(tx, coinConfig)
       } else {
         pyPosition = tx.object(pyPositions[0].id)
       }
 
-      const decimal = Number(effectiveConfig?.decimal)
+      const decimal = Number(coinConfig?.decimal)
 
       // Merge LP positions
       const mergedPosition = mergeLpPositions(
         tx,
-        effectiveConfig,
+        coinConfig,
         marketPositions,
         lpValue,
         decimal,
@@ -72,7 +75,7 @@ export default function useBurnLpDryRun(
       console.log("mergedPosition", mergedPosition)
 
       const moveCallInfo = {
-        target: `${effectiveConfig.nemoContractId}::market::burn_lp`,
+        target: `${coinConfig.nemoContractId}::market::burn_lp`,
         arguments: [
           { name: "lp_amount", value: lpAmount },
           {
@@ -83,7 +86,7 @@ export default function useBurnLpDryRun(
           { name: "market_position", value: marketPositions[0].id.id },
           { name: "clock", value: "0x6" },
         ],
-        typeArguments: [effectiveConfig.syCoinType],
+        typeArguments: [coinConfig.syCoinType],
       }
 
       const debugInfo: DebugInfo = {
@@ -93,10 +96,10 @@ export default function useBurnLpDryRun(
       tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
-          tx.object(effectiveConfig.version),
+          tx.object(coinConfig.version),
           tx.pure.u64(lpAmount),
           pyPosition,
-          tx.object(effectiveConfig.marketStateId),
+          tx.object(coinConfig.marketStateId),
           mergedPosition,
           tx.object("0x6"),
         ],

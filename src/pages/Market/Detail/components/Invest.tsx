@@ -13,7 +13,7 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { Info, ChevronsDown } from "lucide-react"
 import { formatDecimalValue, isValidAmount, debounce } from "@/lib/utils"
 import { useCoinConfig } from "@/queries"
-import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { showTransactionDialog } from "@/lib/dialog"
 import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
@@ -54,8 +54,6 @@ import useQueryPtRatio from "@/hooks/useQueryPtRatio"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
-  const [open, setOpen] = useState(false)
-  const [syValue, setSyValue] = useState("")
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
   const isDev = process.env.NODE_ENV === "development"
@@ -64,15 +62,14 @@ export default function Invest() {
   const [slippage, setSlippage] = useState("0.5")
   const [ptValue, setPtValue] = useState<string>()
   const [ptFeeValue, setPtFeeValue] = useState<string>()
-  const [message, setMessage] = useState<string>()
   const [isSwapping, setIsSwapping] = useState(false)
   const [tokenType, setTokenType] = useState<number>(0)
   const [errorDetail, setErrorDetail] = useState<string>()
-  const [status, setStatus] = useState<"Success" | "Failed">()
   const [isCalcPtLoading, setIsCalcPtLoading] = useState(false)
   const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
   const [conversionRate, setConversionRate] = useState<string>()
   const [ptRatio, setPtRatio] = useState<Decimal>(new Decimal(0))
+  const [syValue, setSyValue] = useState("")
 
   const { mutateAsync: signAndExecuteTransaction } =
     useCustomSignAndExecuteTransaction()
@@ -399,30 +396,46 @@ export default function Invest() {
         })
 
         setTxId(res.digest)
-        setStatus("Success")
-        setOpen(true)
+        showTransactionDialog({
+          status: "Success",
+          network,
+          txId: res.digest,
+          onClose: () => {
+            setTxId("")
+          },
+        })
         setSwapValue("")
 
         await refreshData()
         await refreshPtYt()
       } catch (errorMsg) {
-        setOpen(true)
-        setStatus("Failed")
-        const msg = (errorMsg as Error)?.message ?? error
+        let msg = (errorMsg as Error)?.message ?? error
         const gasMsg = parseGasErrorMessage(msg)
         if (gasMsg) {
-          setMessage(gasMsg)
+          msg = gasMsg
         } else if (
           msg.includes(
             "Transaction failed with the following error. Dry run failed, could not automatically determine a budget: InsufficientGas in command 5",
           )
         ) {
-          setMessage("Insufficient PT in the pool.")
+          msg = "Insufficient PT in the pool."
         } else {
-          const { error, detail } = parseErrorMessage(msg)
-          setMessage(error)
-          setErrorDetail(detail)
+          const { error } = parseErrorMessage(msg)
+          msg = error
         }
+        showTransactionDialog({
+          status: "Failed",
+          network,
+          txId,
+          message:
+            gasMsg ||
+            (msg.includes("InsufficientGas in command 5")
+              ? "Insufficient PT in the pool."
+              : error),
+          onClose: () => {
+            setTxId("")
+          },
+        })
       } finally {
         setIsSwapping(false)
       }
@@ -500,17 +513,6 @@ export default function Invest() {
             </Link>
           )}
         </div>
-        <TransactionStatusDialog
-          open={open}
-          status={status}
-          network={network}
-          txId={txId}
-          message={message}
-          onClose={() => {
-            setTxId("")
-            setOpen(false)
-          }}
-        />
         <AmountInput
           price={price}
           error={error}

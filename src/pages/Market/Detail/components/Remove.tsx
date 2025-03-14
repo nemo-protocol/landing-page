@@ -106,12 +106,13 @@ export default function Remove() {
           setIsInputLoading(true)
           try {
             const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
-            let totalSyOut = new Decimal(syAmount)
             const [{ syAmount: ptToSy }] =
               await swapExactPtForSyDryRun(ptAmount)
-            totalSyOut = totalSyOut.add(ptToSy)
-            const syOut = totalSyOut.div(10 ** decimal).toString()
-            setTargetValue(syOut)
+            const syValue = new Decimal(syAmount)
+              .add(ptToSy)
+              .div(10 ** decimal)
+              .toString()
+            setTargetValue(syValue)
           } catch (error) {
             const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
             const syOut = new Decimal(syAmount).div(10 ** decimal).toString()

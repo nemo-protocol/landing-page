@@ -4,6 +4,7 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
+import { bcs } from "@mysten/sui/bcs"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
   initPyPosition,
@@ -21,7 +22,10 @@ export default function useSwapExactPtForSyDryRun(
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
-  const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
+  const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(
+    coinConfig,
+    true,
+  )
 
   return useMutation({
     mutationFn: async (
@@ -80,7 +84,20 @@ export default function useSwapExactPtForSyDryRun(
         moveCall: [moveCallInfo],
       }
 
-      swapExactPtForSy(tx, coinConfig, ptAmount, pyPosition, priceVoucher, "0")
+      const syCoin = swapExactPtForSy(
+        tx,
+        coinConfig,
+        ptAmount,
+        pyPosition,
+        priceVoucher,
+        "0",
+      )
+
+      tx.moveCall({
+        target: `0x2::coin::value`,
+        arguments: [syCoin],
+        typeArguments: [coinConfig.syCoinType],
+      })
 
       if (created) {
         tx.transferObjects([pyPosition], address)
@@ -104,17 +121,21 @@ export default function useSwapExactPtForSyDryRun(
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.events?.[0]?.parsedJson) {
-        const message = "Failed to get swap data"
+      if (
+        result.results[result.results.length - 1].returnValues[0][1] !== "u64"
+      ) {
+        const message = "Failed to get output amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
-      const syAmount = result.events[0].parsedJson.sy_amount as string
+      const syAmount = bcs.U64.parse(
+        new Uint8Array(
+          result.results[result.results.length - 1].returnValues[0][0],
+        ),
+      )
 
-      //   console.log("syAmount", syAmount)
-
-      debugInfo.parsedOutput = JSON.stringify({ syAmount })
+      debugInfo.parsedOutput = syAmount
 
       const returnValue = { syAmount }
 
