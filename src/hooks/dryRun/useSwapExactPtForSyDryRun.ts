@@ -10,7 +10,6 @@ import {
   getPriceVoucher,
   swapExactPtForSy,
 } from "@/lib/txHelper"
-import Decimal from "decimal.js"
 
 type SwapResult = {
   syAmount: string
@@ -25,11 +24,9 @@ export default function useSwapExactPtForSyDryRun(
   const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
 
   return useMutation({
-    mutationFn: async ({
-      redeemValue,
-    }: {
-      redeemValue: string
-    }): Promise<[SwapResult] | [SwapResult, DebugInfo]> => {
+    mutationFn: async (
+      ptAmount: string,
+    ): Promise<[SwapResult] | [SwapResult, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -60,10 +57,8 @@ export default function useSwapExactPtForSyDryRun(
         arguments: [
           { name: "version", value: coinConfig.version },
           {
-            name: "redeem_value",
-            value: new Decimal(redeemValue)
-              .mul(10 ** Number(coinConfig.decimal))
-              .toFixed(0),
+            name: "pt_amount",
+            value: ptAmount,
           },
           {
             name: "py_position",
@@ -85,14 +80,7 @@ export default function useSwapExactPtForSyDryRun(
         moveCall: [moveCallInfo],
       }
 
-      swapExactPtForSy(
-        tx,
-        coinConfig,
-        redeemValue,
-        pyPosition,
-        priceVoucher,
-        "0",
-      )
+      swapExactPtForSy(tx, coinConfig, ptAmount, pyPosition, priceVoucher, "0")
 
       if (created) {
         tx.transferObjects([pyPosition], address)

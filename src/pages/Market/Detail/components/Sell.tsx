@@ -241,7 +241,7 @@ export default function Sell() {
             ? swapExactPtForSy(
                 tx,
                 coinConfig,
-                redeemValue,
+                inputAmount,
                 pyPosition,
                 priceVoucher,
                 minSyOut,

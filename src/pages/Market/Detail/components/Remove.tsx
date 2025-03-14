@@ -18,7 +18,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import useBurnLpDryRun from "@/hooks/dryRun/useBurnLpDryRun"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
-import { showTransactionDialog } from '@/lib/dialog'
+import { showTransactionDialog } from "@/lib/dialog"
 import useSwapExactPtForSyDryRun from "@/hooks/dryRun/useSwapExactPtForSyDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { ContractError } from "@/hooks/types"
@@ -107,9 +107,8 @@ export default function Remove() {
           try {
             const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
             let totalSyOut = new Decimal(syAmount)
-            const [{ syAmount: ptToSy }] = await swapExactPtForSyDryRun({
-              redeemValue: ptAmount,
-            })
+            const [{ syAmount: ptToSy }] =
+              await swapExactPtForSyDryRun(ptAmount)
             totalSyOut = totalSyOut.add(ptToSy)
             const syOut = totalSyOut.div(10 ** decimal).toString()
             setTargetValue(syOut)
@@ -153,7 +152,14 @@ export default function Remove() {
   const { mutateAsync: redeemLp } = useRedeemLp(coinConfig, marketState)
 
   async function remove() {
-    if (decimal && address && coinType && coinConfig && !insufficientBalance && lppMarketPositionData?.length) {
+    if (
+      decimal &&
+      address &&
+      coinType &&
+      coinConfig &&
+      !insufficientBalance &&
+      lppMarketPositionData?.length
+    ) {
       try {
         setIsRemoving(true)
         const { digest } = await redeemLp({
@@ -164,24 +170,26 @@ export default function Remove() {
         })
 
         showTransactionDialog({
-          status: 'Success',
+          status: "Success",
           network,
           txId: digest,
           onClose: async () => {
             await refreshData()
             await refreshPtYt()
-          }
+          },
         })
 
         setLpValue("")
       } catch (errorMsg) {
-        const { error: msg, detail } = parseErrorMessage((errorMsg as ContractError)?.message ?? errorMsg)
+        const { error: msg, detail } = parseErrorMessage(
+          (errorMsg as ContractError)?.message ?? errorMsg,
+        )
         setErrorDetail(detail)
         showTransactionDialog({
-          status: 'Failed',
+          status: "Failed",
           network,
-          txId: '',
-          message: msg
+          txId: "",
+          message: msg,
         })
       } finally {
         setIsRemoving(false)
@@ -224,7 +232,9 @@ export default function Remove() {
             isConfigLoading={isConfigLoading}
             coinName={`LP ${coinConfig?.coinName}`}
             coinNameComponent={
-              <span className="text-sm sm:text-base">LP {coinConfig?.coinName}</span>
+              <span className="text-sm sm:text-base">
+                LP {coinConfig?.coinName}
+              </span>
             }
           />
 

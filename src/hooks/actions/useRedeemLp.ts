@@ -64,9 +64,7 @@ export default function useRedeemLp(
       let canSwapPt = false
       if (ptAmount && new Decimal(ptAmount).gt(0)) {
         try {
-          await swapExactPtForSyDryRun({
-            redeemValue: ptAmount,
-          })
+          await swapExactPtForSyDryRun(ptAmount)
 
           canSwapPt = true
         } catch (error) {
@@ -125,7 +123,7 @@ export default function useRedeemLp(
         const swappedSyCoin = swapExactPtForSy(
           tx,
           coinConfig,
-          new Decimal(ptAmount).div(10 ** decimal).toString(),
+          ptAmount,
           pyPosition,
           priceVoucher,
           "0",
