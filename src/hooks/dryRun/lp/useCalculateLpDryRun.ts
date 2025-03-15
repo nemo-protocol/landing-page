@@ -102,7 +102,6 @@ export function useCalculateLpAmount(
               tokenType,
               addAmount: inputAmount,
               pyPositions: pyPositionData,
-              coinConfig,
             })
 
           return {
