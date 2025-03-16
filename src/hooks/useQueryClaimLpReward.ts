@@ -98,7 +98,7 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         typeArguments: [rewardMetric.tokenType],
       })
 
-      const result = await client.devInspectTransactionBlock({
+      const result = await client.executeTransactionBlock({
         sender: address,
         transactionBlock: await tx.build({
           client: client,
