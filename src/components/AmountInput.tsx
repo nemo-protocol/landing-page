@@ -31,6 +31,7 @@ interface AmountInputProps {
   disabled?: boolean
   maturity?: string
   errorDetail?: string
+  warningDetail?: string
 }
 
 export default function AmountInput({
@@ -53,6 +54,7 @@ export default function AmountInput({
   disabled,
   maturity,
   errorDetail,
+  warningDetail,
 }: AmountInputProps) {
   return (
     <div className="w-full">
@@ -175,8 +177,18 @@ export default function AmountInput({
         </div>
       )}
       {warning && (
-        <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-yellow-500 break-words">
+        <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-yellow-500 break-words flex items-center gap-x-1">
           {warning}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="size-3 sm:size-3.5 text-yellow-500" />
+              </TooltipTrigger>
+              <TooltipContent className="bg-[#0E0F16] text-white text-xs sm:text-sm w-[280px] sm:w-[500px]">
+                <p>{warningDetail}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )}
     </div>

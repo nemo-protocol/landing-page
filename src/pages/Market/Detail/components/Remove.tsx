@@ -30,6 +30,7 @@ export default function Remove() {
   const [error, setError] = useState<string>()
   const { account: currentAccount } = useWallet()
   const [warning, setWarning] = useState<string>()
+  const [warningDetail, setWarningDetail] = useState<string>()
   const [targetValue, setTargetValue] = useState("")
   const [isRemoving, setIsRemoving] = useState(false)
   const [errorDetail, setErrorDetail] = useState<string>()
@@ -121,7 +122,10 @@ export default function Remove() {
             const syOut = new Decimal(syAmount).div(10 ** decimal).toString()
             const ptOut = new Decimal(ptAmount).div(10 ** decimal).toString()
             setWarning(
-              `Returning ${ptOut} PT ${coinConfig?.coinName} which could be redeemed after maturity`,
+              `Returning ${ptOut} PT ${coinConfig?.coinName}.`,
+            )
+            setWarningDetail(
+              `PT could be sold at the market, or it could be redeemed after maturity with a fixed return.`,
             )
             setTargetValue(syOut)
           } finally {
@@ -232,6 +236,7 @@ export default function Remove() {
             isConnected={isConnected}
             errorDetail={errorDetail}
             coinBalance={lpCoinBalance}
+            warningDetail={warningDetail}
             coinLogo={coinConfig?.coinLogo}
             isConfigLoading={isConfigLoading}
             coinName={`LP ${coinConfig?.coinName}`}
