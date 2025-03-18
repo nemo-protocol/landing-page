@@ -2,11 +2,10 @@ import Decimal from "decimal.js"
 import { MarketState } from "../types"
 import { useMutation } from "@tanstack/react-query"
 import { isValidAmount, safeDivide } from "@/lib/utils"
+import useQuerySyOutByYtIn from "./sy/useQuerySyOutByYtIn"
+import useQueryPtOutBySyIn from "./sy/useQueryPtOutBySyIn"
 import { CoinConfig, Incentive } from "@/queries/types/market"
 import useGetConversionRateDryRun from "../dryRun/useGetConversionRateDryRun"
-import useQuerySyOutByYtIn from "./sy/useQuerySyOutByYtIn"
-import useQuerySyOutByPtIn from "./sy/useQuerySyOutByPtIn"
-import useQueryPtOutBySyIn from "./sy/useQueryPtOutBySyIn"
 
 export interface PoolMetricsResult {
   ptApy: string
@@ -127,7 +126,6 @@ function calculateYtAPY(
 
 export function usePoolMetrics() {
   const { mutateAsync: querySyOutByYtIn } = useQuerySyOutByYtIn()
-  const { mutateAsync: querySyOutByPtIn } = useQuerySyOutByPtIn()
   const { mutateAsync: queryPtOutBySyIn } = useQueryPtOutBySyIn()
   const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
@@ -179,8 +177,6 @@ export function usePoolMetrics() {
         "decimal",
       )
 
-      console.log("underlyingPrice", underlyingPrice.toString(),'coinInfo.coinPrice', coinInfo.coinPrice, 'conversionRate', conversionRate)
-
       let ptPrice: Decimal
       let ytPrice: Decimal
 
@@ -195,27 +191,16 @@ export function usePoolMetrics() {
       } catch (error) {
         console.log("YT calc error", error)
         try {
-          const { ptIn, syOut } = await querySyOutByPtIn(coinInfo)
+          const { syIn, ptOut } = await queryPtOutBySyIn(coinInfo)
           ptPrice = safeDivide(
-            new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
-            ptIn,
+            new Decimal(coinInfo.coinPrice).mul(Number(ptOut)),
+            Number(syIn),
             "decimal",
           )
           ytPrice = underlyingPrice.sub(ptPrice)
-        } catch (ptError) {
-          console.log("PT calc error", ptError)
-          try {
-            const { syIn, ptOut } = await queryPtOutBySyIn(coinInfo)
-            ptPrice = safeDivide(
-              new Decimal(coinInfo.coinPrice).mul(Number(ptOut)),
-              Number(syIn),
-              "decimal",
-            )
-            ytPrice = underlyingPrice.sub(ptPrice)
-          } catch (syError) {
-            console.log("SY calc error", syError)
-            throw new Error("All price calculation methods failed")
-          }
+        } catch (syError) {
+          console.log("SY calc error", syError)
+          throw new Error("All price calculation methods failed")
         }
       }
 
@@ -232,28 +217,23 @@ export function usePoolMetrics() {
         .div(86400)
         .toNumber()
 
-      console.log("daysToExpiry", daysToExpiry)
-
       const ptApy = calculatePtAPY(
         Number(underlyingPrice),
         Number(ptPrice),
         daysToExpiry,
       )
-      console.log("ptApy", ptApy.toString())
 
       const yearsToExpiry = new Decimal(
         (Number(coinInfo.maturity) - Date.now()) / 1000,
       )
         .div(31536000)
         .toNumber()
-      console.log("yearsToExpiry", yearsToExpiry)
 
       const ytApy = calculateYtAPY(
         Number(coinInfo.underlyingApy),
         safeDivide(ytPrice, coinInfo.underlyingPrice, "number"),
         yearsToExpiry,
       )
-      console.log("ytApy", ytApy.toString())
 
       let scaledUnderlyingApy = new Decimal(0)
       let scaledPtApy = new Decimal(0)
@@ -278,16 +258,11 @@ export function usePoolMetrics() {
       )
       const expiryRate = safeDivide(new Decimal(365), daysToExpiry, "decimal")
 
-      console.log("swapFeeRateForLpHolder", swapFeeRateForLpHolder.toString())
-      console.log("expiryRate", expiryRate.toString())
-
       swapFeeApy = swapFeeRateForLpHolder
         .add(1)
         .pow(expiryRate)
         .minus(1)
         .mul(100)
-
-      console.log("swapFeeApy", swapFeeApy.toString())
 
       // Calculate reward APYs
 

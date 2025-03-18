@@ -32,15 +32,15 @@ export default function useQueryPtOutBySyIn() {
         const syAmount = syAmounts[index]
 
         try {
-          const { ptValue, syValue } = await queryPtOutBySyInDryRun({
+          const { ptAmount } = await queryPtOutBySyInDryRun({
             syAmount,
             innerCoinConfig: coinConfig,
           })
 
           lastSuccessIndexRef.current = index
           return {
-            syIn: syValue,
-            ptOut: ptValue,
+            syIn: syAmount,
+            ptOut: ptAmount,
           }
         } catch (error) {
           console.log(`Failed to use syIn=${syAmount}, trying next value...`)
