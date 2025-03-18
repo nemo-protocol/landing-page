@@ -1,8 +1,8 @@
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
 import { bcs } from "@mysten/sui/bcs"
-import { ContractError } from "./types"
-import type { DebugInfo } from "./types"
+import { ContractError } from "../../types"
+import type { DebugInfo } from "../../types"
 import { getPriceVoucher } from "@/lib/txHelper"
 import { DEFAULT_Address } from "@/lib/constants"
 import { useMutation } from "@tanstack/react-query"
@@ -18,20 +18,31 @@ type Result = {
   tradeFee: string
 }
 
+interface QueryPtOutBySyInParams {
+  syAmount: string
+  minPtAmount?: string
+  innerCoinConfig?: CoinConfig
+}
+
 type DryRunResult<T extends boolean> = T extends true
   ? [Result, DebugInfo]
   : Result
 
-export default function useQueryPtOutBySyInWithVoucher<
-  T extends boolean = false,
->(coinConfig?: CoinConfig, debug: T = false as T) {
+export default function useQueryPtOutBySyIn<T extends boolean = false>(
+  { outerCoinConfig, debug }: { outerCoinConfig?: CoinConfig; debug?: T } = {
+    debug: false as T,
+  },
+) {
   const client = useSuiClient()
   const address = DEFAULT_Address
 
   return useMutation({
-    mutationFn: async (syAmount: string): Promise<DryRunResult<T>> => {
-      console.log("useQueryPtOutBySyInWithVoucher syAmount", syAmount)
-
+    mutationFn: async ({
+      syAmount,
+      innerCoinConfig,
+      minPtAmount = "0",
+    }: QueryPtOutBySyInParams): Promise<DryRunResult<T>> => {
+      const coinConfig = outerCoinConfig || innerCoinConfig
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
@@ -45,7 +56,7 @@ export default function useQueryPtOutBySyInWithVoucher<
         target: `${coinConfig.nemoContractId}::router::get_pt_out_for_exact_sy_in_with_price_voucher`,
         arguments: [
           { name: "net_sy_in", value: syAmount },
-          { name: "min_pt_out", value: "0" },
+          { name: "min_pt_out", value: minPtAmount },
           { name: "price_voucher", value: "priceVoucher" },
           { name: "py_state_id", value: coinConfig.pyStateId },
           {
@@ -70,7 +81,7 @@ export default function useQueryPtOutBySyInWithVoucher<
         target: moveCallInfo.target,
         arguments: [
           tx.pure.u64(syAmount),
-          tx.pure.u64("0"),
+          tx.pure.u64(minPtAmount),
           priceVoucher,
           tx.object(coinConfig.pyStateId),
           tx.object(coinConfig.marketFactoryConfigId),
@@ -113,11 +124,11 @@ export default function useQueryPtOutBySyInWithVoucher<
         .div(10 ** Number(coinConfig.decimal))
         .toFixed()
 
-      syAmount = bcs.U64.parse(
+      const parsedSyAmount = bcs.U64.parse(
         new Uint8Array(result.results[1].returnValues[1][0]),
       )
 
-      const syValue = new Decimal(syAmount.toString())
+      const syValue = new Decimal(parsedSyAmount.toString())
         .div(10 ** Number(coinConfig.decimal))
         .toFixed()
 

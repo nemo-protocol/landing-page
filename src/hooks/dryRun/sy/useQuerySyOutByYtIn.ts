@@ -1,26 +1,26 @@
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient } from "@nemoprotocol/wallet-kit"
-import { ContractError } from "../../types"
-import type { BaseCoinInfo } from "@/queries/types/market"
-import type { DebugInfo } from "../../types"
 import { bcs } from "@mysten/sui/bcs"
+import type { CoinConfig } from "@/queries/types/market"
+import type { DebugInfo } from "../../types"
+import { ContractError } from "../../types"
 import { getPriceVoucher } from "@/lib/txHelper"
-import { DEFAULT_Address } from "@/lib/constants"
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
+import { DEFAULT_Address } from "@/lib/constants"
 
-interface SyOutByPtInResult {
+interface SyOutByYtInResult {
   syValue: string
   syAmount: string
 }
 
 type DryRunResult<T extends boolean> = T extends true
-  ? [SyOutByPtInResult, DebugInfo]
-  : SyOutByPtInResult
+  ? [SyOutByYtInResult, DebugInfo]
+  : SyOutByYtInResult
 
-export default function useQuerySyOutDryRun<T extends boolean = false>(
-  { outerCoinInfo, debug }: { outerCoinInfo?: BaseCoinInfo; debug: T } = {
+export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
+  { outerCoinConfig, debug }: { outerCoinConfig?: CoinConfig; debug?: T } = {
     debug: false as T,
   },
 ) {
@@ -29,59 +29,60 @@ export default function useQuerySyOutDryRun<T extends boolean = false>(
 
   return useMutation({
     mutationFn: async ({
-      ptIn,
-      innerCoinInfo,
+      ytAmount,
+      innerCoinConfig,
     }: {
-      ptIn: string
-      innerCoinInfo?: BaseCoinInfo
+      ytAmount: string
+      innerCoinConfig?: CoinConfig
     }): Promise<DryRunResult<T>> => {
-      const coinInfo = outerCoinInfo || innerCoinInfo
-      if (!coinInfo) {
+      const coinConfig = outerCoinConfig || innerCoinConfig
+      if (!coinConfig) {
         throw new Error("Please select a pool")
       }
 
       const tx = new Transaction()
       tx.setSender(address)
 
+      // Get price voucher first
+      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+
       const moveCallInfo = {
-        target: `${coinInfo.nemoContractId}::router::get_sy_amount_out_for_exact_pt_in_with_price_voucher`,
+        target: `${coinConfig.nemoContractId}::router::get_sy_amount_out_for_exact_yt_in_with_price_voucher`,
         arguments: [
-          { name: "exact_pt_in", value: ptIn },
+          { name: "exact_yt_in", value: ytAmount },
           { name: "price_voucher", value: "priceVoucher" },
-          { name: "py_state", value: coinInfo.pyStateId },
+          { name: "py_state", value: coinConfig.pyStateId },
           {
             name: "market_factory_config",
-            value: coinInfo.marketFactoryConfigId,
+            value: coinConfig.marketFactoryConfigId,
           },
-          { name: "market", value: coinInfo.marketStateId },
+          { name: "market", value: coinConfig.marketStateId },
           { name: "clock", value: "0x6" },
         ],
-        typeArguments: [coinInfo.syCoinType],
+        typeArguments: [coinConfig.syCoinType],
       }
+
+      tx.moveCall({
+        target: moveCallInfo.target,
+        arguments: [
+          tx.pure.u64(ytAmount),
+          priceVoucher,
+          tx.object(coinConfig.pyStateId),
+          tx.object(coinConfig.marketFactoryConfigId),
+          tx.object(coinConfig.marketStateId),
+          tx.object("0x6"),
+        ],
+        typeArguments: moveCallInfo.typeArguments,
+      })
 
       const debugInfo: DebugInfo = {
         moveCall: [moveCallInfo],
       }
 
       debugLog(
-        "get_sy_amount_out_for_exact_pt_in_with_price_voucher move call:",
+        "get_sy_amount_out_for_exact_yt_in_with_price_voucher move call:",
         debugInfo,
       )
-
-      const [priceVoucher] = getPriceVoucher(tx, coinInfo)
-
-      tx.moveCall({
-        target: moveCallInfo.target,
-        arguments: [
-          tx.pure.u64(ptIn),
-          priceVoucher,
-          tx.object(coinInfo.pyStateId),
-          tx.object(coinInfo.marketFactoryConfigId),
-          tx.object(coinInfo.marketStateId),
-          tx.object("0x6"),
-        ],
-        typeArguments: moveCallInfo.typeArguments,
-      })
 
       const result = await client.devInspectTransactionBlock({
         sender: address,
@@ -93,7 +94,7 @@ export default function useQuerySyOutDryRun<T extends boolean = false>(
 
       console.log("result", result)
 
-      // 记录原始结果
+      // Record raw result
       debugInfo.rawResult = {
         error: result?.error,
         results: result?.results,
@@ -103,18 +104,20 @@ export default function useQuerySyOutDryRun<T extends boolean = false>(
         throw new ContractError(result.error, debugInfo)
       }
 
-      if (!result?.results?.[1]?.returnValues?.[0]) {
-        const message = "获取 sy 数量失败"
+      if (
+        result.results[result.results.length - 1].returnValues[0][1] !== "u64"
+      ) {
+        const message = "Failed to get sy amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
-      
+
       const syAmount = bcs.U64.parse(
         new Uint8Array(result.results[1].returnValues[0][0]),
-      ).toString()
+      )
 
-      const syValue = new Decimal(syAmount)
-        .div(10 ** Number(coinInfo.decimal))
+      const syValue = new Decimal(syAmount.toString())
+        .div(10 ** Number(coinConfig.decimal))
         .toFixed()
 
       debugInfo.parsedOutput = syAmount

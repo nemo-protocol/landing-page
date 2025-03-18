@@ -13,7 +13,7 @@ import {
   redeemSyCoin,
   burnSCoin,
 } from "@/lib/txHelper"
-import useQuerySyOutFromYtInWithVoucher from "./yt/useQuerySyOutByYtIn"
+import useQuerySyOutFromYtInWithVoucher from "./sy/useQuerySyOutByYtIn"
 
 interface SellYtParams {
   sellValue: string
@@ -34,7 +34,7 @@ export default function useSellYtDryRun<T extends boolean = false>(
   const client = useSuiClient()
   const { address } = useWallet()
   const { mutateAsync: querySyOutFromYt } =
-    useQuerySyOutFromYtInWithVoucher(coinConfig)
+    useQuerySyOutFromYtInWithVoucher({ outerCoinConfig: coinConfig })
 
   return useMutation({
     mutationFn: async ({

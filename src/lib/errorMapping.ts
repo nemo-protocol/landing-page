@@ -28,10 +28,10 @@ const errorMapping: { [key: number]: string } = {
   787: "Market proportion too high", // 0x0000313
   788: "Market proportion cannot be one", // 0x0000314
   789: "Market exchange rate cannot be one", // 0x0000315
-  790: "Insufficient liquidity in the pool, please try a smaller amount.", // 0x0000316
+  790: "Market exchange rate below one", // 0x0000316
   791: "Market burn sy amount is zero", // 0x0000317
   792: "Market burn pt amount is zero", // 0x0000318
-  793: "Insufficient liquidity in the pool, please try a smaller amount.", // 0x0000319
+  793: "Market insufficient pt for swap", // 0x0000319
   800: "Market rate scalar negative", // 0x0000320
   801: "Market insufficient sy for swap", // 0x0000321
   802: "Repay sy in exceeds expected sy in", // 0x0000322
@@ -67,6 +67,13 @@ const errorMapping: { [key: number]: string } = {
   1031: "Invalid yt approx out", // 0x0000407
   1032: "Invalid sy approx out", // 0x0000408
   1033: "Wrong slippage tolerance", // 0x0000409
+  1280: "Invalid reward amount", // 0x0000500
+  1281: "Invalid reward end time", // 0x0000501
+  1282: "Emission exceeds total reward", // 0x0000502
+  1283: "Pool rewarder already active", // 0x0000503
+  1284: "Reward token type mismatch", // 0x0000504
+  1285: "Pool rewarder not active", // 0x0000505
+  1286: "Reward not harvested", // 0x0000506
   65537: "Denominator error", // 0x10001
   65542: "Abort code on calculation result is negative", // 0x10006
   131074: "The quotient value would be too large to be held in a u128", // 0x20002

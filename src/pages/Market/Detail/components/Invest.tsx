@@ -18,7 +18,7 @@ import TradeInfo from "@/components/TradeInfo"
 import { Skeleton } from "@/components/ui/skeleton"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
-import useQueryPtOutBySyInWithVoucher from "@/hooks/useQueryPtOutBySyInWithVoucher"
+import useQueryPtOutBySyInWithVoucher from "@/hooks/dryRun/pt/useQueryPtOutBySyIn"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
@@ -148,7 +148,9 @@ export default function Invest() {
     [coinBalance, swapValue],
   )
 
-  const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
+  const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher({
+    outerCoinConfig: coinConfig,
+  })
   const { mutateAsync: swapExactSyForPtDryRun } =
     useSwapExactSyForPtDryRun(coinConfig)
 
@@ -191,7 +193,7 @@ export default function Invest() {
               syValue,
               tradeFee,
               syAmount: newSyAmount,
-            } = await queryPtOut(syAmount)
+            } = await queryPtOut({ syAmount })
 
             console.log(
               "syValue",
@@ -353,7 +355,9 @@ export default function Invest() {
           pyPosition = tx.object(pyPositionData[0].id)
         }
 
-        const { ptAmount, syAmount: newSyAmount } = await queryPtOut(syAmount)
+        const { ptAmount, syAmount: newSyAmount } = await queryPtOut({
+          syAmount,
+        })
 
         const minPtOut = new Decimal(ptAmount)
           .mul(1 - new Decimal(slippage).div(100).toNumber())

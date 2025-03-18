@@ -1,7 +1,0 @@
-// 使用方式1：预先提供 coinConfig
-const querySyOutByYtInMutation = useQuerySyOutByYtInDryRun(coinConfig)
-const { syAmount } = await querySyOutByYtInMutation.mutateAsync(ytAmount)
-
-// 使用方式2：调用时提供 coinConfig
-const querySyOutByYtInMutation = useQuerySyOutByYtInDryRun()
-const { syAmount } = await querySyOutByYtInMutation.mutateAsync(ytAmount, coinConfig) 

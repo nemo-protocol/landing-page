@@ -6,6 +6,7 @@ import { CoinConfig, Incentive } from "@/queries/types/market"
 import useGetConversionRateDryRun from "../dryRun/useGetConversionRateDryRun"
 import useQuerySyOutByYtIn from "./sy/useQuerySyOutByYtIn"
 import useQuerySyOutByPtIn from "./sy/useQuerySyOutByPtIn"
+import useQueryPtOutBySyIn from "./sy/useQueryPtOutBySyIn"
 
 export interface PoolMetricsResult {
   ptApy: string
@@ -127,6 +128,7 @@ function calculateYtAPY(
 export function usePoolMetrics() {
   const { mutateAsync: querySyOutByYtIn } = useQuerySyOutByYtIn()
   const { mutateAsync: querySyOutByPtIn } = useQuerySyOutByPtIn()
+  const { mutateAsync: queryPtOutBySyIn } = useQueryPtOutBySyIn()
   const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
   const mutation = useMutation({
@@ -171,13 +173,13 @@ export function usePoolMetrics() {
       // Make RPC calls to get prices
       const conversionRate = await getConversionRate(coinInfo)
 
-      console.log("conversionRate", conversionRate)
-
       const underlyingPrice = safeDivide(
         coinInfo.coinPrice,
         conversionRate,
         "decimal",
       )
+
+      console.log("underlyingPrice", underlyingPrice.toString(),'coinInfo.coinPrice', coinInfo.coinPrice, 'conversionRate', conversionRate)
 
       let ptPrice: Decimal
       let ytPrice: Decimal
@@ -191,6 +193,7 @@ export function usePoolMetrics() {
         )
         ptPrice = underlyingPrice.sub(ytPrice)
       } catch (error) {
+        console.log("YT calc error", error)
         try {
           const { ptIn, syOut } = await querySyOutByPtIn(coinInfo)
           ptPrice = safeDivide(
@@ -201,7 +204,18 @@ export function usePoolMetrics() {
           ytPrice = underlyingPrice.sub(ptPrice)
         } catch (ptError) {
           console.log("PT calc error", ptError)
-          throw error
+          try {
+            const { syIn, ptOut } = await queryPtOutBySyIn(coinInfo)
+            ptPrice = safeDivide(
+              new Decimal(coinInfo.coinPrice).mul(Number(ptOut)),
+              Number(syIn),
+              "decimal",
+            )
+            ytPrice = underlyingPrice.sub(ptPrice)
+          } catch (syError) {
+            console.log("SY calc error", syError)
+            throw new Error("All price calculation methods failed")
+          }
         }
       }
 

@@ -1,7 +1,7 @@
 import { useRef } from "react"
 import { CoinConfig } from "@/queries/types/market"
 import { useMutation } from "@tanstack/react-query"
-import useQuerySyOutByYtInDryRun from "@/hooks/dryRun/yt/useQuerySyOutByYtIn"
+import useQuerySyOutByYtInDryRun from "@/hooks/dryRun/sy/useQuerySyOutByYtIn"
 
 interface SyOutByYtInResult {
   ytIn: string
@@ -20,7 +20,7 @@ export default function useQuerySyOutByYtIn() {
         throw new Error("Please select a pool")
       }
 
-      const ytAmounts = ["1000", "1"]
+      const ytAmounts = ["1000000", "10000", "1000"]
 
       const fetchSyOut = async (
         index = lastSuccessIndexRef.current,

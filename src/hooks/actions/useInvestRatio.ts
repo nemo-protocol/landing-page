@@ -2,11 +2,13 @@ import { useRef } from "react"
 import Decimal from "decimal.js"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
-import useQueryPtOutBySyInWithVoucher from "../useQueryPtOutBySyInWithVoucher"
+import useQueryPtOutBySyInWithVoucher from "../dryRun/pt/useQueryPtOutBySyIn"
 
 export default function useInvestRatios(coinConfig?: CoinConfig) {
   const lastPowerRef = useRef(0)
-  const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher(coinConfig)
+  const { mutateAsync: queryPtOut } = useQueryPtOutBySyInWithVoucher({
+    outerCoinConfig: coinConfig,
+  })
 
   return useMutation({
     mutationFn: async (conversionRate: string) => {
@@ -23,10 +25,10 @@ export default function useInvestRatios(coinConfig?: CoinConfig) {
 
         const safeDecimal = Math.max(decimal - power, 0)
         try {
-          const amount = new Decimal(10).pow(safeDecimal).toString()
-          const { ptValue } = await queryPtOut(amount)
+          const syAmount = new Decimal(10).pow(safeDecimal).toString()
+          const { ptValue } = await queryPtOut({ syAmount })
           const ptRatio = new Decimal(ptValue)
-            .div(amount)
+            .div(syAmount)
             .div(conversionRate)
             .toString()
 
