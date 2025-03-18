@@ -1,0 +1,10 @@
+// 错误的用法
+const { syAmount } = await querySyOutByYtInDryRun(ytAmount, coinConfig)
+
+// 正确的用法 - 方式1
+const querySyOutByYtInDryRun = useQuerySyOutByYtInDryRun(coinConfig)
+const { syAmount } = await querySyOutByYtInDryRun.mutateAsync(ytAmount)
+
+// 正确的用法 - 方式2
+const querySyOutByYtInDryRun = useQuerySyOutByYtInDryRun()
+const { syAmount } = await querySyOutByYtInDryRun.mutateAsync(ytAmount, coinConfig) 

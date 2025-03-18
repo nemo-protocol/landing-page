@@ -27,7 +27,7 @@ import AmountInput from "@/components/AmountInput"
 import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue, isValidAmount, safeDivide } from "@/lib/utils"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import useQuerySyOutByYtInDryRun from "@/hooks//dryRun/yt/useQuerySyOutByYtInDryRun"
+import useQuerySyOutByYtInDryRun from "@/hooks/dryRun/yt/useQuerySyOutByYtIn"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import SlippageSetting from "@/components/SlippageSetting"
@@ -84,8 +84,9 @@ export default function Sell() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
-  const { mutateAsync: querySyOutByYtIn } =
-    useQuerySyOutByYtInDryRun(coinConfig)
+  const { mutateAsync: querySyOutByYtIn } = useQuerySyOutByYtInDryRun({
+    outerCoinConfig: coinConfig,
+  })
 
   const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
   // const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)

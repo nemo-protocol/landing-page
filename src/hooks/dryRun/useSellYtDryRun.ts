@@ -13,7 +13,7 @@ import {
   redeemSyCoin,
   burnSCoin,
 } from "@/lib/txHelper"
-import useQuerySyOutFromYtInWithVoucher from "./yt/useQuerySyOutByYtInDryRun"
+import useQuerySyOutFromYtInWithVoucher from "./yt/useQuerySyOutByYtIn"
 
 interface SellYtParams {
   sellValue: string

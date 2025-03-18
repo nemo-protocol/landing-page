@@ -20,8 +20,9 @@ type DryRunResult<T extends boolean> = T extends true
   : SyOutByYtInResult
 
 export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
-  outerCoinConfig?: CoinConfig,
-  debug: T = false as T,
+  { outerCoinConfig, debug }: { outerCoinConfig?: CoinConfig; debug?: T } = {
+    debug: false as T,
+  },
 ) {
   const client = useSuiClient()
   const address = DEFAULT_Address
@@ -35,9 +36,6 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
       innerCoinConfig?: CoinConfig
     }): Promise<DryRunResult<T>> => {
       const coinConfig = outerCoinConfig || innerCoinConfig
-      if (!address) {
-        throw new Error("Please connect wallet first")
-      }
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }

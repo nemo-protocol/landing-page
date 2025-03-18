@@ -4,7 +4,8 @@ import { useMutation } from "@tanstack/react-query"
 import { isValidAmount, safeDivide } from "@/lib/utils"
 import { CoinConfig, Incentive } from "@/queries/types/market"
 import useGetConversionRateDryRun from "../dryRun/useGetConversionRateDryRun"
-import useQuerySyOutByYtInDryRun from "@/hooks//dryRun/yt/useQuerySyOutByYtInDryRun"
+import useQuerySyOutByYtIn from "./sy/useQuerySyOutByYtIn"
+import useQuerySyOutByPtIn from "./sy/useQuerySyOutByPtIn"
 
 export interface PoolMetricsResult {
   ptApy: string
@@ -124,10 +125,8 @@ function calculateYtAPY(
 }
 
 export function usePoolMetrics() {
-  const { mutateAsync: querySyOutByYtIn } = useQuerySyOutByYtInDryRun(
-    undefined,
-    false,
-  )
+  const { mutateAsync: querySyOutByYtIn } = useQuerySyOutByYtIn()
+  const { mutateAsync: querySyOutByPtIn } = useQuerySyOutByPtIn()
   const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
   const mutation = useMutation({
@@ -135,6 +134,7 @@ export function usePoolMetrics() {
       coinInfo,
       marketState,
     }: CalculatePoolMetricsParams): Promise<PoolMetricsResult> => {
+      console.log("coinConfig", coinInfo)
       // Check cache first
       const cachedResult = getMetricsFromCache(coinInfo.marketStateId)
       if (cachedResult) {
@@ -173,68 +173,37 @@ export function usePoolMetrics() {
 
       console.log("conversionRate", conversionRate)
 
-      let ytIn = "1000000"
-      let syOut: string
-
-      try {
-        const { syAmount } = await querySyOutByYtIn({
-          ytAmount: ytIn,
-          innerCoinConfig: coinInfo,
-        })
-        syOut = syAmount
-      } catch (error) {
-        ytIn = "100"
-        try {
-          const { syAmount } = await querySyOutByYtIn({
-            ytAmount: ytIn,
-            innerCoinConfig: coinInfo,
-          })
-          syOut = syAmount
-        } catch (error) {
-          ytIn = "10"
-          try {
-            const { syAmount } = await querySyOutByYtIn({
-              ytAmount: ytIn,
-              innerCoinConfig: coinInfo,
-            })
-            syOut = syAmount
-          } catch (error) {
-            ytIn = "1"
-
-            try {
-              const { syAmount } = await querySyOutByYtIn({
-                ytAmount: ytIn,
-                innerCoinConfig: coinInfo,
-              })
-              syOut = syAmount
-            } catch (error) {
-              console.log("error", error)
-              throw error
-            }
-          }
-        }
-      }
-
-      console.log("syOut", syOut)
-      console.log("ytIn", ytIn)
-
       const underlyingPrice = safeDivide(
         coinInfo.coinPrice,
         conversionRate,
         "decimal",
       )
 
-      console.log("underlyingPrice", underlyingPrice.toString())
+      let ptPrice: Decimal
+      let ytPrice: Decimal
 
-      const ytPrice = safeDivide(
-        new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
-        ytIn,
-        "decimal",
-      )
-      console.log("ytPrice", ytPrice.toString())
-
-      const ptPrice = underlyingPrice.sub(ytPrice)
-      console.log("ptPrice", ptPrice.toString())
+      try {
+        const { ytIn, syOut } = await querySyOutByYtIn(coinInfo)
+        ytPrice = safeDivide(
+          new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
+          ytIn,
+          "decimal",
+        )
+        ptPrice = underlyingPrice.sub(ytPrice)
+      } catch (error) {
+        try {
+          const { ptIn, syOut } = await querySyOutByPtIn(coinInfo)
+          ptPrice = safeDivide(
+            new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
+            ptIn,
+            "decimal",
+          )
+          ytPrice = underlyingPrice.sub(ptPrice)
+        } catch (ptError) {
+          console.log("PT calc error", ptError)
+          throw error
+        }
+      }
 
       // Calculate metrics
       let poolApy = new Decimal(0)
