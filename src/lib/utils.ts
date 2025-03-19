@@ -181,6 +181,7 @@ export const isValidAmount = (
     amount === 0 ||
     amount === "" ||
     amount === "0" ||
+    amount === "NaN" ||
     new Decimal(amount).isZero()
   )
     return false

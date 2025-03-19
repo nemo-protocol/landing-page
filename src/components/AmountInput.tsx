@@ -1,5 +1,5 @@
 import React from "react"
-import { cn, formatDecimalValue } from "@/lib/utils"
+import { cn, formatDecimalValue, isValidAmount } from "@/lib/utils"
 import Decimal from "decimal.js"
 import { Info, Wallet } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -148,8 +148,8 @@ export default function AmountInput({
                   <Skeleton className="h-3 sm:h-4 w-16 sm:w-20 ml-auto bg-[#2D2D48]" />
                 ) : (
                   <span className="text-[10px] sm:text-xs text-white/80 ml-auto">
-                    $
-                    {formatDecimalValue(new Decimal(price || 0).mul(amount), 6)}
+                    $ 
+                    {formatDecimalValue(new Decimal(isValidAmount(price ?? '0') ? price ?? '0' : 0).mul(amount), 6)}
                   </span>
                 )
               ) : (
