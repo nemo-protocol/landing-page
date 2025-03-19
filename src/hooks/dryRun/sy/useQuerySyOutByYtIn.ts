@@ -75,15 +75,6 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
         typeArguments: moveCallInfo.typeArguments,
       })
 
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
-      }
-
-      debugLog(
-        "get_sy_amount_out_for_exact_yt_in_with_price_voucher move call:",
-        debugInfo,
-      )
-
       const result = await client.devInspectTransactionBlock({
         sender: address,
         transactionBlock: await tx.build({
@@ -92,7 +83,10 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
         }),
       })
 
-      console.log("result", result)
+      const debugInfo: DebugInfo = {
+        result,
+        moveCall: [moveCallInfo],
+      }
 
       // Record raw result
       debugInfo.rawResult = {
@@ -101,6 +95,12 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
       }
 
       if (result?.error) {
+        if (!debug) {
+          debugLog(
+            "get_sy_amount_out_for_exact_yt_in_with_price_voucher move call error:",
+            debugInfo,
+          )
+        }
         throw new ContractError(result.error, debugInfo)
       }
 

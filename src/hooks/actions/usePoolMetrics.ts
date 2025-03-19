@@ -189,7 +189,6 @@ export function usePoolMetrics() {
         )
         ptPrice = underlyingPrice.sub(ytPrice)
       } catch (error) {
-        console.log("YT calc error", error)
         try {
           const { syIn, ptOut } = await queryPtOutBySyIn(coinInfo)
           ptPrice = safeDivide(
