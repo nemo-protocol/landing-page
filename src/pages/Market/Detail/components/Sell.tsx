@@ -44,6 +44,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { showTransactionDialog } from "@/lib/dialog"
+import { NEED_MIN_AMOUNT } from "@/lib/constants"
 
 export default function Sell() {
   const [warning, setWarning] = useState("")
@@ -58,6 +59,8 @@ export default function Sell() {
   const [receivingType, setReceivingType] = useState<"underlying" | "sy">(
     "underlying",
   )
+
+  const [minAmount, setMinAmount] = useState(0)
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -88,6 +91,17 @@ export default function Sell() {
     outerCoinConfig: coinConfig,
   })
 
+  useEffect(() => {
+    if (coinConfig) {
+      const minAmount = NEED_MIN_AMOUNT.find(
+        (item) => item.coinType === coinConfig.coinType,
+      )?.minAmount
+      if (minAmount) {
+        setMinAmount(minAmount)
+      }
+    }
+  }, [coinConfig])
+
   const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
   // const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)
 
@@ -96,6 +110,15 @@ export default function Sell() {
       const getSyOut = debounce(async () => {
         if (isValidAmount(value) && decimal && coinConfig?.conversionRate) {
           // TODO: optimize this code to be more efficient
+          if (
+            receivingType === "underlying" &&
+            new Decimal(value).div(coinConfig.conversionRate).lt(minAmount)
+          ) {
+            setError(
+              `Please enter at least ${new Decimal(1).mul(coinConfig.conversionRate)} ${coinConfig.coinName}`,
+            )
+            return
+          }
           try {
             const inputAmount = new Decimal(value).mul(10 ** decimal).toString()
             const { outputValue } =
@@ -441,11 +464,13 @@ export default function Sell() {
               <span>
                 {isLoading ? (
                   <Skeleton className="h-6 sm:h-7 w-36 sm:w-48 bg-[#2D2D48]" />
-                ) : !decimal || !isValidAmount(targetValue) ? (
-                  "--"
                 ) : (
                   <div className="flex items-center gap-x-1 sm:gap-x-1.5">
-                    <span>≈ {formatDecimalValue(targetValue, decimal)}</span>
+                    <span>
+                      {isValidAmount(targetValue)
+                        ? ` ≈ ${formatDecimalValue(targetValue, decimal)}`
+                        : ""}
+                    </span>
                     <Select
                       value={receivingType}
                       onValueChange={(value) => {

@@ -720,6 +720,30 @@ export const burnSCoin = (
 
       return underlyingCoin
     }
+    case "Aftermath": {
+      const burnMoveCall = {
+        target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_unstake`,
+        arguments: [
+          { name: "staked_sui_vault", value: AFTERMATH.STAKED_SUI_VAULT },
+          { name: "safe", value: AFTERMATH.SAFE },
+          { name: "s_coin", value: sCoin },
+        ],
+        typeArguments: [],
+      };
+      debugLog(`aftermath request_unstake move call:`, burnMoveCall);
+
+      const [underlyingCoin] = tx.moveCall({
+        target: burnMoveCall.target,
+        arguments: [
+          tx.object(AFTERMATH.STAKED_SUI_VAULT),
+          tx.object(AFTERMATH.SAFE),
+          sCoin,
+        ],
+        typeArguments: burnMoveCall.typeArguments,
+      });
+
+      return underlyingCoin;
+    }
     default:
       console.error(
         "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
