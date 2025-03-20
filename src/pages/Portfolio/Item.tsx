@@ -23,6 +23,7 @@ import {
   redeemSyCoin,
   getPriceVoucher,
   initPyPosition,
+  mergeAllCoins,
 } from "@/lib/txHelper"
 import {
   AlertDialog,
@@ -42,6 +43,7 @@ import {
 import useQueryClaimLpReward from "@/hooks/useQueryClaimLpReward"
 import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 import { ChevronDown } from "lucide-react"
+import useCoinData from "@/hooks/useCoinData"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -116,6 +118,8 @@ export default function Item({
 
   const { mutateAsync: redeemLp } = useRedeemLp(coinConfig, marketState)
 
+  const { data: suiCoins } = useCoinData(address, "0x2::sui::SUI")
+
   // TODO: yt price optimization
   const { data: ptYtData, isLoading: isPtYtLoading } = useCalculatePtYt(
     coinConfig,
@@ -139,6 +143,7 @@ export default function Item({
     isLoading: isLpRewardLoading,
     refetch: refetchLpReward,
   } = useQueryClaimLpReward(coinConfig, {
+    suiCoins,
     lpBalance,
     lpPositions,
     marketState,
@@ -360,6 +365,8 @@ export default function Item({
   async function claimLpReward(rewardIndex: number = selectedRewardIndex) {
     debugLog("claimLpReward", lpPositions, marketState)
     if (
+      suiCoins &&
+      suiCoins.length &&
       coinConfig?.coinType &&
       address &&
       lpBalance &&
@@ -369,6 +376,8 @@ export default function Item({
       try {
         setClaimLoading(true)
         const tx = new Transaction()
+
+        mergeAllCoins(tx, address, suiCoins, coinConfig.coinType)
 
         await claimLpRewardMutation({
           tx,
@@ -537,11 +546,7 @@ export default function Item({
           isValidAmount(ptYtData?.ytPrice)) && (
           <TableRow className="cursor-pointer">
             <TableCell className="flex items-center gap-x-3">
-              <img
-                src={coinConfig.coinLogo}
-                alt=""
-                className="size-10"
-              />
+              <img src={coinConfig.coinLogo} alt="" className="size-10" />
               <div className="flex items-center gap-x-1 flex-wrap">
                 <span>YT {coinConfig.coinName}</span>
                 <span className="text-white/50 text-xs">
@@ -653,11 +658,7 @@ export default function Item({
         <TableRow className="cursor-pointer">
           {/* Assets */}
           <TableCell className="flex items-center gap-x-3">
-            <img
-              src={coinConfig.coinLogo}
-              alt=""
-              className="size-10"
-            />
+            <img src={coinConfig.coinLogo} alt="" className="size-10" />
             <div className="flex items-center gap-x-1 flex-wrap">
               <span>LP {coinConfig.coinName}</span>
               <span className="text-white/50 text-xs">
@@ -730,26 +731,28 @@ export default function Item({
                             <ChevronDown className="h-4 w-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="bg-black border-white/60 !p-0">
-                            {marketState?.rewardMetrics?.map((metric, index) => (
-                              <DropdownMenuItem
-                                key={index}
-                                onClick={() => {
-                                  setSelectedRewardIndex(index)
-                                  refetchLpReward()
-                                }}
-                              >
-                                <div className="flex items-center gap-2 cursor-pointer w-full hover:bg-white/10 py-1 px-2 rounded-md">
-                                  {metric.tokenLogo && (
-                                    <img
-                                      className="size-4"
-                                      alt={metric.tokenType}
-                                      src={metric.tokenLogo}
-                                    />
-                                  )}
-                                  <span>{metric.tokenName}</span>
-                                </div>
-                              </DropdownMenuItem>
-                            ))}
+                            {marketState?.rewardMetrics?.map(
+                              (metric, index) => (
+                                <DropdownMenuItem
+                                  key={index}
+                                  onClick={() => {
+                                    setSelectedRewardIndex(index)
+                                    refetchLpReward()
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2 cursor-pointer w-full hover:bg-white/10 py-1 px-2 rounded-md">
+                                    {metric.tokenLogo && (
+                                      <img
+                                        className="size-4"
+                                        alt={metric.tokenType}
+                                        src={metric.tokenLogo}
+                                      />
+                                    )}
+                                    <span>{metric.tokenName}</span>
+                                  </div>
+                                </DropdownMenuItem>
+                              ),
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       ) : (

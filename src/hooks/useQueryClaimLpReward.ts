@@ -7,12 +7,15 @@ import { useQuery } from "@tanstack/react-query"
 import { ContractError, LpPosition, MarketState, DebugInfo } from "./types"
 import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { debugLog } from "@/config"
+import { CoinData } from "./useCoinData"
+import { mergeAllCoins } from "@/lib/txHelper"
 
 interface ClaimLpRewardParams {
   lpBalance: string
   lpPositions?: LpPosition[]
   marketState?: MarketState
   rewardIndex: number
+  suiCoins?: CoinData[]
 }
 
 type DryRunResult<T extends boolean> = T extends true
@@ -57,6 +60,10 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         throw new Error("No LP position found")
       }
 
+      if (!params.suiCoins) {
+        throw new Error("No SUI coins found")
+      }
+
       const rewardMetric =
         params.marketState?.rewardMetrics?.[params.rewardIndex]
       if (!rewardMetric?.tokenType) {
@@ -65,6 +72,8 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
 
       const tx = new Transaction()
       tx.setSender(address)
+
+      mergeAllCoins(tx, address, params.suiCoins, coinConfig.coinType)
 
       const moveCallInfo = {
         target: `${coinConfig?.nemoContractId}::market::claim_reward`,

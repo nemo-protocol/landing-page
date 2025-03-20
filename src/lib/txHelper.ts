@@ -1248,6 +1248,7 @@ export const swapExactSyForPt = <T extends boolean = false>(
 export const mergeAllCoins = async (
   tx: Transaction,
   address: string,
+  coins: CoinData[],
   coinType: string = "0x2::sui::SUI",
 ) => {
   debugLog("mergeAllCoins params:", {
@@ -1255,56 +1256,26 @@ export const mergeAllCoins = async (
     address,
   })
 
-  // Query all coins of the specified type
-  const { data: coins } = await suiClient.getCoins({
-    owner: address,
-    coinType: coinType,
-  })
-
-  console.log("coins", coins)
-
   if (!coins || coins.length === 0) {
     debugLog("No coins to merge or only one coin available")
     throw new Error("No coins to merge or only one coin available")
   }
 
   if (coins.length === 1) {
-    throw new Error("Only one coin available")
+    return coins[0].coinObjectId
   }
 
   // For SUI coins, first split a small amount for gas
   if (coinType === "0x2::sui::SUI") {
-    const [firstCoin] = tx.splitCoins(tx.gas, [
+    const [mergedCoin] = tx.splitCoins(tx.gas, [
       tx.pure.u64(
         coins.reduce((total, coin) => total + Number(coin.balance), 0),
       ),
     ])
 
-    tx.transferObjects([firstCoin], address)
+    tx.transferObjects([mergedCoin], address)
 
-    const { data: newCoins } = await suiClient.getCoins({
-      owner: address,
-      coinType: coinType,
-    })
-
-    // // Now merge all other coins into the remaining coin
-    // const otherCoins = sortedCoins
-    //   .slice(1)
-    //   .map((coin) => tx.object(coin.coinObjectId))
-
-    // if (otherCoins.length === 0) {
-    //   throw new Error("No additional coins available to merge")
-    // }
-
-    // debugLog(`Merging ${otherCoins.length + 1} SUI coins after reserving gas`, {
-    //   primaryCoinId,
-    //   otherCoins: sortedCoins.slice(1).map((c) => c.coinObjectId),
-    // })
-
-    // const mergedCoin = tx.mergeCoins(firstCoin, otherCoins)
-
-    // tx.transferObjects([firstCoin], address)
-    return newCoins[0].coinObjectId
+    return coins[0].coinObjectId
   } else {
     // For non-SUI coins, proceed as before
     const primaryCoin = coins[0].coinObjectId

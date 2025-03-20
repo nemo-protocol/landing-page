@@ -98,6 +98,8 @@ export default function Test() {
     }
     setCalls((prev) => [callInfo, ...prev])
 
+    if (!suiData) return
+
     try {
       const tx = new Transaction()
 
@@ -106,7 +108,7 @@ export default function Test() {
         selectedCoinType === "custom" ? customCoinType : selectedCoinType
 
       // We need to await the result since mergeAllCoins is async
-      const primaryCoinId = await mergeAllCoins(tx, address, coinType)
+      const primaryCoinId = await mergeAllCoins(tx, address, suiData, coinType)
 
       // Execute the transaction
       const result = await signAndExecuteTransaction({
