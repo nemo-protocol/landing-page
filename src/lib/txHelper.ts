@@ -19,8 +19,6 @@ import {
   TransactionResult,
   TransactionArgument,
 } from "@mysten/sui/transactions"
-import { getFullnodeUrl, SuiClient } from "@mysten/sui/client"
-const suiClient = new SuiClient({ url: getFullnodeUrl("mainnet") })
 
 export const getPriceVoucher = <T extends boolean = true>(
   tx: Transaction,
