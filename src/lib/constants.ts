@@ -204,10 +204,10 @@ export const HAEDAL = {
     "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
 } as const
 
-export const NEED_MIN_AMOUNT = [
+export const NEED_MIN_VALUE_LIST = [
   {
     coinType:
       "0xf325ce1300e8dac124071d3152c5c5ee6174914f8bc2161e88329cf579246efc::afsui::AFSUI",
-    minAmount: 1,
+    minValue: 1,
   },
 ]

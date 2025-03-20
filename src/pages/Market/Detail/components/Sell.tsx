@@ -44,7 +44,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { showTransactionDialog } from "@/lib/dialog"
-import { NEED_MIN_AMOUNT } from "@/lib/constants"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 export default function Sell() {
   const [warning, setWarning] = useState("")
@@ -60,7 +60,7 @@ export default function Sell() {
     "underlying",
   )
 
-  const [minAmount, setMinAmount] = useState(0)
+  const [minValue, setMinValue] = useState(0)
 
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
@@ -93,11 +93,11 @@ export default function Sell() {
 
   useEffect(() => {
     if (coinConfig) {
-      const minAmount = NEED_MIN_AMOUNT.find(
+      const minValue = NEED_MIN_VALUE_LIST.find(
         (item) => item.coinType === coinConfig.coinType,
-      )?.minAmount
-      if (minAmount) {
-        setMinAmount(minAmount)
+      )?.minValue
+      if (minValue) {
+        setMinValue(minValue)
       }
     }
   }, [coinConfig])
@@ -110,15 +110,7 @@ export default function Sell() {
       const getSyOut = debounce(async () => {
         if (isValidAmount(value) && decimal && coinConfig?.conversionRate) {
           // TODO: optimize this code to be more efficient
-          if (
-            receivingType === "underlying" &&
-            new Decimal(value).div(coinConfig.conversionRate).lt(minAmount)
-          ) {
-            setError(
-              `Please enter at least ${new Decimal(1).mul(coinConfig.conversionRate)} ${coinConfig.coinName}`,
-            )
-            return
-          }
+
           try {
             const inputAmount = new Decimal(value).mul(10 ** decimal).toString()
             const { outputValue } =
@@ -130,25 +122,26 @@ export default function Sell() {
                   }))
                 : await sellPtDryRun({
                     minSyOut: "0",
-                    receivingType,
+                    receivingType: "sy",
                     ptAmount: inputAmount,
                     pyPositions: pyPositionData,
                   })
 
-            const targetValue =
-              tokenType === "yt"
-                ? new Decimal(outputValue)
-                    .mul(
-                      receivingType === "underlying" && tokenType === "yt"
-                        ? coinConfig.conversionRate
-                        : 1,
-                    )
-                    .toFixed(decimal)
-                : outputValue
+            const targetValue = new Decimal(outputValue)
+              .mul(
+                receivingType === "underlying" ? coinConfig.conversionRate : 1,
+              )
+              .toFixed(decimal)
+
+            if (new Decimal(targetValue).lt(minValue)) {
+              setError(
+                `Please enter at least ${new Decimal(value).mul(minValue).div(targetValue)} ${tokenType.toUpperCase()} ${coinConfig.coinName}`,
+              )
+            } else {
+              setError(undefined)
+            }
 
             setTargetValue(targetValue)
-
-            setError(undefined)
           } catch (errorMsg) {
             // TODO:  use other calc hook when not connect
             const { error, detail } = parseErrorMessage(
@@ -168,12 +161,14 @@ export default function Sell() {
       return getSyOut.cancel
     },
     [
-      tokenType,
-      sellPtDryRun,
-      receivingType,
-      pyPositionData,
-      querySyOutByYtIn,
       coinConfig?.conversionRate,
+      coinConfig?.coinName,
+      receivingType,
+      minValue,
+      tokenType,
+      querySyOutByYtIn,
+      sellPtDryRun,
+      pyPositionData,
     ],
   )
 
@@ -365,8 +360,8 @@ export default function Sell() {
   )
 
   const btnDisabled = useMemo(() => {
-    return ["", undefined].includes(redeemValue)
-  }, [redeemValue])
+    return ["", undefined].includes(redeemValue) || !!error
+  }, [redeemValue, error])
 
   const priceImpact = useMemo(() => {
     if (
