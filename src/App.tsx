@@ -106,7 +106,7 @@ function App() {
                 <Route path="/points" element={<Rewards />} />
                 <Route path="/portfolio/:type?" element={<Portfolio />} />
                 <Route path="/wallet-kit" element={<WalletKit />} />
-                <Route path="/test" element={<Test />} />
+                <Route path="/tool" element={<Test />} />
                 <Route path="/swap" element={<Swap />} />
               </Routes>
             </div>
