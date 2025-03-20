@@ -590,8 +590,8 @@ export const MobileCard: React.FC<MobileCardProps> = ({
       style={{ background: getBgGradient(item.coinType) }}
     >
       <div className="flex items-start gap-2 mb-6">
-        {item.underlyingCoinLogo && (
-          <img src={item.underlyingCoinLogo} alt="" className="w-10 h-10" />
+        {item.coinLogo && (
+          <img src={item.coinLogo} alt="" className="w-10 h-10" />
         )}
         <div className="flex flex-col gap-1">
           <h3 className="text-white text-base">{item.underlyingCoinName}</h3>

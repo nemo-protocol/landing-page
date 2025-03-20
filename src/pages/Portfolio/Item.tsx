@@ -23,7 +23,6 @@ import {
   redeemSyCoin,
   getPriceVoucher,
   initPyPosition,
-  mergeAllCoins,
 } from "@/lib/txHelper"
 import {
   AlertDialog,
