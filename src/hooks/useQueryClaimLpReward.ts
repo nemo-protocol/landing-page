@@ -126,9 +126,7 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         throw new ContractError(message, debugInfo)
       }
 
-      console.log("result", result)
-
-      if (!result?.results?.[1]?.returnValues?.[0]) {
+      if (!result?.results?.[result.results.length - 1]?.returnValues?.[0]) {
         const message = "Failed to get reward amount"
         if (debugInfo.rawResult) {
           debugInfo.rawResult.error = message
@@ -137,7 +135,8 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         throw new ContractError(message, debugInfo)
       }
 
-      const [[balanceBytes]] = result.results[1].returnValues
+      const [[balanceBytes]] =
+        result.results[result.results.length - 1].returnValues
       const rewardAmount = bcs.U64.parse(new Uint8Array(balanceBytes))
 
       debugInfo.parsedOutput = rewardAmount

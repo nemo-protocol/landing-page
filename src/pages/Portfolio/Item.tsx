@@ -377,8 +377,6 @@ export default function Item({
         setClaimLoading(true)
         const tx = new Transaction()
 
-        mergeAllCoins(tx, address, suiCoins, coinConfig.coinType)
-
         await claimLpRewardMutation({
           tx,
           coinConfig,
