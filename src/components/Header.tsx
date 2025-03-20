@@ -150,6 +150,14 @@ export default function Header({ className }: { className?: string }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
+                  <Link
+                    to="/tool"
+                    className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
+                  >
+                    Tool
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
                   <a
                     className="px-2 py-1.5 hover:bg-[#131520] text-white hover:text-[#5D94FF] cursor-pointer text-center w-[100px] h-8"
                     href="https://www.sentio.xyz/"
