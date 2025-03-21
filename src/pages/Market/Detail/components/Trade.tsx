@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/tooltip"
 import { formatLargeNumber } from "@/lib/utils"
 import { showTransactionDialog } from '@/lib/dialog'
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 export default function Trade() {
   const [warning, setWarning] = useState("")
@@ -70,11 +71,26 @@ export default function Trade() {
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
+
   const {
     data: coinConfig,
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
+
+
+  const [minValue, setMinValue] = useState(0)
+
+  useEffect(() => {
+    if (coinConfig) {
+      const minValue = NEED_MIN_VALUE_LIST.find(
+        (item) => item.coinType === coinConfig.coinType,
+      )?.minValue
+      if (minValue) {
+        setMinValue(minValue)
+      }
+    }
+  }, [coinConfig])
 
   const coinName = useMemo(
     () =>
@@ -177,9 +193,9 @@ export default function Trade() {
   const debouncedGetYtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getYtOut = debounce(async () => {
-        if (tokenType === 0 && new Decimal(value).lt(1)) {
+        if (tokenType === 0 && new Decimal(value).lt(minValue)) {
           setError(
-            `The minimum investment amount is 1 ${coinConfig?.underlyingCoinName}`,
+            `The minimum investment amount is ${minValue} ${coinConfig?.underlyingCoinName}`,
           )
           return
         }

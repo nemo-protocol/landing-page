@@ -51,6 +51,7 @@ import useGetApproxPtOutDryRun from "@/hooks/dryRun/useGetApproxPtOutDryRun"
 import useSwapExactSyForPtDryRun from "@/hooks/dryRun/useSwapExactSyForPtDryRun"
 import useGetConversionRateDryRun from "@/hooks/dryRun/useGetConversionRateDryRun"
 import useQueryPtRatio from "@/hooks/useQueryPtRatio"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -166,12 +167,25 @@ export default function Invest() {
 
   const { data: initPtRatio } = useQueryPtRatio(coinConfig, "1000")
 
+  const [minValue, setMinValue] = useState(0)
+
+  useEffect(() => {
+    if (coinConfig) {
+      const minValue = NEED_MIN_VALUE_LIST.find(
+        (item) => item.coinType === coinConfig.coinType,
+      )?.minValue
+      if (minValue) {
+        setMinValue(minValue)
+      }
+    }
+  }, [coinConfig])
+
   const debouncedGetPtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getPtOut = debounce(async () => {
-        if (tokenType === 0 && new Decimal(value).lt(1)) {
+        if (tokenType === 0 && new Decimal(value).lt(minValue)) {
           setError(
-            `The minimum investment amount is 1 ${coinConfig?.underlyingCoinName}`,
+            `The minimum investment amount is ${minValue} ${coinConfig?.underlyingCoinName}`,
           )
           return
         }
