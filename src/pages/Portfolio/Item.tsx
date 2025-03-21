@@ -167,6 +167,8 @@ export default function Item({
 
   useEffect(() => {
     if (isConnected) {
+      const ytRewardValue = ytReward && isValidAmount(ytReward) ? ytReward : "0"
+      const lpRewardValue = lpReward && isValidAmount(lpReward) ? lpReward : "0"
       updatePortfolio(
         coinConfig.id,
         new Decimal(ptBalance || 0)
@@ -190,8 +192,19 @@ export default function Item({
             ),
           )
           .toNumber(),
-        new Decimal(ytReward && isValidAmount(ytReward) ? ytReward : "0")
-          .mul(coinConfig?.underlyingPrice ?? 0)
+        new Decimal(ytRewardValue)
+          .mul(
+            new Decimal(ytRewardValue).lt(minValue)
+              ? coinConfig.coinPrice
+              : (coinConfig?.underlyingPrice ?? 0),
+          )
+          .add(
+            new Decimal(lpRewardValue).mul(
+              new Decimal(ytRewardValue).lt(minValue)
+                ? coinConfig.coinPrice
+                : (coinConfig?.underlyingPrice ?? 0),
+            ),
+          )
           .toNumber(),
       )
     }
@@ -206,8 +219,10 @@ export default function Item({
     ptYtData?.ptPrice,
     ptYtData?.lpPrice,
     ptYtData?.ytPrice,
-    coinConfig.coinPrice,
-    coinConfig.underlyingPrice,
+    coinConfig?.coinPrice,
+    coinConfig?.underlyingPrice,
+    lpReward,
+    minValue,
   ])
 
   async function claimYT() {

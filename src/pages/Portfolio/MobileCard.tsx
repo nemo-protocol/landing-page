@@ -32,6 +32,7 @@ import {
   initPyPosition,
 } from "@/lib/txHelper"
 import { debugLog } from "@/config"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -121,6 +122,19 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   const marketState = marketStates?.[item.marketStateId]
   const maturityDate = dayjs(parseInt(item.maturity)).format("MMM DD YYYY")
 
+  const [minValue, setMinValue] = useState(0)
+
+  useEffect(() => {
+    if (item) {
+      const minValue = NEED_MIN_VALUE_LIST.find(
+        (item) => item.coinType === item.coinType,
+      )?.minValue
+      if (minValue) {
+        setMinValue(minValue)
+      }
+    }
+  }, [item])
+
   // YT Reward相关逻辑
   const { data: ytReward, refetch: refetchYtReward } = useQueryClaimYtReward(
     item,
@@ -152,6 +166,8 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   // Add portfolio update effect
   useEffect(() => {
     if (isConnected) {
+      const ytRewardValue = ytReward && isValidAmount(ytReward) ? ytReward : "0"
+      const lpRewardValue = lpReward && isValidAmount(lpReward) ? lpReward : "0"
       updatePortfolio(
         item.id,
         new Decimal(ptBalance || 0)
@@ -175,8 +191,19 @@ export const MobileCard: React.FC<MobileCardProps> = ({
             ),
           )
           .toNumber(),
-        new Decimal(ytReward && isValidAmount(ytReward) ? ytReward : "0")
-          .mul(item?.underlyingPrice ?? 0)
+        new Decimal(ytRewardValue)
+          .mul(
+            new Decimal(ytRewardValue).lt(minValue)
+              ? item.coinPrice
+              : (item?.underlyingPrice ?? 0),
+          )
+          .add(
+            new Decimal(lpRewardValue).mul(
+              new Decimal(ytRewardValue).lt(minValue)
+                ? item.coinPrice
+                : (item?.underlyingPrice ?? 0),
+            ),
+          )
           .toNumber(),
       )
     }
@@ -192,7 +219,9 @@ export const MobileCard: React.FC<MobileCardProps> = ({
     ptYtData?.lpPrice,
     ptYtData?.ytPrice,
     item.coinPrice,
-    item.underlyingPrice,
+    item?.underlyingPrice,
+    lpReward,
+    minValue,
   ])
 
   async function claimYtReward() {
