@@ -177,6 +177,12 @@ export default function Trade() {
   const debouncedGetYtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getYtOut = debounce(async () => {
+        if (tokenType === 0 && new Decimal(value).lt(1)) {
+          setError(
+            `The minimum investment amount is 1 ${coinConfig?.underlyingCoinName}`,
+          )
+          return
+        }
         if (value && decimal && config && conversionRate) {
           setIsCalcYtLoading(true)
           try {

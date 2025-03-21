@@ -169,6 +169,12 @@ export default function Invest() {
   const debouncedGetPtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getPtOut = debounce(async () => {
+        if (tokenType === 0 && new Decimal(value).lt(1)) {
+          setError(
+            `The minimum investment amount is 1 ${coinConfig?.underlyingCoinName}`,
+          )
+          return
+        }
         setError(undefined)
         if (
           isValidAmount(value) &&
@@ -450,8 +456,13 @@ export default function Invest() {
   }, [marketStateData])
 
   const btnDisabled = useMemo(() => {
-    return !hasLiquidity || insufficientBalance || !isValidAmount(swapValue)
-  }, [swapValue, insufficientBalance, hasLiquidity])
+    return (
+      !hasLiquidity ||
+      insufficientBalance ||
+      !isValidAmount(swapValue) ||
+      !!error
+    )
+  }, [swapValue, insufficientBalance, hasLiquidity, error])
 
   const btnText = useMemo(() => {
     if (!hasLiquidity) {
@@ -679,15 +690,14 @@ export default function Invest() {
             ) : (
               <div className="flex items-center gap-x-1.5">
                 <span>
-                  +
                   {ptValue && decimal && ptValue && conversionRate
-                    ? formatDecimalValue(
+                    ? `+${formatDecimalValue(
                         new Decimal(ptValue).minus(
                           new Decimal(syValue).mul(conversionRate),
                         ),
                         decimal,
-                      )
-                    : "--"}
+                      )}`
+                    : "0"}
                 </span>
                 <span>{coinConfig?.underlyingCoinName}</span>
                 <img
