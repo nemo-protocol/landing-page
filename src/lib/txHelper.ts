@@ -32,6 +32,58 @@ export const getPriceVoucher = <T extends boolean = true>(
   : TransactionArgument => {
   let moveCall: MoveCallInfo
   switch (coinConfig.coinType) {
+    case "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN": {
+      moveCall = {
+        target: `${coinConfig.oraclePackageId}::cetus_vault::get_price_voucher_from_cetus_vault`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
+          },
+          {
+            name: "staking",
+            value: HAEDAL.HAEDAL_STAKING_ID,
+          },
+          {
+            name: "vault",
+            value:
+              "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+          },
+          {
+            name: "pool",
+            value:
+              "0x871d8a227114f375170f149f7e9d45be822dd003eba225e83c05ac80828596bc",
+          },
+          { name: "sy_state", value: coinConfig.syStateId },
+          { name: "ctx", value: "0x6" },
+        ],
+        typeArguments: [
+          coinConfig.syCoinType,
+          coinConfig.underlyingCoinType, // Use underlyingCoinType as YieldToken
+          coinConfig.coinType,
+        ],
+      }
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_cetus_vault move call:`,
+          moveCall,
+        )
+      }
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
+    }
     case "0xd01d27939064d79e4ae1179cd11cfeeff23943f32b1a842ea1a1e15a0045d77d::st_sbuck::ST_SBUCK": {
       moveCall = {
         target: `${coinConfig.oraclePackageId}::buck::get_price_voucher_from_ssbuck`,
@@ -570,8 +622,7 @@ export const mintSCoin = <T extends boolean = false>(
 
             {
               name: "staking",
-              value:
-                "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
+              value: HAEDAL.HAEDAL_STAKING_ID,
             },
             { name: "coin", value: amounts[i] },
             {
@@ -591,9 +642,7 @@ export const mintSCoin = <T extends boolean = false>(
             tx.object(
               "0x0000000000000000000000000000000000000000000000000000000000000005",
             ),
-            tx.object(
-              "0x47b224762220393057ebf4f70501b6e657c3e56684737568439a04f80849b2ca",
-            ),
+            tx.object(HAEDAL.HAEDAL_STAKING_ID),
             splitCoins[i],
             tx.object(
               "0x0000000000000000000000000000000000000000000000000000000000000000",
