@@ -86,10 +86,6 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         typeArguments: [coinConfig.syCoinType, rewardMetric.tokenType],
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
-      }
-
       const [coin] = tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
@@ -115,7 +111,10 @@ export default function useQueryClaimLpReward<T extends boolean = false>(
         }),
       })
 
-      debugInfo.rawResult = result
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+        rawResult: result,
+      }
 
       if (result?.error) {
         const message = result.error

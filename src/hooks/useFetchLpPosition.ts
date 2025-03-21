@@ -27,6 +27,18 @@ export default function useFetchLpPosition<T extends boolean = false>(
         throw new Error("Please connect wallet first")
       }
 
+      const response = await suiClient.getOwnedObjects({
+        owner: address,
+        filter: {
+          MatchAny: coinConfig.marketPositionTypeList.map((type: string) => ({
+            StructType: type,
+          })),
+        },
+        options: {
+          showContent: true,
+        },
+      })
+
       const debugInfo: DebugInfo = {
         moveCall: [
           {
@@ -43,22 +55,9 @@ export default function useFetchLpPosition<T extends boolean = false>(
             typeArguments: [],
           },
         ],
-      }
-
-      const response = await suiClient.getOwnedObjects({
-        owner: address,
-        filter: {
-          MatchAny: coinConfig.marketPositionTypeList.map((type: string) => ({
-            StructType: type,
-          })),
+        rawResult: {
+          results: response.data,
         },
-        options: {
-          showContent: true,
-        },
-      })
-
-      debugInfo.rawResult = {
-        results: response.data,
       }
 
       const positions = response.data

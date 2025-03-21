@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
-import { network } from "@/config"
+import { IS_DEV, network } from "@/config"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { useParams, Link } from "react-router-dom"
 import useCoinData from "@/hooks/useCoinData"
@@ -56,7 +56,6 @@ export default function Invest() {
   const [txId, setTxId] = useState("")
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
-  const isDev = process.env.NODE_ENV === "development"
   const [error, setError] = useState<string>()
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
@@ -508,7 +507,7 @@ export default function Invest() {
       <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
         <div className="w-full relative">
           <h2 className="text-base sm:text-xl text-center">Invest</h2>
-          {isDev && (
+          {IS_DEV && (
             <Link
               to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/sell/pt`}
               className="text-sm text-white/60 hover:text-white underline transition-colors absolute right-0 top-1/2 -translate-y-1/2"

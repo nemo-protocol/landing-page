@@ -9,7 +9,7 @@ export interface MoveCallInfo {
 
 export interface DebugInfo {
   moveCall: MoveCallInfo[]
-  rawResult?: {
+  rawResult: {
     error?: string
     results?: unknown[]
   }

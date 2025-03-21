@@ -18,20 +18,6 @@ const useFetchPyPosition = (
         throw new Error("Missing required parameters")
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [
-          {
-            target: "suiClient_getOwnedObjects",
-            arguments: [
-              { name: "owner", value: address },
-              { name: "maturity", value: coinConfig.maturity },
-              { name: "pyStateId", value: coinConfig.pyStateId },
-            ],
-            typeArguments: coinConfig.pyPositionTypeList,
-          },
-        ],
-      }
-
       const response = await suiClient.getOwnedObjects({
         owner: address,
         filter: {
@@ -44,8 +30,21 @@ const useFetchPyPosition = (
         },
       })
 
-      debugInfo.rawResult = {
-        results: [response],
+      const debugInfo: DebugInfo = {
+        moveCall: [
+          {
+            target: "suiClient_getOwnedObjects",
+            arguments: [
+              { name: "owner", value: address },
+              { name: "maturity", value: coinConfig.maturity },
+              { name: "pyStateId", value: coinConfig.pyStateId },
+            ],
+            typeArguments: coinConfig.pyPositionTypeList,
+          },
+        ],
+        rawResult: {
+          results: [response],
+        },
       }
 
       const positions = response.data

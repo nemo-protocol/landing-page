@@ -84,14 +84,8 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
       })
 
       const debugInfo: DebugInfo = {
-        result,
         moveCall: [moveCallInfo],
-      }
-
-      // Record raw result
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+        rawResult: result,
       }
 
       if (result?.error) {

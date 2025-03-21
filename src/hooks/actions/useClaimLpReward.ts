@@ -32,9 +32,6 @@ export default function useClaimLpReward<T extends boolean = false>(
       if (!address) {
         throw new Error("Please connect your wallet")
       }
-      const debugInfo: DebugInfo = {
-        moveCall: [],
-      }
 
       if (!rewardMetric?.tokenType) {
         throw new Error("No reward token type found")
@@ -64,7 +61,10 @@ export default function useClaimLpReward<T extends boolean = false>(
 
       tx.transferObjects([coin], address)
 
-      debugInfo.moveCall = [claimRewardMoveCall]
+      const debugInfo: DebugInfo = {
+        moveCall: [claimRewardMoveCall],
+        rawResult: {},
+      }
 
       if (!debug) {
         debugLog("claim_lp_reward debugInfo:", debugInfo)

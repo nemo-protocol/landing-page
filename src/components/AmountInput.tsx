@@ -70,7 +70,11 @@ export default function AmountInput({
               {isConfigLoading ? (
                 <Skeleton className="size-8 sm:size-12 rounded-full bg-[#2D2D48]" />
               ) : (
-                <img src={coinLogo} alt={coinName} className="size-8 sm:size-12" />
+                <img
+                  src={coinLogo}
+                  alt={coinName}
+                  className="size-8 sm:size-12"
+                />
               )}
 
               <div className="space-y-0.5 sm:space-y-1">
@@ -138,8 +142,15 @@ export default function AmountInput({
                 e.target instanceof HTMLElement && e.target.blur()
               }
               className={cn(
-                "bg-transparent outline-none grow text-right min-w-0 placeholder:text-xl sm:placeholder:text-3xl p-0 text-xl sm:text-3xl font-bold w-full",
+                "bg-transparent outline-none grow text-right min-w-0 placeholder:text-xl sm:placeholder:text-3xl p-0 font-bold w-full",
                 disabled && "cursor-not-allowed",
+                amount.length <= 8
+                  ? "text-xl sm:text-3xl"
+                  : amount.length <= 12
+                    ? "text-lg sm:text-2xl"
+                    : amount.length <= 16
+                      ? "text-base sm:text-xl"
+                      : "text-sm sm:text-base",
               )}
             />
             <div className="flex items-end">
@@ -148,12 +159,19 @@ export default function AmountInput({
                   <Skeleton className="h-3 sm:h-4 w-16 sm:w-20 ml-auto bg-[#2D2D48]" />
                 ) : (
                   <span className="text-[10px] sm:text-xs text-white/80 ml-auto">
-                    $ 
-                    {formatDecimalValue(new Decimal(isValidAmount(price ?? '0') ? price ?? '0' : 0).mul(amount), 6)}
+                    $
+                    {formatDecimalValue(
+                      new Decimal(
+                        isValidAmount(price ?? "0") ? (price ?? "0") : 0,
+                      ).mul(amount),
+                      6,
+                    )}
                   </span>
                 )
               ) : (
-                <span className="text-[10px] sm:text-xs text-white/80 ml-auto">$0</span>
+                <span className="text-[10px] sm:text-xs text-white/80 ml-auto">
+                  $0
+                </span>
               )}
             </div>
           </div>
@@ -161,7 +179,9 @@ export default function AmountInput({
       </div>
       {error && (
         <div className="space-x-1 mt-1 sm:mt-2">
-          <span className="text-xs sm:text-sm text-red-500 break-words">{error}</span>
+          <span className="text-xs sm:text-sm text-red-500 break-words">
+            {error}
+          </span>
           {errorDetail && (
             <TooltipProvider>
               <Tooltip>

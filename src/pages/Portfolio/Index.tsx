@@ -6,29 +6,30 @@ import usePortfolio from "@/hooks/usePortfolio"
 import Decimal from "decimal.js"
 import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
-import CountUp from 'react-countup'
+import CountUp from "react-countup"
 import { cn } from "@/lib/utils"
 
 // 创建一个滚动数字组件
-const AnimatedNumber = ({ 
+const AnimatedNumber = ({
   value,
-  className = "" 
+  className = "",
 }: {
-  value: number;
-  className?: string;
+  value: number
+  className?: string
 }) => {
   return (
     <span className={cn(className)}>
-      $<CountUp 
-        end={value} 
-        separator="," 
+      $
+      <CountUp
+        end={value}
+        separator=","
         decimals={2}
         duration={1.5}
         preserveValue={true}
       />
     </span>
-  );
-};
+  )
+}
 
 export default function Portfolio() {
   const { data: list, isLoading } = usePortfolioList()
@@ -37,19 +38,17 @@ export default function Portfolio() {
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  const balance = portfolios.reduce(
-    (sum, portfolio) => sum.add(portfolio.balance),
-    new Decimal(0),
-  ).toNumber()
+  const balance = portfolios
+    .reduce((sum, portfolio) => sum.add(portfolio.balance), new Decimal(0))
+    .toNumber()
 
-  const reward = portfolios.reduce(
-    (sum, portfolio) => sum.add(portfolio.reward),
-    new Decimal(0),
-  ).toNumber()
+  const reward = portfolios
+    .reduce((sum, portfolio) => sum.add(portfolio.reward), new Decimal(0))
+    .toNumber()
 
   return (
     <>
@@ -67,7 +66,9 @@ export default function Portfolio() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="text-[22px] sm:text-[28px] font-black">My Portfolio</span>
+            <span className="text-[22px] sm:text-[28px] font-black">
+              My Portfolio
+            </span>
             <Eye className="size-3.5 hidden" />
           </motion.h6>
           {isMobile ? (
@@ -81,13 +82,19 @@ export default function Portfolio() {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex flex-col gap-1">
-                    <span className="text-white/60 text-xs">Current balance</span>
-                    <AnimatedNumber 
-                      value={balance} 
-                      className="text-white text-lg" 
+                    <span className="text-white/60 text-xs">
+                      Current balance
+                    </span>
+                    <AnimatedNumber
+                      value={balance}
+                      className="text-white text-lg"
                     />
                   </div>
-                  <img src="/images/svg/balance.svg" alt="balance" className="size-10" />
+                  <img
+                    src="/images/svg/balance.svg"
+                    alt="balance"
+                    className="size-10"
+                  />
                 </div>
               </motion.div>
 
@@ -102,12 +109,16 @@ export default function Portfolio() {
                     <span className="text-white/60 text-xs">
                       My Claimable Yield & Rewards
                     </span>
-                    <AnimatedNumber 
-                      value={reward} 
-                      className="text-white text-lg" 
+                    <AnimatedNumber
+                      value={reward}
+                      className="text-white text-lg"
                     />
                   </div>
-                  <img src="/images/svg/reward.svg" alt="reward" className="size-10" />
+                  <img
+                    src="/images/svg/reward.svg"
+                    alt="reward"
+                    className="size-10"
+                  />
                 </div>
               </motion.div>
             </div>
@@ -126,13 +137,19 @@ export default function Portfolio() {
                   transition={{ duration: 0.5, delay: 0.3 }}
                 >
                   <div className="flex flex-col gap-y-2">
-                    <span className="text-white/60 text-[10px] sm:text-xs">Current balance</span>
-                    <AnimatedNumber 
-                      value={balance} 
-                      className="text-white text-lg sm:text-2xl" 
+                    <span className="text-white/60 text-[10px] sm:text-xs">
+                      Current balance
+                    </span>
+                    <AnimatedNumber
+                      value={balance}
+                      className="text-white text-lg sm:text-2xl"
                     />
                   </div>
-                  <img src="/images/svg/balance.svg" alt="balance" className="size-[48px] sm:size-[58px]" />
+                  <img
+                    src="/images/svg/balance.svg"
+                    alt="balance"
+                    className="size-[48px] sm:size-[58px]"
+                  />
                 </motion.div>
 
                 <motion.div
@@ -150,16 +167,20 @@ export default function Portfolio() {
                       My Claimable Yield & Rewards
                     </span>
                     <div className="flex items-center gap-x-2">
-                      <AnimatedNumber 
-                        value={reward} 
-                        className="text-white text-lg sm:text-2xl" 
+                      <AnimatedNumber
+                        value={reward}
+                        className="text-white text-lg sm:text-2xl"
                       />
                       <button className="rounded-3xl bg-[#0F60FF] py-1 px-2 text-xs hidden">
                         Claim All
                       </button>
                     </div>
                   </div>
-                  <img src="/images/svg/reward.svg" alt="reward" className="size-[48px] sm:size-[58px]" />
+                  <img
+                    src="/images/svg/reward.svg"
+                    alt="reward"
+                    className="size-[48px] sm:size-[58px]"
+                  />
                 </motion.div>
               </div>
             </div>

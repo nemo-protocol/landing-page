@@ -89,10 +89,6 @@ export default function useBurnLpDryRun(
         typeArguments: [coinConfig.syCoinType],
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
-      }
-
       tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
@@ -114,10 +110,9 @@ export default function useBurnLpDryRun(
         }),
       })
 
-      // Record raw result
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+        rawResult: result,
       }
 
       if (result?.error) {

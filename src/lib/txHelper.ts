@@ -729,8 +729,8 @@ export const burnSCoin = (
           { name: "s_coin", value: sCoin },
         ],
         typeArguments: [],
-      };
-      debugLog(`aftermath request_unstake move call:`, burnMoveCall);
+      }
+      debugLog(`aftermath request_unstake move call:`, burnMoveCall)
 
       const [underlyingCoin] = tx.moveCall({
         target: burnMoveCall.target,
@@ -740,9 +740,9 @@ export const burnSCoin = (
           sCoin,
         ],
         typeArguments: burnMoveCall.typeArguments,
-      });
+      })
 
-      return underlyingCoin;
+      return underlyingCoin
     }
     default:
       console.error(

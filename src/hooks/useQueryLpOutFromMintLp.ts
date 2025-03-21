@@ -7,9 +7,9 @@ import type { DebugInfo } from "./types"
 import { ContractError } from "./types"
 import { DEFAULT_Address } from "@/lib/constants"
 
-type QueryReturn<TDebug extends boolean> = TDebug extends true 
-  ? [string, DebugInfo] 
-  : [string];
+type QueryReturn<TDebug extends boolean> = TDebug extends true
+  ? [string, DebugInfo]
+  : [string]
 
 // TODO: optimize the mutation
 export default function useQueryLpOutFromMintLp<TDebug extends boolean = false>(
@@ -31,30 +31,27 @@ export default function useQueryLpOutFromMintLp<TDebug extends boolean = false>(
         throw new Error("Please select a pool")
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [
-          {
-            target: `${coinConfig.nemoContractId}::router::get_lp_out_from_mint_lp`,
-            arguments: [
-              { name: "pt_value", value: ptValue },
-              { name: "sy_value", value: syValue },
-              { name: "market_state_id", value: coinConfig.marketStateId },
-            ],
-            typeArguments: [coinConfig.syCoinType],
-          },
-        ],
-      }
-
       const tx = new Transaction()
       tx.setSender(address)
+
+      const moveCallInfo = {
+        target: `${coinConfig.nemoContractId}::router::get_lp_out_from_mint_lp`,
+        arguments: [
+          { name: "pt_value", value: ptValue },
+          { name: "sy_value", value: syValue },
+          { name: "market_state_id", value: coinConfig.marketStateId },
+        ],
+        typeArguments: [coinConfig.syCoinType],
+      }
+
       tx.moveCall({
-        target: debugInfo.moveCall[0].target,
+        target: moveCallInfo.target,
         arguments: [
           tx.pure.u64(ptValue),
           tx.pure.u64(syValue),
           tx.object(coinConfig.marketStateId),
         ],
-        typeArguments: debugInfo.moveCall[0].typeArguments,
+        typeArguments: moveCallInfo.typeArguments,
       })
 
       const result = await client.devInspectTransactionBlock({
@@ -65,10 +62,9 @@ export default function useQueryLpOutFromMintLp<TDebug extends boolean = false>(
         }),
       })
 
-      // Record raw result
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+        rawResult: result,
       }
 
       if (result?.error) {
@@ -89,7 +85,9 @@ export default function useQueryLpOutFromMintLp<TDebug extends boolean = false>(
 
       const returnValue = outputAmount.toString()
 
-      return (debug ? [returnValue, debugInfo] : [returnValue]) as QueryReturn<TDebug>
+      return (
+        debug ? [returnValue, debugInfo] : [returnValue]
+      ) as QueryReturn<TDebug>
     },
   })
 }

@@ -50,7 +50,7 @@ export default function useQueryPtOutBySyIn<T extends boolean = false>(
       const tx = new Transaction()
       tx.setSender(address)
 
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, priceVoucherInfo] = getPriceVoucher(tx, coinConfig)
 
       const moveCallInfo = {
         target: `${coinConfig.nemoContractId}::router::get_pt_out_for_exact_sy_in_with_price_voucher`,
@@ -68,14 +68,6 @@ export default function useQueryPtOutBySyIn<T extends boolean = false>(
         ],
         typeArguments: [coinConfig.syCoinType],
       }
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
-      }
-
-      debugLog(
-        "get_pt_out_for_exact_sy_in_with_price_voucher move call:",
-        debugInfo,
-      )
 
       tx.moveCall({
         target: moveCallInfo.target,
@@ -99,12 +91,15 @@ export default function useQueryPtOutBySyIn<T extends boolean = false>(
         }),
       })
 
-      console.log("result", result)
-      // Record raw result
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherInfo, moveCallInfo],
+        rawResult: result,
       }
+
+      debugLog(
+        "get_pt_out_for_exact_sy_in_with_price_voucher move call:",
+        debugInfo,
+      )
 
       if (result?.error) {
         throw new ContractError(result.error, debugInfo)

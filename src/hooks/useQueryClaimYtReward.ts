@@ -1,11 +1,12 @@
 import Decimal from "decimal.js"
-import type { PyPosition } from "./types"
-import { isValidAmount } from "@/lib/utils"
+import { bcs } from "@mysten/sui/bcs"
+import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
+import { redeemSyCoin, getPriceVoucher } from "@/lib/txHelper"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { redeemSyCoin, getPriceVoucher, burnSCoin } from "@/lib/txHelper"
+import { ContractError, type DebugInfo, type PyPosition } from "./types"
 
 interface ClaimYtRewardParams {
   ytBalance: string
@@ -61,10 +62,43 @@ export default function useQueryClaimYtReward(
         pyPosition = tx.object(params.pyPositions[0].id)
       }
 
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
+        tx,
+        coinConfig,
+      )
 
-      const [syCoin] = tx.moveCall({
+      const redeemDueInterestMoveCall = {
         target: `${coinConfig?.nemoContractId}::yield_factory::redeem_due_interest`,
+        arguments: [
+          {
+            name: "version",
+            value: coinConfig.version,
+          },
+          {
+            name: "py_position",
+            value: "pyPosition",
+          },
+          {
+            name: "pyStateId",
+            value: coinConfig?.pyStateId,
+          },
+          {
+            name: "price_voucher",
+            value: "priceVoucher",
+          },
+          {
+            name: "yield_factory_config",
+            value: coinConfig?.yieldFactoryConfigId,
+          },
+          {
+            name: "clock",
+            value: "0x6",
+          },
+        ],
+        typeArguments: [coinConfig?.syCoinType],
+      }
+      const [syCoin] = tx.moveCall({
+        target: redeemDueInterestMoveCall.target,
         arguments: [
           tx.object(coinConfig.version),
           pyPosition,
@@ -73,13 +107,16 @@ export default function useQueryClaimYtReward(
           tx.object(coinConfig?.yieldFactoryConfigId),
           tx.object("0x6"),
         ],
-        typeArguments: [coinConfig?.syCoinType],
+        typeArguments: redeemDueInterestMoveCall.typeArguments,
       })
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
-      const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
-      tx.transferObjects([underlyingCoin], address)
+      tx.moveCall({
+        target: `0x2::coin::value`,
+        arguments: [yieldToken],
+        typeArguments: [coinConfig.coinType],
+      })
 
       if (created) {
         tx.transferObjects([pyPosition], address)
@@ -93,24 +130,34 @@ export default function useQueryClaimYtReward(
         }),
       })
 
-      if (result?.error) {
-        // throw new Error(result.error)
-        return "0"
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherMoveCall, redeemDueInterestMoveCall],
+        rawResult: {
+          error: result?.error,
+          results: result?.results,
+        },
       }
 
       if (
-        !result?.events?.[result.events.length - 1]?.parsedJson.withdraw_amount
+        result.results[result.results.length - 1].returnValues[0][1] !== "u64"
       ) {
-        throw new Error("Failed to get yt reward data")
+        const message = "Failed to get output amount"
+        debugInfo.rawResult.error = message
+        throw new ContractError(message, debugInfo)
       }
 
       const decimal = Number(coinConfig.decimal)
 
-      return new Decimal(
-        result.events[result.events.length - 1].parsedJson.withdraw_amount,
+      const syAmount = bcs.U64.parse(
+        new Uint8Array(
+          result.results[result.results.length - 1].returnValues[0][0],
+        ),
       )
-        .div(new Decimal(10).pow(decimal))
-        .toFixed(decimal)
+
+      return formatDecimalValue(
+        new Decimal(syAmount).div(10 ** decimal).toString(),
+        decimal,
+      )
     },
   })
 }

@@ -43,6 +43,7 @@ import useQueryClaimLpReward from "@/hooks/useQueryClaimLpReward"
 import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 import { ChevronDown } from "lucide-react"
 import useCoinData from "@/hooks/useCoinData"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -125,6 +126,19 @@ export default function Item({
     marketState,
   )
 
+  const [minValue, setMinValue] = useState(0)
+
+  useEffect(() => {
+    if (coinConfig) {
+      const minValue = NEED_MIN_VALUE_LIST.find(
+        (item) => item.coinType === coinConfig.coinType,
+      )?.minValue
+      if (minValue) {
+        setMinValue(minValue)
+      }
+    }
+  }, [coinConfig])
+
   const {
     data: ytReward,
     isLoading: isClaimLoading,
@@ -139,8 +153,8 @@ export default function Item({
 
   const {
     data: lpReward,
-    isLoading: isLpRewardLoading,
     refetch: refetchLpReward,
+    isLoading: isLpRewardLoading,
   } = useQueryClaimLpReward(coinConfig, {
     suiCoins,
     lpBalance,
@@ -196,8 +210,8 @@ export default function Item({
     coinConfig.underlyingPrice,
   ])
 
-  async function claim() {
-    if (coinConfig?.coinType && address && ytBalance) {
+  async function claimYT() {
+    if (coinConfig?.coinType && address && ytBalance && ytReward) {
       try {
         setClaimLoading(true)
         const tx = new Transaction()
@@ -240,8 +254,13 @@ export default function Item({
         })
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
-        tx.transferObjects([underlyingCoin], address)
+
+        if (new Decimal(ytReward).lte(minValue)) {
+          tx.transferObjects([yieldToken], address)
+        } else {
+          const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+          tx.transferObjects([underlyingCoin], address)
+        }
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -267,7 +286,12 @@ export default function Item({
   }
 
   async function redeemPY() {
-    if (coinConfig?.coinType && address && isValidAmount(ptBalance)) {
+    if (
+      coinConfig?.coinType &&
+      address &&
+      isValidAmount(ptBalance) &&
+      ytReward
+    ) {
       try {
         setRedeemLoading(true)
         const tx = new Transaction()
@@ -303,9 +327,12 @@ export default function Item({
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
-        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
-
-        tx.transferObjects([underlyingCoin], address)
+        if (new Decimal(ytReward).lte(minValue)) {
+          tx.transferObjects([yieldToken], address)
+        } else {
+          const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+          tx.transferObjects([underlyingCoin], address)
+        }
 
         if (created) {
           tx.transferObjects([pyPosition], address)
@@ -597,7 +624,22 @@ export default function Item({
                   <>
                     <div className="flex flex-col items-center flex-1">
                       <span className="text-white text-sm break-all flex items-center gap-x-1">
-                        <SmallNumDisplay value={ytReward || 0} />
+                        {ytReward ? (
+                          <SmallNumDisplay
+                            value={
+                              new Decimal(ytReward).gt(minValue)
+                                ? formatDecimalValue(
+                                    new Decimal(ytReward).mul(
+                                      coinConfig.conversionRate,
+                                    ),
+                                    Number(coinConfig?.decimal),
+                                  )
+                                : ytReward
+                            }
+                          />
+                        ) : (
+                          0
+                        )}
                         <RefreshButton onRefresh={refetchYtReward} />
                       </span>
                       <span className="text-white/50 text-xs">
@@ -617,11 +659,11 @@ export default function Item({
                       </span>
                     </div>
                     <LoadingButton
-                      onClick={claim}
+                      onClick={claimYT}
                       loading={claimLoading}
                       buttonText="Claim"
                       loadingText="Claiming"
-                      disabled={!isValidAmount(ytBalance)}
+                      disabled={!isValidAmount(ytReward)}
                     />
                   </>
                 )}

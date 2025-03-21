@@ -60,10 +60,6 @@ export default function useAddLiquiditySinglePtDryRun<
         typeArguments: [coinConfig.syCoinType],
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [priceVoucherInfo, moveCallInfo],
-      }
-
       tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
@@ -85,12 +81,15 @@ export default function useAddLiquiditySinglePtDryRun<
         }),
       })
 
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherInfo, moveCallInfo],
+        rawResult: result,
+      }
+
       if (result.error) {
         debugLog("single_liquidity_add_pt_out error:", debugInfo)
         throw new ContractError(result.error, debugInfo)
       }
-
-      debugInfo.rawResult = result
 
       if (!result?.results?.[1]?.returnValues?.[0]) {
         const message = "Failed to get pt value"

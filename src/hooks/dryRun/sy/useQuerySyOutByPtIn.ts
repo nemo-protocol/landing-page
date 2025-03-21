@@ -59,16 +59,7 @@ export default function useQuerySyOutDryRun<T extends boolean = false>(
         typeArguments: [coinInfo.syCoinType],
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
-      }
-
-      debugLog(
-        "get_sy_amount_out_for_exact_pt_in_with_price_voucher move call:",
-        debugInfo,
-      )
-
-      const [priceVoucher] = getPriceVoucher(tx, coinInfo)
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(tx, coinInfo)
 
       tx.moveCall({
         target: moveCallInfo.target,
@@ -91,13 +82,15 @@ export default function useQuerySyOutDryRun<T extends boolean = false>(
         }),
       })
 
-      console.log("result", result)
-
-      // 记录原始结果
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherMoveCall, moveCallInfo],
+        rawResult: result,
       }
+
+      debugLog(
+        "get_sy_amount_out_for_exact_pt_in_with_price_voucher move call:",
+        debugInfo,
+      )
 
       if (result?.error) {
         throw new ContractError(result.error, debugInfo)

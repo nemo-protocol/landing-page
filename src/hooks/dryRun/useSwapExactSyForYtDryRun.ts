@@ -5,7 +5,13 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
-import { initPyPosition, getPriceVoucher, mintSCoin, splitCoinHelper, depositSyCoin } from "@/lib/txHelper"
+import {
+  initPyPosition,
+  getPriceVoucher,
+  mintSCoin,
+  splitCoinHelper,
+  depositSyCoin,
+} from "@/lib/txHelper"
 import { CoinData } from "../useCoinData"
 
 type SwapResult = {
@@ -47,9 +53,9 @@ export default function useSwapExactSyForYtDryRun(
       tx.setSender(address)
 
       const [splitCoin] =
-      tokenType === 0
-        ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
-        : splitCoinHelper(tx, coinData, [swapAmount], coinType)
+        tokenType === 0
+          ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
+          : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
       const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
 
@@ -78,7 +84,10 @@ export default function useSwapExactSyForYtDryRun(
             value: created ? "pyPosition" : pyPositions[0].id,
           },
           { name: "py_state", value: coinConfig.pyStateId },
-          { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
+          {
+            name: "yield_factory_config",
+            value: coinConfig.yieldFactoryConfigId,
+          },
           {
             name: "market_factory_config",
             value: coinConfig.marketFactoryConfigId,
@@ -87,10 +96,6 @@ export default function useSwapExactSyForYtDryRun(
           { name: "clock", value: "0x6" },
         ],
         typeArguments: [coinConfig.syCoinType],
-      }
-
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
       }
 
       tx.moveCall({
@@ -122,13 +127,10 @@ export default function useSwapExactSyForYtDryRun(
         }),
       })
 
-      // Record raw result
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+        rawResult: result,
       }
-
-      console.log("result", result)
 
       if (result?.error) {
         throw new ContractError(result.error, debugInfo)
@@ -149,4 +151,4 @@ export default function useSwapExactSyForYtDryRun(
       return debug ? [returnValue, debugInfo] : [returnValue]
     },
   })
-} 
+}

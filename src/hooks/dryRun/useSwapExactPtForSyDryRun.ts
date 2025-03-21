@@ -80,10 +80,6 @@ export default function useSwapExactPtForSyDryRun(
         typeArguments: [coinConfig.syCoinType],
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
-      }
-
       const syCoin = swapExactPtForSy(
         tx,
         coinConfig,
@@ -111,10 +107,9 @@ export default function useSwapExactPtForSyDryRun(
         }),
       })
 
-      // Record raw result
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+        rawResult: result,
       }
 
       if (result?.error) {

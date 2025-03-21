@@ -100,11 +100,6 @@ export default function useAddLiquiditySingleSyDryRun<
 
       console.log("addLiquiditySingleSyDryRun moveCallInfo", moveCallInfo)
 
-
-      const debugInfo: DebugInfo = {
-        moveCall: [priceVoucherMoveCall, moveCallInfo],
-      }
-
       tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
@@ -130,9 +125,9 @@ export default function useAddLiquiditySingleSyDryRun<
         }),
       })
 
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherMoveCall, moveCallInfo],
+        rawResult: result,
       }
 
       if (!result?.results?.[1]?.returnValues?.[0]) {

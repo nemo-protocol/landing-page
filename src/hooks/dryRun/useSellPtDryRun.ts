@@ -61,7 +61,10 @@ export default function useSellPtDryRun<T extends boolean = false>(
         pyPosition = tx.object(inputPyPositions[0].id)
       }
 
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
+        tx,
+        coinConfig,
+      )
 
       const [syCoin, moveCallInfo] = swapExactPtForSy(
         tx,
@@ -95,10 +98,6 @@ export default function useSellPtDryRun<T extends boolean = false>(
         tx.transferObjects([pyPosition], address)
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
-      }
-
       const result = await client.devInspectTransactionBlock({
         sender: address,
         transactionBlock: await tx.build({
@@ -107,9 +106,9 @@ export default function useSellPtDryRun<T extends boolean = false>(
         }),
       })
 
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherMoveCall, moveCallInfo],
+        rawResult: result,
       }
 
       if (result?.error) {

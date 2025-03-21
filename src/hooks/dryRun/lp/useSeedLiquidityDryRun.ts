@@ -80,7 +80,10 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
         coinConfig.coinType,
       )
 
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
+        tx,
+        coinConfig,
+      )
 
       const moveCallInfo = {
         target: `${coinConfig.nemoContractId}::market::seed_liquidity`,
@@ -102,10 +105,6 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
           { name: "clock", value: "0x6" },
         ],
         typeArguments: [coinConfig.syCoinType],
-      }
-
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
       }
 
       const [lp] = tx.moveCall({
@@ -138,11 +137,9 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
         }),
       })
 
-      console.log("result", result)
-
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherMoveCall, moveCallInfo],
+        rawResult: result,
       }
 
       if (result?.error) {

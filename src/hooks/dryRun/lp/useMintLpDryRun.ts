@@ -113,7 +113,10 @@ export default function useMintLpDryRun<T extends boolean = false>(
         coinConfig.coinType,
       )
 
-      const [priceVoucher] = getPriceVoucher(tx, coinConfig)
+      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
+        tx,
+        coinConfig,
+      )
       const [pt_amount] = mintPY(
         tx,
         coinConfig,
@@ -141,10 +144,6 @@ export default function useMintLpDryRun<T extends boolean = false>(
           { name: "clock", value: "0x6" },
         ],
         typeArguments: [coinConfig.syCoinType],
-      }
-
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
       }
 
       tx.moveCall({
@@ -175,9 +174,9 @@ export default function useMintLpDryRun<T extends boolean = false>(
         }),
       })
 
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [priceVoucherMoveCall, moveCallInfo],
+        rawResult: result,
       }
 
       if (result?.error) {

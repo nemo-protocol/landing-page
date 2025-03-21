@@ -50,6 +50,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
 
       const debugInfo: DebugInfo = {
         moveCall: [priceVoucherMoveCallInfo, moveCallInfo],
+        rawResult: {},
       }
 
       try {

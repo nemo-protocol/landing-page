@@ -33,8 +33,9 @@ export default function useSellYtDryRun<T extends boolean = false>(
 ) {
   const client = useSuiClient()
   const { address } = useWallet()
-  const { mutateAsync: querySyOutFromYt } =
-    useQuerySyOutFromYtInWithVoucher({ outerCoinConfig: coinConfig })
+  const { mutateAsync: querySyOutFromYt } = useQuerySyOutFromYtInWithVoucher({
+    outerCoinConfig: coinConfig,
+  })
 
   return useMutation({
     mutationFn: async ({
@@ -104,7 +105,9 @@ export default function useSellYtDryRun<T extends boolean = false>(
           { name: "min_sy_out", value: minSyOut },
           {
             name: "py_position",
-            value: inputPyPositions?.length ? inputPyPositions[0].id : "pyPosition",
+            value: inputPyPositions?.length
+              ? inputPyPositions[0].id
+              : "pyPosition",
           },
           { name: "py_state", value: coinConfig.pyStateId },
           { name: "price_voucher", value: "priceVoucher" },
@@ -122,10 +125,6 @@ export default function useSellYtDryRun<T extends boolean = false>(
         typeArguments: [coinConfig.syCoinType],
       }
 
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
-      }
-
       const result = await client.devInspectTransactionBlock({
         sender: address,
         transactionBlock: await tx.build({
@@ -134,9 +133,12 @@ export default function useSellYtDryRun<T extends boolean = false>(
         }),
       })
 
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo],
+        rawResult: {
+          error: result?.error,
+          results: result?.results,
+        },
       }
 
       if (result?.error) {

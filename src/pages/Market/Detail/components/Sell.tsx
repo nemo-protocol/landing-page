@@ -138,7 +138,10 @@ export default function Sell() {
               receivingType === "underlying"
             ) {
               setError(
-                `Please enter at least ${new Decimal(value).mul(minValue).div(targetValue)} ${tokenType.toUpperCase()} ${coinConfig.coinName}`,
+                `Please enter at least ${formatDecimalValue(
+                  new Decimal(value).mul(minValue).div(targetValue),
+                  decimal,
+                )} ${tokenType.toUpperCase()} ${coinConfig.coinName}`,
               )
             } else {
               setError(undefined)

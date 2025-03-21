@@ -34,17 +34,6 @@ export default function useQueryPriceVoucher(
 
       const [, moveCallInfo] = getPriceVoucher(tx, coinConfig, caller)
 
-      const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo as MoveCallInfo],
-      }
-
-      if (!debug) {
-        debugLog(
-          `[${caller}] useQueryPriceVoucher move call:`,
-          debugInfo.moveCall,
-        )
-      }
-
       const result = await client.devInspectTransactionBlock({
         sender: address,
         transactionBlock: await tx.build({
@@ -53,10 +42,16 @@ export default function useQueryPriceVoucher(
         }),
       })
 
-      // Record raw result
-      debugInfo.rawResult = {
-        error: result?.error,
-        results: result?.results,
+      const debugInfo: DebugInfo = {
+        moveCall: [moveCallInfo as MoveCallInfo],
+        rawResult: result,
+      }
+
+      if (!debug) {
+        debugLog(
+          `[${caller}] useQueryPriceVoucher move call:`,
+          debugInfo.moveCall,
+        )
       }
 
       if (result?.error) {

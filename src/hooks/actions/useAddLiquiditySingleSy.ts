@@ -52,10 +52,6 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
       minLpAmount,
       conversionRate,
     }: AddLiquiditySingleSyParams): Promise<DryRunResult<T>> => {
-      const debugInfo: DebugInfo = {
-        moveCall: [],
-      }
-
       const [splitCoin] =
         tokenType === 0
           ? mintSCoin(tx, coinConfig, coinData, [addAmount])
@@ -118,7 +114,14 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
 
       const [lpPositions, lpPositionsDebugInfo] = await fetchLpPositions()
 
-      console.log("lpPositions", lpPositions)
+      const debugInfo: DebugInfo = {
+        moveCall: [
+          ...addLiquiditySinglePtMoveCall.moveCall,
+          priceVoucherMoveCall,
+          addLiquidityMoveCall,
+        ],
+        rawResult: {},
+      }
 
       debugInfo.moveCall = [
         ...addLiquiditySinglePtMoveCall.moveCall,
