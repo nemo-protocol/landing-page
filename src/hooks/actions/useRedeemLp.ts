@@ -15,6 +15,7 @@ import {
   redeemSyCoin,
   getPriceVoucher,
   swapExactPtForSy,
+  burnSCoin,
 } from "@/lib/txHelper"
 
 interface RedeemLpParams {
@@ -22,6 +23,7 @@ interface RedeemLpParams {
   coinConfig: CoinConfig
   lpPositions: LpPosition[]
   pyPositions: PyPosition[]
+  receivingType?: "underlying" | "sy"
 }
 
 export default function useRedeemLp(
@@ -42,6 +44,7 @@ export default function useRedeemLp(
       coinConfig,
       lpPositions,
       pyPositions = [],
+      receivingType = "underlying",
     }: RedeemLpParams) => {
       if (
         !address ||
@@ -72,7 +75,6 @@ export default function useRedeemLp(
           canSwapPt = false
         }
       }
-      console.log("canSwapPt", canSwapPt)
 
       const tx = new Transaction()
 
@@ -115,7 +117,14 @@ export default function useRedeemLp(
       )
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-      tx.transferObjects([yieldToken], address)
+
+      // Add conditional logic for receivingType
+      if (receivingType === "underlying") {
+        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+        tx.transferObjects([underlyingCoin], address)
+      } else {
+        tx.transferObjects([yieldToken], address)
+      }
 
       // Add PT swap if possible
       if (canSwapPt) {
@@ -126,11 +135,23 @@ export default function useRedeemLp(
           ptAmount,
           pyPosition,
           priceVoucher,
+          // FIXME: confirm minSyOut
           "0",
         )
 
         const swappedYieldToken = redeemSyCoin(tx, coinConfig, swappedSyCoin)
-        tx.transferObjects([swappedYieldToken], address)
+
+        // Add conditional logic for receivingType for swapped PT
+        if (receivingType === "underlying") {
+          const swappedUnderlyingCoin = burnSCoin(
+            tx,
+            coinConfig,
+            swappedYieldToken,
+          )
+          tx.transferObjects([swappedUnderlyingCoin], address)
+        } else {
+          tx.transferObjects([swappedYieldToken], address)
+        }
       }
 
       if (created) {

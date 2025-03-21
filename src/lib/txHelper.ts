@@ -696,6 +696,93 @@ export const burnSCoin = (
 
       return underlyingCoin
     }
+    case "Strater": {
+      // Convert sCoin to balance first
+      const toBalanceMoveCall = {
+        target: `0x2::coin::into_balance`,
+        arguments: [{ name: "coin", value: "sCoin" }],
+        typeArguments: [coinConfig.coinType],
+      }
+      debugLog(`coin::into_balance move call:`, toBalanceMoveCall)
+
+      const [sbsBalance] = tx.moveCall({
+        target: toBalanceMoveCall.target,
+        arguments: [sCoin],
+        typeArguments: toBalanceMoveCall.typeArguments,
+      })
+
+      // Call withdraw to get a withdraw ticket
+      const withdrawMoveCall = {
+        target: `0x2a721777dc1fcf7cda19492ad7c2272ee284214652bde3e9740e2f49c3bff457::vault::withdraw`,
+        arguments: [
+          {
+            name: "bucket_vault",
+            value:
+              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          },
+          {
+            name: "balance",
+            value: "sbsBalance",
+          },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.underlyingCoinType, coinConfig.coinType],
+      }
+      debugLog(`sbuck_saving_vault::withdraw move call:`, withdrawMoveCall)
+
+      const [withdrawTicket] = tx.moveCall({
+        target: withdrawMoveCall.target,
+        arguments: [
+          tx.object(
+            "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          ),
+          sbsBalance,
+          tx.object("0x6"),
+        ],
+        typeArguments: withdrawMoveCall.typeArguments,
+      })
+
+      // Redeem the withdraw ticket to get the underlying balance
+      const redeemTicketMoveCall = {
+        target: `0x2a721777dc1fcf7cda19492ad7c2272ee284214652bde3e9740e2f49c3bff457::vault::redeem_withdraw_ticket`,
+        arguments: [
+          {
+            name: "bucket_vault",
+            value:
+              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          },
+          {
+            name: "withdraw_ticket",
+            value: "withdrawTicket",
+          },
+        ],
+        typeArguments: [coinConfig.underlyingCoinType, coinConfig.coinType],
+      }
+      debugLog(
+        `sbuck_saving_vault::redeem_withdraw_ticket move call:`,
+        redeemTicketMoveCall,
+      )
+
+      const [underlyingBalance] = tx.moveCall({
+        target: redeemTicketMoveCall.target,
+        arguments: [
+          tx.object(
+            "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          ),
+          withdrawTicket,
+        ],
+        typeArguments: redeemTicketMoveCall.typeArguments,
+      })
+
+      // Convert balance back to coin
+      const [underlyingCoin] = tx.moveCall({
+        target: `0x2::coin::from_balance`,
+        arguments: [underlyingBalance],
+        typeArguments: [coinConfig.underlyingCoinType],
+      })
+
+      return underlyingCoin
+    }
     case "AlphaFi": {
       const redeemMoveCall = {
         target: `${ALPAHFI.PACKAGE_ID}::liquid_staking::redeem`,

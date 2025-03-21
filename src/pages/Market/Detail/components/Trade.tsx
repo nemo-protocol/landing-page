@@ -234,7 +234,7 @@ export default function Trade() {
       getYtOut()
       return getYtOut.cancel
     },
-    [queryYtOut, tokenType, conversionRate],
+    [tokenType, minValue, conversionRate, coinConfig?.underlyingCoinName, queryYtOut],
   )
 
   useEffect(() => {

@@ -6,12 +6,27 @@ import type { DebugInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchLpPosition from "../useFetchLpPosition"
 import useFetchPyPosition from "../useFetchPyPosition"
-import { initPyPosition, mergeLpPositions } from "@/lib/txHelper"
+import {
+  initPyPosition,
+  mergeLpPositions,
+  redeemSyCoin,
+  burnSCoin,
+} from "@/lib/txHelper"
 import Decimal from "decimal.js"
+import { bcs } from "@mysten/sui/bcs"
 
 type BurnLpResult = {
-  syAmount: string
   ptAmount: string
+  syAmount: string
+  ptValue: string
+  syValue: string
+  outputValue: string
+  outputAmount: string
+}
+
+interface BurnLpParams {
+  lpValue: string
+  receivingType?: "underlying" | "sy"
 }
 
 export default function useBurnLpDryRun(
@@ -27,7 +42,7 @@ export default function useBurnLpDryRun(
 
   return useMutation({
     mutationFn: async (
-      lpValue: string,
+      input: string | BurnLpParams,
       innerConfig?: CoinConfig,
     ): Promise<[BurnLpResult] | [BurnLpResult, DebugInfo]> => {
       if (!address) {
@@ -38,6 +53,13 @@ export default function useBurnLpDryRun(
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
+
+      // Handle both string input and object input for backward compatibility
+      const lpValue = typeof input === "string" ? input : input.lpValue
+      const receivingType =
+        typeof input === "string"
+          ? "underlying"
+          : input.receivingType || "underlying"
 
       const marketPositions = await fetchLpPositionAsync()
       const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
@@ -89,7 +111,7 @@ export default function useBurnLpDryRun(
         typeArguments: [coinConfig.syCoinType],
       }
 
-      tx.moveCall({
+      const syCoin = tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
           tx.object(coinConfig.version),
@@ -101,6 +123,25 @@ export default function useBurnLpDryRun(
         ],
         typeArguments: moveCallInfo.typeArguments,
       })
+
+      // Add redeemSyCoin and conditionally burnSCoin based on receivingType
+      const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
+
+      // Use coin::value to get the output amount based on receivingType
+      if (receivingType === "underlying") {
+        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+        tx.moveCall({
+          target: `0x2::coin::value`,
+          arguments: [underlyingCoin],
+          typeArguments: [coinConfig.underlyingCoinType],
+        })
+      } else {
+        tx.moveCall({
+          target: `0x2::coin::value`,
+          arguments: [yieldToken],
+          typeArguments: [coinConfig.coinType],
+        })
+      }
 
       const result = await client.devInspectTransactionBlock({
         sender: address,
@@ -115,24 +156,53 @@ export default function useBurnLpDryRun(
         rawResult: result,
       }
 
-      if (result?.error) {
-        throw new ContractError(result.error, debugInfo)
-      }
-
-      console.log("result", result?.events?.[0]?.parsedJson)
-
-      if (!result?.events?.[0]?.parsedJson) {
-        const message = "Failed to get burn data"
+      if (
+        result.results[result.results.length - 1].returnValues[0][1] !== "u64"
+      ) {
+        const message = "useBurnLpDryRun Failed to get output amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
       }
 
+      if (!result?.events?.[0]?.parsedJson) {
+        const message = "useBurnLpDryRun Failed to get pt amount"
+        debugInfo.rawResult.error = message
+        throw new ContractError(message, debugInfo)
+      }
+
+      const outputAmount = bcs.U64.parse(
+        new Uint8Array(
+          result.results[result.results.length - 1].returnValues[0][0],
+        ),
+      )
+
+      const outputValue = new Decimal(outputAmount)
+        .div(10 ** decimal)
+        .toFixed(decimal)
+
       const syAmount = result.events[0].parsedJson.sy_amount as string
+      const syValue = new Decimal(syAmount).div(10 ** decimal).toFixed(decimal)
+
       const ptAmount = result.events[0].parsedJson.pt_amount as string
+      const ptValue = new Decimal(ptAmount).div(10 ** decimal).toFixed(decimal)
 
-      debugInfo.parsedOutput = JSON.stringify({ syAmount, ptAmount })
+      debugInfo.parsedOutput = JSON.stringify({
+        syAmount,
+        ptAmount,
+        outputAmount,
+        outputValue,
+        syValue,
+        ptValue,
+      })
 
-      const returnValue = { syAmount, ptAmount }
+      const returnValue = {
+        syAmount,
+        ptAmount,
+        outputAmount,
+        outputValue,
+        syValue,
+        ptValue,
+      }
 
       return debug ? [returnValue, debugInfo] : [returnValue]
     },

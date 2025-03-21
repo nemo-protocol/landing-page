@@ -19,9 +19,18 @@ import useBurnLpDryRun from "@/hooks/dryRun/useBurnLpDryRun"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import useLpMarketPositionData from "@/hooks/useLpMarketPositionData"
 import { showTransactionDialog } from "@/lib/dialog"
-import useSwapExactPtForSyDryRun from "@/hooks/dryRun/useSwapExactPtForSyDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { ContractError } from "@/hooks/types"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { formatDecimalValue } from "@/lib/utils"
+import useSellPtDryRun from "@/hooks/dryRun/useSellPtDryRun"
 
 export default function Remove() {
   const navigate = useNavigate()
@@ -35,6 +44,9 @@ export default function Remove() {
   const [isRemoving, setIsRemoving] = useState(false)
   const [errorDetail, setErrorDetail] = useState<string>()
   const [isInputLoading, setIsInputLoading] = useState(false)
+  const [receivingType, setReceivingType] = useState<"underlying" | "sy">(
+    "underlying",
+  )
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -44,6 +56,8 @@ export default function Remove() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
+
+  const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
@@ -55,8 +69,6 @@ export default function Remove() {
   )
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
-  const { mutateAsync: swapExactPtForSyDryRun } =
-    useSwapExactPtForSyDryRun(coinConfig)
 
   const { data: lppMarketPositionData, refetch: refetchLpPosition } =
     useLpMarketPositionData(
@@ -106,28 +118,34 @@ export default function Remove() {
         if (value && value !== "0" && decimal) {
           setIsInputLoading(true)
           try {
-            const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
+            const [{ ptAmount, ptValue, outputValue }] = await burnLpDryRun({
+              lpValue: value,
+              receivingType,
+            })
 
-            const [{ syAmount: ptToSy }] =
-              await swapExactPtForSyDryRun(ptAmount)
+            try {
+              const { outputValue: swappedOutputValue } = await sellPtDryRun({
+                ptAmount,
+                minSyOut: "0",
+                receivingType,
+                pyPositions: pyPositionData,
+              })
 
-            const syValue = new Decimal(syAmount)
-              .add(ptToSy)
-              .div(10 ** decimal)
-              .toFixed(decimal)
-
-            setTargetValue(syValue)
+              setTargetValue(
+                new Decimal(outputValue)
+                  .add(swappedOutputValue)
+                  .toFixed(decimal),
+              )
+            } catch (error) {
+              setTargetValue(outputValue)
+              setWarning(`Returning ${ptValue} PT ${coinConfig?.coinName}.`)
+              setWarningDetail(
+                `PT could be sold at the market, or it could be redeemed after maturity with a fixed return.`,
+              )
+              console.log("sellPtDryRun error", error)
+            }
           } catch (error) {
-            const [{ syAmount, ptAmount }] = await burnLpDryRun(value)
-            const syOut = new Decimal(syAmount).div(10 ** decimal).toString()
-            const ptOut = new Decimal(ptAmount).div(10 ** decimal).toString()
-            setWarning(
-              `Returning ${ptOut} PT ${coinConfig?.coinName}.`,
-            )
-            setWarningDetail(
-              `PT could be sold at the market, or it could be redeemed after maturity with a fixed return.`,
-            )
-            setTargetValue(syOut)
+            console.log("burnLpDryRun error", error)
           } finally {
             setIsInputLoading(false)
           }
@@ -139,7 +157,13 @@ export default function Remove() {
       getSyOut()
       return getSyOut.cancel
     },
-    [burnLpDryRun, swapExactPtForSyDryRun, coinConfig?.coinName],
+    [
+      burnLpDryRun,
+      receivingType,
+      sellPtDryRun,
+      pyPositionData,
+      coinConfig?.coinName,
+    ],
   )
 
   useEffect(() => {
@@ -147,7 +171,7 @@ export default function Remove() {
     return () => {
       cancelFn()
     }
-  }, [lpValue, decimal, debouncedGetSyOut])
+  }, [lpValue, decimal, debouncedGetSyOut, receivingType])
 
   const refreshData = useCallback(async () => {
     await Promise.all([
@@ -158,6 +182,22 @@ export default function Remove() {
   }, [refetchCoinConfig, refetchLpPosition, refetchPyPosition])
 
   const { mutateAsync: redeemLp } = useRedeemLp(coinConfig, marketState)
+
+  const convertReceivingValue = useCallback(
+    (value: string, fromType: string, toType: string) => {
+      if (!value || !decimal || !coinConfig?.conversionRate) return ""
+
+      const conversionRate = new Decimal(coinConfig.conversionRate)
+
+      if (fromType === "underlying" && toType === "sy") {
+        return new Decimal(value).div(conversionRate).toString()
+      } else if (fromType === "sy" && toType === "underlying") {
+        return new Decimal(value).mul(conversionRate).toString()
+      }
+      return value
+    },
+    [decimal, coinConfig],
+  )
 
   async function remove() {
     if (
@@ -175,6 +215,7 @@ export default function Remove() {
           coinConfig,
           lpPositions: lppMarketPositionData,
           pyPositions: pyPositionData || [],
+          receivingType,
         })
 
         showTransactionDialog({
@@ -259,17 +300,84 @@ export default function Remove() {
                   ) : !lpValue ? (
                     "--"
                   ) : (
-                    <>
-                      <span>{targetValue}</span>
-                      <span>{coinConfig?.coinName}</span>
-                      {coinConfig?.coinLogo && (
-                        <img
-                          src={coinConfig.coinLogo}
-                          alt={coinConfig.coinName}
-                          className="size-6 sm:size-7"
-                        />
-                      )}
-                    </>
+                    <div className="flex items-center gap-x-1 sm:gap-x-1.5">
+                      <span>{formatDecimalValue(targetValue, decimal)}</span>
+                      <Select
+                        value={receivingType}
+                        onValueChange={(value) => {
+                          const newTargetValue = convertReceivingValue(
+                            targetValue,
+                            receivingType,
+                            value,
+                          )
+                          setReceivingType(value as "underlying" | "sy")
+                          setTargetValue(newTargetValue)
+                        }}
+                      >
+                        <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
+                          <SelectValue>
+                            <div className="flex items-center gap-x-1">
+                              <span>
+                                {receivingType === "underlying"
+                                  ? coinConfig?.underlyingCoinName
+                                  : coinConfig?.coinName}
+                              </span>
+                              {(receivingType === "underlying"
+                                ? coinConfig?.underlyingCoinLogo
+                                : coinConfig?.coinLogo) && (
+                                <img
+                                  src={
+                                    receivingType === "underlying"
+                                      ? coinConfig?.underlyingCoinLogo
+                                      : coinConfig?.coinLogo
+                                  }
+                                  alt={
+                                    receivingType === "underlying"
+                                      ? coinConfig?.underlyingCoinName
+                                      : coinConfig?.coinName
+                                  }
+                                  className="size-4 sm:size-5"
+                                />
+                              )}
+                            </div>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="border-none outline-none bg-[#0E0F16]">
+                          <SelectGroup>
+                            <SelectItem
+                              value="underlying"
+                              className="cursor-pointer text-white"
+                            >
+                              <div className="flex items-center gap-x-1">
+                                <span>{coinConfig?.underlyingCoinName}</span>
+                                {coinConfig?.underlyingCoinLogo && (
+                                  <img
+                                    src={coinConfig.underlyingCoinLogo}
+                                    alt={coinConfig.underlyingCoinName}
+                                    className="size-4 sm:size-5"
+                                  />
+                                )}
+                              </div>
+                            </SelectItem>
+                            <SelectItem
+                              value="sy"
+                              className="cursor-pointer text-white"
+                            >
+                              <div className="flex items-center gap-x-1">
+                                <span>{coinConfig?.coinName}</span>
+                                {coinConfig?.coinLogo && (
+                                  <img
+                                    src={coinConfig.coinLogo}
+                                    alt={coinConfig.coinName}
+                                    className="size-4 sm:size-5"
+                                  />
+                                )}
+                              </div>
+                            </SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
                 </span>
               </div>
