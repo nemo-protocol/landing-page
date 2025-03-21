@@ -15,8 +15,6 @@ export interface BaseCoinInfo {
   underlyingCoinType: string
   providerMarket: string
   providerVersion: string
-  metadataId: string
-  nativePool: string
   priceOracleConfigId: string
   decimal: string
   underlyingApy: string

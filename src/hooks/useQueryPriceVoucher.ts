@@ -9,11 +9,6 @@ import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import { debugLog } from "@/config"
 
-interface MoveCallInfo {
-  target: string
-  arguments: { name: string; value: string }[]
-  typeArguments: string[]
-}
 
 export default function useQueryPriceVoucher(
   coinConfig?: CoinConfig,
@@ -32,48 +27,61 @@ export default function useQueryPriceVoucher(
       const tx = new Transaction()
       tx.setSender(address)
 
-      const [, moveCallInfo] = getPriceVoucher(tx, coinConfig, caller)
-
-      const result = await client.devInspectTransactionBlock({
-        sender: address,
-        transactionBlock: await tx.build({
-          client: client,
-          onlyTransactionKind: true,
-        }),
-      })
-
       const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo as MoveCallInfo],
-        rawResult: result,
+        moveCall: [],
+        rawResult: {},
       }
 
-      if (!debug) {
-        debugLog(
-          `[${caller}] useQueryPriceVoucher move call:`,
-          debugInfo.moveCall,
+      try {
+        const [, priceVoucherMoveCallInfo] = getPriceVoucher(
+          tx,
+          coinConfig,
+          caller,
         )
+
+        debugInfo.moveCall = [priceVoucherMoveCallInfo]
+
+        const result = await client.devInspectTransactionBlock({
+          sender: address,
+          transactionBlock: await tx.build({
+            client: client,
+            onlyTransactionKind: true,
+          }),
+        })
+
+        debugInfo.rawResult = result
+
+        if (!debug) {
+          debugLog(
+            `[${caller}] useQueryPriceVoucher move call:`,
+            debugInfo.moveCall,
+          )
+        }
+
+        if (result?.error) {
+          throw new ContractError(
+            "useQueryPriceVoucher error: " + result.error,
+            debugInfo,
+          )
+        }
+
+        if (!result?.results?.[0]?.returnValues?.[0]) {
+          const message = "Failed to get price voucher"
+          debugInfo.rawResult.error = message
+          throw new ContractError(message, debugInfo)
+        }
+
+        const outputVoucher = bcs.U128.parse(
+          new Uint8Array(result.results[0].returnValues[0][0]),
+        ).toString()
+
+        debugInfo.parsedOutput = outputVoucher
+
+        return debug ? [outputVoucher, debugInfo] : outputVoucher
+      } catch (error) {
+        debugLog("useQueryPriceVoucher error", error)
+        throw new Error("Failed to get price voucher")
       }
-
-      if (result?.error) {
-        throw new ContractError(
-          "useQueryPriceVoucher error: " + result.error,
-          debugInfo,
-        )
-      }
-
-      if (!result?.results?.[0]?.returnValues?.[0]) {
-        const message = "Failed to get price voucher"
-        debugInfo.rawResult.error = message
-        throw new ContractError(message, debugInfo)
-      }
-
-      const outputVoucher = bcs.U128.parse(
-        new Uint8Array(result.results[0].returnValues[0][0]),
-      ).toString()
-
-      debugInfo.parsedOutput = outputVoucher
-
-      return debug ? [outputVoucher, debugInfo] : outputVoucher
     },
   })
 }

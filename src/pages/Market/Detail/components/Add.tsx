@@ -54,6 +54,7 @@ import type { CoinData } from "@/hooks/useCoinData"
 import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
 import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
 import { useCalculateLpAmount } from "@/hooks/dryRun/lp/useCalculateLpDryRun"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -449,6 +450,16 @@ export default function SingleCoin() {
           pyPosition = initPyPosition(tx, coinConfig)
         } else {
           pyPosition = tx.object(pyPositionData[0].id)
+        }
+
+        // FIXME: optimize to 1 sui
+        if (
+          tokenType === 0 &&
+          NEED_MIN_VALUE_LIST.find((item) => item.coinType === coinType) &&
+          new Decimal(lpAmount).lt(new Decimal(3))
+        ) {
+          setError("Please enter at least 3 SUI")
+          return
         }
 
         console.log("lpAmount", lpAmount)

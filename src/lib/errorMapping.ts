@@ -46,7 +46,7 @@ const errorMapping: { [key: number]: string } = {
   817: "Sy insufficient repay", // 0x0000331
   818: "Factory invalid py", // 0x0000332
   819: "Invalid py amount", // 0x0000333
-  820: "Market insufficient pt in for mint lp", // 0x0000334
+  820: "Market insufficient pt.", // 0x0000334
   821: "Market invalid py state", // 0x0000335
   822: "Market invalid market position", // 0x0000336
   823: "Market lp amount is zero", // 0x0000337

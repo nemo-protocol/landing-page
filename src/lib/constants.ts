@@ -210,4 +210,14 @@ export const NEED_MIN_VALUE_LIST = [
       "0xf325ce1300e8dac124071d3152c5c5ee6174914f8bc2161e88329cf579246efc::afsui::AFSUI",
     minValue: 1,
   },
+  {
+    coinType:
+      "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT",
+    minValue: 1,
+  },
 ]
+
+export const VOLO = {
+  NATIVE_POOL: "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf",
+  METADATA: "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
+} as const

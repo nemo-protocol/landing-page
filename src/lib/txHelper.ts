@@ -13,6 +13,7 @@ import {
   ALPAHFI,
   SPRING_SUI,
   HAEDAL,
+  VOLO,
 } from "./constants"
 import {
   Transaction,
@@ -20,6 +21,7 @@ import {
   TransactionArgument,
 } from "@mysten/sui/transactions"
 
+// FIXME: catch error and return moveCall
 export const getPriceVoucher = <T extends boolean = true>(
   tx: Transaction,
   coinConfig: BaseCoinInfo,
@@ -79,8 +81,8 @@ export const getPriceVoucher = <T extends boolean = true>(
             name: "price_ticket_cap",
             value: coinConfig.oracleTicket,
           },
-          { name: "native_pool", value: coinConfig.nativePool },
-          { name: "metadata", value: coinConfig.metadataId },
+          { name: "native_pool", value: VOLO.NATIVE_POOL },
+          { name: "metadata", value: VOLO.METADATA },
           { name: "sy_state", value: coinConfig.syStateId },
         ],
         typeArguments: [coinConfig.syCoinType],
@@ -518,13 +520,11 @@ export const mintSCoin = <T extends boolean = false>(
           arguments: [
             {
               name: "native_pool",
-              value:
-                "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf",
+              value: VOLO.NATIVE_POOL,
             },
             {
               name: "metadata",
-              value:
-                "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
+              value: VOLO.METADATA,
             },
             { name: "sui_system_state", value: "0x5" },
             { name: "coin", value: amounts[i] },
@@ -537,12 +537,8 @@ export const mintSCoin = <T extends boolean = false>(
         const [sCoin] = tx.moveCall({
           target: moveCall.target,
           arguments: [
-            tx.object(
-              "0x7fa2faa111b8c65bea48a23049bfd81ca8f971a262d981dcd9a17c3825cb5baf",
-            ),
-            tx.object(
-              "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
-            ),
+            tx.object(VOLO.NATIVE_POOL),
+            tx.object(VOLO.METADATA),
             tx.object("0x5"),
             splitCoins[i],
           ],
