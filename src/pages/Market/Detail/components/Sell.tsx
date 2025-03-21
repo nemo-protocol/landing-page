@@ -1,5 +1,5 @@
 import Decimal from "decimal.js"
-import { useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { Transaction } from "@mysten/sui/transactions"
 import { ChevronsDown, Info } from "lucide-react"
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { network } from "@/config"
+import { IS_DEV, network } from "@/config"
 import { useCoinConfig } from "@/queries"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
@@ -133,7 +133,10 @@ export default function Sell() {
               )
               .toFixed(decimal)
 
-            if (new Decimal(targetValue).lt(minValue)) {
+            if (
+              new Decimal(targetValue).lt(minValue) &&
+              receivingType === "underlying"
+            ) {
               setError(
                 `Please enter at least ${new Decimal(value).mul(minValue).div(targetValue)} ${tokenType.toUpperCase()} ${coinConfig.coinName}`,
               )
@@ -406,9 +409,19 @@ export default function Sell() {
   return (
     <div className="w-full bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
       <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
-        <h2 className="text-center text-base sm:text-xl">Sell</h2>
-        <div className="flex justify-end w-full">
-          <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
+        <div className="w-full relative">
+          {IS_DEV && (
+            <Link
+              to={`/market/detail/${coinConfig?.coinType}/${coinConfig?.maturity}/swap/${tokenType === "pt" ? "pt" : "yt"}`}
+              className="text-sm text-white/60 hover:text-white underline transition-colors absolute left-0 top-1/2 -translate-y-1/2"
+            >
+              Swap {tokenType === "pt" ? "PT" : "YT"}
+            </Link>
+          )}
+          <h2 className="text-base sm:text-xl text-center">Sell</h2>
+          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+            <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
+          </div>
         </div>
         <AmountInput
           error={error}
