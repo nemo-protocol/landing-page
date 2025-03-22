@@ -104,6 +104,15 @@ export default function SingleCoin() {
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
 
+  useEffect(() => {
+    if (
+      coinType ===
+      "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN"
+    ) {
+      setTokenType(1)
+    }
+  }, [coinType])
+
   const { mutateAsync: fetchLpPositions } = useFetchLpPosition(coinConfig)
 
   const coinName = useMemo(

@@ -95,9 +95,10 @@ export default function AmountInput({
                     <Skeleton className="h-3 sm:h-4 w-28 sm:w-40 bg-[#2D2D48]" />
                   ) : (
                     <button
+                      title={`${formatDecimalValue(coinBalance, decimal)} ${coinName}`}
                       disabled={disabled}
                       className={cn(
-                        "flex items-center gap-x-1 text-xs sm:text-sm",
+                        "flex items-center gap-x-1 text-xs sm:text-sm max-w-60 truncate",
                         disabled
                           ? "cursor-not-allowed "
                           : " cursor-pointer hover:underline",
@@ -122,7 +123,7 @@ export default function AmountInput({
                       <Wallet className="size-3 sm:size-3.5" />
                       {isConnected
                         ? `${formatDecimalValue(coinBalance, decimal)} ${coinName}`
-                        : "--"}
+                        : "0"}
                     </button>
                   )}
                 </div>

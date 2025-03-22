@@ -32,6 +32,7 @@ export interface BaseCoinInfo {
   oraclePackageId: string
   oracleTicket: string
   oracleVoucherPackageId: string
+  yieldTokenType: string
 }
 
 export interface Incentive {

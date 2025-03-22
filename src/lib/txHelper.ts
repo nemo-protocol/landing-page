@@ -34,7 +34,7 @@ export const getPriceVoucher = <T extends boolean = true>(
   switch (coinConfig.coinType) {
     case "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN": {
       moveCall = {
-        target: `${coinConfig.oraclePackageId}::cetus_vault::get_price_voucher_from_cetus_vault`,
+        target: `${coinConfig.oraclePackageId}::haedal::get_price_voucher_from_cetus_vault`,
         arguments: [
           {
             name: "price_oracle_config",
@@ -59,11 +59,10 @@ export const getPriceVoucher = <T extends boolean = true>(
               "0x871d8a227114f375170f149f7e9d45be822dd003eba225e83c05ac80828596bc",
           },
           { name: "sy_state", value: coinConfig.syStateId },
-          { name: "ctx", value: "0x6" },
         ],
         typeArguments: [
           coinConfig.syCoinType,
-          coinConfig.underlyingCoinType, // Use underlyingCoinType as YieldToken
+          coinConfig.yieldTokenType, // Use underlyingCoinType as YieldToken
           coinConfig.coinType,
         ],
       }
