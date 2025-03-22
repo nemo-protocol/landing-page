@@ -14,6 +14,7 @@ import {
 } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
+import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 
 interface SellPtParams {
   minSyOut: string
@@ -79,7 +80,10 @@ export default function useSellPtDryRun<T extends boolean = false>(
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
-      if (receivingType === "underlying") {
+      if (
+        receivingType === "underlying" &&
+        !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
+      ) {
         const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
         tx.moveCall({
           target: `0x2::coin::value`,

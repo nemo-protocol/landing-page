@@ -17,6 +17,7 @@ import {
   swapExactPtForSy,
   burnSCoin,
 } from "@/lib/txHelper"
+import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 
 interface RedeemLpParams {
   lpAmount: string
@@ -119,7 +120,10 @@ export default function useRedeemLp(
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
       // Add conditional logic for receivingType
-      if (receivingType === "underlying") {
+      if (
+        receivingType === "underlying" &&
+        !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
+      ) {
         const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
         tx.transferObjects([underlyingCoin], address)
       } else {
@@ -142,7 +146,10 @@ export default function useRedeemLp(
         const swappedYieldToken = redeemSyCoin(tx, coinConfig, swappedSyCoin)
 
         // Add conditional logic for receivingType for swapped PT
-        if (receivingType === "underlying") {
+        if (
+          receivingType === "underlying" &&
+          !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
+        ) {
           const swappedUnderlyingCoin = burnSCoin(
             tx,
             coinConfig,

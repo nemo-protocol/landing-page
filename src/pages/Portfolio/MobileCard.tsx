@@ -32,7 +32,10 @@ import {
   initPyPosition,
 } from "@/lib/txHelper"
 import { debugLog } from "@/config"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import {
+  NEED_MIN_VALUE_LIST,
+  UNSUPPORTED_UNDERLYING_COINS,
+} from "@/lib/constants"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -225,7 +228,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   ])
 
   async function claimYtReward() {
-    if (item?.coinType && address && ytBalance) {
+    if (item?.coinType && address && ytBalance && ytReward) {
       try {
         const tx = new Transaction()
 
@@ -267,8 +270,15 @@ export const MobileCard: React.FC<MobileCardProps> = ({
         })
 
         const yieldToken = redeemSyCoin(tx, item, syCoin)
-        const underlyingCoin = burnSCoin(tx, item, yieldToken)
-        tx.transferObjects([underlyingCoin], address)
+        if (
+          new Decimal(ytReward).gt(minValue) &&
+          !UNSUPPORTED_UNDERLYING_COINS.includes(item?.coinType)
+        ) {
+          const underlyingCoin = burnSCoin(tx, item, yieldToken)
+          tx.transferObjects([underlyingCoin], address)
+        } else {
+          tx.transferObjects([yieldToken], address)
+        }
 
         if (created) {
           tx.transferObjects([pyPosition], address)

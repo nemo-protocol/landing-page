@@ -14,6 +14,7 @@ import {
 } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
+import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 
 type BurnLpResult = {
   ptAmount: string
@@ -128,7 +129,10 @@ export default function useBurnLpDryRun(
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
       // Use coin::value to get the output amount based on receivingType
-      if (receivingType === "underlying") {
+      if (
+        receivingType === "underlying" &&
+        !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
+      ) {
         const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
         tx.moveCall({
           target: `0x2::coin::value`,

@@ -44,7 +44,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { showTransactionDialog } from "@/lib/dialog"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import {
+  NEED_MIN_VALUE_LIST,
+  UNSUPPORTED_UNDERLYING_COINS,
+} from "@/lib/constants"
 
 export default function Sell() {
   const [warning, setWarning] = useState("")
@@ -281,7 +284,10 @@ export default function Sell() {
               )
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
-        if (receivingType === "underlying") {
+        if (
+          receivingType === "underlying" &&
+          !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
+        ) {
           const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
           tx.transferObjects([underlyingCoin], address)
         } else {

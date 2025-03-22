@@ -694,7 +694,8 @@ export const mintSCoin = <T extends boolean = false>(
     }
     default:
       throw new Error(
-        "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+        "mintSCoin Unsupported underlying protocol: " +
+          coinConfig.underlyingProtocol,
       )
   }
 }
@@ -877,7 +878,8 @@ export const burnSCoin = (
     }
     default:
       console.error(
-        "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+        "burnSCoin Unsupported underlying protocol: " +
+          coinConfig.underlyingProtocol,
       )
       return sCoin
     // throw new Error(

@@ -98,7 +98,7 @@ export default function AmountInput({
                       title={`${formatDecimalValue(coinBalance, decimal)} ${coinName}`}
                       disabled={disabled}
                       className={cn(
-                        "flex items-center gap-x-1 text-xs sm:text-sm max-w-60 truncate",
+                        "flex gap-x-1 text-xs sm:text-sm",
                         disabled
                           ? "cursor-not-allowed "
                           : " cursor-pointer hover:underline",
@@ -121,9 +121,13 @@ export default function AmountInput({
                       }}
                     >
                       <Wallet className="size-3 sm:size-3.5" />
-                      {isConnected
-                        ? `${formatDecimalValue(coinBalance, decimal)} ${coinName}`
-                        : "0"}
+                      {isConnected ? (
+                        <span className="max-w-60 text-wrap text-left">
+                          {`${formatDecimalValue(coinBalance, decimal)} ${coinName}`}
+                        </span>
+                      ) : (
+                        "0"
+                      )}
                     </button>
                   )}
                 </div>

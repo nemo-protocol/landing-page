@@ -170,6 +170,15 @@ export default function Invest() {
   const [minValue, setMinValue] = useState(0)
 
   useEffect(() => {
+    if (
+      coinType ===
+      "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN"
+    ) {
+      setTokenType(1)
+    }
+  }, [coinType])
+
+  useEffect(() => {
     if (coinConfig) {
       const minValue = NEED_MIN_VALUE_LIST.find(
         (item) => item.coinType === coinConfig.coinType,

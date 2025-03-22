@@ -634,8 +634,8 @@ export default function SingleCoin() {
 
               <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
                 <div className="flex flex-col items-end gap-y-1">
-                  <div className="flex items-center justify-between w-full h-[24px] sm:h-[28px]">
-                    <span>LP Position</span>
+                  <div className="flex items-center justify-between w-full h-[24px] sm:h-[28px] gap-x-4">
+                    <span className="shrink-0">LP Position</span>
                     <span className="flex items-center gap-x-1 sm:gap-x-1.5">
                       {!addValue ? (
                         "--"

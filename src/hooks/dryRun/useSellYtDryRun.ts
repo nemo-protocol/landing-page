@@ -14,6 +14,7 @@ import {
   burnSCoin,
 } from "@/lib/txHelper"
 import useQuerySyOutFromYtInWithVoucher from "./sy/useQuerySyOutByYtIn"
+import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 
 interface SellYtParams {
   sellValue: string
@@ -86,7 +87,10 @@ export default function useSellYtDryRun<T extends boolean = false>(
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
-      if (receivingType === "underlying") {
+      if (
+        receivingType === "underlying" &&
+        !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
+      ) {
         const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
         tx.transferObjects([underlyingCoin], address)
       } else {

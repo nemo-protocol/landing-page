@@ -43,7 +43,10 @@ import useQueryClaimLpReward from "@/hooks/useQueryClaimLpReward"
 import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 import { ChevronDown } from "lucide-react"
 import useCoinData from "@/hooks/useCoinData"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import {
+  NEED_MIN_VALUE_LIST,
+  UNSUPPORTED_UNDERLYING_COINS,
+} from "@/lib/constants"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -270,11 +273,14 @@ export default function Item({
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
-        if (new Decimal(ytReward).lte(minValue)) {
-          tx.transferObjects([yieldToken], address)
-        } else {
+        if (
+          new Decimal(ytReward).gt(minValue) &&
+          !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
+        ) {
           const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
           tx.transferObjects([underlyingCoin], address)
+        } else {
+          tx.transferObjects([yieldToken], address)
         }
 
         if (created) {

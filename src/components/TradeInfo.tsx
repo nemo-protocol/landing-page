@@ -29,7 +29,7 @@ export default function TradeInfo({
 }: TradeInfoProps) {
   return (
     <div className="border border-[#2D2D48] bg-[#181827] rounded-xl px-[18px] py-6 w-full text-sm flex flex-col gap-y-4">
-      <div className="flex items-center justify-between text-white/60">
+      <div className="flex items-center justify-between text-white/60 gap-x-4">
         <span>Price</span>
         <div className="flex items-center gap-x-1">
           {isRatioLoading ? (
