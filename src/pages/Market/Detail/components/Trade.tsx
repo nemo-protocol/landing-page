@@ -50,7 +50,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { formatLargeNumber } from "@/lib/utils"
-import { showTransactionDialog } from '@/lib/dialog'
+import { showTransactionDialog } from "@/lib/dialog"
 import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 export default function Trade() {
@@ -71,7 +71,6 @@ export default function Trade() {
   const { address, signAndExecuteTransaction } = useWallet()
   const isConnected = useMemo(() => !!address, [address])
 
-
   const {
     data: coinConfig,
     isLoading: isConfigLoading,
@@ -86,7 +85,6 @@ export default function Trade() {
       setTokenType(1)
     }
   }, [coinType])
-
 
   const [minValue, setMinValue] = useState(0)
 
@@ -202,7 +200,7 @@ export default function Trade() {
   const debouncedGetYtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getYtOut = debounce(async () => {
-        if (tokenType === 0 && new Decimal(value).lt(minValue)) {
+        if (tokenType === 0 && value && new Decimal(value).lt(minValue)) {
           setError(
             `The minimum investment amount is ${minValue} ${coinConfig?.underlyingCoinName}`,
           )
@@ -243,7 +241,13 @@ export default function Trade() {
       getYtOut()
       return getYtOut.cancel
     },
-    [tokenType, minValue, conversionRate, coinConfig?.underlyingCoinName, queryYtOut],
+    [
+      tokenType,
+      minValue,
+      conversionRate,
+      coinConfig?.underlyingCoinName,
+      queryYtOut,
+    ],
   )
 
   useEffect(() => {
@@ -425,13 +429,13 @@ export default function Trade() {
         })
 
         showTransactionDialog({
-          status: 'Success',
+          status: "Success",
           network,
           txId: res.digest,
           onClose: async () => {
             await refreshData()
             await refetchPtYt()
-          }
+          },
         })
 
         setSwapValue("")
@@ -440,10 +444,10 @@ export default function Trade() {
         const gasMsg = parseGasErrorMessage(msg)
         if (gasMsg) {
           showTransactionDialog({
-            status: 'Failed',
+            status: "Failed",
             network,
-            txId: '',
-            message: gasMsg
+            txId: "",
+            message: gasMsg,
           })
         } else if (
           msg.includes(
@@ -451,19 +455,19 @@ export default function Trade() {
           )
         ) {
           showTransactionDialog({
-            status: 'Failed',
+            status: "Failed",
             network,
-            txId: '',
-            message: "Insufficient YT in the pool."
+            txId: "",
+            message: "Insufficient YT in the pool.",
           })
         } else {
           const { error, detail } = parseErrorMessage(msg || "")
           setErrorDetail(detail)
           showTransactionDialog({
-            status: 'Failed',
+            status: "Failed",
             network,
-            txId: '',
-            message: error
+            txId: "",
+            message: error,
           })
         }
       } finally {
@@ -740,7 +744,9 @@ export default function Trade() {
         <img src="/images/market/yt_desc.png" alt="yt" className="w-full" />
         <div className="border border-[#2D2D48] grid grid-cols-3 rounded-xl">
           <div className="flex flex-col-reverse sm:flex-col items-start py-4 px-2.5 gap-2.5">
-            <div className="text-white/60 text-xs h-12 sm:h-auto">Underlying Protocol</div>
+            <div className="text-white/60 text-xs h-12 sm:h-auto">
+              Underlying Protocol
+            </div>
             <div className="flex items-center gap-x-1">
               <img
                 className="size-3.5"
@@ -751,7 +757,9 @@ export default function Trade() {
             </div>
           </div>
           <div className="flex flex-col-reverse sm:flex-col items-start py-4 px-2.5 gap-2.5">
-            <div className="text-white/60 text-xs h-12 sm:h-auto">Underlying APY</div>
+            <div className="text-white/60 text-xs h-12 sm:h-auto">
+              Underlying APY
+            </div>
             <div className="text-[#2DF4DD] text-xs">
               {coinConfig?.underlyingApy
                 ? `${new Decimal(coinConfig.underlyingApy).mul(100).toFixed(2)} %`
@@ -759,7 +767,9 @@ export default function Trade() {
             </div>
           </div>
           <div className="flex flex-col-reverse sm:flex-col items-start py-4 px-2.5 gap-2.5">
-            <div className="text-white/60 text-xs h-12 sm:h-auto">7D Avg. Underlying APY</div>
+            <div className="text-white/60 text-xs h-12 sm:h-auto">
+              7D Avg. Underlying APY
+            </div>
             <div className="text-[#2DF4DD] text-xs">
               {coinConfig?.sevenAvgUnderlyingApy
                 ? `${new Decimal(coinConfig.sevenAvgUnderlyingApy).mul(100).toFixed(2)} %`
