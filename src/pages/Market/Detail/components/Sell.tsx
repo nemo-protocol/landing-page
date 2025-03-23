@@ -315,7 +315,6 @@ export default function Sell() {
         setRedeemValue("")
         setTargetValue("")
       } catch (errorMsg) {
-        console.log("tx error", errorMsg)
         const { error, detail } = parseErrorMessage(
           (errorMsg as Error)?.message ?? "",
         )

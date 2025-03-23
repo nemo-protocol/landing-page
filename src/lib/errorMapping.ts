@@ -79,7 +79,8 @@ const errorMapping: { [key: number]: string } = {
   131074: "The quotient value would be too large to be held in a u128", // 0x20002
   131075: "The multiplied value would be too large to be held in a u128", // 0x20003
   65540: "A division by zero was encountered", // 0x10004
-  131077: "The computed ratio when converting to a FixedPoint64 would be unrepresentable", // 0x20005
+  131077:
+    "The computed ratio when converting to a FixedPoint64 would be unrepresentable", // 0x20005
 }
 
 export default errorMapping
@@ -106,9 +107,15 @@ export const parseErrorMessage = (errorString: string) => {
       ? "To ensure the capital efficiency of the liquidity pool, Nemo's flash swap is utilized when selling YT, which requires higher liquidity. You can try swapping again later or reduce the selling amount."
       : ""
 
+  if (errorString.includes("math_fixed64_with_sign")) {
+    return { error: "Insufficient pool liquidity.", detail: "" }
+  }
+
   const error = errorCode
     ? getErrorMessage(errorCode, errorString)
-    : errorString
+    : errorString.includes("math_fixed64_with_sign")
+      ? "Insufficient pool liquidity."
+      : errorString
 
   return { error, detail }
 }
