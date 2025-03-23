@@ -72,6 +72,7 @@ export default function SingleCoin() {
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isCalculating, setIsCalculating] = useState(false)
   const [ratio, setRatio] = useState<string>()
+  const [minValue, setMinValue] = useState(0)
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -81,6 +82,17 @@ export default function SingleCoin() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
+
+  useEffect(() => {
+    if (tokenType === 0) {
+      const minValue = NEED_MIN_VALUE_LIST.find(
+        (item) => item.coinType === coinType,
+      )?.minValue
+      if (minValue) {
+        setMinValue(minValue)
+      }
+    }
+  }, [tokenType, coinType])
 
   const { data: conversionRate } = useQueryConversionRate(coinConfig)
 
@@ -104,6 +116,7 @@ export default function SingleCoin() {
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
 
+  // FIXME: remove this
   useEffect(() => {
     if (
       coinType ===
@@ -286,6 +299,15 @@ export default function SingleCoin() {
             )
           } catch (error) {
             setIsCalculating(false)
+          } finally {
+            if (
+              tokenType === 0 &&
+              new Decimal(value).lt(new Decimal(minValue).mul(3))
+            ) {
+              setError(
+                `Minimum amount is ${new Decimal(minValue).mul(3).toString()} ${coinName}`,
+              )
+            }
           }
         } else {
           setLpAmount(undefined)
@@ -295,7 +317,15 @@ export default function SingleCoin() {
       getLpPosition()
       return getLpPosition.cancel
     },
-    [calculateLpAmount, tokenType, coinData, pyPositionData, marketStateData],
+    [
+      coinData,
+      pyPositionData,
+      marketStateData,
+      calculateLpAmount,
+      tokenType,
+      minValue,
+      coinName,
+    ],
   )
 
   useEffect(() => {
@@ -373,8 +403,24 @@ export default function SingleCoin() {
   ): Promise<void> {
     const lpOut = await estimateLpOut(addAmount)
     const amounts = {
-      syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
       sy: new Decimal(lpOut.syValue).toFixed(0),
+      syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
+    }
+
+    const smallerAmount = formatDecimalValue(
+      Decimal.min(
+        new Decimal(lpOut.syForPtValue).div(10 ** decimal),
+        new Decimal(lpOut.syValue).div(10 ** decimal),
+      ),
+      decimal,
+    )
+
+    if (new Decimal(smallerAmount).lt(new Decimal(minValue))) {
+      const needValue = formatDecimalValue(
+        new Decimal(minValue).div(new Decimal(smallerAmount)).mul(addValue),
+        decimal,
+      )
+      throw new Error(`Please enter at least ${needValue} ${coinName}`)
     }
 
     const [splitCoinForSy, splitCoinForPt] =
@@ -460,18 +506,6 @@ export default function SingleCoin() {
         } else {
           pyPosition = tx.object(pyPositionData[0].id)
         }
-
-        // FIXME: optimize to 1 sui
-        if (
-          tokenType === 0 &&
-          NEED_MIN_VALUE_LIST.find((item) => item.coinType === coinType) &&
-          new Decimal(lpAmount).lt(new Decimal(3))
-        ) {
-          setError("Please enter at least 3 SUI")
-          return
-        }
-
-        console.log("lpAmount", lpAmount)
 
         const minLpAmount = new Decimal(lpAmount)
           .mul(10 ** decimal)
