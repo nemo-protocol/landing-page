@@ -179,6 +179,16 @@ export default function Remove() {
     ],
   )
 
+  const btnText = useMemo(() => {
+    if (insufficientBalance) {
+      return `Insufficient LP ${coinConfig?.coinName} balance`
+    }
+    if (lpValue === "") {
+      return "Please enter an amount"
+    }
+    return "Remove"
+  }, [insufficientBalance, lpValue, coinConfig?.coinName])
+
   useEffect(() => {
     const cancelFn = debouncedGetSyOut(lpValue, decimal ?? 0)
     return () => {
@@ -403,8 +413,8 @@ export default function Remove() {
           </div>
 
           <ActionButton
-            btnText="Remove Liquidity"
             onClick={remove}
+            btnText={btnText}
             loading={isRemoving}
             disabled={
               !!error ||
