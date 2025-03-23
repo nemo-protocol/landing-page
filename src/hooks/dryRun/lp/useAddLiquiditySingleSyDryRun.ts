@@ -117,6 +117,10 @@ export default function useAddLiquiditySingleSyDryRun<
         parsedOutput: "",
       }
 
+      if (result.error) {
+        throw new ContractError(result.error, debugInfo)
+      }
+
       // 检查结果
       if (!result?.events?.[result.events.length - 1]?.parsedJson?.lp_amount) {
         const message = "Failed to get lp amount"
@@ -129,7 +133,10 @@ export default function useAddLiquiditySingleSyDryRun<
       }
 
       // 检查结果
-      if (!result?.events?.[result.events.length - 2]?.parsedJson?.reserve_fee?.value) {
+      if (
+        !result?.events?.[result.events.length - 2]?.parsedJson?.reserve_fee
+          ?.value
+      ) {
         const message = "Failed to get reserve fee"
         // 更新 error 信息
         debugInfo.rawResult = {
@@ -139,15 +146,11 @@ export default function useAddLiquiditySingleSyDryRun<
         throw new ContractError(message, debugInfo)
       }
 
-      console.log("useAddLiquiditySingleSyDryRun result", result)
+      const decimal = Number(coinConfig.decimal)
 
       // 解析 LP 数量
       const lpAmount =
         result?.events?.[result.events.length - 1]?.parsedJson?.lp_amount
-
-      console.log("useAddLiquiditySingleSyDryRun lpAmount", lpAmount)
-
-      const decimal = Number(coinConfig.decimal)
 
       const lpValue = new Decimal(lpAmount.toString())
         .div(10 ** decimal)
@@ -155,13 +158,15 @@ export default function useAddLiquiditySingleSyDryRun<
 
       // 在干运行中，我们不能直接获取 tradeFee，设置为 0
       const tradeFee = formatDecimalValue(
-        new Decimal(result?.events?.[result.events.length - 2]?.parsedJson?.reserve_fee?.value)
+        new Decimal(
+          result?.events?.[
+            result.events.length - 2
+          ]?.parsedJson?.reserve_fee?.value,
+        )
           .div(2 ** 64)
           .div(10 ** decimal),
         decimal,
       )
-
-      console.log("useAddLiquiditySingleSyDryRun tradeFee", tradeFee)
 
       // 更新 parsedOutput
       debugInfo.parsedOutput = `${lpAmount}`

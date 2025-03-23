@@ -18,6 +18,8 @@ import {
   getPriceVoucher,
   splitCoinHelper,
 } from "@/lib/txHelper"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import { formatDecimalValue } from "@/lib/utils"
 
 interface MintLpParams {
   addAmount: string
@@ -63,8 +65,6 @@ export default function useMintLpDryRun<T extends boolean = false>(
         throw new Error("No available coins")
       }
 
-      console.log("inputPyPositions", inputPyPositions)
-
       const [pyPositions] = (
         inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
       ) as [PyPosition[]]
@@ -83,10 +83,46 @@ export default function useMintLpDryRun<T extends boolean = false>(
 
       // Calculate LP output
       const lpOut = await estimateLpOut(addAmount)
+
+      const decimal = Number(coinConfig.decimal)
+
+      const minValue =
+        NEED_MIN_VALUE_LIST.find(
+          (item) => item.coinType === coinConfig.coinType,
+        )?.minValue || 0
+
+      const smallerAmount = formatDecimalValue(
+        Decimal.min(
+          new Decimal(lpOut.syForPtValue).div(10 ** decimal),
+          new Decimal(lpOut.syValue).div(10 ** decimal),
+        ),
+        decimal,
+      )
+
+      const addValue = formatDecimalValue(
+        new Decimal(addAmount).div(10 ** decimal),
+        decimal,
+      )
+
+      if (
+        tokenType === 0 &&
+        new Decimal(smallerAmount).lt(new Decimal(minValue))
+      ) {
+        const needValue = formatDecimalValue(
+          new Decimal(minValue).div(new Decimal(smallerAmount)).mul(addValue),
+          decimal,
+        )
+        throw new Error(
+          `Please enter at least ${needValue} ${coinConfig.underlyingCoinName}`,
+        )
+      }
+
       const amounts = {
         syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
         sy: new Decimal(lpOut.syValue).toFixed(0),
       }
+
+      console.log("amounts", amounts)
 
       // Split coins and deposit
       const [splitCoinForSy, splitCoinForPt] =

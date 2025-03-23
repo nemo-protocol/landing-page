@@ -8,14 +8,17 @@ import useSeedLiquidityDryRun from "./useSeedLiquidityDryRun"
 import { useEstimateLpOutDryRun } from "./useEstimateLpOutDryRun"
 import { useMutation, UseMutationResult } from "@tanstack/react-query"
 import useAddLiquiditySingleSyDryRun from "./useAddLiquiditySingleSyDryRun"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import { formatDecimalValue } from "@/lib/utils"
 
 interface CalculateLpAmountResult {
-  lpAmount: string | undefined
-  ytAmount: string | undefined
-  lpFeeAmount: string | undefined
-  ratio: string | undefined
-  error: string | undefined
-  errorDetail: string | undefined
+  lpAmount?: string
+  ytAmount?: string
+  lpFeeAmount?: string
+  ratio?: string
+  error?: string
+  errorDetail?: string
+  addType?: "mint" | "seed" | "add"
 }
 
 interface CalculateLpAmountParams {
@@ -56,9 +59,29 @@ export function useCalculateLpAmount(
         throw new Error("Market state is required")
       }
 
-      console.log("marketState", marketState)
+      const minValue =
+        NEED_MIN_VALUE_LIST.find(
+          (item) => item.coinType === coinConfig.coinType,
+        )?.minValue || 0
+
+      const addValue = formatDecimalValue(
+        new Decimal(inputAmount).div(10 ** decimal),
+        decimal,
+      )
+
       try {
         if (marketState?.lpSupply === "0") {
+          console.log("seedLiquidityDryRun")
+
+          if (
+            tokenType === 0 &&
+            new Decimal(addValue).lt(new Decimal(minValue))
+          ) {
+            return {
+              error: `Please enter at least ${minValue} ${coinConfig.underlyingCoinName}`,
+            }
+          }
+
           const { lpAmount, ytAmount } = await seedLiquidityDryRun({
             addAmount: inputAmount,
             tokenType,
@@ -74,11 +97,13 @@ export function useCalculateLpAmount(
             ratio: new Decimal(lpAmount).div(inputAmount).toString(),
             lpAmount: new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
             ytAmount: new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
+            addType: "seed",
           }
         } else if (
           marketState &&
           new Decimal(marketState.totalSy).mul(0.4).lt(inputAmount)
         ) {
+          console.log("mintLpDryRun")
           const { lpAmount, ytAmount } = await mintLpDryRun({
             coinData,
             tokenType,
@@ -94,45 +119,77 @@ export function useCalculateLpAmount(
             ratio: new Decimal(lpAmount).div(inputAmount).toString(),
             lpAmount: new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
             ytAmount: new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
+            addType: "mint",
           }
         } else {
-          const { lpAmount, lpValue, tradeFee } =
-            await addLiquiditySingleSyDryRun({
+          try {
+            console.log("addLiquiditySingleSyDryRun")
+            if (
+              tokenType === 0 &&
+              new Decimal(addValue).lt(new Decimal(minValue))
+            ) {
+              return {
+                error: `Please enter at least ${minValue} ${coinConfig.underlyingCoinName}`,
+              }
+            }
+
+            const { lpAmount, lpValue, tradeFee } =
+              await addLiquiditySingleSyDryRun({
+                coinData,
+                tokenType,
+                addAmount: inputAmount,
+                pyPositions: pyPositionData,
+              })
+
+            return {
+              lpAmount: lpValue,
+              ytAmount: undefined,
+              lpFeeAmount: tradeFee,
+              ratio: new Decimal(lpAmount).div(inputAmount).toString(),
+              error: undefined,
+              errorDetail: undefined,
+              addType: "add",
+            }
+          } catch (error) {
+            console.log("addLiquiditySingleSyDryRun error", error)
+            console.log("mintLpDryRun")
+            const { lpAmount, ytAmount } = await mintLpDryRun({
               coinData,
               tokenType,
+              coinConfig,
               addAmount: inputAmount,
               pyPositions: pyPositionData,
             })
 
-          return {
-            lpAmount: lpValue,
-            ytAmount: undefined,
-            lpFeeAmount: tradeFee,
-            ratio: new Decimal(lpAmount).div(inputAmount).toString(),
-            error: undefined,
-            errorDetail: undefined,
+            return {
+              error: undefined,
+              lpFeeAmount: undefined,
+              errorDetail: undefined,
+              ratio: new Decimal(lpAmount).div(inputAmount).toString(),
+              lpAmount: new Decimal(lpAmount)
+                .div(10 ** decimal)
+                .toFixed(decimal),
+              ytAmount: new Decimal(ytAmount)
+                .div(10 ** decimal)
+                .toFixed(decimal),
+              addType: "mint",
+            }
           }
         }
       } catch (error) {
         try {
+          console.log("estimateLpOut", error)
           const lpOut = await estimateLpOut(inputAmount)
           return {
             lpAmount: lpOut.lpAmount,
-            ytAmount: undefined,
-            lpFeeAmount: undefined,
-            ratio: undefined,
-            error: undefined,
-            errorDetail: undefined,
+            ratio: new Decimal(lpOut.lpAmount).div(inputAmount).toString(),
+            error: (error as Error)?.message,
           }
         } catch (errorMsg) {
           const { error, detail } = parseErrorMessage(errorMsg as string)
           return {
             error,
-            ratio: undefined,
             errorDetail: detail,
-            lpAmount: undefined,
-            ytAmount: undefined,
-            lpFeeAmount: undefined,
           }
         }
       }

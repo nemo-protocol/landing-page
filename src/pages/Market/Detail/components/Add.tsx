@@ -54,7 +54,6 @@ import type { CoinData } from "@/hooks/useCoinData"
 import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
 import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
 import { useCalculateLpAmount } from "@/hooks/dryRun/lp/useCalculateLpDryRun"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -72,7 +71,7 @@ export default function SingleCoin() {
   const { account: currentAccount, signAndExecuteTransaction } = useWallet()
   const [isCalculating, setIsCalculating] = useState(false)
   const [ratio, setRatio] = useState<string>()
-  const [minValue, setMinValue] = useState(0)
+  const [addType, setAddType] = useState<"mint" | "seed" | "add">()
 
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
@@ -82,17 +81,6 @@ export default function SingleCoin() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
-
-  useEffect(() => {
-    if (tokenType === 0) {
-      const minValue = NEED_MIN_VALUE_LIST.find(
-        (item) => item.coinType === coinType,
-      )?.minValue
-      if (minValue) {
-        setMinValue(minValue)
-      }
-    }
-  }, [tokenType, coinType])
 
   const { data: conversionRate } = useQueryConversionRate(coinConfig)
 
@@ -204,8 +192,13 @@ export default function SingleCoin() {
   )
 
   const btnDisabled = useMemo(() => {
-    return !isValidAmount(addValue) || insufficientBalance || isCalculating
-  }, [addValue, insufficientBalance, isCalculating])
+    return (
+      !isValidAmount(addValue) ||
+      insufficientBalance ||
+      isCalculating ||
+      !!error
+    )
+  }, [addValue, error, insufficientBalance, isCalculating])
 
   const btnText = useMemo(() => {
     if (insufficientBalance) {
@@ -285,6 +278,8 @@ export default function SingleCoin() {
               },
               {
                 onSuccess: (result) => {
+                  console.log("result", result)
+                  setAddType(result.addType)
                   setLpAmount(result.lpAmount)
                   setYtAmount(result.ytAmount)
                   setLpFeeAmount(result.lpFeeAmount)
@@ -299,15 +294,6 @@ export default function SingleCoin() {
             )
           } catch (error) {
             setIsCalculating(false)
-          } finally {
-            if (
-              tokenType === 0 &&
-              new Decimal(value).lt(new Decimal(minValue).mul(3))
-            ) {
-              setError(
-                `Minimum amount is ${new Decimal(minValue).mul(3).toString()} ${coinName}`,
-              )
-            }
           }
         } else {
           setLpAmount(undefined)
@@ -317,15 +303,7 @@ export default function SingleCoin() {
       getLpPosition()
       return getLpPosition.cancel
     },
-    [
-      coinData,
-      pyPositionData,
-      marketStateData,
-      calculateLpAmount,
-      tokenType,
-      minValue,
-      coinName,
-    ],
+    [coinData, pyPositionData, marketStateData, calculateLpAmount, tokenType],
   )
 
   useEffect(() => {
@@ -407,22 +385,6 @@ export default function SingleCoin() {
       syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
     }
 
-    const smallerAmount = formatDecimalValue(
-      Decimal.min(
-        new Decimal(lpOut.syForPtValue).div(10 ** decimal),
-        new Decimal(lpOut.syValue).div(10 ** decimal),
-      ),
-      decimal,
-    )
-
-    if (new Decimal(smallerAmount).lt(new Decimal(minValue))) {
-      const needValue = formatDecimalValue(
-        new Decimal(minValue).div(new Decimal(smallerAmount)).mul(addValue),
-        decimal,
-      )
-      throw new Error(`Please enter at least ${needValue} ${coinName}`)
-    }
-
     const [splitCoinForSy, splitCoinForPt] =
       tokenType === 0
         ? mintSCoin(tx, coinConfig, coinData, [amounts.sy, amounts.syForPt])
@@ -482,6 +444,7 @@ export default function SingleCoin() {
   async function add() {
     if (
       decimal &&
+      addType &&
       address &&
       coinType &&
       slippage &&
@@ -527,7 +490,8 @@ export default function SingleCoin() {
             minLpAmount,
           )
         } else if (
-          new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
+          new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount) ||
+          addType === "mint"
         ) {
           console.log("handleMintLp")
           await handleMintLp(
