@@ -73,7 +73,7 @@ export default function Remove() {
       coinType ===
       "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN"
     ) {
-      setReceivingType('sy')
+      setReceivingType("sy")
     }
   }, [coinType])
 
@@ -125,6 +125,10 @@ export default function Remove() {
         setError(undefined)
         setWarning(undefined)
         if (value && value !== "0" && decimal) {
+          if (receivingType === "underlying" && new Decimal(value).lt(3)) {
+            setError("The minimum redeem amount is 3")
+            return
+          }
           setIsInputLoading(true)
           try {
             const [{ ptAmount, ptValue, outputValue }] = await burnLpDryRun({
@@ -140,11 +144,11 @@ export default function Remove() {
                 pyPositions: pyPositionData,
               })
 
-              setTargetValue(
-                new Decimal(outputValue)
-                  .add(swappedOutputValue)
-                  .toFixed(decimal),
-              )
+              const targetValue = new Decimal(outputValue)
+                .add(swappedOutputValue)
+                .toFixed(decimal)
+
+              setTargetValue(targetValue)
             } catch (error) {
               setTargetValue(outputValue)
               setWarning(`Returning ${ptValue} PT ${coinConfig?.coinName}.`)
@@ -220,11 +224,11 @@ export default function Remove() {
       try {
         setIsRemoving(true)
         const { digest } = await redeemLp({
-          lpAmount: lpValue,
           coinConfig,
-          lpPositions: lppMarketPositionData,
-          pyPositions: pyPositionData || [],
           receivingType,
+          lpAmount: lpValue,
+          pyPositions: pyPositionData || [],
+          lpPositions: lppMarketPositionData,
         })
 
         showTransactionDialog({
@@ -403,6 +407,7 @@ export default function Remove() {
             onClick={remove}
             loading={isRemoving}
             disabled={
+              !!error ||
               lpValue === "" ||
               lpValue === "0" ||
               insufficientBalance ||
