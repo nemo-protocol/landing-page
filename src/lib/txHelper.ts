@@ -854,21 +854,25 @@ export const burnSCoin = (
     }
     case "Aftermath": {
       const burnMoveCall = {
-        target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_unstake`,
+        target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_unstake_atomic`,
         arguments: [
           { name: "staked_sui_vault", value: AFTERMATH.STAKED_SUI_VAULT },
           { name: "safe", value: AFTERMATH.SAFE },
+          { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
+          { name: "treasury", value: AFTERMATH.TREASURY },
           { name: "s_coin", value: sCoin },
         ],
         typeArguments: [],
       }
-      debugLog(`aftermath request_unstake move call:`, burnMoveCall)
+      debugLog(`aftermath request_unstake_atomic move call:`, burnMoveCall)
 
       const [underlyingCoin] = tx.moveCall({
         target: burnMoveCall.target,
         arguments: [
           tx.object(AFTERMATH.STAKED_SUI_VAULT),
           tx.object(AFTERMATH.SAFE),
+          tx.object(AFTERMATH.REFERRAL_VAULT),
+          tx.object(AFTERMATH.TREASURY),
           sCoin,
         ],
         typeArguments: burnMoveCall.typeArguments,

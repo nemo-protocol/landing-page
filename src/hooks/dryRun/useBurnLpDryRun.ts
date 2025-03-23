@@ -15,6 +15,7 @@ import {
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
+import { debugLog } from "@/config"
 
 type BurnLpResult = {
   ptAmount: string
@@ -95,17 +96,16 @@ export default function useBurnLpDryRun(
 
       const lpAmount = new Decimal(lpValue).mul(10 ** decimal).toFixed()
 
-      console.log("mergedPosition", mergedPosition)
-
       const moveCallInfo = {
         target: `${coinConfig.nemoContractId}::market::burn_lp`,
         arguments: [
+          { name: "version", value: coinConfig.version },
           { name: "lp_amount", value: lpAmount },
           {
             name: "py_position",
             value: created ? "pyPosition" : pyPositions[0].id,
           },
-          { name: "market", value: "market" },
+          { name: "market_state", value: coinConfig.marketStateId },
           { name: "market_position", value: marketPositions[0].id.id },
           { name: "clock", value: "0x6" },
         ],
@@ -125,7 +125,6 @@ export default function useBurnLpDryRun(
         typeArguments: moveCallInfo.typeArguments,
       })
 
-      // Add redeemSyCoin and conditionally burnSCoin based on receivingType
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
       // Use coin::value to get the output amount based on receivingType
@@ -158,6 +157,11 @@ export default function useBurnLpDryRun(
       const debugInfo: DebugInfo = {
         moveCall: [moveCallInfo],
         rawResult: result,
+      }
+
+      if (result.error) {
+        debugLog("useBurnLpDryRun error", debugInfo)
+        throw new ContractError(result.error, debugInfo)
       }
 
       if (
