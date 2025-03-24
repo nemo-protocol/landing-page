@@ -1003,13 +1003,11 @@ export const mergeLpPositions = (
   tx: Transaction,
   coinConfig: CoinConfig,
   lpPositions: LpPosition[],
-  lpValue: string,
-  decimal: number,
+  lpAmount: string,
 ) => {
   debugLog("mergeLppMarketPositions params:", {
     lpPositions,
-    lpValue,
-    decimal,
+    lpAmount,
   })
 
   const sortedPositions = [...lpPositions].sort(
@@ -1018,17 +1016,16 @@ export const mergeLpPositions = (
 
   let accumulatedAmount = new Decimal(0)
   const positionsToMerge: LpPosition[] = []
-  const targetAmount = new Decimal(lpValue).mul(10 ** decimal)
   for (const position of sortedPositions) {
     accumulatedAmount = accumulatedAmount.add(position.lp_amount)
     positionsToMerge.push(position)
 
-    if (accumulatedAmount.gte(targetAmount)) {
+    if (accumulatedAmount.gte(lpAmount)) {
       break
     }
   }
 
-  if (accumulatedAmount.lt(targetAmount)) {
+  if (accumulatedAmount.lt(lpAmount)) {
     throw new Error("Insufficient LP amount")
   }
 
@@ -1152,16 +1149,15 @@ export const redeemSyCoin = (
 export const burnLp = (
   tx: Transaction,
   coinConfig: CoinConfig,
-  lpValue: string,
+  lpAmount: string,
   pyPosition: TransactionArgument,
   mergedPositionId: TransactionArgument,
-  decimal: number,
 ) => {
   const burnLpMoveCall = {
     target: `${coinConfig.nemoContractId}::market::burn_lp`,
     arguments: [
       coinConfig.version,
-      new Decimal(lpValue).mul(10 ** decimal).toFixed(0),
+      lpAmount,
       "pyPosition",
       coinConfig.marketStateId,
       "mergedPositionId",
@@ -1175,7 +1171,7 @@ export const burnLp = (
     ...burnLpMoveCall,
     arguments: [
       tx.object(coinConfig.version),
-      tx.pure.u64(new Decimal(lpValue).mul(10 ** decimal).toFixed(0)),
+      tx.pure.u64(lpAmount),
       pyPosition,
       tx.object(coinConfig.marketStateId),
       mergedPositionId,

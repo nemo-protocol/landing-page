@@ -145,8 +145,9 @@ export default function Remove() {
           }
           setIsInputLoading(true)
           try {
+            const lpAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
             const [{ ptAmount, ptValue, outputValue }] = await burnLpDryRun({
-              lpValue: value,
+              lpAmount,
               receivingType,
             })
 
@@ -185,8 +186,9 @@ export default function Remove() {
       return getSyOut.cancel
     },
     [
-      burnLpDryRun,
       receivingType,
+      minValue,
+      burnLpDryRun,
       sellPtDryRun,
       pyPositionData,
       coinConfig?.coinName,
@@ -247,10 +249,11 @@ export default function Remove() {
     ) {
       try {
         setIsRemoving(true)
+        const lpAmount = new Decimal(lpValue).mul(10 ** decimal).toFixed(0)
         const { digest } = await redeemLp({
+          lpAmount,
           coinConfig,
           receivingType,
-          lpAmount: lpValue,
           pyPositions: pyPositionData || [],
           lpPositions: lppMarketPositionData,
         })
@@ -335,87 +338,87 @@ export default function Remove() {
                   {isInputLoading ? (
                     <Skeleton className="h-6 sm:h-7 w-[140px] sm:w-[180px] bg-[#2D2D48]" />
                   ) : !lpValue ? (
-                    "--"
+                    "0"
                   ) : (
                     <div className="flex items-center gap-x-1 sm:gap-x-1.5">
                       <span>{formatDecimalValue(targetValue, decimal)}</span>
-                      <Select
-                        value={receivingType}
-                        onValueChange={(value) => {
-                          const newTargetValue = convertReceivingValue(
-                            targetValue,
-                            receivingType,
-                            value,
-                          )
-                          setReceivingType(value as "underlying" | "sy")
-                          setTargetValue(newTargetValue)
-                        }}
-                      >
-                        <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
-                          <SelectValue>
-                            <div className="flex items-center gap-x-1">
-                              <span>
-                                {receivingType === "underlying"
-                                  ? coinConfig?.underlyingCoinName
-                                  : coinConfig?.coinName}
-                              </span>
-                              {(receivingType === "underlying"
-                                ? coinConfig?.underlyingCoinLogo
-                                : coinConfig?.coinLogo) && (
-                                <img
-                                  src={
-                                    receivingType === "underlying"
-                                      ? coinConfig?.underlyingCoinLogo
-                                      : coinConfig?.coinLogo
-                                  }
-                                  alt={
-                                    receivingType === "underlying"
-                                      ? coinConfig?.underlyingCoinName
-                                      : coinConfig?.coinName
-                                  }
-                                  className="size-4 sm:size-5"
-                                />
-                              )}
-                            </div>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="border-none outline-none bg-[#0E0F16]">
-                          <SelectGroup>
-                            <SelectItem
-                              value="underlying"
-                              className="cursor-pointer text-white"
-                            >
-                              <div className="flex items-center gap-x-1">
-                                <span>{coinConfig?.underlyingCoinName}</span>
-                                {coinConfig?.underlyingCoinLogo && (
-                                  <img
-                                    src={coinConfig.underlyingCoinLogo}
-                                    alt={coinConfig.underlyingCoinName}
-                                    className="size-4 sm:size-5"
-                                  />
-                                )}
-                              </div>
-                            </SelectItem>
-                            <SelectItem
-                              value="sy"
-                              className="cursor-pointer text-white"
-                            >
-                              <div className="flex items-center gap-x-1">
-                                <span>{coinConfig?.coinName}</span>
-                                {coinConfig?.coinLogo && (
-                                  <img
-                                    src={coinConfig.coinLogo}
-                                    alt={coinConfig.coinName}
-                                    className="size-4 sm:size-5"
-                                  />
-                                )}
-                              </div>
-                            </SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
                     </div>
                   )}
+                  <Select
+                    value={receivingType}
+                    onValueChange={(value) => {
+                      const newTargetValue = convertReceivingValue(
+                        targetValue,
+                        receivingType,
+                        value,
+                      )
+                      setReceivingType(value as "underlying" | "sy")
+                      setTargetValue(newTargetValue)
+                    }}
+                  >
+                    <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
+                      <SelectValue>
+                        <div className="flex items-center gap-x-1">
+                          <span>
+                            {receivingType === "underlying"
+                              ? coinConfig?.underlyingCoinName
+                              : coinConfig?.coinName}
+                          </span>
+                          {(receivingType === "underlying"
+                            ? coinConfig?.underlyingCoinLogo
+                            : coinConfig?.coinLogo) && (
+                            <img
+                              src={
+                                receivingType === "underlying"
+                                  ? coinConfig?.underlyingCoinLogo
+                                  : coinConfig?.coinLogo
+                              }
+                              alt={
+                                receivingType === "underlying"
+                                  ? coinConfig?.underlyingCoinName
+                                  : coinConfig?.coinName
+                              }
+                              className="size-4 sm:size-5"
+                            />
+                          )}
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="border-none outline-none bg-[#0E0F16]">
+                      <SelectGroup>
+                        <SelectItem
+                          value="underlying"
+                          className="cursor-pointer text-white"
+                        >
+                          <div className="flex items-center gap-x-1">
+                            <span>{coinConfig?.underlyingCoinName}</span>
+                            {coinConfig?.underlyingCoinLogo && (
+                              <img
+                                src={coinConfig.underlyingCoinLogo}
+                                alt={coinConfig.underlyingCoinName}
+                                className="size-4 sm:size-5"
+                              />
+                            )}
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="sy"
+                          className="cursor-pointer text-white"
+                        >
+                          <div className="flex items-center gap-x-1">
+                            <span>{coinConfig?.coinName}</span>
+                            {coinConfig?.coinLogo && (
+                              <img
+                                src={coinConfig.coinLogo}
+                                alt={coinConfig.coinName}
+                                className="size-4 sm:size-5"
+                              />
+                            )}
+                          </div>
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </span>
               </div>
               <div className="text-[10px] sm:text-xs text-white/60">

@@ -49,8 +49,8 @@ export default function useRedeemLp(
     }: RedeemLpParams) => {
       if (
         !address ||
-        !coinConfig?.coinType ||
         !lpAmount ||
+        !coinConfig?.coinType ||
         !lpPositions?.length
       ) {
         throw new Error("Invalid parameters for redeeming LP")
@@ -60,10 +60,10 @@ export default function useRedeemLp(
         throw new Error("Market state is not available")
       }
 
-      const decimal = Number(coinConfig?.decimal)
+      console.log("lpAmount", lpAmount)
 
       // First check if we can swap PT
-      const [{ ptAmount }] = await burnLpDryRun(lpAmount)
+      const [{ ptAmount }] = await burnLpDryRun({ lpAmount, receivingType })
 
       let canSwapPt = false
       if (ptAmount && new Decimal(ptAmount).gt(0)) {
@@ -105,7 +105,6 @@ export default function useRedeemLp(
         coinConfig,
         lpPositions,
         lpAmount,
-        decimal,
       )
 
       const syCoin = burnLp(
@@ -114,7 +113,6 @@ export default function useRedeemLp(
         lpAmount,
         pyPosition,
         mergedPositionId,
-        decimal,
       )
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)

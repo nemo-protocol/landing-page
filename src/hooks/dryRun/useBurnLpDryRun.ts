@@ -27,7 +27,7 @@ type BurnLpResult = {
 }
 
 interface BurnLpParams {
-  lpValue: string
+  lpAmount: string
   receivingType?: "underlying" | "sy"
 }
 
@@ -44,7 +44,7 @@ export default function useBurnLpDryRun(
 
   return useMutation({
     mutationFn: async (
-      input: string | BurnLpParams,
+      { lpAmount, receivingType }: BurnLpParams,
       innerConfig?: CoinConfig,
     ): Promise<[BurnLpResult] | [BurnLpResult, DebugInfo]> => {
       if (!address) {
@@ -55,13 +55,6 @@ export default function useBurnLpDryRun(
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
-
-      // Handle both string input and object input for backward compatibility
-      const lpValue = typeof input === "string" ? input : input.lpValue
-      const receivingType =
-        typeof input === "string"
-          ? "underlying"
-          : input.receivingType || "underlying"
 
       const marketPositions = await fetchLpPositionAsync()
       const [pyPositions] = (await fetchPyPositionAsync()) as [PyPosition[]]
@@ -90,11 +83,8 @@ export default function useBurnLpDryRun(
         tx,
         coinConfig,
         marketPositions,
-        lpValue,
-        decimal,
+        lpAmount,
       )
-
-      const lpAmount = new Decimal(lpValue).mul(10 ** decimal).toFixed()
 
       const moveCallInfo = {
         target: `${coinConfig.nemoContractId}::market::burn_lp`,
@@ -132,6 +122,8 @@ export default function useBurnLpDryRun(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
+        console.log("useBurnLpDryRun burnSCoin")
+
         const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
         tx.moveCall({
           target: `0x2::coin::value`,
@@ -158,6 +150,8 @@ export default function useBurnLpDryRun(
         moveCall: [moveCallInfo],
         rawResult: result,
       }
+
+      debugLog("useBurnLpDryRun", debugInfo)
 
       if (result.error) {
         debugLog("useBurnLpDryRun error", debugInfo)
