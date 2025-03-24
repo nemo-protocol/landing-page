@@ -20,7 +20,7 @@ export default function useQueryYtOutBySyInWithVoucher<
   const { address } = useWallet()
 
   return useMutation({
-    mutationFn: async (syValue: string): Promise<DryRunResult<T>> => {
+    mutationFn: async (syAmount: string): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -35,7 +35,7 @@ export default function useQueryYtOutBySyInWithVoucher<
       const moveCallInfo = {
         target: `${coinConfig.nemoContractId}::router::get_yt_out_for_exact_sy_in_with_price_voucher`,
         arguments: [
-          { name: "net_sy_in", value: syValue },
+          { name: "net_sy_in", value: syAmount },
           { name: "min_yt_out", value: "0" },
           { name: "price_voucher", value: "priceVoucher" },
           { name: "py_state_id", value: coinConfig.pyStateId },
@@ -48,7 +48,7 @@ export default function useQueryYtOutBySyInWithVoucher<
       tx.moveCall({
         target: moveCallInfo.target,
         arguments: [
-          tx.pure.u64(syValue),
+          tx.pure.u64(syAmount),
           tx.pure.u64("0"),
           priceVoucher,
           tx.object(coinConfig.pyStateId),
