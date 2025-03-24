@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select"
 import { formatDecimalValue } from "@/lib/utils"
 import useSellPtDryRun from "@/hooks/dryRun/useSellPtDryRun"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 export default function Remove() {
   const navigate = useNavigate()
@@ -48,6 +49,8 @@ export default function Remove() {
     "underlying",
   )
 
+  const [minValue, setMinValue] = useState<number>(0)
+
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
 
@@ -56,6 +59,13 @@ export default function Remove() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
+
+  useEffect(() => {
+    const minValue =
+      NEED_MIN_VALUE_LIST.find((item) => item.coinType === coinConfig?.coinType)
+        ?.minValue || 0
+    setMinValue(minValue)
+  }, [coinConfig])
 
   const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
 
@@ -125,7 +135,11 @@ export default function Remove() {
         setError(undefined)
         setWarning(undefined)
         if (value && value !== "0" && decimal) {
-          if (receivingType === "underlying" && new Decimal(value).lt(3)) {
+          if (
+            receivingType === "underlying" &&
+            new Decimal(minValue).gt(0) &&
+            new Decimal(value).lt(minValue)
+          ) {
             setError("The minimum redeem amount is 3")
             return
           }

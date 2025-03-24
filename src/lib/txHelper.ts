@@ -880,6 +880,51 @@ export const burnSCoin = (
 
       return underlyingCoin
     }
+    case "Volo": {
+      const mintTicketMoveCall = {
+        target: `0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::native_pool::mint_ticket_non_entry`,
+        arguments: [
+          { name: "native_pool", value: VOLO.NATIVE_POOL },
+          { name: "metadata", value: VOLO.METADATA },
+          { name: "cert_coin", value: "sCoin" },
+        ],
+        typeArguments: [],
+      }
+      debugLog(`volo mint_ticket_non_entry move call:`, mintTicketMoveCall)
+
+      const [unstakeTicket] = tx.moveCall({
+        target: mintTicketMoveCall.target,
+        arguments: [
+          tx.object(VOLO.NATIVE_POOL),
+          tx.object(VOLO.METADATA),
+          sCoin,
+        ],
+        typeArguments: mintTicketMoveCall.typeArguments,
+      })
+
+      const burnTicketMoveCall = {
+        target: `0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::native_pool::burn_ticket_non_entry`,
+        arguments: [
+          { name: "native_pool", value: VOLO.NATIVE_POOL },
+          { name: "sui_system_state", value: "0x5" },
+          { name: "unstake_ticket", value: "unstakeTicket" },
+        ],
+        typeArguments: [],
+      }
+      debugLog(`volo burn_ticket_non_entry move call:`, burnTicketMoveCall)
+
+      const [underlyingCoin] = tx.moveCall({
+        target: burnTicketMoveCall.target,
+        arguments: [
+          tx.object(VOLO.NATIVE_POOL),
+          tx.object("0x5"),
+          unstakeTicket,
+        ],
+        typeArguments: burnTicketMoveCall.typeArguments,
+      })
+
+      return underlyingCoin
+    }
     default:
       console.error(
         "burnSCoin Unsupported underlying protocol: " +
