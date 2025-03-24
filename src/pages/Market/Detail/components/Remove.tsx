@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { formatDecimalValue } from "@/lib/utils"
-import useSellPtDryRun from "@/hooks/dryRun/useSellPtDryRun"
+import useSellPtDryRun from "@/hooks/dryRun/pt/useSellPtDryRun"
 import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 
 export default function Remove() {

@@ -1235,24 +1235,39 @@ export const swapExactPtForSy = <T extends boolean = false>(
     : TransactionResult
 }
 
-export const swapExactYtForSy = (
+export const swapExactYtForSy = <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
-  redeemValue: string,
+  ytAmount: string,
   pyPosition: TransactionArgument,
   priceVoucher: TransactionArgument,
   minSyOut: string,
-) => {
-  console.log("minSyOut", minSyOut)
-  const [syCoin] = tx.moveCall({
+  returnDebugInfo?: T,
+): T extends true ? [TransactionResult, MoveCallInfo] : TransactionResult => {
+  const debugInfo: MoveCallInfo = {
     target: `${coinConfig.nemoContractId}::router::swap_exact_yt_for_sy`,
     arguments: [
+      { name: "version", value: coinConfig.version },
+      { name: "yt_amount", value: ytAmount },
+      { name: "min_sy_out", value: minSyOut },
+      { name: "py_position", value: "pyPosition" },
+      { name: "py_state", value: coinConfig.pyStateId },
+      { name: "price_voucher", value: "priceVoucher" },
+      { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
+      { name: "market_factory_config", value: coinConfig.marketFactoryConfigId },
+      { name: "market_state", value: coinConfig.marketStateId },
+      { name: "clock", value: "0x6" },
+    ],
+    typeArguments: [coinConfig.syCoinType],
+  }
+
+  debugLog("swap_exact_yt_for_sy move call:", debugInfo)
+
+  const txMoveCall = {
+    target: debugInfo.target,
+    arguments: [
       tx.object(coinConfig.version),
-      tx.pure.u64(
-        new Decimal(redeemValue)
-          .mul(10 ** Number(coinConfig.decimal))
-          .toFixed(0),
-      ),
+      tx.pure.u64(ytAmount),
       tx.pure.u64(minSyOut),
       pyPosition,
       tx.object(coinConfig.pyStateId),
@@ -1262,9 +1277,14 @@ export const swapExactYtForSy = (
       tx.object(coinConfig.marketStateId),
       tx.object("0x6"),
     ],
-    typeArguments: [coinConfig.syCoinType],
-  })
-  return syCoin
+    typeArguments: debugInfo.typeArguments,
+  }
+
+  const result = tx.moveCall(txMoveCall)
+
+  return (returnDebugInfo ? [result, debugInfo] : result) as T extends true
+    ? [TransactionResult, MoveCallInfo]
+    : TransactionResult
 }
 
 export const redeemPy = <T extends boolean = false>(

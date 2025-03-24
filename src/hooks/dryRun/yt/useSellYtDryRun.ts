@@ -2,23 +2,22 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo } from "../types"
-import { ContractError } from "../types"
-import type { PyPosition } from "../types"
+import type { DebugInfo, PyPosition } from "../../types"
+import { ContractError } from "../../types"
 import {
   initPyPosition,
   getPriceVoucher,
-  swapExactPtForSy,
+  swapExactYtForSy,
   redeemSyCoin,
   burnSCoin,
 } from "@/lib/txHelper"
+import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
-import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 
-interface SellPtParams {
+interface SellYtParams {
   minSyOut: string
-  ptAmount: string
+  ytAmount: string
   pyPositions?: PyPosition[]
   receivingType: "underlying" | "sy"
 }
@@ -29,7 +28,7 @@ type DryRunResult<T extends boolean> = T extends true
   ? [Result, DebugInfo]
   : Result
 
-export default function useSellPtDryRun<T extends boolean = false>(
+export default function useSellYtDryRun<T extends boolean = false>(
   coinConfig?: CoinConfig,
   debug: T = false as T,
 ) {
@@ -39,10 +38,10 @@ export default function useSellPtDryRun<T extends boolean = false>(
   return useMutation({
     mutationFn: async ({
       minSyOut,
-      ptAmount,
+      ytAmount,
       receivingType,
       pyPositions: inputPyPositions,
-    }: SellPtParams): Promise<DryRunResult<T>> => {
+    }: SellYtParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
       }
@@ -62,18 +61,17 @@ export default function useSellPtDryRun<T extends boolean = false>(
         pyPosition = tx.object(inputPyPositions[0].id)
       }
 
-      const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
+      const [priceVoucher, priceVoucherMoveCallInfo] = getPriceVoucher(
         tx,
         coinConfig,
       )
 
-      const [syCoin, moveCallInfo] = swapExactPtForSy(
+      const [syCoin, swapMoveCallInfo] = swapExactYtForSy(
         tx,
         coinConfig,
-        ptAmount,
+        ytAmount,
         pyPosition,
         priceVoucher,
-        // FIXME: confirm minSyOut
         minSyOut,
         true,
       )
@@ -111,8 +109,10 @@ export default function useSellPtDryRun<T extends boolean = false>(
         }),
       })
 
+      console.log("result", result)
+
       const debugInfo: DebugInfo = {
-        moveCall: [priceVoucherMoveCall, moveCallInfo],
+        moveCall: [priceVoucherMoveCallInfo, swapMoveCallInfo],
         rawResult: result,
       }
 
@@ -128,7 +128,7 @@ export default function useSellPtDryRun<T extends boolean = false>(
         throw new ContractError(message, debugInfo)
       }
 
-      if (!result.events[1].parsedJson.amount_out) {
+      if (!result.events[result.events.length - 1].parsedJson.amount_out) {
         const message = "Failed to get sy amount"
         debugInfo.rawResult.error = message
         throw new ContractError(message, debugInfo)
@@ -140,7 +140,8 @@ export default function useSellPtDryRun<T extends boolean = false>(
         ),
       )
 
-      const syAmount = result.events[1].parsedJson.amount_out
+      const syAmount =
+        result.events[result.events.length - 1].parsedJson.amount_out
 
       const decimal = Number(coinConfig.decimal)
 

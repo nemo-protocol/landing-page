@@ -27,14 +27,13 @@ import AmountInput from "@/components/AmountInput"
 import ActionButton from "@/components/ActionButton"
 import { formatDecimalValue, isValidAmount, safeDivide } from "@/lib/utils"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import useQuerySyOutByYtInDryRun from "@/hooks/dryRun/sy/useQuerySyOutByYtIn"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import SlippageSetting from "@/components/SlippageSetting"
 import useInputLoadingState from "@/hooks/useInputLoadingState"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
-import useSellPtDryRun from "@/hooks/dryRun/useSellPtDryRun"
-// import useSellYtDryRun from "@/hooks/dryrun/useSellYtDryRun"
+import useSellPtDryRun from "@/hooks/dryRun/pt/useSellPtDryRun"
+import useSellYtDryRun from "@/hooks/dryRun/yt/useSellYtDryRun"
 import { ContractError } from "@/hooks/types"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import {
@@ -51,6 +50,7 @@ import {
 
 export default function Sell() {
   const [warning, setWarning] = useState("")
+  const [syValue, setSyValue] = useState("")
   const [error, setError] = useState<string>()
   const [slippage, setSlippage] = useState("0.5")
   const [tokenType, setTokenType] = useState("pt")
@@ -90,10 +90,6 @@ export default function Sell() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
-  const { mutateAsync: querySyOutByYtIn } = useQuerySyOutByYtInDryRun({
-    outerCoinConfig: coinConfig,
-  })
-
   useEffect(() => {
     if (coinConfig) {
       const minValue = NEED_MIN_VALUE_LIST.find(
@@ -106,6 +102,7 @@ export default function Sell() {
   }, [coinConfig])
 
   const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
+  const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)
   // const { mutateAsync: sellYtDryRun } = useSellYtDryRun(coinConfig)
 
   const debouncedGetSyOut = useCallback(
@@ -113,28 +110,31 @@ export default function Sell() {
       const getSyOut = debounce(async () => {
         if (isValidAmount(value) && decimal && coinConfig?.conversionRate) {
           // TODO: optimize this code to be more efficient
-
           try {
             const inputAmount = new Decimal(value).mul(10 ** decimal).toString()
             const { outputValue } =
               tokenType === "yt"
-                ? await querySyOutByYtIn({
+                ? await sellYtDryRun({
                     ytAmount: inputAmount,
-                  }).then(({ syValue }) => ({
-                    outputValue: syValue,
-                  }))
+                    minSyOut: "0",
+                    receivingType: "sy",
+                    pyPositions: pyPositionData,
+                  })
                 : await sellPtDryRun({
                     minSyOut: "0",
                     receivingType: "sy",
                     ptAmount: inputAmount,
                     pyPositions: pyPositionData,
                   })
+            setSyValue(outputValue)
 
-            const targetValue = new Decimal(outputValue)
-              .mul(
+            const targetValue = formatDecimalValue(
+              new Decimal(outputValue).mul(
                 receivingType === "underlying" ? coinConfig.conversionRate : 1,
-              )
-              .toFixed(decimal)
+              ),
+              decimal,
+            )
+            setTargetValue(targetValue)
 
             if (
               new Decimal(targetValue).lt(minValue) &&
@@ -149,8 +149,6 @@ export default function Sell() {
             } else {
               setError(undefined)
             }
-
-            setTargetValue(targetValue)
           } catch (errorMsg) {
             // TODO:  use other calc hook when not connect
             const { error, detail } = parseErrorMessage(
@@ -172,12 +170,12 @@ export default function Sell() {
     [
       coinConfig?.conversionRate,
       coinConfig?.coinName,
+      tokenType,
+      sellYtDryRun,
+      pyPositionData,
+      sellPtDryRun,
       receivingType,
       minValue,
-      tokenType,
-      querySyOutByYtIn,
-      sellPtDryRun,
-      pyPositionData,
     ],
   )
 
@@ -225,7 +223,7 @@ export default function Sell() {
   }, [refetchCoinConfig, refetchPyPosition])
 
   async function redeem() {
-    if (!insufficientBalance && coinConfig && coinType && address) {
+    if (!insufficientBalance && coinConfig && coinType && address && syValue) {
       try {
         setIsRedeeming(true)
         const tx = new Transaction()
@@ -245,24 +243,15 @@ export default function Sell() {
           .mul(10 ** decimal)
           .toString()
 
-        // 计算预期输出
-        const { syAmount } = await (tokenType === "yt"
-          ? querySyOutByYtIn({ ytAmount: inputAmount })
-          : sellPtDryRun({
-              minSyOut: "0",
-              receivingType,
-              ptAmount: inputAmount,
-              pyPositions: pyPositionData,
-            }))
-
-        console.log("swap_exact_pt_for_sy", "syAmount", syAmount)
-
         // 计算最小输出（考虑滑点）
-        const minSyOut = new Decimal(syAmount)
+        const minSyOut = new Decimal(syValue)
+          .mul(10 ** decimal)
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)
 
         console.log("swap_exact_pt_for_sy", "minSyOut", minSyOut)
+
+        console.log("swapExactYtForSy", inputAmount)
 
         const syCoin =
           tokenType === "pt"
@@ -277,7 +266,7 @@ export default function Sell() {
             : swapExactYtForSy(
                 tx,
                 coinConfig,
-                redeemValue,
+                inputAmount,
                 pyPosition,
                 priceVoucher,
                 minSyOut,
