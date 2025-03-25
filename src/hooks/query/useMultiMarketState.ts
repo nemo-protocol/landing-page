@@ -98,13 +98,13 @@ const useMultiMarketState = (marketStateIds?: string[]) => {
         }
 
         // Group rewarders by tokenType and sum their emission_per_second
-        const currentTime = Date.now()
+        // const currentTime = Date.now()
         const groupedRewarders = (
           fields.reward_pool?.fields.rewarders.fields.contents || []
         )
-          .filter(
-            (entry) => Number(entry.fields.value.fields.end_time) > currentTime,
-          )
+          // .filter(
+          //   (entry) => Number(entry.fields.value.fields.end_time) > currentTime,
+          // )
           .reduce(
             (acc, entry) => {
               const rewarder = entry.fields.value.fields

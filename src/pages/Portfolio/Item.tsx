@@ -761,7 +761,7 @@ export default function Item({
             <SmallNumDisplay value={lpBalance} />
           </TableCell>
 
-          {/* Accrued Yield */}
+          {/* Incentive */}
           <TableCell className="text-center">
             <div className="flex items-center gap-x-2 justify-center">
               {isLpRewardLoading ? (
