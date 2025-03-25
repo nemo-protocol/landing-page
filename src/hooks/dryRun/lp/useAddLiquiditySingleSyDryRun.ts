@@ -1,7 +1,7 @@
 import Decimal from "decimal.js"
 import { ContractError } from "../../types"
 import { useMutation } from "@tanstack/react-query"
-import type { CoinData } from "@/hooks/useCoinData"
+import type { CoinData } from "@/types"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo, PyPosition } from "../../types"

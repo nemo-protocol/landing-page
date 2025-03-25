@@ -5,7 +5,7 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
 import Decimal from "decimal.js"
-import type { CoinData } from "@/hooks/useCoinData"
+import type { CoinData } from "@/types"
 import type { PyPosition } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {

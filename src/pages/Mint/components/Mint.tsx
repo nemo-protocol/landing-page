@@ -1,7 +1,7 @@
 import Decimal from "decimal.js"
 import { network } from "@/config"
 import { useMemo, useState, useCallback, useEffect } from "react"
-import useCoinData from "@/hooks/useCoinData"
+import useCoinData from "@/hooks/query/useCoinData"
 import { Transaction } from "@mysten/sui/transactions"
 import { ChevronsDown, Plus, Wallet as WalletIcon } from "lucide-react"
 import { useCoinConfig } from "@/queries"

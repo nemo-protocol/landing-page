@@ -12,7 +12,7 @@ import {
   splitCoinHelper,
   depositSyCoin,
 } from "@/lib/txHelper"
-import { CoinData } from "../useCoinData"
+import { CoinData } from "@/types"
 
 type SwapResult = {
   ytAmount: string

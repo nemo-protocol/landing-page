@@ -1,15 +1,15 @@
 import Decimal from "decimal.js"
+import { CoinData } from "@/types"
 import useMintLpDryRun from "./useMintLpDryRun"
-import { CoinData } from "@/hooks/useCoinData"
+import { formatDecimalValue } from "@/lib/utils"
 import { CoinConfig } from "@/queries/types/market"
+import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { PyPosition, MarketState } from "@/hooks/types"
 import useSeedLiquidityDryRun from "./useSeedLiquidityDryRun"
 import { useEstimateLpOutDryRun } from "./useEstimateLpOutDryRun"
 import { useMutation, UseMutationResult } from "@tanstack/react-query"
 import useAddLiquiditySingleSyDryRun from "./useAddLiquiditySingleSyDryRun"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
-import { formatDecimalValue } from "@/lib/utils"
 
 interface CalculateLpAmountResult {
   lpAmount?: string

@@ -1,6 +1,6 @@
 import { ContractError } from "../types"
 import type { DebugInfo, MoveCallInfo } from "../types"
-import { CoinData } from "@/hooks/useCoinData"
+import { CoinData } from "@/types"
 import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
 import { useWallet } from "@nemoprotocol/wallet-kit"

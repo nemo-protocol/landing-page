@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query"
 import { ContractError, LpPosition, MarketState, DebugInfo } from "./types"
 import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { debugLog } from "@/config"
-import { CoinData } from "./useCoinData"
+import { CoinData } from "@/types"
 import { mergeAllCoins } from "@/lib/txHelper"
 
 interface ClaimLpRewardParams {

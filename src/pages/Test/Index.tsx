@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import useCoinData from "@/hooks/useCoinData"
+import useCoinData from "@/hooks/query/useCoinData"
 import Decimal from "decimal.js"
 import { mergeAllCoins } from "@/lib/txHelper"
 import { Transaction } from "@mysten/sui/transactions"

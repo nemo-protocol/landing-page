@@ -1,7 +1,7 @@
 import dayjs from "dayjs"
 import Decimal from "decimal.js"
 import { useMemo, useState, useEffect, useCallback } from "react"
-import useCoinData from "@/hooks/useCoinData"
+import useCoinData from "@/hooks/query/useCoinData"
 import TradeInfo from "@/components/TradeInfo"
 import PoolSelect from "@/components/PoolSelect"
 import { ChevronsDown, Info } from "lucide-react"
@@ -23,6 +23,14 @@ import { showTransactionDialog } from "@/lib/dialog"
 import { CoinConfig } from "@/queries/types/market"
 import { useEstimateLpOutDryRun } from "@/hooks/dryRun/lp/useEstimateLpOutDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
+import type { CoinData } from "@/types"
+import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
+import useFetchLpPosition from "@/hooks/useFetchLpPosition"
+import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
+import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
+import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
+import { useCalculateLpAmount } from "@/hooks/dryRun/lp/useCalculateLpDryRun"
+import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
 import {
   mintSCoin,
   initPyPosition,
@@ -47,13 +55,7 @@ import {
   SelectTrigger,
   SelectContent,
 } from "@/components/ui/select"
-import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
-import useFetchLpPosition from "@/hooks/useFetchLpPosition"
-import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
-import type { CoinData } from "@/hooks/useCoinData"
-import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
-import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
-import { useCalculateLpAmount } from "@/hooks/dryRun/lp/useCalculateLpDryRun"
+
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -103,16 +105,6 @@ export default function SingleCoin() {
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
-
-  // FIXME: remove this
-  useEffect(() => {
-    if (
-      coinType ===
-      "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN"
-    ) {
-      setTokenType(1)
-    }
-  }, [coinType])
 
   const { mutateAsync: fetchLpPositions } = useFetchLpPosition(coinConfig)
 
@@ -324,9 +316,31 @@ export default function SingleCoin() {
     address: string,
     minLpAmount: string,
   ): Promise<void> {
+    const sdk = initCetusVaultsSDK({
+      network: "mainnet",
+    })
+    const cetusData =
+      coinType ===
+      "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
+        ? await sdk.Vaults.calculateDepositAmount({
+            vault_id:
+              "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+            fix_amount_a: true,
+            input_amount: addAmount,
+            slippage: Number(slippage),
+            side: InputType.OneSide,
+          })
+        : undefined
     const [splitCoin] =
       tokenType === 0
-        ? mintSCoin(tx, coinConfig, coinData, [addAmount])
+        ? await mintSCoin(
+            tx,
+            coinConfig,
+            coinData,
+            [addAmount],
+            false,
+            cetusData ? [cetusData] : undefined,
+          )
         : splitCoinHelper(tx, coinData, [addAmount], coinType)
 
     const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
@@ -387,7 +401,10 @@ export default function SingleCoin() {
 
     const [splitCoinForSy, splitCoinForPt] =
       tokenType === 0
-        ? mintSCoin(tx, coinConfig, coinData, [amounts.sy, amounts.syForPt])
+        ? await mintSCoin(tx, coinConfig, coinData, [
+            amounts.sy,
+            amounts.syForPt,
+          ])
         : splitCoinHelper(tx, coinData, [amounts.sy, amounts.syForPt], coinType)
 
     const syCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)

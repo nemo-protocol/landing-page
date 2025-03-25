@@ -1,5 +1,5 @@
 import { CoinConfig } from "@/queries/types/market"
-import { CoinData } from "@/hooks/useCoinData"
+import { CoinData } from "@/types"
 import {
   mintSCoin,
   depositSyCoin,

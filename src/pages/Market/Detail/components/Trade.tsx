@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import useCoinData from "@/hooks/useCoinData"
+import useCoinData from "@/hooks/query/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
 import {
@@ -76,15 +76,6 @@ export default function Trade() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
-
-  useEffect(() => {
-    if (
-      coinType ===
-      "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN"
-    ) {
-      setTokenType(1)
-    }
-  }, [coinType])
 
   const [minValue, setMinValue] = useState(0)
 
@@ -354,7 +345,7 @@ export default function Trade() {
 
         const [splitCoin] =
           tokenType === 0
-            ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
+            ? await mintSCoin(tx, coinConfig, coinData, [swapAmount])
             : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)

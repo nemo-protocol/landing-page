@@ -14,7 +14,7 @@ import {
 } from "@/lib/txHelper"
 import useFetchPyPosition from "../useFetchPyPosition"
 import type { PyPosition } from "../types"
-import type { CoinData } from "@/hooks/useCoinData"
+import type { CoinData } from "@/types"
 import Decimal from "decimal.js"
 
 interface SwapParams {

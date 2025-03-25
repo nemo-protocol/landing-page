@@ -1,8 +1,8 @@
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
+import { CoinData } from "@/types"
 import { MoveCallInfo } from "@/hooks/types"
 import { LpPosition } from "@/hooks/types"
-import { CoinData } from "@/hooks/useCoinData"
 import { BaseCoinInfo, CoinConfig } from "@/queries/types/market"
 import {
   SCALLOP,
@@ -20,6 +20,7 @@ import {
   TransactionResult,
   TransactionArgument,
 } from "@mysten/sui/transactions"
+import { formatDecimalValue } from "./utils"
 
 // FIXME: catch error and return moveCall
 export const getPriceVoucher = <T extends boolean = true>(
@@ -360,6 +361,12 @@ export const mintSCoin = <T extends boolean = false>(
   coinData: CoinData[],
   amounts: string[],
   debug: T = false as T,
+  cetusData?: {
+    amount_a: string
+    amount_b: string
+    amount_limit_a: string
+    amount_limit_b: string
+  }[],
 ): MintSCoinResult<T> => {
   const splitCoins = splitCoinHelper(
     tx,
@@ -688,6 +695,149 @@ export const mintSCoin = <T extends boolean = false>(
         sCoins.push(sCoin)
       }
 
+      return (debug
+        ? [sCoins, moveCallInfos]
+        : sCoins) as unknown as MintSCoinResult<T>
+    }
+    case "Cetus": {
+      console.log("cetusData", cetusData, "coinData", coinData)
+
+      const sCoins: TransactionArgument[] = []
+      if (!cetusData) {
+        throw new Error("Cetus data is required")
+      }
+
+      for (let i = 0; i < cetusData.length; i++) {
+        const { amount_a, amount_b, amount_limit_a, amount_limit_b } =
+          cetusData[i]
+
+        const suiForHaedal = splitCoins[i * 2]
+        const suiCoin = splitCoins[i * 2 + 1]
+
+        if (new Decimal(amount_a).lt(10 ** 9)) {
+          const amount = new Decimal(amount_a).add(amount_b)
+          throw Error(
+            `Please invest at least ${formatDecimalValue(
+              new Decimal(amount)
+                .div(new Decimal(amount_a))
+                .mul(
+                  amounts
+                    .reduce((acc, curr) => acc.add(curr), new Decimal(0))
+                    .div(amount),
+                ),
+              Number(coinConfig.decimal),
+            )} ${coinConfig.underlyingCoinName}`,
+          )
+        }
+
+        const mintHaedalMoveCall = {
+          target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_stake_coin`,
+          arguments: [
+            { name: "sui_system_state", value: "0x5" },
+
+            {
+              name: "staking",
+              value: HAEDAL.HAEDAL_STAKING_ID,
+            },
+            { name: "coin", value: amount_a },
+            {
+              name: "address",
+              value:
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            },
+          ],
+          typeArguments: [],
+        }
+
+        moveCallInfos.push(mintHaedalMoveCall)
+        const [hasuiCoin] = tx.moveCall({
+          target: mintHaedalMoveCall.target,
+          arguments: [
+            tx.object(
+              "0x0000000000000000000000000000000000000000000000000000000000000005",
+            ),
+            tx.object(HAEDAL.HAEDAL_STAKING_ID),
+            suiForHaedal,
+            tx.object(
+              "0x0000000000000000000000000000000000000000000000000000000000000000",
+            ),
+          ],
+          typeArguments: mintHaedalMoveCall.typeArguments,
+        })
+
+        // Now implement the deposit call based on the provided parameters
+        const vaultDepositMoveCall = {
+          target: `0xd3453d9be7e35efe222f78a810bb3af1859fd1600926afced8b4936d825c9a05::vaults::deposit`,
+          arguments: [
+            {
+              name: "vaults_manager",
+              value:
+                "0x25b82dd2f5ee486ed1c8af144b89a8931cd9c29dee3a86a1bfe194fdea9d04a6",
+            },
+            {
+              name: "vault",
+              value:
+                "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+            },
+            {
+              name: "rewarder_manager",
+              value:
+                "0xe0e155a88c77025056da08db5b1701a91b79edb6167462f768e387c3ed6614d5",
+            },
+            {
+              name: "cetus_global_config",
+              value:
+                "0x21215f2f6de04b57dd87d9be7bb4e15499aec935e36078e2488f36436d64996e",
+            },
+            {
+              name: "cetus_pool",
+              value:
+                "0x9f5fd63b2a2fd8f698ff6b7b9720dbb2aa14bedb9fc4fd6411f20e5b531a4b89",
+            },
+            {
+              name: "dex_global_config",
+              value:
+                "0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f",
+            },
+            {
+              name: "dex_pool",
+              value:
+                "0x871d8a227114f375170f149f7e9d45be822dd003eba225e83c05ac80828596bc",
+            },
+            { name: "coin_a", value: amount_a },
+            { name: "coin_b", value: amount_b },
+            { name: "amount_a_min", value: amount_limit_a },
+            { name: "amount_b_min", value: amount_limit_b },
+            { name: "is_one_side", value: "true" },
+            { name: "clock", value: "0x6" },
+          ],
+          typeArguments: [
+            "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI",
+            coinConfig.underlyingCoinType,
+            coinConfig.coinType,
+          ],
+        }
+        moveCallInfos.push(vaultDepositMoveCall)
+        // Execute the deposit call
+        const [sCoin] = tx.moveCall({
+          target: vaultDepositMoveCall.target,
+          arguments: vaultDepositMoveCall.arguments.map((arg) => {
+            if (arg.name === "coin_a" || arg.name === "coin_b") {
+              return arg.value === amount_a ? hasuiCoin : suiCoin
+            }
+            if (arg.name === "amount_a_min" || arg.name === "amount_b_min") {
+              return tx.pure.u64(arg.value.toString())
+            }
+            if (arg.name === "is_one_side") {
+              return tx.pure.bool(true)
+            }
+            return tx.object(arg.value.toString())
+          }),
+          typeArguments: vaultDepositMoveCall.typeArguments,
+        })
+        console.log("moveCallInfos", moveCallInfos)
+        sCoins.push(sCoin)
+      }
       return (debug
         ? [sCoins, moveCallInfos]
         : sCoins) as unknown as MintSCoinResult<T>
@@ -1254,7 +1404,10 @@ export const swapExactYtForSy = <T extends boolean = false>(
       { name: "py_state", value: coinConfig.pyStateId },
       { name: "price_voucher", value: "priceVoucher" },
       { name: "yield_factory_config", value: coinConfig.yieldFactoryConfigId },
-      { name: "market_factory_config", value: coinConfig.marketFactoryConfigId },
+      {
+        name: "market_factory_config",
+        value: coinConfig.marketFactoryConfigId,
+      },
       { name: "market_state", value: coinConfig.marketStateId },
       { name: "clock", value: "0x6" },
     ],

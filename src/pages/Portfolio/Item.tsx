@@ -42,7 +42,7 @@ import {
 import useQueryClaimLpReward from "@/hooks/useQueryClaimLpReward"
 import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 import { ChevronDown } from "lucide-react"
-import useCoinData from "@/hooks/useCoinData"
+import useCoinData from "@/hooks/query/useCoinData"
 import {
   NEED_MIN_VALUE_LIST,
   UNSUPPORTED_UNDERLYING_COINS,

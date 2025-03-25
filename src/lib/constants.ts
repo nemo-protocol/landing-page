@@ -224,6 +224,4 @@ export const VOLO = {
     "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
 } as const
 
-export const UNSUPPORTED_UNDERLYING_COINS = [
-  "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN",
-]
+export const UNSUPPORTED_UNDERLYING_COINS: string[] = []

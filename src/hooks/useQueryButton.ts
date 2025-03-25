@@ -10,7 +10,7 @@ import useFetchLpPosition from "./useFetchLpPosition"
 import useFetchPyPosition from "./useFetchPyPosition"
 import type { DebugInfo } from "./types"
 import useMintSCoin from "./actions/useMintSCoin"
-import { CoinData } from "./useCoinData"
+import { CoinData } from "@/types"
 
 export interface GetObjectParams {
   objectId: string
