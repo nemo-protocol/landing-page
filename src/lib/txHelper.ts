@@ -767,7 +767,7 @@ export const mintSCoin = <T extends boolean = false>(
 
         // Now implement the deposit call based on the provided parameters
         const vaultDepositMoveCall = {
-          target: `0xd3453d9be7e35efe222f78a810bb3af1859fd1600926afced8b4936d825c9a05::vaults::deposit`,
+          target: `0x5c35deb22849011d69456f37aaf4d90356e0829545d413039212dafa5b1d70b4::vaults::deposit`,
           arguments: [
             {
               name: "vaults_manager",
