@@ -142,6 +142,12 @@ export const SCALLOP = {
       treasury:
         "0xc06688ee1af25abc286ffb1d18ce273d1d5907cd1064c25f4e8ca61ea989c1d1",
     },
+    {
+      coinType:
+        "0x622345b3f80ea5947567760eec7b9639d0582adcfd6ab9fccb85437aeda7c0d0::scallop_wal::SCALLOP_WAL",
+      treasury:
+        "0xc02b365a1d880156c1a757d7777867e8a436ab97ce5f51e211695580ab7c9bce",
+    },
   ],
 } as const
 
