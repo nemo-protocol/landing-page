@@ -1,7 +1,7 @@
 import { useRef } from "react"
 import Decimal from "decimal.js"
-import { useMutation } from "@tanstack/react-query"
 import { CoinConfig } from "@/queries/types/market"
+import { useMutation } from "@tanstack/react-query"
 import useQueryYtOutBySyInWithVoucher from "../useQueryYtOutBySyInWithVoucher"
 
 export default function useTradeRatio(coinConfig?: CoinConfig) {
@@ -24,7 +24,7 @@ export default function useTradeRatio(coinConfig?: CoinConfig) {
         const safeDecimal = Math.max(decimal - power, 0)
         try {
           const amount = new Decimal(10).pow(safeDecimal).toString()
-          const [ytOut] = await queryYtOut(amount)
+          const { ytValue: ytOut } = await queryYtOut(amount)
           const ytRatio = new Decimal(ytOut)
             .div(amount)
             .div(conversionRate)

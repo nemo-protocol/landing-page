@@ -1104,7 +1104,13 @@ export function splitCoinHelper(
     new Decimal(0),
   )
 
-  if (!coinType || coinType === "0x2::sui::SUI") {
+  if (
+    !coinType ||
+    [
+      "0x2::sui::SUI",
+      "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI",
+    ].includes(coinType)
+  ) {
     const totalBalance = coinData.reduce(
       (sum, coin) => sum.add(coin.balance),
       new Decimal(0),

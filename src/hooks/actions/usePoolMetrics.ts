@@ -182,11 +182,13 @@ export function usePoolMetrics() {
 
       try {
         const { ytIn, syOut } = await querySyOutByYtIn(coinInfo)
+
         ytPrice = safeDivide(
           new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
           ytIn,
           "decimal",
         )
+
         ptPrice = underlyingPrice.sub(ytPrice)
       } catch (error) {
         try {

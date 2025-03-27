@@ -1,18 +1,18 @@
 import { nemoApi } from "./request"
 import { MarketState } from "@/hooks/types"
-import { useWallet } from "@nemoprotocol/wallet-kit"
-import { useQuery, UseQueryResult, useMutation } from "@tanstack/react-query"
 import { handleInfinityValues } from "@/lib/utils"
+import { useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchMultiMarketState from "@/hooks/fetch/useMultiMarketState"
 import useCalculatePoolMetrics from "@/hooks/actions/useCalculatePoolMetrics"
+import { useQuery, UseQueryResult, useMutation } from "@tanstack/react-query"
 import {
   PointItem,
   CoinConfig,
   BaseCoinInfo,
+  TokenInfoMap,
   PortfolioItem,
   FixedReturnItem,
   CoinInfoWithMetrics,
-  TokenInfoMap,
 } from "./types/market"
 
 interface CoinInfoListParams {
@@ -163,11 +163,11 @@ export function useQueryLPRatio(
   mintType?: string,
 ) {
   return useQuery({
+    enabled: !!marketStateId,
+    refetchInterval: 1000 * 20,
     // FIXME： queryKey dose not work
     queryKey: ["lpRatio", marketStateId, mintType],
     queryFn: () => getLPRatio(marketStateId!, address!, mintType),
-    enabled: !!marketStateId,
-    refetchInterval: 1000 * 20,
   })
 }
 

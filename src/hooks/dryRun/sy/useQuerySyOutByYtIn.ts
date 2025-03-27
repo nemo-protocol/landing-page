@@ -88,6 +88,8 @@ export default function useQuerySyOutByYtInDryRun<T extends boolean = false>(
         rawResult: result,
       }
 
+      debugLog("useQuerySyOutByYtInDryRun debugInfo", debugInfo)
+
       if (result?.error) {
         if (!debug) {
           debugLog(

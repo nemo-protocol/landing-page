@@ -52,6 +52,7 @@ import {
 import { formatLargeNumber } from "@/lib/utils"
 import { showTransactionDialog } from "@/lib/dialog"
 import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import useGetConversionRateDryRun from "@/hooks/dryRun/useGetConversionRateDryRun"
 
 export default function Trade() {
   const [warning, setWarning] = useState("")
@@ -76,6 +77,8 @@ export default function Trade() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
+
+  const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
   const [minValue, setMinValue] = useState(0)
 
@@ -205,9 +208,10 @@ export default function Trade() {
               .div(tokenType === 0 ? conversionRate : 1)
               .mul(10 ** decimal)
               .toFixed(0)
-            const [ytValue, ytFeeValue] = await queryYtOut(swapAmount)
+            const { ytValue, feeValue } = await queryYtOut(swapAmount)
+
             setYtValue(ytValue)
-            setYtFeeValue(ytFeeValue)
+            setYtFeeValue(feeValue)
             const ytRatio = new Decimal(ytValue).div(value).toFixed(4)
             setRatio(ytRatio)
           } catch (error) {
@@ -232,13 +236,7 @@ export default function Trade() {
       getYtOut()
       return getYtOut.cancel
     },
-    [
-      tokenType,
-      minValue,
-      conversionRate,
-      coinConfig?.underlyingCoinName,
-      queryYtOut,
-    ],
+    [tokenType, minValue, conversionRate, queryYtOut, coinConfig],
   )
 
   useEffect(() => {
@@ -330,15 +328,17 @@ export default function Trade() {
         setIsSwapping(true)
         const tx = new Transaction()
 
+        const conversionRate = await getConversionRate(coinConfig)
+
         const swapAmount = new Decimal(swapValue).mul(10 ** decimal).toFixed(0)
 
         const syAmount = new Decimal(swapAmount)
           .div(tokenType === 0 ? conversionRate : 1)
           .toFixed(0)
 
-        const [ytOut] = await queryYtOut(syAmount)
+        const { ytValue } = await queryYtOut(syAmount)
 
-        const minYtOut = new Decimal(ytOut)
+        const minYtOut = new Decimal(ytValue)
           .mul(10 ** decimal)
           .mul(1 - new Decimal(slippage).div(100).toNumber())
           .toFixed(0)

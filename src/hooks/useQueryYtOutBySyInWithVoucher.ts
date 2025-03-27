@@ -1,17 +1,24 @@
-import { bcs } from "@mysten/sui/bcs"
+import Decimal from "decimal.js"
 import { debugLog } from "@/config"
+import { bcs } from "@mysten/sui/bcs"
 import { ContractError } from "./types"
 import type { DebugInfo } from "./types"
 import { getPriceVoucher } from "@/lib/txHelper"
+import { formatDecimalValue } from "@/lib/utils"
 import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import Decimal from "decimal.js"
+
+interface YtOutBySyInResult {
+  ytValue: string
+  feeValue: string
+  ytAmount: string
+}
 
 type DryRunResult<T extends boolean> = T extends true
-  ? [string, DebugInfo]
-  : [string, string]
+  ? [YtOutBySyInResult, DebugInfo]
+  : YtOutBySyInResult
 
 export default function useQueryYtOutBySyInWithVoucher<
   T extends boolean = false,
@@ -87,27 +94,30 @@ export default function useQueryYtOutBySyInWithVoucher<
         throw new ContractError(message, debugInfo)
       }
 
-      const outputAmount = bcs.U64.parse(
+      const decimal = Number(coinConfig.decimal)
+
+      const ytAmount = bcs.U64.parse(
         new Uint8Array(result.results[1].returnValues[0][0]),
       )
 
-      const fee = bcs.U128.parse(
+      const ytValue = formatDecimalValue(
+        new Decimal(ytAmount).div(10 ** decimal),
+        decimal,
+      )
+
+      const feeAmount = bcs.U128.parse(
         new Uint8Array(result.results[1].returnValues[1][0]),
       )
-      const formattedFee = new Decimal(fee)
-        .div(2 ** 64)
-        .div(10 ** Number(coinConfig.decimal))
-        .toString()
 
-      const formattedAmount = new Decimal(outputAmount.toString())
-        .div(10 ** Number(coinConfig.decimal))
-        .toFixed()
+      const feeValue = formatDecimalValue(
+        new Decimal(feeAmount).div(2 ** 64).div(10 ** decimal),
+        decimal,
+      )
 
-      debugInfo.parsedOutput = formattedAmount
+      const resultObj = { ytValue, feeValue, ytAmount }
+      debugInfo.parsedOutput = `${ytValue},${feeValue}`
 
-      return (
-        debug ? [formattedAmount, debugInfo] : [formattedAmount, formattedFee]
-      ) as DryRunResult<T>
+      return (debug ? [resultObj, debugInfo] : resultObj) as DryRunResult<T>
     },
   })
 }

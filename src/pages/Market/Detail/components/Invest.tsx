@@ -299,10 +299,11 @@ export default function Invest() {
       return getPtOut.cancel
     },
     [
+      tokenType,
+      minValue,
       coinType,
       coinConfig,
       getConversionRate,
-      tokenType,
       queryPtOut,
       slippage,
       getApproxPtOut,
