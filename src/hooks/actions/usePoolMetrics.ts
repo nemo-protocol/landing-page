@@ -2,7 +2,7 @@ import Decimal from "decimal.js"
 import { MarketState } from "../types"
 import { useMutation } from "@tanstack/react-query"
 import { isValidAmount, safeDivide } from "@/lib/utils"
-import useQuerySyOutByYtIn from "./sy/useQuerySyOutByYtIn"
+import useQueryYtOutBySyIn from "./yt/useQueryYtOutBySyIn"
 import useQueryPtOutBySyIn from "./sy/useQueryPtOutBySyIn"
 import { CoinConfig, Incentive } from "@/queries/types/market"
 import useGetConversionRateDryRun from "../dryRun/useGetConversionRateDryRun"
@@ -125,7 +125,7 @@ function calculateYtAPY(
 }
 
 export function usePoolMetrics() {
-  const { mutateAsync: querySyOutByYtIn } = useQuerySyOutByYtIn()
+  const { mutateAsync: queryYtOutBySyIn } = useQueryYtOutBySyIn()
   const { mutateAsync: queryPtOutBySyIn } = useQueryPtOutBySyIn()
   const { mutateAsync: getConversionRate } = useGetConversionRateDryRun()
 
@@ -181,11 +181,11 @@ export function usePoolMetrics() {
       let ytPrice: Decimal
 
       try {
-        const { ytIn, syOut } = await querySyOutByYtIn(coinInfo)
+        const { syIn, ytOut } = await queryYtOutBySyIn(coinInfo)
 
         ytPrice = safeDivide(
-          new Decimal(coinInfo.coinPrice).mul(Number(syOut)),
-          ytIn,
+          new Decimal(coinInfo.coinPrice).mul(Number(syIn)),
+          Number(ytOut),
           "decimal",
         )
 
