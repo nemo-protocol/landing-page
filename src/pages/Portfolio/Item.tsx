@@ -644,7 +644,7 @@ export default function Item({
                 ) : (
                   <>
                     <div className="flex flex-col items-center flex-1">
-                      <span className="text-white text-sm break-all flex items-center gap-x-1">
+                      <span className="text-white text-sm whitespace-nowrap flex items-center gap-x-1">
                         {ytReward ? (
                           <SmallNumDisplay
                             value={
@@ -663,7 +663,7 @@ export default function Item({
                         )}
                         <RefreshButton onRefresh={refetchYtReward} />
                       </span>
-                      <span className="text-white/50 text-xs">
+                      <span className="text-white/50 text-xs whitespace-nowrap">
                         $
                         <SmallNumDisplay
                           value={
@@ -763,7 +763,7 @@ export default function Item({
 
           {/* Incentive */}
           <TableCell className="text-center">
-            <div className="flex items-center gap-x-2 justify-center">
+            <div className="flex items-center gap-x-2 justify-end">
               {isLpRewardLoading ? (
                 <div className="flex items-center gap-x-2">
                   <Skeleton className="h-5 w-16 mb-1" />
@@ -831,7 +831,7 @@ export default function Item({
                           />
                         )
                       )}
-                      <span className="text-white text-sm break-all flex items-center gap-x-1">
+                      <span className="text-white text-sm whitespace-nowrap flex items-center gap-x-1">
                         <SmallNumDisplay value={lpReward || "0"} />
                         <RefreshButton
                           onRefresh={refetchLpReward}
@@ -839,7 +839,7 @@ export default function Item({
                         />
                       </span>
                     </div>
-                    <span className="text-white/50 text-xs">
+                    <span className="text-white/50 text-xs whitespace-nowrap">
                       $
                       <SmallNumDisplay
                         value={
