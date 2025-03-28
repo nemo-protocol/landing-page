@@ -25,6 +25,7 @@ import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteT
 import Loading from "@/components/Loading"
 import { useState, useEffect } from "react"
 import usePortfolio from "@/hooks/usePortfolio"
+import useCoinData from "@/hooks/query/useCoinData"
 import {
   burnSCoin,
   redeemSyCoin,
@@ -127,6 +128,8 @@ export const MobileCard: React.FC<MobileCardProps> = ({
 
   const [minValue, setMinValue] = useState(0)
 
+  const { data: suiCoins } = useCoinData(address, "0x2::sui::SUI")
+
   useEffect(() => {
     if (item) {
       const minValue = NEED_MIN_VALUE_LIST.find(
@@ -152,6 +155,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   const { data: lpReward, refetch: refetchLpReward } = useQueryClaimLpReward(
     item,
     {
+      suiCoins,
       lpBalance: lpBalance || "0",
       lpPositions: lpPositionsMap?.[item.id]?.lpPositions || [],
       marketState: marketState,
@@ -576,18 +580,20 @@ export const MobileCard: React.FC<MobileCardProps> = ({
       ] as ItemType[],
       actions: (
         <>
-          <button
-            className={[
-              "w-full rounded-3xl h-8 text-xs text-white",
-              !isValidAmount(rewardValue)
-                ? "bg-[#0F60FF]/50 cursor-not-allowed"
-                : "bg-[#0F60FF]",
-            ].join(" ")}
-            disabled={!isValidAmount(rewardValue)}
-            onClick={() => claimLpReward(selectedRewardIndex)}
-          >
-            Claim
-          </button>
+          <LoadingButton
+            className="w-full text-xs"
+            loading={claimLoading}
+            disabled={!isValidAmount(lpReward) || !lpPositionsMap?.[item.id]?.lpPositions?.length || !marketState?.rewardMetrics?.length}
+            onClick={async () => {
+              try {
+                await claimLpReward(selectedRewardIndex)
+              } catch (error) {
+                console.error("Error claiming LP reward:", error)
+              }
+            }}
+            buttonText="Claim"
+            loadingText="Claiming"
+          />
           {Number(item.maturity || Infinity) > Date.now() ? (
             <div className="flex gap-2 mt-2">
               <Link
