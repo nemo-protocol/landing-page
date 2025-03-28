@@ -73,7 +73,7 @@ export default function Portfolio() {
           </motion.h6>
           {isMobile ? (
             // Mobile View - Card Layout
-            <div className="space-y-4 hidden">
+            <div className="space-y-4">
               <motion.div
                 className="rounded-xl p-4 bg-gradient-to-r from-[#072120] to-[#050908] border border-white/5"
                 initial={{ opacity: 0, y: 20 }}
@@ -99,7 +99,7 @@ export default function Portfolio() {
               </motion.div>
 
               <motion.div
-                className="rounded-xl p-4 bg-gradient-to-r from-[rgba(14,15,22,0.65)] to-[rgba(3,91,250,0.19)] border border-white/5"
+                className="rounded-xl p-4 bg-gradient-to-r from-[rgba(14,15,22,0.65)] to-[rgba(3,91,250,0.19)] border border-white/5 hidden"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
@@ -125,7 +125,7 @@ export default function Portfolio() {
           ) : (
             // Desktop View - Original Layout
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row items-stretch md:items-center justify-between">
-              <div className="w-full md:w-fit flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-5 hidden">
+              <div className="w-full md:w-fit flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-5">
                 <motion.div
                   className="flex items-center justify-between gap-x-4 px-4 sm:px-5 py-4 sm:py-6 rounded-2xl sm:rounded-3xl w-full md:w-[360px] h-[100px] sm:h-[120px] border border-white/5"
                   style={{
@@ -153,7 +153,7 @@ export default function Portfolio() {
                 </motion.div>
 
                 <motion.div
-                  className="flex items-center justify-between gap-x-4 px-4 sm:px-5 py-4 sm:py-6 rounded-2xl sm:rounded-3xl w-full md:w-[360px] h-[100px] sm:h-[120px] border border-white/5"
+                  className="flex items-center justify-between gap-x-4 px-4 sm:px-5 py-4 sm:py-6 rounded-2xl sm:rounded-3xl w-full md:w-[360px] h-[100px] sm:h-[120px] border border-white/5 hidden"
                   style={{
                     background:
                       "linear-gradient(45deg, rgba(14, 15, 22, 0.65) 27.28%, rgba(3, 91, 250, 0.19) 124.06%)",
