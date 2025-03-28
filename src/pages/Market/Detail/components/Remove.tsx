@@ -114,11 +114,11 @@ export default function Remove() {
   )
 
   const lpPrice = useMemo(() => {
-    if (coinConfig?.coinPrice && ptYtData?.ptPrice) {
-      return new Decimal(coinConfig.coinPrice).add(ptYtData.ptPrice).toString()
+    if (ptYtData?.lpPrice) {
+      return new Decimal(ptYtData.lpPrice).toString()
     }
     return "0"
-  }, [coinConfig?.coinPrice, ptYtData?.ptPrice])
+  }, [ ptYtData?.lpPrice])
 
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
