@@ -9,7 +9,6 @@ import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { LoaderCircle } from "lucide-react"
 import {
-  getPriceVoucher,
   initPyPosition,
   mintPY,
   splitCoinHelper,
@@ -22,6 +21,7 @@ import useMintPYDryRun from "@/hooks/dryRun/useMintPYDryRun"
 import { debounce } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ContractError } from "@/hooks/types"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 export default function Mint({
   maturity,

@@ -7,12 +7,12 @@ import { ContractError } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
   initPyPosition,
-  getPriceVoucher,
   mintSCoin,
   splitCoinHelper,
   depositSyCoin,
 } from "@/lib/txHelper"
 import { CoinData } from "@/types"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 type SwapResult = {
   ytAmount: string

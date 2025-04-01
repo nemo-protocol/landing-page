@@ -21,7 +21,6 @@ import {
   redeemPy,
   burnSCoin,
   redeemSyCoin,
-  getPriceVoucher,
   initPyPosition,
 } from "@/lib/txHelper"
 import {
@@ -47,6 +46,7 @@ import {
   NEED_MIN_VALUE_LIST,
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface LoadingButtonProps {
   loading: boolean

@@ -9,7 +9,6 @@ import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import {
   initPyPosition,
-  getPriceVoucher,
   redeemPy,
   redeemSyCoin,
 } from "@/lib/txHelper"
@@ -21,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import { ContractError } from "@/hooks/types"
 import { showTransactionDialog } from '@/lib/dialog'
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 export default function Redeem({
   maturity,

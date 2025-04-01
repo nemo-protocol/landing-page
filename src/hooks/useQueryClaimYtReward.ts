@@ -4,9 +4,10 @@ import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
-import { redeemSyCoin, getPriceVoucher } from "@/lib/txHelper"
+import { redeemSyCoin } from "@/lib/txHelper"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { ContractError, type DebugInfo, type PyPosition } from "./types"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface ClaimYtRewardParams {
   ytBalance: string

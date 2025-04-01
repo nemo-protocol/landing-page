@@ -7,11 +7,11 @@ import { ContractError } from "../types"
 import type { PyPosition } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
-  getPriceVoucher,
   initPyPosition,
   redeemPy,
   redeemSyCoin,
 } from "@/lib/txHelper"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 export default function useRedeemPYDryRun(
   coinConfig?: CoinConfig,

@@ -10,11 +10,11 @@ import type { PyPosition } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
   depositSyCoin,
-  getPriceVoucher,
   initPyPosition,
   mintPY,
   splitCoinHelper,
 } from "@/lib/txHelper"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 type MintResult = {
   ptAmount: string

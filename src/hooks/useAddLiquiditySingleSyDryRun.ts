@@ -8,9 +8,10 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo, PyPosition } from "./types"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import useFetchPyPosition from "./useFetchPyPosition"
-import { getPriceVoucher, initPyPosition } from "@/lib/txHelper"
+import { initPyPosition } from "@/lib/txHelper"
 import useGetConversionRateDryRun from "./dryRun/useGetConversionRateDryRun"
 import { safeDivide } from "@/lib/utils"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface AddLiquiditySingleSyParams {
   addAmount: string
