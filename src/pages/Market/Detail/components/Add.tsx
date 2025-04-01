@@ -453,7 +453,7 @@ export default function SingleCoin() {
     if (!coinData?.length) {
       throw new Error("No coin data")
     }
-    const lpOut = await estimateLpOut("1000000000")
+    const lpOut = await estimateLpOut("3000000000")
     const amounts = [
       new Decimal(lpOut.syValue).toFixed(0),
       new Decimal(lpOut.syForPtValue).toFixed(0),
@@ -461,6 +461,7 @@ export default function SingleCoin() {
     const tx = new Transaction()
     const sdk = initCetusVaultsSDK({
       network: "mainnet",
+      fullNodeUrl: "/sui-api",
     })
 
     sdk.senderAddress =
@@ -483,6 +484,9 @@ export default function SingleCoin() {
         slippage: Number(slippage),
         side: InputType.OneSide,
       })
+
+      console.log("depositResult", depositResult)
+
       depositResults.push(depositResult)
     }
 
@@ -509,27 +513,13 @@ export default function SingleCoin() {
       )
     }
 
+    tx.setGasBudget(100000000)
+
     const res = await signAndExecuteTransaction({
       transaction: tx,
     })
 
-    // const res = await sdk.fullClient.devInspectTransactionBlock({
-    //   transactionBlock: tx,
-    //   sender:
-    //     "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
-    // })
-
     console.log("res", res)
-
-    // showTransactionDialog({
-    //   status: "Success",
-    //   network,
-    //   txId: res.digest,
-    //   onClose: async () => {
-    //     await refreshData()
-    //     await refreshPtYt()
-    //   },
-    // })
   }
 
   async function add() {
