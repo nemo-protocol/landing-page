@@ -22,7 +22,6 @@ import useQueryPtOutBySyInWithVoucher from "@/hooks/dryRun/pt/useQueryPtOutBySyI
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import {
-  getPriceVoucher,
   initPyPosition,
   splitCoinHelper,
   mintSCoin,
@@ -52,6 +51,7 @@ import useSwapExactSyForPtDryRun from "@/hooks/dryRun/useSwapExactSyForPtDryRun"
 import useGetConversionRateDryRun from "@/hooks/dryRun/useGetConversionRateDryRun"
 import useQueryPtRatio from "@/hooks/useQueryPtRatio"
 import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")

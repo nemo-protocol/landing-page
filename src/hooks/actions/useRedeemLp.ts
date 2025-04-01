@@ -13,11 +13,11 @@ import {
   mergeLpPositions,
   burnLp,
   redeemSyCoin,
-  getPriceVoucher,
   swapExactPtForSy,
   burnSCoin,
 } from "@/lib/txHelper"
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface RedeemLpParams {
   lpAmount: string

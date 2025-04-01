@@ -18,6 +18,8 @@ interface MarketItemProps {
 }
 
 const MarketItem = ({ item }: MarketItemProps) => {
+  console.log("item", item);
+  
   const navigate = useNavigate()
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const tooltipRef = useRef<HTMLDivElement>(null)

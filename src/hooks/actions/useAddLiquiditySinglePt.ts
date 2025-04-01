@@ -1,4 +1,4 @@
-import { getPriceVoucher } from "@/lib/txHelper"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 import { CoinConfig } from "@/queries/types/market"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { Transaction } from "@mysten/sui/transactions"

@@ -24,6 +24,7 @@ import { CoinConfig } from "@/queries/types/market"
 import { useEstimateLpOutDryRun } from "@/hooks/dryRun/lp/useEstimateLpOutDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import type { CoinData } from "@/types"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
 import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
@@ -34,13 +35,13 @@ import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy
 import {
   mintSCoin,
   initPyPosition,
-  getPriceVoucher,
   splitCoinHelper,
   depositSyCoin,
   mintPY,
   redeemSyCoin,
   mergeAllLpPositions,
 } from "@/lib/txHelper"
+
 import {
   Tooltip,
   TooltipContent,
@@ -55,7 +56,6 @@ import {
   SelectTrigger,
   SelectContent,
 } from "@/components/ui/select"
-
 
 export default function SingleCoin() {
   const navigate = useNavigate()

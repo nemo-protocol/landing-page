@@ -230,4 +230,9 @@ export const VOLO = {
     "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
 } as const
 
+export const SUPER_SUI = {
+  REGISTRY: "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
+  VAULT: "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+} as const
+
 export const UNSUPPORTED_UNDERLYING_COINS: string[] = []

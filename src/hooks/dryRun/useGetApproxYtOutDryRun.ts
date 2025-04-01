@@ -5,7 +5,7 @@ import { Transaction } from "@mysten/sui/transactions"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { bcs } from "@mysten/sui/bcs"
-import { getPriceVoucher } from "@/lib/txHelper"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 import { debugLog } from "@/config"
 
 interface GetApproxYtOutParams {

@@ -15,13 +15,13 @@ import {
   mintSCoin,
   depositSyCoin,
   initPyPosition,
-  getPriceVoucher,
   splitCoinHelper,
 } from "@/lib/txHelper"
 import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 import { formatDecimalValue } from "@/lib/utils"
 import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 import { debugLog } from "@/config"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface MintLpParams {
   addAmount: string

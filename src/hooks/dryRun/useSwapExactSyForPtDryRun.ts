@@ -6,7 +6,6 @@ import type { DebugInfo } from "../types"
 import { ContractError } from "../types"
 import {
   depositSyCoin,
-  getPriceVoucher,
   initPyPosition,
   mintSCoin,
   splitCoinHelper,
@@ -16,6 +15,7 @@ import useFetchPyPosition from "../useFetchPyPosition"
 import type { PyPosition } from "../types"
 import type { CoinData } from "@/types"
 import Decimal from "decimal.js"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface SwapParams {
   tokenType: number

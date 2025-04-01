@@ -6,7 +6,6 @@ import type { DebugInfo, PyPosition } from "../../types"
 import { ContractError } from "../../types"
 import {
   initPyPosition,
-  getPriceVoucher,
   swapExactYtForSy,
   redeemSyCoin,
   burnSCoin,
@@ -14,6 +13,7 @@ import {
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface SellYtParams {
   minSyOut: string

@@ -8,9 +8,9 @@ import { bcs } from "@mysten/sui/bcs"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
   initPyPosition,
-  getPriceVoucher,
   swapExactPtForSy,
 } from "@/lib/txHelper"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 type SwapResult = {
   syAmount: string

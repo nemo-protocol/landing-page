@@ -4,7 +4,6 @@ import {
   mintSCoin,
   depositSyCoin,
   splitCoinHelper,
-  getPriceVoucher,
   mergeAllLpPositions,
 } from "@/lib/txHelper"
 import { debugLog } from "@/config"
@@ -14,6 +13,7 @@ import useFetchLpPosition from "@/hooks/useFetchLpPosition"
 import { useMutation } from "@tanstack/react-query"
 import type { DebugInfo } from "../types"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface AddLiquiditySingleSyParams {
   tx: Transaction

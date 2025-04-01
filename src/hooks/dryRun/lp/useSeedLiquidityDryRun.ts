@@ -10,10 +10,10 @@ import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 import {
   mintSCoin,
   depositSyCoin,
-  getPriceVoucher,
   initPyPosition,
   splitCoinHelper,
 } from "@/lib/txHelper"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 interface SeedLiquidityParams {
   addAmount: string

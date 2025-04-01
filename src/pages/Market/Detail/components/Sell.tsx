@@ -18,7 +18,6 @@ import { parseErrorMessage } from "@/lib/errorMapping"
 import {
   initPyPosition,
   redeemSyCoin,
-  getPriceVoucher,
   swapExactPtForSy,
   swapExactYtForSy,
   burnSCoin,
@@ -47,6 +46,7 @@ import {
   NEED_MIN_VALUE_LIST,
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
+import { getPriceVoucher } from "@/lib/txHelper/price"
 
 export default function Sell() {
   const [warning, setWarning] = useState("")
