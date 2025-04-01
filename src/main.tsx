@@ -16,8 +16,12 @@ const queryClient = new QueryClient()
 const { networkConfig } = createNetworkConfig({
   // TODO: support muilt rpc
   // mainnet: { url: "https://sui-mainnet-endpoint.blockvision.org" },
-  mainnet: { url: getFullnodeUrl("mainnet") },
-  testnet: { url: getFullnodeUrl("testnet") },
+  mainnet: { 
+    url: import.meta.env.DEV ? "/sui-mainnet" : getFullnodeUrl("mainnet") 
+  },
+  testnet: { 
+    url: import.meta.env.DEV ? "/sui-testnet" : getFullnodeUrl("testnet") 
+  },
 })
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

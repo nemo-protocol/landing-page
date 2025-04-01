@@ -211,10 +211,10 @@ export function useCoinInfoList<T extends boolean = true>(
     queryKey: ["coinInfoList", name, address, isShowExpiry],
     queryFn: async () => {
       const coinList = (await getCoinInfoList(params).catch(() => [])).filter(
-        ({ marketStateId }) =>
-          marketStateId ===
-          "0xa72ae88db5febc37fabb1bf10b6f0eeca002b59b7252998abd0b359c5269eed0",
-        // ({ marketStateId }) => !!marketStateId,
+        // ({ marketStateId }) =>
+        //   marketStateId ===
+        //   "0xa72ae88db5febc37fabb1bf10b6f0eeca002b59b7252998abd0b359c5269eed0",
+        ({ marketStateId }) => !!marketStateId,
       )
 
       if (!coinList.length) return []
