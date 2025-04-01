@@ -85,9 +85,13 @@ export default function useQueryLpOutFromMintLp<TDebug extends boolean = false>(
 
       const returnValue = outputAmount.toString()
 
+<<<<<<< Updated upstream
       return (
         debug ? [returnValue, debugInfo] : [returnValue]
       ) as QueryReturn<TDebug>
+=======
+      return (debug ? [returnValue, debugInfo] : [returnValue]) as QueryReturn<TDebug>
+>>>>>>> Stashed changes
     },
   })
 }

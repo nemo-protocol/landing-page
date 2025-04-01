@@ -1,3 +1,4 @@
+import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 import Decimal from "decimal.js"
 import { debugLog } from "@/config"
 import { CoinData } from "@/types"
@@ -20,7 +21,6 @@ import {
   TransactionResult,
   TransactionArgument,
 } from "@mysten/sui/transactions"
-import { formatDecimalValue } from "./utils"
 
 // FIXME: catch error and return moveCall
 export const getPriceVoucher = <T extends boolean = true>(
@@ -355,33 +355,27 @@ type MintSCoinResult<T extends boolean> = T extends true
   ? [TransactionArgument[], MoveCallInfo[]]
   : TransactionArgument[]
 
-export const mintSCoin = <T extends boolean = false>(
+export const mintSCoin = async <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
   coinData: CoinData[],
   amounts: string[],
+  slippage: string,
   debug: T = false as T,
-  cetusData?: {
-    amount_a: string
-    amount_b: string
-    amount_limit_a: string
-    amount_limit_b: string
-  }[],
-): MintSCoinResult<T> => {
-  const splitCoins = splitCoinHelper(
-    tx,
-    coinData,
-    amounts,
-    coinConfig.underlyingCoinType,
-  )
-
+): Promise<MintSCoinResult<T>> => {
   let moveCall: MoveCallInfo
   const moveCallInfos: MoveCallInfo[] = []
+  const sCoins: TransactionArgument[] = []
 
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
+      const splitCoins = splitCoinHelper(
+        tx,
+        coinData,
+        amounts,
+        coinConfig.underlyingCoinType,
+      )
       const treasury = getTreasury(coinConfig.coinType)
-      const sCoins: TransactionArgument[] = []
 
       for (let i = 0; i < amounts.length; i++) {
         const moveCall = {
@@ -432,8 +426,12 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Strater": {
-      const sCoins: TransactionArgument[] = []
-
+      const splitCoins = splitCoinHelper(
+        tx,
+        coinData,
+        amounts,
+        coinConfig.underlyingCoinType,
+      )
       for (let i = 0; i < amounts.length; i++) {
         const fromBalanceMoveCall = {
           target: `0x2::coin::into_balance`,
@@ -492,8 +490,12 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Aftermath": {
-      const sCoins: TransactionArgument[] = []
-
+      const splitCoins = splitCoinHelper(
+        tx,
+        coinData,
+        amounts,
+        coinConfig.underlyingCoinType,
+      )
       for (let i = 0; i < amounts.length; i++) {
         moveCall = {
           target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_stake`,
@@ -531,8 +533,12 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "SpringSui": {
-      const sCoins: TransactionArgument[] = []
-
+      const splitCoins = splitCoinHelper(
+        tx,
+        coinData,
+        amounts,
+        coinConfig.underlyingCoinType,
+      )
       for (let i = 0; i < amounts.length; i++) {
         moveCall = {
           target: `0x82e6f4f75441eae97d2d5850f41a09d28c7b64a05b067d37748d471f43aaf3f7::liquid_staking::mint`,
@@ -570,8 +576,12 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Volo": {
-      const sCoins: TransactionArgument[] = []
-
+      const splitCoins = splitCoinHelper(
+        tx,
+        coinData,
+        amounts,
+        coinConfig.underlyingCoinType,
+      )
       for (let i = 0; i < amounts.length; i++) {
         const moveCall = {
           target: `0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::native_pool::stake_non_entry`,
@@ -611,6 +621,12 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Haedal": {
+      const splitCoins = splitCoinHelper(
+        tx,
+        coinData,
+        amounts,
+        coinConfig.underlyingCoinType,
+      )
       if (
         amounts
           .reduce((acc, curr) => acc.add(curr), new Decimal(0))
@@ -664,8 +680,12 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "AlphaFi": {
-      const sCoins: TransactionArgument[] = []
-
+      const splitCoins = splitCoinHelper(
+        tx,
+        coinData,
+        amounts,
+        coinConfig.underlyingCoinType,
+      )
       for (let i = 0; i < amounts.length; i++) {
         moveCall = {
           target: `${ALPAHFI.PACKAGE_ID}::liquid_staking::mint`,
@@ -700,142 +720,40 @@ export const mintSCoin = <T extends boolean = false>(
         : sCoins) as unknown as MintSCoinResult<T>
     }
     case "Cetus": {
-      console.log("cetusData", cetusData, "coinData", coinData)
+      const sdk = initCetusVaultsSDK({
+        network: "mainnet",
+      })
 
-      const sCoins: TransactionArgument[] = []
-      if (!cetusData) {
-        throw new Error("Cetus data is required")
-      }
+      sdk.senderAddress =
+        "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb"
 
-      for (let i = 0; i < cetusData.length; i++) {
-        const { amount_a, amount_b, amount_limit_a, amount_limit_b } =
-          cetusData[i]
+      tx.setSender(
+        "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+      )
 
-        const suiForHaedal = splitCoins[i * 2]
-        const suiCoin = splitCoins[i * 2 + 1]
-
-        if (new Decimal(amount_a).lt(10 ** 9)) {
-          const amount = new Decimal(amount_a).add(amount_b)
-          throw Error(
-            `Please invest at least ${formatDecimalValue(
-              new Decimal(amount)
-                .div(new Decimal(amount_a))
-                .mul(
-                  amounts
-                    .reduce((acc, curr) => acc.add(curr), new Decimal(0))
-                    .div(amount),
-                ),
-              Number(coinConfig.decimal),
-            )} ${coinConfig.underlyingCoinName}`,
-          )
-        }
-
-        const mintHaedalMoveCall = {
-          target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_stake_coin`,
-          arguments: [
-            { name: "sui_system_state", value: "0x5" },
-
-            {
-              name: "staking",
-              value: HAEDAL.HAEDAL_STAKING_ID,
-            },
-            { name: "coin", value: amount_a },
-            {
-              name: "address",
-              value:
-                "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-          ],
-          typeArguments: [],
-        }
-
-        moveCallInfos.push(mintHaedalMoveCall)
-        const [hasuiCoin] = tx.moveCall({
-          target: mintHaedalMoveCall.target,
-          arguments: [
-            tx.object(
-              "0x0000000000000000000000000000000000000000000000000000000000000005",
-            ),
-            tx.object(HAEDAL.HAEDAL_STAKING_ID),
-            suiForHaedal,
-            tx.object(
-              "0x0000000000000000000000000000000000000000000000000000000000000000",
-            ),
-          ],
-          typeArguments: mintHaedalMoveCall.typeArguments,
+      for (let i = 0; i < amounts.length; i++) {
+        const depositResult = await sdk.Vaults.calculateDepositAmount({
+          vault_id:
+            "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+          fix_amount_a: false,
+          input_amount: amounts[i],
+          slippage: Number(slippage),
+          side: InputType.OneSide,
         })
 
-        // Now implement the deposit call based on the provided parameters
-        const vaultDepositMoveCall = {
-          target: `0x5c35deb22849011d69456f37aaf4d90356e0829545d413039212dafa5b1d70b4::vaults::deposit`,
-          arguments: [
-            {
-              name: "vaults_manager",
-              value:
-                "0x25b82dd2f5ee486ed1c8af144b89a8931cd9c29dee3a86a1bfe194fdea9d04a6",
-            },
-            {
-              name: "vault",
-              value:
-                "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-            },
-            {
-              name: "rewarder_manager",
-              value:
-                "0xe0e155a88c77025056da08db5b1701a91b79edb6167462f768e387c3ed6614d5",
-            },
-            {
-              name: "cetus_global_config",
-              value:
-                "0x21215f2f6de04b57dd87d9be7bb4e15499aec935e36078e2488f36436d64996e",
-            },
-            {
-              name: "cetus_pool",
-              value:
-                "0x9f5fd63b2a2fd8f698ff6b7b9720dbb2aa14bedb9fc4fd6411f20e5b531a4b89",
-            },
-            {
-              name: "dex_global_config",
-              value:
-                "0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f",
-            },
-            {
-              name: "dex_pool",
-              value:
-                "0x871d8a227114f375170f149f7e9d45be822dd003eba225e83c05ac80828596bc",
-            },
-            { name: "coin_a", value: amount_a },
-            { name: "coin_b", value: amount_b },
-            { name: "amount_a_min", value: amount_limit_a },
-            { name: "amount_b_min", value: amount_limit_b },
-            { name: "is_one_side", value: "true" },
-            { name: "clock", value: "0x6" },
-          ],
-          typeArguments: [
-            "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI",
-            coinConfig.underlyingCoinType,
-            coinConfig.coinType,
-          ],
-        }
-        moveCallInfos.push(vaultDepositMoveCall)
-        // Execute the deposit call
-        const [sCoin] = tx.moveCall({
-          target: vaultDepositMoveCall.target,
-          arguments: vaultDepositMoveCall.arguments.map((arg) => {
-            if (arg.name === "coin_a" || arg.name === "coin_b") {
-              return arg.value === amount_a ? hasuiCoin : suiCoin
-            }
-            if (arg.name === "amount_a_min" || arg.name === "amount_b_min") {
-              return tx.pure.u64(arg.value.toString())
-            }
-            if (arg.name === "is_one_side") {
-              return tx.pure.bool(true)
-            }
-            return tx.object(arg.value.toString())
-          }),
-          typeArguments: vaultDepositMoveCall.typeArguments,
-        })
-        console.log("moveCallInfos", moveCallInfos)
+        console.log("depositResult", depositResult)
+
+        const sCoin = (await sdk.Vaults.deposit(
+          {
+            vault_id:
+              "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+            slippage: Number(slippage),
+            deposit_result: depositResult,
+            return_lp_token: true,
+          },
+          tx,
+        )) as TransactionArgument
+
         sCoins.push(sCoin)
       }
       return (debug

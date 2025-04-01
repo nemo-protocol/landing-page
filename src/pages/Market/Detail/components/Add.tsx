@@ -26,7 +26,6 @@ import useMarketStateData from "@/hooks/useMarketStateData"
 import type { CoinData } from "@/types"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
 import useFetchLpPosition from "@/hooks/useFetchLpPosition"
-import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
 import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
 import { useCalculateLpAmount } from "@/hooks/dryRun/lp/useCalculateLpDryRun"
@@ -55,7 +54,7 @@ import {
   SelectTrigger,
   SelectContent,
 } from "@/components/ui/select"
-
+import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -316,21 +315,6 @@ export default function SingleCoin() {
     address: string,
     minLpAmount: string,
   ): Promise<void> {
-    const sdk = initCetusVaultsSDK({
-      network: "mainnet",
-    })
-    const cetusData =
-      coinType ===
-      "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
-        ? await sdk.Vaults.calculateDepositAmount({
-            vault_id:
-              "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-            fix_amount_a: true,
-            input_amount: addAmount,
-            slippage: Number(slippage),
-            side: InputType.OneSide,
-          })
-        : undefined
     const [splitCoin] =
       tokenType === 0
         ? await mintSCoin(
@@ -338,8 +322,8 @@ export default function SingleCoin() {
             coinConfig,
             coinData,
             [addAmount],
+            slippage,
             false,
-            cetusData ? [cetusData] : undefined,
           )
         : splitCoinHelper(tx, coinData, [addAmount], coinType)
 
@@ -401,11 +385,18 @@ export default function SingleCoin() {
 
     const [splitCoinForSy, splitCoinForPt] =
       tokenType === 0
-        ? await mintSCoin(tx, coinConfig, coinData, [
-            amounts.sy,
-            amounts.syForPt,
-          ])
+        ? await mintSCoin(
+            tx,
+            coinConfig,
+            coinData,
+            [amounts.sy, amounts.syForPt],
+            slippage,
+            false,
+          )
         : splitCoinHelper(tx, coinData, [amounts.sy, amounts.syForPt], coinType)
+
+    // tx.transferObjects([splitCoinForSy, splitCoinForPt], address)
+    // return
 
     const syCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
 
@@ -456,6 +447,89 @@ export default function SingleCoin() {
       marketPosition,
     )
     tx.transferObjects([yieldToken, mergedPosition], address)
+  }
+
+  async function test() {
+    if (!coinData?.length) {
+      throw new Error("No coin data")
+    }
+    const lpOut = await estimateLpOut("1000000000")
+    const amounts = [
+      new Decimal(lpOut.syValue).toFixed(0),
+      new Decimal(lpOut.syForPtValue).toFixed(0),
+    ]
+    const tx = new Transaction()
+    const sdk = initCetusVaultsSDK({
+      network: "mainnet",
+    })
+
+    sdk.senderAddress =
+      "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb"
+
+    tx.setSender(
+      "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+    )
+
+    const depositResults = []
+
+    // const splitCoin = splitCoinHelper(tx, coinData, [amounts.sy, amounts.syForPt], coinType)
+
+    for (let i = 0; i < amounts.length; i++) {
+      const depositResult = await sdk.Vaults.calculateDepositAmount({
+        vault_id:
+          "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+        fix_amount_a: false,
+        input_amount: amounts[i],
+        slippage: Number(slippage),
+        side: InputType.OneSide,
+      })
+      depositResults.push(depositResult)
+    }
+
+    const splitAmounts = depositResults.map((result) => result.amount_limit_b)
+
+    const splitCoins = splitCoinHelper(tx, coinData, splitAmounts, coinType)
+
+    for (let i = 0; i < amounts.length; i++) {
+      const sCoin = (await sdk.Vaults.deposit(
+        {
+          coin_object_b: splitCoins[i],
+          vault_id:
+            "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+          slippage: Number(slippage),
+          deposit_result: depositResults[i],
+          return_lp_token: true,
+        },
+        tx,
+      )) as TransactionArgument
+
+      tx.transferObjects(
+        [sCoin],
+        "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+      )
+    }
+
+    const res = await signAndExecuteTransaction({
+      transaction: tx,
+    })
+
+    // const res = await sdk.fullClient.devInspectTransactionBlock({
+    //   transactionBlock: tx,
+    //   sender:
+    //     "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+    // })
+
+    console.log("res", res)
+
+    // showTransactionDialog({
+    //   status: "Success",
+    //   network,
+    //   txId: res.digest,
+    //   onClose: async () => {
+    //     await refreshData()
+    //     await refreshPtYt()
+    //   },
+    // })
   }
 
   async function add() {
@@ -592,7 +666,7 @@ export default function SingleCoin() {
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
             <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
-              <h2 className="text-center text-base sm:text-xl">
+              <h2 className="text-center text-base sm:text-xl" onClick={test}>
                 Add Liquidity
               </h2>
 

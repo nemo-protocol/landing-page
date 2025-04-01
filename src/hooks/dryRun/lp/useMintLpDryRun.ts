@@ -20,7 +20,6 @@ import {
 } from "@/lib/txHelper"
 import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 import { formatDecimalValue } from "@/lib/utils"
-import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 import { debugLog } from "@/config"
 
 interface MintLpParams {
@@ -124,57 +123,16 @@ export default function useMintLpDryRun<T extends boolean = false>(
         sy: new Decimal(lpOut.syValue).toFixed(0),
       }
 
-      console.log("amounts", amounts)
-
-      const sdk = initCetusVaultsSDK({
-        network: "mainnet",
-      })
-
-      console.log("coinType", coinConfig.coinType)
-
-      const cetusDatas =
-        coinConfig.coinType ===
-        "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN"
-          ? [
-              await sdk.Vaults.calculateDepositAmount({
-                vault_id:
-                  "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-                fix_amount_a: true,
-                input_amount: amounts.syForPt,
-                slippage: 0.005,
-                side: InputType.OneSide,
-              }),
-              await sdk.Vaults.calculateDepositAmount({
-                vault_id:
-                  "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-                fix_amount_a: true,
-                input_amount: amounts.sy,
-                slippage: 0.005,
-                side: InputType.OneSide,
-              }),
-            ]
-          : undefined
-
-      console.log("cetusDatas", cetusDatas,cetusDatas
-        ?.map((item) => [item.amount_a, item.amount_b])
-        .flat())
-
       // Split coins and deposit
       const [[splitCoinForSy, splitCoinForPt], mintSCoinMoveCall] =
         tokenType === 0
-          ? mintSCoin(
+          ? await mintSCoin(
               tx,
               coinConfig,
               coinData,
-              coinConfig.coinType ===
-                "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN" &&
-                cetusDatas?.length
-                ? cetusDatas
-                    ?.map((item) => [item.amount_a, item.amount_b])
-                    .flat()
-                : [amounts.sy, amounts.syForPt],
+              [amounts.sy, amounts.syForPt],
+              "0.005",
               true,
-              cetusDatas,
             )
           : [
               splitCoinHelper(

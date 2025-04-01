@@ -17,6 +17,7 @@ interface AddLiquiditySingleSyParams {
   tokenType: number
   coinData: CoinData[]
   pyPositions?: PyPosition[]
+  coinConfig: CoinConfig
 }
 
 interface AddLiquiditySingleSyResult {
@@ -47,6 +48,7 @@ export default function useAddLiquiditySingleSyDryRun<
       addAmount,
       tokenType,
       pyPositions: inputPyPositions,
+      coinConfig,
     }: AddLiquiditySingleSyParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
