@@ -60,9 +60,11 @@ export default function useMintLpDryRun<T extends boolean = false>(
       if (!address) {
         throw new Error("Please connect wallet first")
       }
+
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
+
       if (!coinData?.length) {
         throw new Error("No available coins")
       }
@@ -155,9 +157,11 @@ export default function useMintLpDryRun<T extends boolean = false>(
             ]
           : undefined
 
-      console.log("cetusDatas", cetusDatas,cetusDatas
-        ?.map((item) => [item.amount_a, item.amount_b])
-        .flat())
+      console.log(
+        "cetusDatas",
+        cetusDatas,
+        cetusDatas?.map((item) => [item.amount_a, item.amount_b]).flat(),
+      )
 
       // Split coins and deposit
       const [[splitCoinForSy, splitCoinForPt], mintSCoinMoveCall] =

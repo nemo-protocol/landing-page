@@ -507,8 +507,8 @@ export default function SingleCoin() {
             minLpAmount,
           )
         } else if (
-          new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount) ||
-          addType === "mint"
+          addType === "mint" ||
+          new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
         ) {
           console.log("handleMintLp")
           await handleMintLp(

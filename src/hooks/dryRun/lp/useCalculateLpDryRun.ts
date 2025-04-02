@@ -113,13 +113,10 @@ export function useCalculateLpAmount(
           })
 
           return {
-            error: undefined,
-            lpFeeAmount: undefined,
-            errorDetail: undefined,
+            addType: "mint",
             ratio: new Decimal(lpAmount).div(inputAmount).toString(),
             lpAmount: new Decimal(lpAmount).div(10 ** decimal).toFixed(decimal),
             ytAmount: new Decimal(ytAmount).div(10 ** decimal).toFixed(decimal),
-            addType: "mint",
           }
         } else {
           try {
@@ -142,13 +139,10 @@ export function useCalculateLpAmount(
               })
 
             return {
+              addType: "add",
               lpAmount: lpValue,
-              ytAmount: undefined,
               lpFeeAmount: tradeFee,
               ratio: new Decimal(lpAmount).div(inputAmount).toString(),
-              error: undefined,
-              errorDetail: undefined,
-              addType: "add",
             }
           } catch (error) {
             console.log("addLiquiditySingleSyDryRun error", error)
@@ -162,9 +156,7 @@ export function useCalculateLpAmount(
             })
 
             return {
-              error: undefined,
-              lpFeeAmount: undefined,
-              errorDetail: undefined,
+              addType: "mint",
               ratio: new Decimal(lpAmount).div(inputAmount).toString(),
               lpAmount: new Decimal(lpAmount)
                 .div(10 ** decimal)
@@ -172,7 +164,6 @@ export function useCalculateLpAmount(
               ytAmount: new Decimal(ytAmount)
                 .div(10 ** decimal)
                 .toFixed(decimal),
-              addType: "mint",
             }
           }
         }
