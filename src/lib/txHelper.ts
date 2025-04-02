@@ -830,6 +830,66 @@ export const burnSCoin = (
 
       return underlyingCoin
     }
+    case "Mstable": {
+      // First, create the withdraw cap
+      const createWithdrawCapMoveCall = {
+        target: `0x8e9aa615cd18d263cfea43d68e2519a2de2d39075756a05f67ae6cee2794ff06::exchange_rate::create_withdraw_cap`,
+        arguments: [
+          { 
+            name: "meta_vault_sui_integration", 
+            value: "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa" 
+          },
+          { 
+            name: "vault", 
+            value: "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d" 
+          },
+          { 
+            name: "registry", 
+            value: "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8" 
+          }
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      debugLog(`Mstable create_withdraw_cap move call:`, createWithdrawCapMoveCall)
+
+      const [withdrawCap] = tx.moveCall({
+        target: createWithdrawCapMoveCall.target,
+        arguments: [
+          tx.object("0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa"),
+          tx.object("0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d"),
+          tx.object("0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8")
+        ],
+        typeArguments: createWithdrawCapMoveCall.typeArguments,
+      })
+
+      // Next, perform the withdrawal
+      const withdrawMoveCall = {
+        target: `0x74ecdeabc36974da37a3e2052592b2bc2c83e878bbd74690e00816e91f93a505::vault::withdraw`,
+        arguments: [
+          { name: "vault", value: "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d" },
+          { name: "version", value: "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c" },
+          { name: "withdraw_cap", value: "withdrawCap" },
+          { name: "coin", value: "sCoin" },
+          { name: "amount_limit", value: "0" },
+        ],
+        typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
+      }
+      debugLog(`Mstable vault withdraw move call:`, withdrawMoveCall)
+
+      const [underlyingCoin] = tx.moveCall({
+        target: withdrawMoveCall.target,
+        arguments: [
+          tx.object("0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d"),
+          tx.object("0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c"),
+          withdrawCap,
+          sCoin,
+          tx.pure.u64("0"),
+        ],
+        typeArguments: withdrawMoveCall.typeArguments,
+      })
+
+      return underlyingCoin
+    }
     default:
       console.error(
         "burnSCoin Unsupported underlying protocol: " +
