@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
-import type { DebugInfo, PyPosition } from "../types"
+import type { DebugInfo, MoveCallInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchLpPosition from "../useFetchLpPosition"
 import useFetchPyPosition from "../useFetchPyPosition"
@@ -86,7 +86,9 @@ export default function useBurnLpDryRun(
         lpAmount,
       )
 
-      const moveCallInfo = {
+      const moveCallInfos: MoveCallInfo[] = []
+
+      const burnLpmoveCallInfo = {
         target: `${coinConfig.nemoContractId}::market::burn_lp`,
         arguments: [
           { name: "version", value: coinConfig.version },
@@ -102,8 +104,10 @@ export default function useBurnLpDryRun(
         typeArguments: [coinConfig.syCoinType],
       }
 
+      moveCallInfos.push(burnLpmoveCallInfo)
+
       const syCoin = tx.moveCall({
-        target: moveCallInfo.target,
+        target: burnLpmoveCallInfo.target,
         arguments: [
           tx.object(coinConfig.version),
           tx.pure.u64(lpAmount),
@@ -112,7 +116,7 @@ export default function useBurnLpDryRun(
           mergedPosition,
           tx.object("0x6"),
         ],
-        typeArguments: moveCallInfo.typeArguments,
+        typeArguments: burnLpmoveCallInfo.typeArguments,
       })
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
@@ -124,12 +128,18 @@ export default function useBurnLpDryRun(
       ) {
         console.log("useBurnLpDryRun burnSCoin")
 
-        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+        const [underlyingCoin, burnMoveCallInfo] = burnSCoin(
+          tx,
+          coinConfig,
+          yieldToken,
+          true,
+        )
         tx.moveCall({
           target: `0x2::coin::value`,
           arguments: [underlyingCoin],
           typeArguments: [coinConfig.underlyingCoinType],
         })
+        moveCallInfos.push(...burnMoveCallInfo)
       } else {
         tx.moveCall({
           target: `0x2::coin::value`,
@@ -147,7 +157,7 @@ export default function useBurnLpDryRun(
       })
 
       const debugInfo: DebugInfo = {
-        moveCall: [moveCallInfo],
+        moveCall: moveCallInfos,
         rawResult: result,
       }
 

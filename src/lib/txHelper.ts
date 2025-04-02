@@ -605,50 +605,62 @@ export const mintSCoin = <T extends boolean = false>(
   }
 }
 
-export const burnSCoin = (
+export const burnSCoin = <T extends boolean = false>(
   tx: Transaction,
   coinConfig: CoinConfig,
   sCoin: TransactionArgument,
-) => {
+  debug: T = false as T,
+): T extends true ? [TransactionArgument, MoveCallInfo[]] : TransactionArgument => {
+  const moveCallInfos: MoveCallInfo[] = []
+  let underlyingCoin: TransactionArgument
+
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
       const treasury = getTreasury(coinConfig.coinType)
 
       const burnSCoinMoveCall = {
         target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::burn_s_coin`,
-        arguments: [treasury, sCoin],
+        arguments: [
+          { name: "treasury", value: treasury },
+          { name: "s_coin", value: "sCoin" }
+        ],
         typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
       }
+      moveCallInfos.push(burnSCoinMoveCall)
       debugLog(`burn_s_coin move call:`, burnSCoinMoveCall)
 
       const marketCoin = tx.moveCall({
-        ...burnSCoinMoveCall,
+        target: burnSCoinMoveCall.target,
         arguments: [tx.object(treasury), sCoin],
+        typeArguments: burnSCoinMoveCall.typeArguments,
       })
 
       const redeemMoveCall = {
         target: `0x83bbe0b3985c5e3857803e2678899b03f3c4a31be75006ab03faf268c014ce41::redeem::redeem`,
         arguments: [
-          SCALLOP.VERSION_OBJECT,
-          SCALLOP.MARKET_OBJECT,
-          marketCoin,
-          "0x6",
+          { name: "version", value: SCALLOP.VERSION_OBJECT },
+          { name: "market", value: SCALLOP.MARKET_OBJECT },
+          { name: "market_coin", value: "marketCoin" },
+          { name: "clock", value: "0x6" },
         ],
         typeArguments: [coinConfig.underlyingCoinType],
       }
+      moveCallInfos.push(redeemMoveCall)
       debugLog(`scallop redeem move call:`, redeemMoveCall)
 
-      const [underlyingCoin] = tx.moveCall({
-        ...redeemMoveCall,
+      const [coin] = tx.moveCall({
+        target: redeemMoveCall.target,
         arguments: [
           tx.object(SCALLOP.VERSION_OBJECT),
           tx.object(SCALLOP.MARKET_OBJECT),
           marketCoin,
           tx.object("0x6"),
         ],
+        typeArguments: redeemMoveCall.typeArguments,
       })
 
-      return underlyingCoin
+      underlyingCoin = coin
+      break
     }
     case "Strater": {
       // Convert sCoin to balance first
@@ -657,6 +669,7 @@ export const burnSCoin = (
         arguments: [{ name: "coin", value: "sCoin" }],
         typeArguments: [coinConfig.coinType],
       }
+      moveCallInfos.push(toBalanceMoveCall)
       debugLog(`coin::into_balance move call:`, toBalanceMoveCall)
 
       const [sbsBalance] = tx.moveCall({
@@ -671,8 +684,7 @@ export const burnSCoin = (
         arguments: [
           {
             name: "bucket_vault",
-            value:
-              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+            value: "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
           },
           {
             name: "balance",
@@ -682,14 +694,13 @@ export const burnSCoin = (
         ],
         typeArguments: [coinConfig.underlyingCoinType, coinConfig.coinType],
       }
+      moveCallInfos.push(withdrawMoveCall)
       debugLog(`sbuck_saving_vault::withdraw move call:`, withdrawMoveCall)
 
       const [withdrawTicket] = tx.moveCall({
         target: withdrawMoveCall.target,
         arguments: [
-          tx.object(
-            "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
-          ),
+          tx.object("0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224"),
           sbsBalance,
           tx.object("0x6"),
         ],
@@ -702,8 +713,7 @@ export const burnSCoin = (
         arguments: [
           {
             name: "bucket_vault",
-            value:
-              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+            value: "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
           },
           {
             name: "withdraw_ticket",
@@ -712,40 +722,50 @@ export const burnSCoin = (
         ],
         typeArguments: [coinConfig.underlyingCoinType, coinConfig.coinType],
       }
-      debugLog(
-        `sbuck_saving_vault::redeem_withdraw_ticket move call:`,
-        redeemTicketMoveCall,
-      )
+      moveCallInfos.push(redeemTicketMoveCall)
+      debugLog(`sbuck_saving_vault::redeem_withdraw_ticket move call:`, redeemTicketMoveCall)
 
       const [underlyingBalance] = tx.moveCall({
         target: redeemTicketMoveCall.target,
         arguments: [
-          tx.object(
-            "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
-          ),
+          tx.object("0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224"),
           withdrawTicket,
         ],
         typeArguments: redeemTicketMoveCall.typeArguments,
       })
 
       // Convert balance back to coin
-      const [underlyingCoin] = tx.moveCall({
+      const fromBalanceMoveCall = {
         target: `0x2::coin::from_balance`,
-        arguments: [underlyingBalance],
+        arguments: [{ name: "balance", value: "underlyingBalance" }],
         typeArguments: [coinConfig.underlyingCoinType],
+      }
+      moveCallInfos.push(fromBalanceMoveCall)
+      debugLog(`coin::from_balance move call:`, fromBalanceMoveCall)
+
+      const [coin] = tx.moveCall({
+        target: fromBalanceMoveCall.target,
+        arguments: [underlyingBalance],
+        typeArguments: fromBalanceMoveCall.typeArguments,
       })
 
-      return underlyingCoin
+      underlyingCoin = coin
+      break
     }
     case "AlphaFi": {
       const redeemMoveCall = {
         target: `${ALPAHFI.PACKAGE_ID}::liquid_staking::redeem`,
-        arguments: [ALPAHFI.LIQUID_STAKING_INFO, sCoin, "0x5"],
+        arguments: [
+          { name: "liquid_staking_info", value: ALPAHFI.LIQUID_STAKING_INFO },
+          { name: "coin", value: "sCoin" },
+          { name: "sui_system_state", value: "0x5" },
+        ],
         typeArguments: [coinConfig.coinType],
       }
+      moveCallInfos.push(redeemMoveCall)
       debugLog(`alphaFi redeem move call:`, redeemMoveCall)
 
-      const [underlyingCoin] = tx.moveCall({
+      const [coin] = tx.moveCall({
         target: redeemMoveCall.target,
         arguments: [
           tx.object(ALPAHFI.LIQUID_STAKING_INFO),
@@ -755,7 +775,8 @@ export const burnSCoin = (
         typeArguments: redeemMoveCall.typeArguments,
       })
 
-      return underlyingCoin
+      underlyingCoin = coin
+      break
     }
     case "Aftermath": {
       const burnMoveCall = {
@@ -765,13 +786,14 @@ export const burnSCoin = (
           { name: "safe", value: AFTERMATH.SAFE },
           { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
           { name: "treasury", value: AFTERMATH.TREASURY },
-          { name: "s_coin", value: sCoin },
+          { name: "s_coin", value: "sCoin" },
         ],
         typeArguments: [],
       }
+      moveCallInfos.push(burnMoveCall)
       debugLog(`aftermath request_unstake_atomic move call:`, burnMoveCall)
 
-      const [underlyingCoin] = tx.moveCall({
+      const [coin] = tx.moveCall({
         target: burnMoveCall.target,
         arguments: [
           tx.object(AFTERMATH.STAKED_SUI_VAULT),
@@ -783,7 +805,8 @@ export const burnSCoin = (
         typeArguments: burnMoveCall.typeArguments,
       })
 
-      return underlyingCoin
+      underlyingCoin = coin
+      break
     }
     case "Volo": {
       const mintTicketMoveCall = {
@@ -795,6 +818,7 @@ export const burnSCoin = (
         ],
         typeArguments: [],
       }
+      moveCallInfos.push(mintTicketMoveCall)
       debugLog(`volo mint_ticket_non_entry move call:`, mintTicketMoveCall)
 
       const [unstakeTicket] = tx.moveCall({
@@ -816,9 +840,10 @@ export const burnSCoin = (
         ],
         typeArguments: [],
       }
+      moveCallInfos.push(burnTicketMoveCall)
       debugLog(`volo burn_ticket_non_entry move call:`, burnTicketMoveCall)
 
-      const [underlyingCoin] = tx.moveCall({
+      const [coin] = tx.moveCall({
         target: burnTicketMoveCall.target,
         arguments: [
           tx.object(VOLO.NATIVE_POOL),
@@ -828,7 +853,8 @@ export const burnSCoin = (
         typeArguments: burnTicketMoveCall.typeArguments,
       })
 
-      return underlyingCoin
+      underlyingCoin = coin
+      break
     }
     case "Mstable": {
       // First, create the withdraw cap
@@ -850,6 +876,7 @@ export const burnSCoin = (
         ],
         typeArguments: [coinConfig.coinType],
       }
+      moveCallInfos.push(createWithdrawCapMoveCall)
       debugLog(`Mstable create_withdraw_cap move call:`, createWithdrawCapMoveCall)
 
       const [withdrawCap] = tx.moveCall({
@@ -874,9 +901,10 @@ export const burnSCoin = (
         ],
         typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
       }
+      moveCallInfos.push(withdrawMoveCall)
       debugLog(`Mstable vault withdraw move call:`, withdrawMoveCall)
 
-      const [underlyingCoin] = tx.moveCall({
+      const [coin] = tx.moveCall({
         target: withdrawMoveCall.target,
         arguments: [
           tx.object("0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d"),
@@ -888,18 +916,23 @@ export const burnSCoin = (
         typeArguments: withdrawMoveCall.typeArguments,
       })
 
-      return underlyingCoin
+      underlyingCoin = coin
+      break
     }
     default:
       console.error(
         "burnSCoin Unsupported underlying protocol: " +
           coinConfig.underlyingProtocol,
       )
-      return sCoin
-    // throw new Error(
-    //   "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
-    // )
+      underlyingCoin = sCoin
+      // throw new Error(
+      //   "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+      // )
   }
+
+  return (debug ? [underlyingCoin, moveCallInfos] : underlyingCoin) as unknown as T extends true
+    ? [TransactionArgument, MoveCallInfo[]]
+    : TransactionArgument
 }
 
 export function splitCoinHelper(
