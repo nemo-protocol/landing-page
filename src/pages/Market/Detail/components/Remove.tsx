@@ -163,8 +163,13 @@ export default function Remove() {
               )
               console.log("sellPtDryRun error", error)
             }
-          } catch (error) {
-            console.log("burnLpDryRun error", error)
+          } catch (errorMsg) {
+            const { error: msg, detail } = parseErrorMessage(
+              (errorMsg as ContractError)?.message ?? errorMsg,
+            )
+            setErrorDetail(detail)
+            setError(msg)
+            console.log("burnLpDryRun error", errorMsg)
           } finally {
             setIsInputLoading(false)
           }

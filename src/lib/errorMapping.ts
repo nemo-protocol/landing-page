@@ -111,6 +111,14 @@ export const parseErrorMessage = (errorString: string) => {
     return { error: "Insufficient pool liquidity.", detail: "" }
   }
 
+  if (
+    errorString.includes(
+      'address: ca653d2fac70a49549c7ff8792027fa4fa418fd6619954ea0f45d6fd0d081b8e, name: Identifier("vault")',
+    )
+  ) {
+    return { error: "Insufficient vault balance.", detail: "" }
+  }
+
   const error = errorCode
     ? getErrorMessage(errorCode, errorString)
     : errorString.includes("math_fixed64_with_sign")
