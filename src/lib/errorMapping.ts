@@ -116,7 +116,7 @@ export const parseErrorMessage = (errorString: string) => {
       'address: ca653d2fac70a49549c7ff8792027fa4fa418fd6619954ea0f45d6fd0d081b8e, name: Identifier("vault")',
     )
   ) {
-    return { error: "Insufficient vault balance.", detail: "" }
+    return { error: "Underlying protocol error, try to withdraw to superSUI.", detail: "" }
   }
 
   const error = errorCode
