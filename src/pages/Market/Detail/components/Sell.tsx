@@ -273,6 +273,7 @@ export default function Sell() {
               )
 
         const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
+
         if (
           receivingType === "underlying" &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)

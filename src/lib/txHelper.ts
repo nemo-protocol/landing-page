@@ -535,30 +535,42 @@ export const mintSCoin = <T extends boolean = false>(
         const createDepositCapMoveCall = {
           target: `0x8e9aa615cd18d263cfea43d68e2519a2de2d39075756a05f67ae6cee2794ff06::exchange_rate::create_deposit_cap`,
           arguments: [
-            { 
-              name: "meta_vault_sui_integration", 
-              value: "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa" 
+            {
+              name: "meta_vault_sui_integration",
+              value:
+                "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa",
             },
-            { 
-              name: "vault", 
-              value: "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d" 
+            {
+              name: "vault",
+              value:
+                "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
             },
-            { 
-              name: "registry", 
-              value: "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8" 
-            }
+            {
+              name: "registry",
+              value:
+                "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
+            },
           ],
           typeArguments: [coinConfig.coinType],
         }
         moveCallInfos.push(createDepositCapMoveCall)
-        debugLog(`Mstable create_deposit_cap move call:`, createDepositCapMoveCall)
+        debugLog(
+          `Mstable create_deposit_cap move call:`,
+          createDepositCapMoveCall,
+        )
 
         const [depositCap] = tx.moveCall({
           target: createDepositCapMoveCall.target,
           arguments: [
-            tx.object("0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa"),
-            tx.object("0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d"),
-            tx.object("0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8")
+            tx.object(
+              "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa",
+            ),
+            tx.object(
+              "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+            ),
+            tx.object(
+              "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
+            ),
           ],
           typeArguments: createDepositCapMoveCall.typeArguments,
         })
@@ -567,8 +579,16 @@ export const mintSCoin = <T extends boolean = false>(
         const depositMoveCall = {
           target: `0x74ecdeabc36974da37a3e2052592b2bc2c83e878bbd74690e00816e91f93a505::vault::deposit`,
           arguments: [
-            { name: "vault", value: "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d" },
-            { name: "version", value: "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c" },
+            {
+              name: "vault",
+              value:
+                "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+            },
+            {
+              name: "version",
+              value:
+                "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c",
+            },
             { name: "deposit_cap", value: "depositCap" },
             { name: "coin", value: amounts[i] },
             { name: "amount_limit", value: "0" },
@@ -581,8 +601,12 @@ export const mintSCoin = <T extends boolean = false>(
         const [sCoin] = tx.moveCall({
           target: depositMoveCall.target,
           arguments: [
-            tx.object("0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d"),
-            tx.object("0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c"),
+            tx.object(
+              "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+            ),
+            tx.object(
+              "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c",
+            ),
             depositCap,
             splitCoins[i],
             tx.pure.u64("0"),
@@ -610,9 +634,17 @@ export const burnSCoin = <T extends boolean = false>(
   coinConfig: CoinConfig,
   sCoin: TransactionArgument,
   debug: T = false as T,
-): T extends true ? [TransactionArgument, MoveCallInfo[]] : TransactionArgument => {
+): T extends true
+  ? [TransactionArgument, MoveCallInfo[]]
+  : TransactionArgument => {
   const moveCallInfos: MoveCallInfo[] = []
   let underlyingCoin: TransactionArgument
+
+  console.log(
+    "underlyingProtocol",
+    coinConfig.underlyingProtocol,
+    coinConfig.underlyingProtocol === "Haedal",
+  )
 
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
@@ -622,7 +654,7 @@ export const burnSCoin = <T extends boolean = false>(
         target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::burn_s_coin`,
         arguments: [
           { name: "treasury", value: treasury },
-          { name: "s_coin", value: "sCoin" }
+          { name: "s_coin", value: "sCoin" },
         ],
         typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
       }
@@ -662,6 +694,32 @@ export const burnSCoin = <T extends boolean = false>(
       underlyingCoin = coin
       break
     }
+    case "Haedal": {
+      const unstakeMoveCall = {
+        target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_unstake_instant_coin`,
+        arguments: [
+          { name: "sui_system_state", value: "0x5" },
+          { name: "staking", value: HAEDAL.HAEDAL_STAKING_ID },
+          { name: "s_coin", value: "sCoin" },
+        ],
+        typeArguments: [],
+      }
+      moveCallInfos.push(unstakeMoveCall)
+      debugLog(`haedal request_unstake_instant_coin move call:`, unstakeMoveCall)
+
+      const [coin] = tx.moveCall({
+        target: unstakeMoveCall.target,
+        arguments: [
+          tx.object("0x5"),
+          tx.object(HAEDAL.HAEDAL_STAKING_ID),
+          sCoin,
+        ],
+        typeArguments: unstakeMoveCall.typeArguments,
+      })
+
+      underlyingCoin = coin
+      break
+    }
     case "Strater": {
       // Convert sCoin to balance first
       const toBalanceMoveCall = {
@@ -684,7 +742,8 @@ export const burnSCoin = <T extends boolean = false>(
         arguments: [
           {
             name: "bucket_vault",
-            value: "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+            value:
+              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
           },
           {
             name: "balance",
@@ -700,7 +759,9 @@ export const burnSCoin = <T extends boolean = false>(
       const [withdrawTicket] = tx.moveCall({
         target: withdrawMoveCall.target,
         arguments: [
-          tx.object("0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224"),
+          tx.object(
+            "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          ),
           sbsBalance,
           tx.object("0x6"),
         ],
@@ -713,7 +774,8 @@ export const burnSCoin = <T extends boolean = false>(
         arguments: [
           {
             name: "bucket_vault",
-            value: "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+            value:
+              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
           },
           {
             name: "withdraw_ticket",
@@ -723,12 +785,17 @@ export const burnSCoin = <T extends boolean = false>(
         typeArguments: [coinConfig.underlyingCoinType, coinConfig.coinType],
       }
       moveCallInfos.push(redeemTicketMoveCall)
-      debugLog(`sbuck_saving_vault::redeem_withdraw_ticket move call:`, redeemTicketMoveCall)
+      debugLog(
+        `sbuck_saving_vault::redeem_withdraw_ticket move call:`,
+        redeemTicketMoveCall,
+      )
 
       const [underlyingBalance] = tx.moveCall({
         target: redeemTicketMoveCall.target,
         arguments: [
-          tx.object("0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224"),
+          tx.object(
+            "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          ),
           withdrawTicket,
         ],
         typeArguments: redeemTicketMoveCall.typeArguments,
@@ -861,30 +928,42 @@ export const burnSCoin = <T extends boolean = false>(
       const createWithdrawCapMoveCall = {
         target: `0x8e9aa615cd18d263cfea43d68e2519a2de2d39075756a05f67ae6cee2794ff06::exchange_rate::create_withdraw_cap`,
         arguments: [
-          { 
-            name: "meta_vault_sui_integration", 
-            value: "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa" 
+          {
+            name: "meta_vault_sui_integration",
+            value:
+              "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa",
           },
-          { 
-            name: "vault", 
-            value: "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d" 
+          {
+            name: "vault",
+            value:
+              "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
           },
-          { 
-            name: "registry", 
-            value: "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8" 
-          }
+          {
+            name: "registry",
+            value:
+              "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
+          },
         ],
         typeArguments: [coinConfig.coinType],
       }
       moveCallInfos.push(createWithdrawCapMoveCall)
-      debugLog(`Mstable create_withdraw_cap move call:`, createWithdrawCapMoveCall)
+      debugLog(
+        `Mstable create_withdraw_cap move call:`,
+        createWithdrawCapMoveCall,
+      )
 
       const [withdrawCap] = tx.moveCall({
         target: createWithdrawCapMoveCall.target,
         arguments: [
-          tx.object("0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa"),
-          tx.object("0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d"),
-          tx.object("0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8")
+          tx.object(
+            "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa",
+          ),
+          tx.object(
+            "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+          ),
+          tx.object(
+            "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
+          ),
         ],
         typeArguments: createWithdrawCapMoveCall.typeArguments,
       })
@@ -893,8 +972,16 @@ export const burnSCoin = <T extends boolean = false>(
       const withdrawMoveCall = {
         target: `0x74ecdeabc36974da37a3e2052592b2bc2c83e878bbd74690e00816e91f93a505::vault::withdraw`,
         arguments: [
-          { name: "vault", value: "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d" },
-          { name: "version", value: "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c" },
+          {
+            name: "vault",
+            value:
+              "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+          },
+          {
+            name: "version",
+            value:
+              "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c",
+          },
           { name: "withdraw_cap", value: "withdrawCap" },
           { name: "coin", value: "sCoin" },
           { name: "amount_limit", value: "0" },
@@ -907,8 +994,12 @@ export const burnSCoin = <T extends boolean = false>(
       const [coin] = tx.moveCall({
         target: withdrawMoveCall.target,
         arguments: [
-          tx.object("0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d"),
-          tx.object("0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c"),
+          tx.object(
+            "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+          ),
+          tx.object(
+            "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c",
+          ),
           withdrawCap,
           sCoin,
           tx.pure.u64("0"),
@@ -925,12 +1016,14 @@ export const burnSCoin = <T extends boolean = false>(
           coinConfig.underlyingProtocol,
       )
       underlyingCoin = sCoin
-      // throw new Error(
-      //   "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
-      // )
+    // throw new Error(
+    //   "Unsupported underlying protocol: " + coinConfig.underlyingProtocol,
+    // )
   }
 
-  return (debug ? [underlyingCoin, moveCallInfos] : underlyingCoin) as unknown as T extends true
+  return (debug
+    ? [underlyingCoin, moveCallInfos]
+    : underlyingCoin) as unknown as T extends true
     ? [TransactionArgument, MoveCallInfo[]]
     : TransactionArgument
 }

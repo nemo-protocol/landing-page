@@ -183,7 +183,7 @@ export default function Invest() {
   const debouncedGetPtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getPtOut = debounce(async () => {
-        if (tokenType === 0 && new Decimal(value).lt(minValue)) {
+        if (tokenType === 0 && value && new Decimal(value).lt(minValue)) {
           setError(
             `The minimum investment amount is ${minValue} ${coinConfig?.underlyingCoinName}`,
           )
@@ -433,7 +433,7 @@ export default function Invest() {
         await refreshData()
         await refreshPtYt()
       } catch (errorMsg) {
-        let msg = (errorMsg as Error)?.message ?? error
+        let msg = (errorMsg as Error)?.message ?? errorMsg
         const gasMsg = parseGasErrorMessage(msg)
         if (gasMsg) {
           msg = gasMsg
@@ -447,15 +447,12 @@ export default function Invest() {
           const { error } = parseErrorMessage(msg)
           msg = error
         }
+
         showTransactionDialog({
           status: "Failed",
           network,
           txId,
-          message:
-            gasMsg ||
-            (msg.includes("InsufficientGas in command 5")
-              ? "Insufficient PT in the pool."
-              : error),
+          message: msg,
           onClose: () => {
             setTxId("")
           },
