@@ -221,6 +221,12 @@ export const NEED_MIN_VALUE_LIST = [
       "0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::cert::CERT",
     minValue: 1,
   },
+
+  {
+    coinType:
+      "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI",
+    minValue: 1,
+  },
 ]
 
 export const VOLO = {
@@ -231,7 +237,8 @@ export const VOLO = {
 } as const
 
 export const SUPER_SUI = {
-  REGISTRY: "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
+  REGISTRY:
+    "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
   VAULT: "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
 } as const
 
