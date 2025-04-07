@@ -200,6 +200,7 @@ export default function Invest() {
           setIsCalcPtLoading(true)
           try {
             const rate = await getConversionRate(coinConfig)
+            console.log("rate", rate)
             setConversionRate(rate)
             const swapAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
 

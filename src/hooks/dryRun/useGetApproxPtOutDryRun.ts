@@ -85,6 +85,8 @@ export default function useGetApproxPtOutDryRun<T extends boolean = false>(
         }),
       })
 
+      console.log("useGetApproxPtOutDryRun result", result)
+
       const debugInfo: DebugInfo = {
         moveCall: [priceVoucherMoveCall, moveCallInfo],
         rawResult: result,

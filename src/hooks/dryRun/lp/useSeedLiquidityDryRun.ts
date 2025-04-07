@@ -40,8 +40,8 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
       coinData,
       addAmount,
       tokenType,
-      pyPositions: inputPyPositions,
       coinConfig,
+      pyPositions: inputPyPositions,
     }: SeedLiquidityParams): Promise<DryRunResult<T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")

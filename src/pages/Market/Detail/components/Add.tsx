@@ -21,25 +21,21 @@ import { formatDecimalValue, debounce, isValidAmount } from "@/lib/utils"
 import { useRatioLoadingState } from "@/hooks/useRatioLoadingState"
 import { showTransactionDialog } from "@/lib/dialog"
 import { CoinConfig } from "@/queries/types/market"
-import { useEstimateLpOutDryRun } from "@/hooks/dryRun/lp/useEstimateLpOutDryRun"
 import useMarketStateData from "@/hooks/useMarketStateData"
 import type { CoinData } from "@/types"
 import { getPriceVoucher } from "@/lib/txHelper/price"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
-import useFetchLpPosition from "@/hooks/useFetchLpPosition"
 import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
 import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
 import { useCalculateLpAmount } from "@/hooks/dryRun/lp/useCalculateLpDryRun"
 import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
+import { useMintLp } from "@/hooks/actions/useMintLp"
 import {
   mintSCoin,
   initPyPosition,
   splitCoinHelper,
   depositSyCoin,
-  mintPY,
-  redeemSyCoin,
-  mergeAllLpPositions,
 } from "@/lib/txHelper"
 
 import {
@@ -56,6 +52,7 @@ import {
   SelectTrigger,
   SelectContent,
 } from "@/components/ui/select"
+import { mintMultiSCoin } from "@/lib/txHelper/coin"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -89,6 +86,11 @@ export default function SingleCoin() {
   const { mutateAsync: handleAddLiquiditySingleSy } =
     useAddLiquiditySingleSy(coinConfig)
 
+  const { data: marketStateData, isLoading: isMarketStateDataLoading } =
+    useMarketStateData(coinConfig?.marketStateId)
+
+  const { mutateAsync: handleMintLp } = useMintLp(coinConfig, marketStateData)
+
   const { data: pyPositionData, refetch: refetchPyPosition } =
     usePyPositionData(
       address,
@@ -105,8 +107,6 @@ export default function SingleCoin() {
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
   )
-
-  const { mutateAsync: fetchLpPositions } = useFetchLpPosition(coinConfig)
 
   const coinName = useMemo(
     () =>
@@ -130,12 +130,6 @@ export default function SingleCoin() {
   )
 
   const decimal = useMemo(() => Number(coinConfig?.decimal || 0), [coinConfig])
-
-  const { data: marketStateData, isLoading: isMarketStateDataLoading } =
-    useMarketStateData(coinConfig?.marketStateId)
-
-  const { mutateAsync: estimateLpOut, isPending: isLpAmountOutLoading } =
-    useEstimateLpOutDryRun(coinConfig, marketStateData)
 
   const coinBalance = useMemo(() => {
     if (coinData?.length) {
@@ -176,7 +170,7 @@ export default function SingleCoin() {
 
   const { isLoading } = useInputLoadingState(
     addValue,
-    isConfigLoading || isLpAmountOutLoading || isCalculating,
+    isConfigLoading || isCalculating,
   )
 
   const { isLoading: isRatioLoading } = useRatioLoadingState(
@@ -379,83 +373,7 @@ export default function SingleCoin() {
       ],
     })
 
-    tx.transferObjects([lp], address)
-  }
-
-  async function handleMintLp(
-    tx: Transaction,
-    addAmount: string,
-    tokenType: number,
-    coinConfig: CoinConfig,
-    coinData: CoinData[],
-    coinType: string,
-    pyPosition: TransactionArgument,
-    address: string,
-    minLpAmount: string,
-  ): Promise<void> {
-    const lpOut = await estimateLpOut(addAmount)
-    const amounts = {
-      sy: new Decimal(lpOut.syValue).toFixed(0),
-      syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
-    }
-
-    const [splitCoinForSy, splitCoinForPt] =
-      tokenType === 0
-        ? await mintSCoin(tx, coinConfig, coinData, [
-            amounts.sy,
-            amounts.syForPt,
-          ])
-        : splitCoinHelper(tx, coinData, [amounts.sy, amounts.syForPt], coinType)
-
-    const syCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
-
-    const pyCoin = depositSyCoin(tx, coinConfig, splitCoinForPt, coinType)
-    const [priceVoucher] = getPriceVoucher(tx, coinConfig)
-    const [pt_amount] = mintPY(tx, coinConfig, pyCoin, priceVoucher, pyPosition)
-
-    const [priceVoucherForMintLp] = getPriceVoucher(tx, coinConfig)
-
-    const mintLpMoveCall = {
-      target: `${coinConfig.nemoContractId}::market::mint_lp`,
-      arguments: [
-        coinConfig.version,
-        syCoin,
-        pt_amount,
-        minLpAmount,
-        priceVoucherForMintLp,
-        pyPosition,
-        coinConfig.pyStateId,
-        coinConfig.marketStateId,
-        "0x6",
-      ],
-      typeArguments: [coinConfig.syCoinType],
-    }
-    debugLog("mint_lp move call:", mintLpMoveCall)
-
-    const [remainingSyCoin, marketPosition] = tx.moveCall({
-      ...mintLpMoveCall,
-      arguments: [
-        tx.object(coinConfig.version),
-        syCoin,
-        pt_amount,
-        tx.pure.u64(minLpAmount),
-        priceVoucherForMintLp,
-        pyPosition,
-        tx.object(coinConfig.pyStateId),
-        tx.object(coinConfig.marketStateId),
-        tx.object("0x6"),
-      ],
-    })
-
-    const yieldToken = redeemSyCoin(tx, coinConfig, remainingSyCoin)
-    const lpPositions = await fetchLpPositions()
-    const mergedPosition = mergeAllLpPositions(
-      tx,
-      coinConfig,
-      lpPositions,
-      marketPosition,
-    )
-    tx.transferObjects([yieldToken, mergedPosition], address)
+    tx.transferObjects([lp], tx.pure.address(address))
   }
 
   async function add() {
@@ -511,7 +429,7 @@ export default function SingleCoin() {
           new Decimal(marketStateData.totalSy).mul(0.4).lt(addAmount)
         ) {
           console.log("handleMintLp")
-          await handleMintLp(
+          await handleMintLp({
             tx,
             addAmount,
             tokenType,
@@ -521,7 +439,7 @@ export default function SingleCoin() {
             pyPosition,
             address,
             minLpAmount,
-          )
+          })
         } else {
           console.log("handleAddLiquiditySingleSy")
           await handleAddLiquiditySingleSy({
@@ -539,8 +457,83 @@ export default function SingleCoin() {
         }
 
         if (created) {
-          tx.transferObjects([pyPosition], address)
+          tx.transferObjects([pyPosition], tx.pure.address(address))
         }
+
+        const res = await signAndExecuteTransaction({
+          transaction: tx,
+        })
+
+        showTransactionDialog({
+          status: "Success",
+          network,
+          txId: res.digest,
+          onClose: async () => {
+            await refreshData()
+            await refreshPtYt()
+          },
+        })
+
+        setAddValue("")
+      } catch (errorMsg) {
+        const { error: msg, detail } = parseErrorMessage(
+          (errorMsg as Error)?.message ?? "",
+        )
+        setErrorDetail(detail)
+        showTransactionDialog({
+          status: "Failed",
+          network,
+          txId: "",
+          message: msg,
+        })
+      } finally {
+        setIsAdding(false)
+      }
+    }
+  }
+
+  async function test() {
+    if (address && coinData && coinConfig) {
+      try {
+        setIsAdding(true)
+        const addAmount = new Decimal(addValue).mul(10 ** decimal).toFixed(0)
+
+        const tx = new Transaction()
+
+        const coinAmount = "958461728"
+
+        const lpOut = {
+          syValue: "59375180",
+          syForPtValue: "899086547",
+        }
+
+        const splitAmounts = [
+          new Decimal(lpOut.syValue)
+            .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
+            .mul(coinAmount)
+            .toFixed(0, Decimal.ROUND_HALF_UP),
+          new Decimal(lpOut.syForPtValue)
+            .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
+            .mul(coinAmount)
+            .toFixed(0, Decimal.ROUND_HALF_UP),
+        ]
+
+        console.log("Split amounts:", splitAmounts);
+
+        // First mint SCoin, then split it
+        const coins = mintMultiSCoin({
+          tx,
+          coinData,
+          coinConfig,
+          debug: false,
+          splitAmounts,
+          amount: addAmount,
+        });
+
+        console.log("Number of split coins:", coins.length);
+
+        // Transfer all split coin objects to user
+        tx.transferObjects(coins, tx.pure.address(address));
 
         const res = await signAndExecuteTransaction({
           transaction: tx,
@@ -592,7 +585,7 @@ export default function SingleCoin() {
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
             <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
-              <h2 className="text-center text-base sm:text-xl">
+              <h2 className="text-center text-base sm:text-xl" onClick={test}>
                 Add Liquidity
               </h2>
 

@@ -104,7 +104,7 @@ export default function useSwapExactSyForPtDryRun<T extends boolean = false>(
         }),
       })
 
-      console.log("result", result)
+      console.log("useSwapExactSyForPtDryRun result", result)
 
       const debugInfo: DebugInfo = {
         moveCall: [moveCallInfo],

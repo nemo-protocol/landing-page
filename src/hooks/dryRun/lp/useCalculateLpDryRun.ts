@@ -104,11 +104,12 @@ export function useCalculateLpAmount(
           new Decimal(marketState.totalSy).mul(0.4).lt(inputAmount)
         ) {
           console.log("mintLpDryRun")
+
           const { lpAmount, ytAmount } = await mintLpDryRun({
             coinData,
             tokenType,
             coinConfig,
-            addAmount: inputAmount,
+            amount: inputAmount,
             pyPositions: pyPositionData,
           })
 
@@ -147,11 +148,12 @@ export function useCalculateLpAmount(
           } catch (error) {
             console.log("addLiquiditySingleSyDryRun error", error)
             console.log("mintLpDryRun")
+
             const { lpAmount, ytAmount } = await mintLpDryRun({
               coinData,
               tokenType,
               coinConfig,
-              addAmount: inputAmount,
+              amount: inputAmount,
               pyPositions: pyPositionData,
             })
 
@@ -170,11 +172,11 @@ export function useCalculateLpAmount(
       } catch (error) {
         try {
           console.log("estimateLpOut", error)
-          const lpOut = await estimateLpOut(inputAmount)
+          const { lpAmount } = await estimateLpOut(inputAmount)
           return {
-            lpAmount: lpOut.lpAmount,
-            ratio: new Decimal(lpOut.lpAmount).div(inputAmount).toString(),
+            lpAmount,
             error: (error as Error)?.message,
+            ratio: new Decimal(lpAmount).div(inputAmount).toString(),
           }
         } catch (errorMsg) {
           const { error, detail } = parseErrorMessage(errorMsg as string)

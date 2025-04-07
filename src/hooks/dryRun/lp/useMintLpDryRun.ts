@@ -12,19 +12,17 @@ import { useMutation, UseMutationResult } from "@tanstack/react-query"
 import { BaseDryRunResult, createDryRunResult } from "../../types/dryRun"
 import {
   mintPY,
-  mintSCoin,
   depositSyCoin,
   initPyPosition,
   splitCoinHelper,
 } from "@/lib/txHelper"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
-import { formatDecimalValue } from "@/lib/utils"
-import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 import { debugLog } from "@/config"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import useMintCoinDryRun from "../useMintSCoinDryRun"
+import { mintMultiSCoin } from "@/lib/txHelper/coin"
 
 interface MintLpParams {
-  addAmount: string
+  amount: string
   tokenType: number
   coinData: CoinData[]
   pyPositions?: PyPosition[]
@@ -47,15 +45,16 @@ export default function useMintLpDryRun<T extends boolean = false>(
     coinConfig,
     marketState,
   )
+  const { mutateAsync: mintCoin } = useMintCoinDryRun(coinConfig, false)
   const { mutateAsync: fetchPyPositionAsync } = useFetchPyPosition(coinConfig)
 
   return useMutation({
     mutationFn: async ({
+      amount,
       coinData,
-      addAmount,
       tokenType,
-      pyPositions: inputPyPositions,
       coinConfig,
+      pyPositions: inputPyPositions,
     }: MintLpParams): Promise<BaseDryRunResult<MintLpResult, T>> => {
       if (!address) {
         throw new Error("Please connect wallet first")
@@ -68,6 +67,11 @@ export default function useMintLpDryRun<T extends boolean = false>(
       if (!coinData?.length) {
         throw new Error("No available coins")
       }
+
+      const { coinAmount } = await mintCoin({ amount, coinData })
+      console.log("useMintCoinDryRun coinAmount:", coinAmount)
+
+      const lpOut = await estimateLpOut(amount)
 
       const [pyPositions] = (
         inputPyPositions ? [inputPyPositions] : await fetchPyPositionAsync()
@@ -85,112 +89,38 @@ export default function useMintLpDryRun<T extends boolean = false>(
         pyPosition = tx.object(pyPositions[0].id)
       }
 
-      // Calculate LP output
-      const lpOut = await estimateLpOut(addAmount)
-
-      const decimal = Number(coinConfig.decimal)
-
-      const minValue =
-        NEED_MIN_VALUE_LIST.find(
-          (item) => item.coinType === coinConfig.coinType,
-        )?.minValue || 0
-
-      const smallerAmount = formatDecimalValue(
-        Decimal.min(
-          new Decimal(lpOut.syForPtValue).div(10 ** decimal),
-          new Decimal(lpOut.syValue).div(10 ** decimal),
-        ),
-        decimal,
-      )
-
-      const addValue = formatDecimalValue(
-        new Decimal(addAmount).div(10 ** decimal),
-        decimal,
-      )
-
-      if (
-        tokenType === 0 &&
-        new Decimal(smallerAmount).lt(new Decimal(minValue))
-      ) {
-        const needValue = formatDecimalValue(
-          new Decimal(minValue).div(new Decimal(smallerAmount)).mul(addValue),
-          decimal,
-        )
-        throw new Error(
-          `Please enter at least ${needValue} ${coinConfig.underlyingCoinName}`,
-        )
-      }
-
-      const amounts = {
-        syForPt: new Decimal(lpOut.syForPtValue).toFixed(0),
-        sy: new Decimal(lpOut.syValue).toFixed(0),
-      }
-
-      console.log("amounts", amounts)
-
-      const sdk = initCetusVaultsSDK({
-        network: "mainnet",
-      })
-
-      console.log("coinType", coinConfig.coinType)
-
-      const cetusDatas =
-        coinConfig.coinType ===
-        "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN"
-          ? [
-              await sdk.Vaults.calculateDepositAmount({
-                vault_id:
-                  "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-                fix_amount_a: true,
-                input_amount: amounts.syForPt,
-                slippage: 0.005,
-                side: InputType.OneSide,
-              }),
-              await sdk.Vaults.calculateDepositAmount({
-                vault_id:
-                  "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-                fix_amount_a: true,
-                input_amount: amounts.sy,
-                slippage: 0.005,
-                side: InputType.OneSide,
-              }),
-            ]
-          : undefined
-
-      console.log(
-        "cetusDatas",
-        cetusDatas,
-        cetusDatas?.map((item) => [item.amount_a, item.amount_b]).flat(),
-      )
-
       // Split coins and deposit
       const [[splitCoinForSy, splitCoinForPt], mintSCoinMoveCall] =
         tokenType === 0
-          ? mintSCoin(
+          ? mintMultiSCoin({
               tx,
-              coinConfig,
+              amount,
               coinData,
-              coinConfig.coinType ===
-                "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN" &&
-                cetusDatas?.length
-                ? cetusDatas
-                    ?.map((item) => [item.amount_a, item.amount_b])
-                    .flat()
-                : [amounts.sy, amounts.syForPt],
-              true,
-              cetusDatas,
-            )
+              coinConfig,
+              debug: true,
+              splitAmounts: [
+                new Decimal(lpOut.syValue)
+                  .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
+                  .mul(coinAmount)
+                  .toFixed(0),
+                new Decimal(lpOut.syForPtValue)
+                  .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
+                  .mul(coinAmount)
+                  .toFixed(0),
+              ],
+            })
           : [
               splitCoinHelper(
                 tx,
                 coinData,
-                [amounts.sy, amounts.syForPt],
+                [
+                  new Decimal(lpOut.syValue).toFixed(0),
+                  new Decimal(lpOut.syForPtValue).toFixed(0),
+                ],
                 coinConfig.coinType,
               ),
               [] as MoveCallInfo[],
             ]
-
-      // tx.transferObjects([splitCoinForSy, splitCoinForPt], address)
 
       const syCoin = depositSyCoin(
         tx,
