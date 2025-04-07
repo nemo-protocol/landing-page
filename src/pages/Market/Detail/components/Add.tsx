@@ -52,7 +52,6 @@ import {
   SelectTrigger,
   SelectContent,
 } from "@/components/ui/select"
-import { mintMultiSCoin } from "@/lib/txHelper/coin"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -431,13 +430,12 @@ export default function SingleCoin() {
           console.log("handleMintLp")
           await handleMintLp({
             tx,
+            address,
+            coinData,
             addAmount,
             tokenType,
             coinConfig,
-            coinData,
-            coinType,
             pyPosition,
-            address,
             minLpAmount,
           })
         } else {
@@ -492,81 +490,6 @@ export default function SingleCoin() {
     }
   }
 
-  async function test() {
-    if (address && coinData && coinConfig) {
-      try {
-        setIsAdding(true)
-        const addAmount = new Decimal(addValue).mul(10 ** decimal).toFixed(0)
-
-        const tx = new Transaction()
-
-        const coinAmount = "958461728"
-
-        const lpOut = {
-          syValue: "59375180",
-          syForPtValue: "899086547",
-        }
-
-        const splitAmounts = [
-          new Decimal(lpOut.syValue)
-            .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
-            .mul(coinAmount)
-            .toFixed(0, Decimal.ROUND_HALF_UP),
-          new Decimal(lpOut.syForPtValue)
-            .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
-            .mul(coinAmount)
-            .toFixed(0, Decimal.ROUND_HALF_UP),
-        ]
-
-        console.log("Split amounts:", splitAmounts);
-
-        // First mint SCoin, then split it
-        const coins = mintMultiSCoin({
-          tx,
-          coinData,
-          coinConfig,
-          debug: false,
-          splitAmounts,
-          amount: addAmount,
-        });
-
-        console.log("Number of split coins:", coins.length);
-
-        // Transfer all split coin objects to user
-        tx.transferObjects(coins, tx.pure.address(address));
-
-        const res = await signAndExecuteTransaction({
-          transaction: tx,
-        })
-
-        showTransactionDialog({
-          status: "Success",
-          network,
-          txId: res.digest,
-          onClose: async () => {
-            await refreshData()
-            await refreshPtYt()
-          },
-        })
-
-        setAddValue("")
-      } catch (errorMsg) {
-        const { error: msg, detail } = parseErrorMessage(
-          (errorMsg as Error)?.message ?? "",
-        )
-        setErrorDetail(detail)
-        showTransactionDialog({
-          status: "Failed",
-          network,
-          txId: "",
-          message: msg,
-        })
-      } finally {
-        setIsAdding(false)
-      }
-    }
-  }
-
   return (
     <div className="w-full md:w-[500px] lg:w-full bg-[#0E0F16] rounded-xl md:rounded-2xl xl:rounded-[40px] p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
       <div className="grid grid-cols-1 lg:grid-cols-[500px_1fr] gap-4 sm:gap-8">
@@ -585,7 +508,7 @@ export default function SingleCoin() {
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
             <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
-              <h2 className="text-center text-base sm:text-xl" onClick={test}>
+              <h2 className="text-center text-base sm:text-xl">
                 Add Liquidity
               </h2>
 

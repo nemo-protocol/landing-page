@@ -25,8 +25,8 @@ interface MintLpParams {
   amount: string
   tokenType: number
   coinData: CoinData[]
-  pyPositions?: PyPosition[]
   coinConfig: CoinConfig
+  pyPositions?: PyPosition[]
 }
 
 interface MintLpResult {
@@ -69,7 +69,6 @@ export default function useMintLpDryRun<T extends boolean = false>(
       }
 
       const { coinAmount } = await mintCoin({ amount, coinData })
-      console.log("useMintCoinDryRun coinAmount:", coinAmount)
 
       const lpOut = await estimateLpOut(amount)
 
@@ -90,7 +89,7 @@ export default function useMintLpDryRun<T extends boolean = false>(
       }
 
       // Split coins and deposit
-      const [[splitCoinForSy, splitCoinForPt], mintSCoinMoveCall] =
+      const [[splitCoinForSy, splitCoinForPt, sCoin], mintSCoinMoveCall] =
         tokenType === 0
           ? mintMultiSCoin({
               tx,
@@ -102,11 +101,11 @@ export default function useMintLpDryRun<T extends boolean = false>(
                 new Decimal(lpOut.syValue)
                   .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
                   .mul(coinAmount)
-                  .toFixed(0),
+                  .toFixed(0, Decimal.ROUND_HALF_UP),
                 new Decimal(lpOut.syForPtValue)
                   .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
                   .mul(coinAmount)
-                  .toFixed(0),
+                  .toFixed(0, Decimal.ROUND_HALF_UP),
               ],
             })
           : [
@@ -114,13 +113,18 @@ export default function useMintLpDryRun<T extends boolean = false>(
                 tx,
                 coinData,
                 [
-                  new Decimal(lpOut.syValue).toFixed(0),
-                  new Decimal(lpOut.syForPtValue).toFixed(0),
+                  new Decimal(lpOut.syValue).toFixed(0, Decimal.ROUND_HALF_UP),
+                  new Decimal(lpOut.syForPtValue).toFixed(
+                    0,
+                    Decimal.ROUND_HALF_UP,
+                  ),
                 ],
                 coinConfig.coinType,
               ),
               [] as MoveCallInfo[],
             ]
+
+      tx.transferObjects([sCoin], address)
 
       const syCoin = depositSyCoin(
         tx,

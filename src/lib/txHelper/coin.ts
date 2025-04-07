@@ -86,9 +86,9 @@ export const mintMultiSCoin = <T extends boolean = false>({
     debugLog(`coin::split move call:`, splitMoveCallInfo)
   }
 
-  const coins = tx.splitCoins(sCoin, splitAmounts)
+  const splitCoins = tx.splitCoins(sCoin, splitAmounts)
 
-  console.log("mintMultiSCoin coins length:", coins.length)
+  const coins = [...splitCoins, sCoin]
 
   return (debug
     ? [coins, moveCallInfos]

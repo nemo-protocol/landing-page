@@ -1,34 +1,33 @@
-import useMintSCoinDryRun from "@/hooks/dryRun/useMintSCoinDryRun"
-import { CoinConfig } from "@/queries/types/market"
 import { CoinData } from "@/types"
+import { debugLog } from "@/config"
+import { MarketState } from "../types"
+import { CoinConfig } from "@/queries/types/market"
+import { useMutation } from "@tanstack/react-query"
+import { mintMultiSCoin } from "@/lib/txHelper/coin"
+import { getPriceVoucher } from "@/lib/txHelper/price"
+import type { DebugInfo, MoveCallInfo } from "../types"
+import useFetchLpPosition from "@/hooks/useFetchLpPosition"
+import useMintSCoinDryRun from "@/hooks/dryRun/useMintSCoinDryRun"
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
+import { useEstimateLpOutDryRun } from "../dryRun/lp/useEstimateLpOutDryRun"
 import {
+  mintPY,
+  redeemSyCoin,
   depositSyCoin,
   splitCoinHelper,
   mergeAllLpPositions,
-  mintPY,
-  redeemSyCoin,
 } from "@/lib/txHelper"
-import { debugLog } from "@/config"
-import useFetchLpPosition from "@/hooks/useFetchLpPosition"
-import { useMutation } from "@tanstack/react-query"
-import type { DebugInfo, MoveCallInfo } from "../types"
-import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
-import { getPriceVoucher } from "@/lib/txHelper/price"
-import { useEstimateLpOutDryRun } from "../dryRun/lp/useEstimateLpOutDryRun"
 import Decimal from "decimal.js"
-import { MarketState } from "../types"
-import { mintMultiSCoin } from "@/lib/txHelper/coin"
 
 interface MintLpParams {
   tx: Transaction
+  address: string
   addAmount: string
   tokenType: number
-  coinConfig: CoinConfig
-  coinData: CoinData[]
-  coinType: string
-  pyPosition: TransactionArgument
-  address: string
   minLpAmount: string
+  coinData: CoinData[]
+  coinConfig: CoinConfig
+  pyPosition: TransactionArgument
 }
 
 type DryRunResult<T extends boolean> = T extends true ? DebugInfo : void
@@ -50,7 +49,6 @@ export function useMintLp<T extends boolean = false>(
     mutationFn: async ({
       tx,
       address,
-      coinType,
       coinData,
       tokenType,
       addAmount,
@@ -59,10 +57,10 @@ export function useMintLp<T extends boolean = false>(
       minLpAmount,
     }: MintLpParams): Promise<DryRunResult<T>> => {
       const { coinAmount } = await mintCoin({ amount: addAmount, coinData })
-      console.log("useMintCoinDryRun coinAmount:", coinAmount)
+
       const lpOut = await estimateLpOut(addAmount)
 
-      const [[splitCoinForSy, splitCoinForPt], mintSCoinMoveCall] =
+      const [[splitCoinForSy, splitCoinForPt, sCoin], mintSCoinMoveCall] =
         tokenType === 0
           ? mintMultiSCoin({
               tx,
@@ -74,11 +72,11 @@ export function useMintLp<T extends boolean = false>(
                 new Decimal(lpOut.syValue)
                   .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
                   .mul(coinAmount)
-                  .toFixed(0),
+                  .toFixed(0, Decimal.ROUND_HALF_UP),
                 new Decimal(lpOut.syForPtValue)
                   .div(new Decimal(lpOut.syValue).plus(lpOut.syForPtValue))
                   .mul(coinAmount)
-                  .toFixed(0),
+                  .toFixed(0, Decimal.ROUND_HALF_UP),
               ],
             })
           : [
@@ -86,16 +84,32 @@ export function useMintLp<T extends boolean = false>(
                 tx,
                 coinData,
                 [
-                  new Decimal(lpOut.syValue).toFixed(0),
-                  new Decimal(lpOut.syForPtValue).toFixed(0),
+                  new Decimal(lpOut.syValue).toFixed(0, Decimal.ROUND_HALF_UP),
+                  new Decimal(lpOut.syForPtValue).toFixed(
+                    0,
+                    Decimal.ROUND_HALF_UP,
+                  ),
                 ],
                 coinConfig.coinType,
               ),
               [] as MoveCallInfo[],
             ]
 
-      const syCoin = depositSyCoin(tx, coinConfig, splitCoinForSy, coinType)
-      const pyCoin = depositSyCoin(tx, coinConfig, splitCoinForPt, coinType)
+      tx.transferObjects([sCoin], address)
+
+      const syCoin = depositSyCoin(
+        tx,
+        coinConfig,
+        splitCoinForSy,
+        coinConfig.coinType,
+      )
+
+      const pyCoin = depositSyCoin(
+        tx,
+        coinConfig,
+        splitCoinForPt,
+        coinConfig.coinType,
+      )
 
       const [priceVoucher, priceVoucherMoveCall] = getPriceVoucher(
         tx,
