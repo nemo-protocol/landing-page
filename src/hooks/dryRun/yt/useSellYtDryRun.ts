@@ -109,8 +109,6 @@ export default function useSellYtDryRun<T extends boolean = false>(
         }),
       })
 
-      console.log("result", result)
-
       const debugInfo: DebugInfo = {
         moveCall: [priceVoucherMoveCallInfo, swapMoveCallInfo],
         rawResult: result,

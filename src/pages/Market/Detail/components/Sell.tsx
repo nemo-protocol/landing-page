@@ -134,6 +134,7 @@ export default function Sell() {
               ),
               decimal,
             )
+
             setTargetValue(targetValue)
 
             if (
@@ -249,10 +250,6 @@ export default function Sell() {
           .mul(new Decimal(1).sub(new Decimal(slippage).div(100)))
           .toFixed(0)
 
-        console.log("swap_exact_pt_for_sy", "minSyOut", minSyOut)
-
-        console.log("swapExactYtForSy", inputAmount)
-
         const syCoin =
           tokenType === "pt"
             ? swapExactPtForSy(
@@ -361,8 +358,12 @@ export default function Sell() {
   )
 
   const btnDisabled = useMemo(() => {
-    return ["", undefined].includes(redeemValue) || !!error
-  }, [redeemValue, error])
+    return (
+      !!error ||
+      !isValidAmount(redeemValue) ||
+      !isValidAmount(targetValue)
+    )
+  }, [redeemValue, targetValue, error])
 
   const priceImpact = useMemo(() => {
     if (
@@ -474,8 +475,8 @@ export default function Sell() {
                   <div className="flex items-center gap-x-1 sm:gap-x-1.5">
                     <span>
                       {isValidAmount(targetValue)
-                        ? ` ≈ ${formatDecimalValue(targetValue, decimal)}`
-                        : ""}
+                        ? `≈ ${formatDecimalValue(targetValue, decimal)}`
+                        : "0"}
                     </span>
                     <Select
                       value={receivingType}
