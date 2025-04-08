@@ -1,4 +1,3 @@
-import Decimal from "decimal.js"
 import { debugLog } from "@/config"
 import { CoinData } from "@/types"
 import { MoveCallInfo } from "@/hooks/types"
@@ -333,10 +332,6 @@ export const mintSCoin = <T extends boolean = false>({
         : sCoin) as unknown as MintSCoinResult<T>
     }
     case "Haedal": {
-      if (new Decimal(amount).lt(new Decimal(2.97).mul(10 ** 9))) {
-        throw new Error("Please invest at least 3 SUI")
-      }
-
       const moveCall = {
         target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_stake_coin`,
         arguments: [

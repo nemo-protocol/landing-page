@@ -23,12 +23,8 @@ import {
   debounce,
   safeDivide,
 } from "@/lib/utils"
-import {
-  depositSyCoin,
-  initPyPosition,
-  mintSCoin,
-  splitCoinHelper,
-} from "@/lib/txHelper"
+import { depositSyCoin, initPyPosition, splitCoinHelper } from "@/lib/txHelper"
+import { mintSCoin } from "@/lib/txHelper/coin"
 import ActionButton from "@/components/ActionButton"
 import AmountInput from "@/components/AmountInput"
 import { useWallet } from "@nemoprotocol/wallet-kit"
@@ -345,7 +341,7 @@ export default function Trade() {
 
         const [splitCoin] =
           tokenType === 0
-            ? await mintSCoin(tx, coinConfig, coinData, [swapAmount])
+            ? [mintSCoin({ tx, coinConfig, coinData, amount: swapAmount })]
             : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
