@@ -6,14 +6,9 @@ import type { DebugInfo, PyPosition } from "../../types"
 import type { CoinConfig } from "@/queries/types/market"
 import useFetchPyPosition from "../../useFetchPyPosition"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
-import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
-import {
-  mintSCoin,
-  depositSyCoin,
-  initPyPosition,
-  splitCoinHelper,
-} from "@/lib/txHelper"
+import { depositSyCoin, initPyPosition, splitCoinHelper } from "@/lib/txHelper"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { mintSCoin } from "@/lib/txHelper/coin"
 
 interface SeedLiquidityParams {
   addAmount: string
@@ -69,33 +64,15 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
         pyPosition = tx.object(pyPositions[0].id)
       }
 
-      const sdk = initCetusVaultsSDK({
-        network: "mainnet",
-      })
-
-      const cetusData =
-        coinConfig.coinType ===
-        "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
-          ? await sdk.Vaults.calculateDepositAmount({
-              vault_id:
-                "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-              fix_amount_a: true,
-              input_amount: addAmount,
-              slippage: 0.005,
-              side: InputType.OneSide,
-            })
-          : undefined
-
       const [splitCoin] =
         tokenType === 0
-          ? mintSCoin(
+          ? mintSCoin({
               tx,
               coinConfig,
               coinData,
-              [addAmount],
-              false,
-              cetusData ? [cetusData] : undefined,
-            )
+              amount: addAmount,
+              debug: true,
+            })
           : splitCoinHelper(tx, coinData, [addAmount], coinConfig.coinType)
 
       const syCoin = depositSyCoin(

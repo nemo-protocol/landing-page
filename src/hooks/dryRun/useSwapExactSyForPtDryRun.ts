@@ -7,7 +7,6 @@ import { ContractError } from "../types"
 import {
   depositSyCoin,
   initPyPosition,
-  mintSCoin,
   splitCoinHelper,
   swapExactSyForPt,
 } from "@/lib/txHelper"
@@ -16,6 +15,7 @@ import type { PyPosition } from "../types"
 import type { CoinData } from "@/types"
 import Decimal from "decimal.js"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { mintSCoin } from "@/lib/txHelper/coin"
 
 interface SwapParams {
   tokenType: number
@@ -61,7 +61,13 @@ export default function useSwapExactSyForPtDryRun<T extends boolean = false>(
 
       const [splitCoin] =
         tokenType === 0
-          ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
+          ? mintSCoin({
+              tx,
+              coinConfig,
+              coinData,
+              amount: swapAmount,
+              debug: true,
+            })
           : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
       const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)

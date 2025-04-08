@@ -7,12 +7,12 @@ import { ContractError } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
 import {
   initPyPosition,
-  mintSCoin,
   splitCoinHelper,
   depositSyCoin,
 } from "@/lib/txHelper"
 import { CoinData } from "@/types"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { mintSCoin } from "@/lib/txHelper/coin"
 
 type SwapResult = {
   ytAmount: string
@@ -54,7 +54,13 @@ export default function useSwapExactSyForYtDryRun(
 
       const [splitCoin] =
         tokenType === 0
-          ? mintSCoin(tx, coinConfig, coinData, [swapAmount])
+          ? mintSCoin({
+              tx,
+              coinData,
+              coinConfig,
+              debug: true,
+              amount: swapAmount,
+            })
           : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
       const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)

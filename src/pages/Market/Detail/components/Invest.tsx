@@ -24,7 +24,6 @@ import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteT
 import {
   initPyPosition,
   splitCoinHelper,
-  mintSCoin,
   depositSyCoin,
   swapExactSyForPt,
 } from "@/lib/txHelper"
@@ -52,6 +51,7 @@ import useGetConversionRateDryRun from "@/hooks/dryRun/useGetConversionRateDryRu
 import useQueryPtRatio from "@/hooks/useQueryPtRatio"
 import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { mintSCoin } from "@/lib/txHelper/coin"
 
 export default function Invest() {
   const [txId, setTxId] = useState("")
@@ -397,7 +397,14 @@ export default function Invest() {
 
         const [splitCoin] =
           tokenType === 0
-            ? await mintSCoin(tx, coinConfig, coinData, [actualSwapAmount])
+            ? [
+                mintSCoin({
+                  tx,
+                  coinConfig,
+                  coinData,
+                  amount: actualSwapAmount,
+                }),
+              ]
             : splitCoinHelper(tx, coinData, [actualSwapAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)

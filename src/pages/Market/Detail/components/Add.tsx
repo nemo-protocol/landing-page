@@ -25,18 +25,12 @@ import useMarketStateData from "@/hooks/useMarketStateData"
 import type { CoinData } from "@/types"
 import { getPriceVoucher } from "@/lib/txHelper/price"
 import { useCalculatePtYt } from "@/hooks/usePtYtRatio"
-import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 import useQueryConversionRate from "@/hooks/query/useQueryConversionRate"
 import { useAddLiquidityRatio } from "@/hooks/actions/useAddLiquidityRatio"
 import { useCalculateLpAmount } from "@/hooks/dryRun/lp/useCalculateLpDryRun"
 import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
 import { useMintLp } from "@/hooks/actions/useMintLp"
-import {
-  mintSCoin,
-  initPyPosition,
-  splitCoinHelper,
-  depositSyCoin,
-} from "@/lib/txHelper"
+import { initPyPosition, splitCoinHelper, depositSyCoin } from "@/lib/txHelper"
 
 import {
   Tooltip,
@@ -52,6 +46,7 @@ import {
   SelectTrigger,
   SelectContent,
 } from "@/components/ui/select"
+import { mintSCoin } from "@/lib/txHelper/coin"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -309,31 +304,16 @@ export default function SingleCoin() {
     address: string,
     minLpAmount: string,
   ): Promise<void> {
-    const sdk = initCetusVaultsSDK({
-      network: "mainnet",
-    })
-    const cetusData =
-      coinType ===
-      "0xaafc4f740de0dd0dde642a31148fb94517087052f19afb0f7bed1dc41a50c77b::scallop_sui::SCALLOP_SUI"
-        ? await sdk.Vaults.calculateDepositAmount({
-            vault_id:
-              "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-            fix_amount_a: true,
-            input_amount: addAmount,
-            slippage: Number(slippage),
-            side: InputType.OneSide,
-          })
-        : undefined
     const [splitCoin] =
       tokenType === 0
-        ? await mintSCoin(
-            tx,
-            coinConfig,
-            coinData,
-            [addAmount],
-            false,
-            cetusData ? [cetusData] : undefined,
-          )
+        ? [
+            mintSCoin({
+              tx,
+              coinConfig,
+              coinData,
+              amount: addAmount,
+            }),
+          ]
         : splitCoinHelper(tx, coinData, [addAmount], coinType)
 
     const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)

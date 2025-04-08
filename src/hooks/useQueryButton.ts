@@ -9,7 +9,6 @@ import useBurnLpMutation from "./dryRun/useBurnLpDryRun"
 import useFetchLpPosition from "./useFetchLpPosition"
 import useFetchPyPosition from "./useFetchPyPosition"
 import type { DebugInfo } from "./types"
-import useMintSCoin from "./actions/useMintSCoin"
 import { CoinData } from "@/types"
 
 export interface GetObjectParams {
@@ -46,10 +45,6 @@ export type QueryInputMap = {
 }
 
 export const QUERY_CONFIGS = {
-  MINT_SCOIN: {
-    target: "mint_scoin",
-    hook: useMintSCoin,
-  },
   PT_OUT_BY_SY_IN: {
     target: "get_pt_out_for_exact_sy_in_with_price_voucher",
     hook: useQueryPtOutBySyInWithVoucher,

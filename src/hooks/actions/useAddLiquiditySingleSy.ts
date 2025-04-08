@@ -1,7 +1,6 @@
 import { CoinConfig } from "@/queries/types/market"
 import { CoinData } from "@/types"
 import {
-  mintSCoin,
   depositSyCoin,
   splitCoinHelper,
   mergeAllLpPositions,
@@ -14,6 +13,7 @@ import { useMutation } from "@tanstack/react-query"
 import type { DebugInfo } from "../types"
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { mintSCoin } from "@/lib/txHelper/coin"
 
 interface AddLiquiditySingleSyParams {
   tx: Transaction
@@ -54,7 +54,13 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
     }: AddLiquiditySingleSyParams): Promise<DryRunResult<T>> => {
       const [splitCoin] =
         tokenType === 0
-          ? mintSCoin(tx, coinConfig, coinData, [addAmount])
+          ? mintSCoin({
+              tx,
+              coinConfig,
+              coinData,
+              amount: addAmount,
+              debug: true,
+            })
           : splitCoinHelper(tx, coinData, [addAmount], coinType)
 
       const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)
