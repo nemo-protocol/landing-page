@@ -500,7 +500,7 @@ export default function Trade() {
                   setTokenType(Number(value))
                 }}
               >
-                <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
+                <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit max-w-44 text-left">
                   <SelectValue placeholder="Select token type" />
                 </SelectTrigger>
                 <SelectContent className="border-none outline-none bg-[#0E0F16]">
