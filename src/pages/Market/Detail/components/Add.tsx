@@ -453,15 +453,17 @@ export default function SingleCoin() {
     if (!coinData?.length) {
       throw new Error("No coin data")
     }
-    const lpOut = await estimateLpOut("3000000000")
+    const lpOut = await estimateLpOut("5000000000")
     const amounts = [
       new Decimal(lpOut.syValue).toFixed(0),
       new Decimal(lpOut.syForPtValue).toFixed(0),
     ]
+    console.log("amounts", amounts)
+
     const tx = new Transaction()
     const sdk = initCetusVaultsSDK({
       network: "mainnet",
-      fullNodeUrl: "/sui-api",
+      // fullNodeUrl: "/sui-api",
     })
 
     sdk.senderAddress =
@@ -479,7 +481,7 @@ export default function SingleCoin() {
       const depositResult = await sdk.Vaults.calculateDepositAmount({
         vault_id:
           "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
-        fix_amount_a: false,
+        fix_amount_a: true,
         input_amount: amounts[i],
         slippage: Number(slippage),
         side: InputType.OneSide,
@@ -492,9 +494,19 @@ export default function SingleCoin() {
 
     const splitAmounts = depositResults.map((result) => result.amount_limit_b)
 
+    console.log("splitAmounts", splitAmounts)
+
     const splitCoins = splitCoinHelper(tx, coinData, splitAmounts, coinType)
 
     for (let i = 0; i < amounts.length; i++) {
+      console.log({
+        coin_object_b: splitCoins[i],
+        vault_id:
+          "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+        slippage: Number(slippage),
+        deposit_result: depositResults[i],
+        return_lp_token: true,
+      })
       const sCoin = (await sdk.Vaults.deposit(
         {
           coin_object_b: splitCoins[i],
@@ -513,7 +525,7 @@ export default function SingleCoin() {
       )
     }
 
-    tx.setGasBudget(100000000)
+    // tx.setGasBudget(100000000)
 
     const res = await signAndExecuteTransaction({
       transaction: tx,
