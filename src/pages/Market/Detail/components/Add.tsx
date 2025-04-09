@@ -10,7 +10,11 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { network, debugLog } from "@/config"
 import ActionButton from "@/components/ActionButton"
-import { Transaction, TransactionArgument } from "@mysten/sui/transactions"
+import {
+  Transaction,
+  TransactionArgument,
+  TransactionObjectArgument,
+} from "@mysten/sui/transactions"
 import { parseErrorMessage } from "@/lib/errorMapping"
 import { useWallet } from "@nemoprotocol/wallet-kit"
 import { useParams, useNavigate } from "react-router-dom"
@@ -47,6 +51,9 @@ import {
   SelectContent,
 } from "@/components/ui/select"
 import { mintSCoin } from "@/lib/txHelper/coin"
+import { useEstimateLpOutDryRun } from "@/hooks/dryRun/lp/useEstimateLpOutDryRun"
+
+import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -82,6 +89,95 @@ export default function SingleCoin() {
 
   const { data: marketStateData, isLoading: isMarketStateDataLoading } =
     useMarketStateData(coinConfig?.marketStateId)
+
+  const { mutateAsync: estimateLpOut } = useEstimateLpOutDryRun(
+    coinConfig,
+    marketStateData,
+  )
+
+  async function test() {
+    if (!coinData?.length) {
+      throw new Error("No coin data")
+    }
+    const lpOut = await estimateLpOut("10000000000")
+    const amounts = [
+      new Decimal(lpOut.syValue).toFixed(0),
+      new Decimal(lpOut.syForPtValue).toFixed(0),
+    ]
+    console.log("amounts", amounts)
+
+    const tx = new Transaction()
+    const sdk = initCetusVaultsSDK({
+      network: "mainnet",
+    })
+
+    sdk.senderAddress =
+      "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb"
+
+    tx.setSender(
+      "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+    )
+
+    const depositResults = []
+
+    // const splitCoin = splitCoinHelper(tx, coinData, [amounts.sy, amounts.syForPt], coinType)
+
+    for (let i = 0; i < amounts.length; i++) {
+      const depositResult = await sdk.Vaults.calculateDepositAmount({
+        vault_id:
+          "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+        fix_amount_a: false,
+        input_amount: amounts[i],
+        slippage: Number(slippage),
+        side: InputType.OneSide,
+      })
+
+      console.log("depositResult", depositResult)
+
+      depositResults.push(depositResult)
+    }
+
+    const splitAmounts = depositResults.map((result) => result.amount_limit_b)
+
+    console.log("splitAmounts", splitAmounts)
+
+    const splitCoins = splitCoinHelper(tx, coinData, splitAmounts, coinType)
+
+    for (let i = 0; i < amounts.length; i++) {
+      console.log({
+        coin_object_b: splitCoins[i],
+        vault_id:
+          "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+        slippage: Number(slippage),
+        deposit_result: depositResults[i],
+        return_lp_token: true,
+      })
+      const sCoin = (await sdk.Vaults.deposit(
+        {
+          coin_object_b: splitCoins[i],
+          vault_id:
+            "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+          slippage: Number(slippage),
+          deposit_result: depositResults[i],
+          return_lp_token: true,
+        },
+        tx,
+      )) as TransactionObjectArgument
+
+      tx.transferObjects(
+        [sCoin],
+        "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+      )
+    }
+
+    // tx.setGasBudget(100000000)
+
+    const res = await signAndExecuteTransaction({
+      transaction: tx,
+    })
+
+    console.log("res", res)
+  }
 
   const { mutateAsync: handleMintLp } = useMintLp(coinConfig, marketStateData)
 
@@ -488,7 +584,7 @@ export default function SingleCoin() {
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
             <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
-              <h2 className="text-center text-base sm:text-xl">
+              <h2 className="text-center text-base sm:text-xl" onClick={test}>
                 Add Liquidity
               </h2>
 
