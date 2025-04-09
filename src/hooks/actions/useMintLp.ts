@@ -95,7 +95,9 @@ export function useMintLp<T extends boolean = false>(
               [] as MoveCallInfo[],
             ]
 
-      tx.transferObjects([sCoin], address)
+      if (tokenType === 0) {
+        tx.transferObjects([sCoin], address)
+      }
 
       const syCoin = depositSyCoin(
         tx,
