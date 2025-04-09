@@ -99,6 +99,9 @@ export default function SingleCoin() {
     if (!coinData?.length) {
       throw new Error("No coin data")
     }
+    if (!address) {
+      throw new Error("No address")
+    }
     const lpOut = await estimateLpOut("10000000000")
     const amounts = [
       new Decimal(lpOut.syValue).toFixed(0),
@@ -111,12 +114,9 @@ export default function SingleCoin() {
       network: "mainnet",
     })
 
-    sdk.senderAddress =
-      "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb"
+    sdk.senderAddress = address
 
-    tx.setSender(
-      "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
-    )
+    tx.setSender(address)
 
     const depositResults = []
 
@@ -137,7 +137,9 @@ export default function SingleCoin() {
       depositResults.push(depositResult)
     }
 
-    const splitAmounts = depositResults.map((result) => result.amount_limit_b)
+    const splitAmounts = depositResults.map(
+      (result) => result.original_input_amount,
+    )
 
     console.log("splitAmounts", splitAmounts)
 
@@ -164,10 +166,7 @@ export default function SingleCoin() {
         tx,
       )) as TransactionObjectArgument
 
-      tx.transferObjects(
-        [sCoin],
-        "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
-      )
+      tx.transferObjects([sCoin], address)
     }
 
     // tx.setGasBudget(100000000)
