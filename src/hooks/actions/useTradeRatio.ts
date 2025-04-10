@@ -24,8 +24,8 @@ export default function useTradeRatio(coinConfig?: CoinConfig) {
         const safeDecimal = Math.max(decimal - power, 0)
         try {
           const amount = new Decimal(10).pow(safeDecimal).toString()
-          const { ytValue: ytOut } = await queryYtOut(amount)
-          const ytRatio = new Decimal(ytOut)
+          const { ytAmount } = await queryYtOut(amount)
+          const ytRatio = new Decimal(ytAmount)
             .div(amount)
             .div(conversionRate)
             .toString()

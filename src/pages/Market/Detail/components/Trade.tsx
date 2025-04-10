@@ -55,6 +55,7 @@ export default function Trade() {
   const { coinType, maturity } = useParams()
   const [error, setError] = useState<string>()
   const [ratio, setRatio] = useState<string>("")
+  const [ytRatio, setYtRatio] = useState<string>("")
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
   const [ytValue, setYtValue] = useState<string>()
@@ -209,7 +210,7 @@ export default function Trade() {
             setYtValue(ytValue)
             setYtFeeValue(feeValue)
             const ytRatio = new Decimal(ytValue).div(value).toFixed(4)
-            setRatio(ytRatio)
+            setYtRatio(ytRatio)
           } catch (error) {
             const { error: msg, detail } = parseErrorMessage(
               (error as Error)?.message ?? "",
@@ -218,14 +219,14 @@ export default function Trade() {
             setErrorDetail(detail)
             setYtValue(undefined)
             setYtFeeValue(undefined)
-            setRatio("")
+            setYtRatio("")
           } finally {
             setIsCalcYtLoading(false)
           }
         } else {
           setYtValue(undefined)
           setYtFeeValue(undefined)
-          setRatio("")
+          setYtRatio("")
           setError(undefined)
         }
       }, 500)
@@ -617,11 +618,11 @@ export default function Trade() {
             </div>
           </div>
           <TradeInfo
-            ratio={ratio}
             coinName={coinName}
             slippage={slippage}
             isLoading={isLoading}
             setSlippage={setSlippage}
+            ratio={!swapValue ? ratio : ytRatio}
             onRefresh={async () => {
               if (conversionRate) {
                 try {
