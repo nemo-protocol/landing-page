@@ -255,28 +255,15 @@ export default function Invest() {
                   swapAmount: actualSwapAmount,
                 })
 
-                const ptRatio = new Decimal(ptValue).div(syValue)
+                const ptRatio = new Decimal(ptValue).div(value)
 
-                console.log(
-                  "show rate calc ptRatio",
-                  ptRatio.toString(),
-                  "syValue",
-                  syValue,
-                  "ptValue",
-                  ptValue,
-                )
-
-                // .mul(tokenType === 0 ? rate : 1)
                 setPtRatio(ptRatio)
                 setPtValue(newPtValue)
               } else {
                 throw new Error("Please connect your wallet")
               }
             } catch (dryRunError) {
-              const ptRatio = new Decimal(ptValue)
-                .div(syValue)
-                .mul(tokenType === 0 ? rate : 1)
-              setPtRatio(ptRatio)
+              setPtRatio(new Decimal(ptValue).div(value))
               setPtValue(ptValue)
             }
           } catch (errorMsg) {
