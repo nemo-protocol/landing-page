@@ -23,6 +23,46 @@ export const getPriceVoucher = <T extends boolean = true>(
   : TransactionArgument => {
   let moveCall: MoveCallInfo
   switch (coinConfig.coinType) {
+    case "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL": {
+      moveCall = {
+        target: `${coinConfig.oraclePackageId}::haedal::get_haWAL_price_voucher`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
+          },
+          {
+            name: "staking",
+            value: "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b",
+          },
+          { name: "sy_state", value: coinConfig.syStateId },
+        ],
+        typeArguments: [
+          coinConfig.syCoinType,
+          coinConfig.underlyingCoinType,
+        ],
+      }
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_haWAL_price_voucher move call:`,
+          moveCall,
+        )
+      }
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
+    }
     case "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN": {
       moveCall = {
         target: `${coinConfig.oraclePackageId}::haedal::get_price_voucher_from_cetus_vault`,
