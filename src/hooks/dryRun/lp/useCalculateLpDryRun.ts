@@ -169,13 +169,13 @@ export function useCalculateLpAmount(
             }
           }
         }
-      } catch (error) {
+      } catch (errorMsg) {
         try {
-          console.log("estimateLpOut", error)
+          const { error } = parseErrorMessage((errorMsg as Error).message)
           const { lpAmount } = await estimateLpOut(inputAmount)
           return {
+            error,
             lpAmount,
-            error: (error as Error)?.message,
             ratio: new Decimal(lpAmount).div(inputAmount).toString(),
           }
         } catch (errorMsg) {

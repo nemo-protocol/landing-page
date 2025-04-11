@@ -116,7 +116,18 @@ export const parseErrorMessage = (errorString: string) => {
       'address: ca653d2fac70a49549c7ff8792027fa4fa418fd6619954ea0f45d6fd0d081b8e, name: Identifier("vault")',
     )
   ) {
-    return { error: "Underlying protocol error, try to withdraw to superSUI.", detail: "" }
+    return {
+      error: "Underlying protocol error, try to withdraw to superSUI.",
+      detail: "",
+    }
+  }
+
+  if (
+    errorString.includes(
+      'address: 8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470, name: Identifier("walstaking")',
+    )
+  ) {
+    return { error: "Please enter at least 1 WAL.", detail: "" }
   }
 
   const error = errorCode

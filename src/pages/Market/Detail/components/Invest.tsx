@@ -44,7 +44,6 @@ import {
 import useMarketStateData from "@/hooks/useMarketStateData"
 import useInvestRatio from "@/hooks/actions/useInvestRatio"
 import { CoinConfig } from "@/queries/types/market"
-import { ContractError } from "@/hooks/types"
 import useGetApproxPtOutDryRun from "@/hooks/dryRun/useGetApproxPtOutDryRun"
 import useSwapExactSyForPtDryRun from "@/hooks/dryRun/useSwapExactSyForPtDryRun"
 import useGetConversionRateDryRun from "@/hooks/dryRun/useGetConversionRateDryRun"
@@ -185,7 +184,7 @@ export default function Invest() {
       const getPtOut = debounce(async () => {
         if (tokenType === 0 && value && new Decimal(value).lt(minValue)) {
           setError(
-            `The minimum investment amount is ${minValue} ${coinConfig?.underlyingCoinName}`,
+            `Please enter at least ${minValue} ${coinConfig?.underlyingCoinName}`,
           )
           return
         }
@@ -214,15 +213,6 @@ export default function Invest() {
               tradeFee,
               syAmount: newSyAmount,
             } = await queryPtOut({ syAmount })
-
-            console.log(
-              "syValue",
-              syValue,
-              "ptValue",
-              ptValue,
-              "underlying value",
-              new Decimal(syValue).mul(tokenType === 0 ? rate : 1).toString(),
-            )
 
             setSyValue(syValue)
 
@@ -263,12 +253,16 @@ export default function Invest() {
                 throw new Error("Please connect your wallet")
               }
             } catch (dryRunError) {
+              const { error } = parseErrorMessage(
+                (dryRunError as Error).message ?? dryRunError,
+              )
               setPtRatio(new Decimal(ptValue).div(value).toFixed(4))
               setPtValue(ptValue)
+              setError(error)
             }
           } catch (errorMsg) {
             const { error, detail } = parseErrorMessage(
-              (errorMsg as ContractError)?.message ?? errorMsg,
+              (errorMsg as Error)?.message ?? errorMsg,
             )
             setError(error)
             setErrorDetail(detail)
@@ -697,7 +691,10 @@ export default function Invest() {
             ) : (
               <div className="flex items-center gap-x-1.5">
                 <span>
-                  {ptValue && decimal && ptValue && conversionRate
+                  {isValidAmount(ptValue) &&
+                  ptValue &&
+                  decimal &&
+                  conversionRate
                     ? `+${formatDecimalValue(
                         new Decimal(ptValue).minus(
                           new Decimal(syValue).mul(conversionRate),

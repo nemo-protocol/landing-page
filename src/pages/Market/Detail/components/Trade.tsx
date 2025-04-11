@@ -188,7 +188,7 @@ export default function Trade() {
       const getYtOut = debounce(async () => {
         if (tokenType === 0 && value && new Decimal(value).lt(minValue)) {
           setError(
-            `The minimum investment amount is ${minValue} ${coinConfig?.underlyingCoinName}`,
+            `Please enter at least ${minValue} ${coinConfig?.underlyingCoinName}`,
           )
           return
         }

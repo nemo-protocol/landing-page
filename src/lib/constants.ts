@@ -227,6 +227,11 @@ export const NEED_MIN_VALUE_LIST = [
       "0xbde4ba4c2e274a60ce15c1cfff9e5c42e41654ac8b6d906a57efa4bd3c29f47d::hasui::HASUI",
     minValue: 1,
   },
+  {
+    coinType:
+      "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL",
+    minValue: 1,
+  },
 ]
 
 export const VOLO = {
