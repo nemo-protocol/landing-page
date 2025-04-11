@@ -17,12 +17,7 @@ import {
 import useCoinData from "@/hooks/query/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
-import {
-  formatDecimalValue,
-  isValidAmount,
-  debounce,
-  safeDivide,
-} from "@/lib/utils"
+import { formatDecimalValue, isValidAmount, debounce } from "@/lib/utils"
 import { depositSyCoin, initPyPosition, splitCoinHelper } from "@/lib/txHelper"
 import { mintSCoin } from "@/lib/txHelper/coin"
 import ActionButton from "@/components/ActionButton"
@@ -54,7 +49,7 @@ export default function Trade() {
   const [warning, setWarning] = useState("")
   const { coinType, maturity } = useParams()
   const [error, setError] = useState<string>()
-  const [ratio, setRatio] = useState<string>("")
+  const [initRatio, setInitRatio] = useState<string>("")
   const [ytRatio, setYtRatio] = useState<string>("")
   const [swapValue, setSwapValue] = useState("")
   const [slippage, setSlippage] = useState("0.5")
@@ -177,7 +172,7 @@ export default function Trade() {
           const initialRatio = await calculateRatio(
             tokenType === 0 ? conversionRate : "1",
           )
-          setRatio(initialRatio)
+          setInitRatio(initialRatio)
         } catch (error) {
           console.error("Failed to calculate initial ratio:", error)
         } finally {
@@ -286,26 +281,18 @@ export default function Trade() {
       return
     }
 
-    const inputValue =
-      tokenType === 0
-        ? new Decimal(swapValue).mul(coinConfig.underlyingPrice)
-        : new Decimal(swapValue).mul(coinConfig.coinPrice)
-
     const outputValue = new Decimal(ytValue).mul(ptYtData.ytPrice)
 
     const value = outputValue
-    const ratio = safeDivide(
-      inputValue.minus(outputValue),
-      inputValue,
-      "decimal",
-    ).mul(100)
+    const ratio = new Decimal(ytRatio).minus(initRatio).mul(100)
 
     return { value, ratio }
   }, [
-    decimal,
     ytValue,
+    decimal,
+    ytRatio,
     swapValue,
-    tokenType,
+    initRatio,
     ptYtData?.ytPrice,
     coinConfig?.coinPrice,
     coinConfig?.underlyingPrice,
@@ -622,7 +609,7 @@ export default function Trade() {
             slippage={slippage}
             isLoading={isLoading}
             setSlippage={setSlippage}
-            ratio={!swapValue ? ratio : ytRatio}
+            ratio={ytRatio}
             onRefresh={async () => {
               if (conversionRate) {
                 try {
@@ -630,10 +617,10 @@ export default function Trade() {
                   const newRatio = await calculateRatio(
                     tokenType === 0 ? conversionRate : "1",
                   )
-                  setRatio(newRatio)
+                  setInitRatio(newRatio)
                 } catch (error) {
                   console.error("Failed to refresh ratio:", error)
-                  setRatio("")
+                  setInitRatio("")
                 } finally {
                   setIsCalcYtLoading(false)
                 }

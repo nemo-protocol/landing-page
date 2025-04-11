@@ -31,7 +31,7 @@ const SlippageSetting: React.FC<SlippageSettingProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="flex items-center gap-x-1 sm:gap-x-2 cursor-pointer bg-[#161720]/50 rounded-full px-2.5 sm:px-3 py-1.5">
+        <div className="flex items-center gap-x-1 sm:gap-x-2 cursor-pointer bg-[#161720]/50 rounded-full py-1.5">
           <span className="text-white/60 text-xs sm:text-sm">{slippage}%</span>
           <SlidersHorizontal className="size-4 sm:size-5" />
         </div>

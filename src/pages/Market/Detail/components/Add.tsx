@@ -356,6 +356,7 @@ export default function SingleCoin() {
   }
 
   async function add() {
+    console.log("add", addValue, decimal, addType, address, coinType, slippage, lpAmount, coinConfig, conversionRate, marketStateData, coinData?.length, insufficientBalance)
     if (
       decimal &&
       addType &&

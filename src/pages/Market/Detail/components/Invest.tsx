@@ -68,7 +68,7 @@ export default function Invest() {
   const [isCalcPtLoading, setIsCalcPtLoading] = useState(false)
   const [isInitRatioLoading, setIsInitRatioLoading] = useState(false)
   const [conversionRate, setConversionRate] = useState<string>()
-  const [ptRatio, setPtRatio] = useState<Decimal>(new Decimal(0))
+  const [ptRatio, setPtRatio] = useState<string>()
   const [syValue, setSyValue] = useState("")
 
   const { mutateAsync: signAndExecuteTransaction } =
@@ -255,7 +255,7 @@ export default function Invest() {
                   swapAmount: actualSwapAmount,
                 })
 
-                const ptRatio = new Decimal(ptValue).div(value)
+                const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
 
                 setPtRatio(ptRatio)
                 setPtValue(newPtValue)
@@ -263,7 +263,7 @@ export default function Invest() {
                 throw new Error("Please connect your wallet")
               }
             } catch (dryRunError) {
-              setPtRatio(new Decimal(ptValue).div(value))
+              setPtRatio(new Decimal(ptValue).div(value).toFixed(4))
               setPtValue(ptValue)
             }
           } catch (errorMsg) {
@@ -746,7 +746,7 @@ export default function Invest() {
           </div>
         </div>
         <TradeInfo
-          ratio={!swapValue ? initPtRatio?.toString() : ptRatio.toString()}
+          ratio={ptRatio}
           coinName={coinName}
           slippage={slippage}
           isLoading={isLoading}
