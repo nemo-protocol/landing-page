@@ -112,6 +112,7 @@ export const mintSCoin = <T extends boolean = false>({
     coinConfig.underlyingCoinType,
   )
 
+  // Otherwise proceed with existing protocol-based switch
   switch (coinConfig.underlyingProtocol) {
     case "Scallop": {
       const treasury = getTreasury(coinConfig.coinType)
@@ -332,47 +333,80 @@ export const mintSCoin = <T extends boolean = false>({
         : sCoin) as unknown as MintSCoinResult<T>
     }
     case "Haedal": {
-      const moveCall = {
-        target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_stake_coin`,
-        arguments: [
-          { name: "sui_system_state", value: "0x5" },
+      // 根据 coinType 处理不同的逻辑
+      if (coinConfig.coinType === "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL") {
+        // 处理 HAWAL 特殊情况
+        const moveCall = {
+          target: `0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::walstaking::request_stake_coin`,
+          arguments: [
+            { name: "staking", value: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904" },
+            { name: "staking", value: "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b"},
+            { name: "coin", value: amount },
+            { name: "id", value: "0x0000000000000000000000000000000000000000000000000000000000000000" },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        if (!debug) {
+          debugLog(`HAWAL stake move call:`, moveCall)
+        }
 
-          {
-            name: "staking",
-            value: HAEDAL.HAEDAL_STAKING_ID,
-          },
-          { name: "coin", value: amount },
-          {
-            name: "address",
-            value:
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object("0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904"),
+            tx.object("0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b"),
+            coin,
+            tx.object("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
+
+        return (debug
+          ? [sCoin, moveCallInfos]
+          : sCoin) as unknown as MintSCoinResult<T>
+      } else {
+        const moveCall = {
+          target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_stake_coin`,
+          arguments: [
+            { name: "sui_system_state", value: "0x5" },
+            {
+              name: "staking",
+              value: HAEDAL.HAEDAL_STAKING_ID,
+            },
+            { name: "coin", value: amount },
+            {
+              name: "address",
+              value:
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(moveCall)
+        if (!debug) {
+          debugLog(`Haedal stake move call:`, moveCall)
+        }
+
+        const [sCoin] = tx.moveCall({
+          target: moveCall.target,
+          arguments: [
+            tx.object(
+              "0x0000000000000000000000000000000000000000000000000000000000000005",
+            ),
+            tx.object(HAEDAL.HAEDAL_STAKING_ID),
+            coin,
+            tx.object(
               "0x0000000000000000000000000000000000000000000000000000000000000000",
-          },
-        ],
-        typeArguments: [],
-      }
-      moveCallInfos.push(moveCall)
-      if (!debug) {
-        debugLog(`Haedal stake move call:`, moveCall)
-      }
+            ),
+          ],
+          typeArguments: moveCall.typeArguments,
+        })
 
-      const [sCoin] = tx.moveCall({
-        target: moveCall.target,
-        arguments: [
-          tx.object(
-            "0x0000000000000000000000000000000000000000000000000000000000000005",
-          ),
-          tx.object(HAEDAL.HAEDAL_STAKING_ID),
-          coin,
-          tx.object(
-            "0x0000000000000000000000000000000000000000000000000000000000000000",
-          ),
-        ],
-        typeArguments: moveCall.typeArguments,
-      })
-
-      return (debug
-        ? [sCoin, moveCallInfos]
-        : sCoin) as unknown as MintSCoinResult<T>
+        return (debug
+          ? [sCoin, moveCallInfos]
+          : sCoin) as unknown as MintSCoinResult<T>
+      }
     }
     case "AlphaFi": {
       moveCall = {
