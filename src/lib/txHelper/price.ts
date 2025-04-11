@@ -42,8 +42,8 @@ export const getPriceVoucher = <T extends boolean = true>(
           { name: "sy_state", value: coinConfig.syStateId },
         ],
         typeArguments: [
-          coinConfig.coinType,
           coinConfig.syCoinType,
+          coinConfig.coinType,
         ],
       }
       if (!returnDebugInfo) {

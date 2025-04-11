@@ -9,6 +9,7 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { depositSyCoin, initPyPosition, splitCoinHelper } from "@/lib/txHelper"
 import { getPriceVoucher } from "@/lib/txHelper/price"
 import { mintSCoin } from "@/lib/txHelper/coin"
+import { debugLog } from "@/config"
 
 interface SeedLiquidityParams {
   addAmount: string
@@ -145,6 +146,7 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
       }
 
       if (result?.error) {
+        debugLog("seedLiquidityDryRun error", debugInfo)
         throw new ContractError(result.error, debugInfo)
       }
 
