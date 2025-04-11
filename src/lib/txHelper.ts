@@ -101,56 +101,11 @@ export const burnSCoin = <T extends boolean = false>(
     }
     case "Haedal": {
       // 检查是否为 HAWAL 币种
-      if (coinConfig.coinType === "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL") {
-        // 首先获得 UnstakeTicket
-        const unstakeTicketMoveCall = {
-          target: `0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::walstaking::request_unstake_ticket`,
-          arguments: [
-            { name: "staking", value: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904" },
-            { name: "hawal_coin", value: "sCoin" },
-          ],
-          typeArguments: [],
-        }
-        moveCallInfos.push(unstakeTicketMoveCall)
-        debugLog(`HAWAL request_unstake_ticket move call:`, unstakeTicketMoveCall)
-
-        const [unstakeTicket] = tx.moveCall({
-          target: unstakeTicketMoveCall.target,
-          arguments: [
-            tx.object("0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904"),
-            sCoin,
-          ],
-          typeArguments: [],
-        })
-
-        // 然后用 UnstakeTicket 调用 withdraw_stake 获取 WAL
-        const withdrawStakeMoveCall = {
-          target: `0xfdc88f7d7cf30afab2f82e8380d11ee8f70efb90e863d1de8616fae1bb09ea77::staking::withdraw_stake`,
-          arguments: [
-            { name: "system", value: "0xfdc88f7d7cf30afab2f82e8380d11ee8f70efb90e863d1de8616fae1bb09ea77" },
-            { name: "haedal_staking", value: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904" },
-            { name: "validator_staking", value: "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b" },
-            { name: "clock", value: "0x6" },
-            { name: "unstake_ticket", value: "unstakeTicket" },
-          ],
-          typeArguments: [],
-        }
-        moveCallInfos.push(withdrawStakeMoveCall)
-        debugLog(`HAWAL withdraw_stake move call:`, withdrawStakeMoveCall)
-
-        const [coin] = tx.moveCall({
-          target: withdrawStakeMoveCall.target,
-          arguments: [
-            tx.object("0xfdc88f7d7cf30afab2f82e8380d11ee8f70efb90e863d1de8616fae1bb09ea77"),
-            tx.object("0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904"),
-            tx.object("0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b"),
-            tx.object("0x6"),
-            unstakeTicket,
-          ],
-          typeArguments: withdrawStakeMoveCall.typeArguments,
-        })
-
-        underlyingCoin = coin;
+      if (
+        coinConfig.coinType ===
+        "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL"
+      ) {
+        throw new Error("Underlying protocol error, try to withdraw to HAWAL.")
       } else {
         // 原有的 HASUI 处理逻辑
         const unstakeMoveCall = {
@@ -178,9 +133,9 @@ export const burnSCoin = <T extends boolean = false>(
           typeArguments: unstakeMoveCall.typeArguments,
         })
 
-        underlyingCoin = coin;
+        underlyingCoin = coin
       }
-      break;
+      break
     }
     case "Strater": {
       // Convert sCoin to balance first
