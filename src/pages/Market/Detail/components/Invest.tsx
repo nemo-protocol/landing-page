@@ -379,10 +379,11 @@ export default function Invest() {
         const [splitCoin] =
           tokenType === 0
             ? [
-                mintSCoin({
+                await mintSCoin({
                   tx,
-                  coinConfig,
+                  address,
                   coinData,
+                  coinConfig,
                   amount: actualSwapAmount,
                 }),
               ]

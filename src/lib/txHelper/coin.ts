@@ -13,6 +13,7 @@ import {
   VALIDATORS,
   getTreasury,
 } from "../constants"
+import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 
 type MintSCoinResult<T extends boolean> = T extends true
   ? [TransactionArgument, MoveCallInfo[]]
@@ -23,6 +24,7 @@ type MintSCoinParams<T extends boolean = false> = {
   coinConfig: CoinConfig
   coinData: CoinData[]
   amount: string
+  address: string
   debug?: T
 }
 
@@ -32,6 +34,7 @@ type MintMultiSCoinResult<T extends boolean> = T extends true
 
 type MintMultiSCoinParams<T extends boolean = false> = {
   amount: string
+  address: string
   tx: Transaction
   coinData: CoinData[]
   coinConfig: CoinConfig
@@ -39,20 +42,22 @@ type MintMultiSCoinParams<T extends boolean = false> = {
   debug?: T
 }
 
-export const mintMultiSCoin = <T extends boolean = false>({
+export const mintMultiSCoin = async <T extends boolean = false>({
   tx,
   amount,
+  address,
   coinData,
   coinConfig,
   splitAmounts,
   debug = false as T,
-}: MintMultiSCoinParams<T>): MintMultiSCoinResult<T> => {
+}: MintMultiSCoinParams<T>): Promise<MintMultiSCoinResult<T>> => {
   console.log("mintMultiSCoin splitAmounts", splitAmounts)
 
-  const mintResult = mintSCoin({
+  const mintResult = await mintSCoin({
     tx,
     debug,
     amount,
+    address,
     coinData,
     coinConfig,
   })
@@ -94,13 +99,14 @@ export const mintMultiSCoin = <T extends boolean = false>({
     : coins) as unknown as MintMultiSCoinResult<T>
 }
 
-export const mintSCoin = <T extends boolean = false>({
+export const mintSCoin = async <T extends boolean = false>({
   tx,
   amount,
+  address,
   coinData,
   coinConfig,
   debug = false as T,
-}: MintSCoinParams<T>): MintSCoinResult<T> => {
+}: MintSCoinParams<T>): Promise<MintSCoinResult<T>> => {
   let moveCall: MoveCallInfo
   const moveCallInfos: MoveCallInfo[] = []
 
@@ -334,15 +340,30 @@ export const mintSCoin = <T extends boolean = false>({
     }
     case "Haedal": {
       // 根据 coinType 处理不同的逻辑
-      if (coinConfig.coinType === "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL") {
+      if (
+        coinConfig.coinType ===
+        "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL"
+      ) {
         // 处理 HAWAL 特殊情况
         const moveCall = {
           target: `0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::walstaking::request_stake_coin`,
           arguments: [
-            { name: "staking", value: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904" },
-            { name: "staking", value: "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b"},
+            {
+              name: "staking",
+              value:
+                "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+            },
+            {
+              name: "staking",
+              value:
+                "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b",
+            },
             { name: "coin", value: amount },
-            { name: "id", value: "0x0000000000000000000000000000000000000000000000000000000000000000" },
+            {
+              name: "id",
+              value:
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            },
           ],
           typeArguments: [],
         }
@@ -354,10 +375,16 @@ export const mintSCoin = <T extends boolean = false>({
         const [sCoin] = tx.moveCall({
           target: moveCall.target,
           arguments: [
-            tx.object("0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904"),
-            tx.object("0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b"),
+            tx.object(
+              "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+            ),
+            tx.object(
+              "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b",
+            ),
             coin,
-            tx.object("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            tx.object(
+              "0x0000000000000000000000000000000000000000000000000000000000000000",
+            ),
           ],
           typeArguments: moveCall.typeArguments,
         })
@@ -539,20 +566,26 @@ export const mintSCoin = <T extends boolean = false>({
         arguments: [
           {
             name: "blizzard_av",
-            value: "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+            value:
+              "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
           },
         ],
         typeArguments: [],
       }
       moveCallInfos.push(getAllowedVersionsMoveCall)
       if (!debug) {
-        debugLog(`Winter get_allowed_versions move call:`, getAllowedVersionsMoveCall)
+        debugLog(
+          `Winter get_allowed_versions move call:`,
+          getAllowedVersionsMoveCall,
+        )
       }
 
       const [allowedVersions] = tx.moveCall({
         target: getAllowedVersionsMoveCall.target,
         arguments: [
-          tx.object("0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a"),
+          tx.object(
+            "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+          ),
         ],
         typeArguments: getAllowedVersionsMoveCall.typeArguments,
       })
@@ -563,11 +596,13 @@ export const mintSCoin = <T extends boolean = false>({
         arguments: [
           {
             name: "blizzard_staking",
-            value: "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
+            value:
+              "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
           },
           {
             name: "staking",
-            value: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+            value:
+              "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
           },
           {
             name: "coin",
@@ -575,7 +610,8 @@ export const mintSCoin = <T extends boolean = false>({
           },
           {
             name: "id",
-            value: "0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb",
+            value:
+              "0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb",
           },
           {
             name: "allowed_versions",
@@ -592,14 +628,61 @@ export const mintSCoin = <T extends boolean = false>({
       const [sCoin] = tx.moveCall({
         target: mintMoveCall.target,
         arguments: [
-          tx.object("0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d"),
-          tx.object("0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904"),
+          tx.object(
+            "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
+          ),
+          tx.object(
+            "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+          ),
           coin,
-          tx.object("0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb"),
+          tx.object(
+            "0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb",
+          ),
           allowedVersions,
         ],
         typeArguments: mintMoveCall.typeArguments,
       })
+
+      return (debug
+        ? [sCoin, moveCallInfos]
+        : sCoin) as unknown as MintSCoinResult<T>
+    }
+
+    case "Cetus": {
+      const sdk = initCetusVaultsSDK({
+        network: "mainnet",
+      })
+
+      const slippage = 0.05
+      sdk.senderAddress = address
+
+      const depositResult = await sdk.Vaults.calculateDepositAmount({
+        vault_id:
+          "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+        fix_amount_a: false,
+        input_amount: amount,
+        slippage: Number(slippage),
+        side: InputType.OneSide,
+      })
+
+      const [splitCoin] = splitCoinHelper(
+        tx,
+        coinData,
+        [amount],
+        "0x2::sui::SUI",
+      )
+
+      const sCoin = await sdk.Vaults.deposit(
+        {
+          coin_object_b: splitCoin,
+          vault_id:
+            "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+          slippage: Number(slippage),
+          deposit_result: depositResult,
+          return_lp_token: true,
+        },
+        tx,
+      )
 
       return (debug
         ? [sCoin, moveCallInfos]

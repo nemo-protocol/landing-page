@@ -67,12 +67,13 @@ export default function useSeedLiquidityDryRun<T extends boolean = false>(
 
       const [splitCoin] =
         tokenType === 0
-          ? mintSCoin({
+          ? await mintSCoin({
               tx,
-              coinConfig,
+              address,
               coinData,
-              amount: addAmount,
+              coinConfig,
               debug: true,
+              amount: addAmount,
             })
           : splitCoinHelper(tx, coinData, [addAmount], coinConfig.coinType)
 

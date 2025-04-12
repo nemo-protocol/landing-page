@@ -47,6 +47,7 @@ import {
   SelectContent,
 } from "@/components/ui/select"
 import { mintSCoin } from "@/lib/txHelper/coin"
+import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -307,10 +308,11 @@ export default function SingleCoin() {
     const [splitCoin] =
       tokenType === 0
         ? [
-            mintSCoin({
+            await mintSCoin({
               tx,
-              coinConfig,
+              address,
               coinData,
+              coinConfig,
               amount: addAmount,
             }),
           ]
@@ -355,6 +357,57 @@ export default function SingleCoin() {
     tx.transferObjects([lp], tx.pure.address(address))
   }
 
+  async function test() {
+    if (!address) {
+      throw new Error("Please connect wallet")
+    }
+
+    if (!coinData?.length) {
+      throw new Error("Insufficient balance")
+    }
+
+    const sdk = initCetusVaultsSDK({
+      network: "mainnet",
+      // fullNodeUrl: "/sui-api",
+    })
+    const tx = new Transaction()
+    const amount = "5000000000"
+
+    const slippage = 0.05
+    sdk.senderAddress = address
+
+    const depositResult = await sdk.Vaults.calculateDepositAmount({
+      vault_id:
+        "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+      fix_amount_a: false,
+      input_amount: amount,
+      slippage: Number(slippage),
+      side: InputType.OneSide,
+    })
+
+    const [splitCoin] = splitCoinHelper(tx, coinData, [amount], "0x2::sui::SUI")
+
+    const sCoin = (await sdk.Vaults.deposit(
+      {
+        coin_object_b: splitCoin,
+        vault_id:
+          "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+        slippage: Number(slippage),
+        deposit_result: depositResult,
+        return_lp_token: true,
+      },
+      tx,
+    )) as TransactionArgument
+
+    tx.transferObjects([sCoin], address)
+
+    const res = await signAndExecuteTransaction({
+      transaction: tx,
+    })
+
+    console.log("res", res)
+  }
+
   async function add() {
     if (
       decimal &&
@@ -374,6 +427,8 @@ export default function SingleCoin() {
         const addAmount = new Decimal(addValue).mul(10 ** decimal).toFixed(0)
 
         const tx = new Transaction()
+
+        // tx.setGasBudget(1e8)
 
         let pyPosition
         let created = false
@@ -488,7 +543,7 @@ export default function SingleCoin() {
           {/* Add Liquidity Panel */}
           <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07]">
             <div className="flex flex-col items-center gap-y-3 sm:gap-y-4">
-              <h2 className="text-center text-base sm:text-xl">
+              <h2 className="text-center text-base sm:text-xl" onClick={test}>
                 Add Liquidity
               </h2>
 

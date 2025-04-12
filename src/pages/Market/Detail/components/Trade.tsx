@@ -329,7 +329,15 @@ export default function Trade() {
 
         const [splitCoin] =
           tokenType === 0
-            ? [mintSCoin({ tx, coinConfig, coinData, amount: swapAmount })]
+            ? [
+                await mintSCoin({
+                  tx,
+                  address,
+                  coinData,
+                  coinConfig,
+                  amount: swapAmount,
+                }),
+              ]
             : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
         const syCoin = depositSyCoin(tx, coinConfig, splitCoin, coinType)

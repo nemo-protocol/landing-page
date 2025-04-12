@@ -5,11 +5,7 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchPyPosition from "../useFetchPyPosition"
-import {
-  initPyPosition,
-  splitCoinHelper,
-  depositSyCoin,
-} from "@/lib/txHelper"
+import { initPyPosition, splitCoinHelper, depositSyCoin } from "@/lib/txHelper"
 import { CoinData } from "@/types"
 import { getPriceVoucher } from "@/lib/txHelper/price"
 import { mintSCoin } from "@/lib/txHelper/coin"
@@ -54,8 +50,9 @@ export default function useSwapExactSyForYtDryRun(
 
       const [splitCoin] =
         tokenType === 0
-          ? mintSCoin({
+          ? await mintSCoin({
               tx,
+              address,
               coinData,
               coinConfig,
               debug: true,
