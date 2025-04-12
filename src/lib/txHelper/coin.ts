@@ -532,6 +532,79 @@ export const mintSCoin = <T extends boolean = false>({
         ? [sCoin, moveCallInfos]
         : sCoin) as unknown as MintSCoinResult<T>
     }
+    case "Winter": {
+      // 首先调用get_allowed_versions获取版本信息
+      const getAllowedVersionsMoveCall = {
+        target: `0x29ba7f7bc53e776f27a6d1289555ded2f407b4b1a799224f06b26addbcd1c33d::blizzard_allowed_versions::get_allowed_versions`,
+        arguments: [
+          {
+            name: "blizzard_av",
+            value: "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+          },
+        ],
+        typeArguments: [],
+      }
+      moveCallInfos.push(getAllowedVersionsMoveCall)
+      if (!debug) {
+        debugLog(`Winter get_allowed_versions move call:`, getAllowedVersionsMoveCall)
+      }
+
+      const [allowedVersions] = tx.moveCall({
+        target: getAllowedVersionsMoveCall.target,
+        arguments: [
+          tx.object("0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a"),
+        ],
+        typeArguments: getAllowedVersionsMoveCall.typeArguments,
+      })
+
+      // 然后调用blizzard_protocol::mint
+      const mintMoveCall = {
+        target: `0x29ba7f7bc53e776f27a6d1289555ded2f407b4b1a799224f06b26addbcd1c33d::blizzard_protocol::mint`,
+        arguments: [
+          {
+            name: "blizzard_staking",
+            value: "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
+          },
+          {
+            name: "staking",
+            value: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+          },
+          {
+            name: "coin",
+            value: amount,
+          },
+          {
+            name: "id",
+            value: "0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb",
+          },
+          {
+            name: "allowed_versions",
+            value: "allowedVersions",
+          },
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(mintMoveCall)
+      if (!debug) {
+        debugLog(`Winter mint move call:`, mintMoveCall)
+      }
+
+      const [sCoin] = tx.moveCall({
+        target: mintMoveCall.target,
+        arguments: [
+          tx.object("0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d"),
+          tx.object("0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904"),
+          coin,
+          tx.object("0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb"),
+          allowedVersions,
+        ],
+        typeArguments: mintMoveCall.typeArguments,
+      })
+
+      return (debug
+        ? [sCoin, moveCallInfos]
+        : sCoin) as unknown as MintSCoinResult<T>
+    }
     default:
       throw new Error(
         "mintSCoin Unsupported underlying protocol: " +

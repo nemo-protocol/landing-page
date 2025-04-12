@@ -10,6 +10,7 @@ import {
   AFTERMATH,
   SPRING_SUI,
   SUPER_SUI,
+  WWAL,
 } from "../constants"
 
 // FIXME: catch error and return moveCall
@@ -347,6 +348,47 @@ export const getPriceVoucher = <T extends boolean = true>(
       if (!returnDebugInfo) {
         debugLog(
           `[${caller}] get_price_voucher_from_spring move call:`,
+          moveCall,
+        )
+      }
+      const [priceVoucher] = tx.moveCall({
+        target: moveCall.target,
+        arguments: moveCall.arguments.map((arg) => tx.object(arg.value)),
+        typeArguments: moveCall.typeArguments,
+      })
+      return (returnDebugInfo
+        ? [priceVoucher, moveCall]
+        : priceVoucher) as unknown as T extends true
+        ? [TransactionArgument, MoveCallInfo]
+        : TransactionArgument
+    }
+    case "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL": {
+      moveCall = {
+        target: `${coinConfig.oraclePackageId}::haedal::get_price_voucher_from_blizzard`,
+        arguments: [
+          {
+            name: "price_oracle_config",
+            value: coinConfig.priceOracleConfigId,
+          },
+          {
+            name: "price_ticket_cap",
+            value: coinConfig.oracleTicket,
+          },
+          {
+            name: "blizzard_staking",
+            value: WWAL.BLIZZARD_STAKING,
+          },
+          {
+            name: "walrus_staking",
+            value: WWAL.WALRUS_STAKING,
+          },
+          { name: "sy_state", value: coinConfig.syStateId },
+        ],
+        typeArguments: [coinConfig.syCoinType, coinConfig.coinType],
+      }
+      if (!returnDebugInfo) {
+        debugLog(
+          `[${caller}] get_price_voucher_from_blizzard move call:`,
           moveCall,
         )
       }
