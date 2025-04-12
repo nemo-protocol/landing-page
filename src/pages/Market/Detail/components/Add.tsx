@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/select"
 import { mintSCoin } from "@/lib/txHelper/coin"
 import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
+import useMintSCoinDryRun from "@/hooks/dryRun/useMintSCoinDryRun"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -357,6 +358,8 @@ export default function SingleCoin() {
     tx.transferObjects([lp], tx.pure.address(address))
   }
 
+  const { mutateAsync: mintCoin } = useMintSCoinDryRun(coinConfig, false)
+
   async function test() {
     if (!address) {
       throw new Error("Please connect wallet")
@@ -372,6 +375,8 @@ export default function SingleCoin() {
     })
     const tx = new Transaction()
     const amount = "5000000000"
+
+    const { coinAmount } = await mintCoin({ amount, coinData })
 
     const slippage = 0.05
     sdk.senderAddress = address
@@ -399,7 +404,12 @@ export default function SingleCoin() {
       tx,
     )) as TransactionArgument
 
-    tx.transferObjects([sCoin], address)
+    const splitCoinForSy = tx.splitCoins(sCoin, [
+      new Decimal(1).div(3).mul(coinAmount).toFixed(0, Decimal.ROUND_HALF_UP),
+      new Decimal(2).div(3).mul(coinAmount).toFixed(0, Decimal.ROUND_HALF_UP),
+    ])
+
+    tx.transferObjects([...splitCoinForSy, sCoin], address)
 
     const res = await signAndExecuteTransaction({
       transaction: tx,
