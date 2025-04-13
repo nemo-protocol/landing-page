@@ -5,16 +5,12 @@ import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo } from "../../types"
 import { ContractError } from "../../types"
 import type { PyPosition } from "../../types"
-import {
-  initPyPosition,
-  swapExactPtForSy,
-  redeemSyCoin,
-  burnSCoin,
-} from "@/lib/txHelper"
+import { initPyPosition, swapExactPtForSy, redeemSyCoin } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { burnSCoin } from "@/lib/txHelper/coin"
 
 interface SellPtParams {
   minSyOut: string
@@ -83,7 +79,12 @@ export default function useSellPtDryRun<T extends boolean = false>(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
-        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+        const underlyingCoin = burnSCoin({
+          tx,
+          coinConfig,
+          sCoin: yieldToken,
+          address,
+        })
         tx.moveCall({
           target: `0x2::coin::value`,
           arguments: [underlyingCoin],

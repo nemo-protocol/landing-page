@@ -12,6 +12,7 @@ import {
   AFTERMATH,
   VALIDATORS,
   getTreasury,
+  WINTER,
 } from "../constants"
 
 type MintSCoinResult<T extends boolean> = T extends true
@@ -334,15 +335,30 @@ export const mintSCoin = <T extends boolean = false>({
     }
     case "Haedal": {
       // 根据 coinType 处理不同的逻辑
-      if (coinConfig.coinType === "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL") {
+      if (
+        coinConfig.coinType ===
+        "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL"
+      ) {
         // 处理 HAWAL 特殊情况
         const moveCall = {
           target: `0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::walstaking::request_stake_coin`,
           arguments: [
-            { name: "staking", value: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904" },
-            { name: "staking", value: "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b"},
+            {
+              name: "staking",
+              value:
+                "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+            },
+            {
+              name: "staking",
+              value:
+                "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b",
+            },
             { name: "coin", value: amount },
-            { name: "id", value: "0x0000000000000000000000000000000000000000000000000000000000000000" },
+            {
+              name: "id",
+              value:
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            },
           ],
           typeArguments: [],
         }
@@ -354,10 +370,16 @@ export const mintSCoin = <T extends boolean = false>({
         const [sCoin] = tx.moveCall({
           target: moveCall.target,
           arguments: [
-            tx.object("0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904"),
-            tx.object("0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b"),
+            tx.object(
+              "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+            ),
+            tx.object(
+              "0x9e5f6537be1a5b658ec7eed23160df0b28c799563f6c41e9becc9ad633cb592b",
+            ),
             coin,
-            tx.object("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            tx.object(
+              "0x0000000000000000000000000000000000000000000000000000000000000000",
+            ),
           ],
           typeArguments: moveCall.typeArguments,
         })
@@ -539,20 +561,26 @@ export const mintSCoin = <T extends boolean = false>({
         arguments: [
           {
             name: "blizzard_av",
-            value: "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+            value:
+              "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
           },
         ],
         typeArguments: [],
       }
       moveCallInfos.push(getAllowedVersionsMoveCall)
       if (!debug) {
-        debugLog(`Winter get_allowed_versions move call:`, getAllowedVersionsMoveCall)
+        debugLog(
+          `Winter get_allowed_versions move call:`,
+          getAllowedVersionsMoveCall,
+        )
       }
 
       const [allowedVersions] = tx.moveCall({
         target: getAllowedVersionsMoveCall.target,
         arguments: [
-          tx.object("0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a"),
+          tx.object(
+            "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+          ),
         ],
         typeArguments: getAllowedVersionsMoveCall.typeArguments,
       })
@@ -563,11 +591,13 @@ export const mintSCoin = <T extends boolean = false>({
         arguments: [
           {
             name: "blizzard_staking",
-            value: "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
+            value:
+              "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
           },
           {
             name: "staking",
-            value: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+            value:
+              "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
           },
           {
             name: "coin",
@@ -575,7 +605,8 @@ export const mintSCoin = <T extends boolean = false>({
           },
           {
             name: "id",
-            value: "0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb",
+            value:
+              "0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb",
           },
           {
             name: "allowed_versions",
@@ -592,10 +623,16 @@ export const mintSCoin = <T extends boolean = false>({
       const [sCoin] = tx.moveCall({
         target: mintMoveCall.target,
         arguments: [
-          tx.object("0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d"),
-          tx.object("0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904"),
+          tx.object(
+            "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
+          ),
+          tx.object(
+            "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+          ),
           coin,
-          tx.object("0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb"),
+          tx.object(
+            "0xe2b5df873dbcddfea64dcd16f0b581e3b9893becf991649dacc9541895c898cb",
+          ),
           allowedVersions,
         ],
         typeArguments: mintMoveCall.typeArguments,
@@ -640,4 +677,609 @@ export const getCoinValue = <T extends boolean = false>(
   })
 
   return (debug ? moveCallInfo : undefined) as unknown as GetCoinValueResult<T>
+}
+
+type BurnSCoinResult<T extends boolean> = T extends true
+  ? [TransactionArgument, MoveCallInfo[]]
+  : TransactionArgument
+
+type BurnSCoinParams<T extends boolean = false> = {
+  debug?: T
+  tx: Transaction
+  address: string
+  coinConfig: CoinConfig
+  sCoin: TransactionArgument
+}
+
+export const burnSCoin = <T extends boolean = false>({
+  tx,
+  sCoin,
+  address,
+  coinConfig,
+  debug = false as T,
+}: BurnSCoinParams<T>): BurnSCoinResult<T> => {
+  const moveCallInfos: MoveCallInfo[] = []
+  let underlyingCoin: TransactionArgument
+
+  switch (coinConfig.underlyingProtocol) {
+    case "Scallop": {
+      const treasury = getTreasury(coinConfig.coinType)
+
+      const burnSCoinMoveCall = {
+        target: `0x80ca577876dec91ae6d22090e56c39bc60dce9086ab0729930c6900bc4162b4c::s_coin_converter::burn_s_coin`,
+        arguments: [
+          { name: "treasury", value: treasury },
+          { name: "s_coin", value: "sCoin" },
+        ],
+        typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
+      }
+      moveCallInfos.push(burnSCoinMoveCall)
+      if (!debug) {
+        debugLog(`burn_s_coin move call:`, burnSCoinMoveCall)
+      }
+
+      const [marketCoin] = tx.moveCall({
+        target: burnSCoinMoveCall.target,
+        arguments: [tx.object(treasury), sCoin],
+        typeArguments: burnSCoinMoveCall.typeArguments,
+      })
+
+      const redeemMoveCall = {
+        target: `0x83bbe0b3985c5e3857803e2678899b03f3c4a31be75006ab03faf268c014ce41::redeem::redeem`,
+        arguments: [
+          { name: "version", value: SCALLOP.VERSION_OBJECT },
+          { name: "market", value: SCALLOP.MARKET_OBJECT },
+          { name: "market_coin", value: "marketCoin" },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.underlyingCoinType],
+      }
+      moveCallInfos.push(redeemMoveCall)
+      if (!debug) {
+        debugLog(`scallop redeem move call:`, redeemMoveCall)
+      }
+
+      const [coin] = tx.moveCall({
+        target: redeemMoveCall.target,
+        arguments: [
+          tx.object(SCALLOP.VERSION_OBJECT),
+          tx.object(SCALLOP.MARKET_OBJECT),
+          marketCoin,
+          tx.object("0x6"),
+        ],
+        typeArguments: redeemMoveCall.typeArguments,
+      })
+
+      underlyingCoin = coin
+      break
+    }
+    case "Haedal": {
+      // 检查是否为 HAWAL 币种
+      if (
+        coinConfig.coinType ===
+        "0x8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470::hawal::HAWAL"
+      ) {
+        throw new Error("Underlying protocol error, try to withdraw to HAWAL.")
+      } else {
+        // 原有的 HASUI 处理逻辑
+        const unstakeMoveCall = {
+          target: `0x3f45767c1aa95b25422f675800f02d8a813ec793a00b60667d071a77ba7178a2::staking::request_unstake_instant_coin`,
+          arguments: [
+            { name: "sui_system_state", value: "0x5" },
+            { name: "staking", value: HAEDAL.HAEDAL_STAKING_ID },
+            { name: "s_coin", value: "sCoin" },
+          ],
+          typeArguments: [],
+        }
+        moveCallInfos.push(unstakeMoveCall)
+        if (!debug) {
+          debugLog(
+            `haedal request_unstake_instant_coin move call:`,
+            unstakeMoveCall,
+          )
+        }
+
+        const [coin] = tx.moveCall({
+          target: unstakeMoveCall.target,
+          arguments: [
+            tx.object("0x5"),
+            tx.object(HAEDAL.HAEDAL_STAKING_ID),
+            sCoin,
+          ],
+          typeArguments: unstakeMoveCall.typeArguments,
+        })
+
+        underlyingCoin = coin
+      }
+      break
+    }
+    case "Strater": {
+      // Convert sCoin to balance first
+      const toBalanceMoveCall = {
+        target: `0x2::coin::into_balance`,
+        arguments: [{ name: "coin", value: "sCoin" }],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(toBalanceMoveCall)
+      if (!debug) {
+        debugLog(`coin::into_balance move call:`, toBalanceMoveCall)
+      }
+
+      const [sbsBalance] = tx.moveCall({
+        target: toBalanceMoveCall.target,
+        arguments: [sCoin],
+        typeArguments: toBalanceMoveCall.typeArguments,
+      })
+
+      // Call withdraw to get a withdraw ticket
+      const withdrawMoveCall = {
+        target: `0x2a721777dc1fcf7cda19492ad7c2272ee284214652bde3e9740e2f49c3bff457::vault::withdraw`,
+        arguments: [
+          {
+            name: "bucket_vault",
+            value:
+              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          },
+          {
+            name: "balance",
+            value: "sbsBalance",
+          },
+          { name: "clock", value: "0x6" },
+        ],
+        typeArguments: [coinConfig.underlyingCoinType, coinConfig.coinType],
+      }
+      moveCallInfos.push(withdrawMoveCall)
+      if (!debug) {
+        debugLog(`sbuck_saving_vault::withdraw move call:`, withdrawMoveCall)
+      }
+
+      const [withdrawTicket] = tx.moveCall({
+        target: withdrawMoveCall.target,
+        arguments: [
+          tx.object(
+            "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          ),
+          sbsBalance,
+          tx.object("0x6"),
+        ],
+        typeArguments: withdrawMoveCall.typeArguments,
+      })
+
+      // Redeem the withdraw ticket to get the underlying balance
+      const redeemTicketMoveCall = {
+        target: `0x2a721777dc1fcf7cda19492ad7c2272ee284214652bde3e9740e2f49c3bff457::vault::redeem_withdraw_ticket`,
+        arguments: [
+          {
+            name: "bucket_vault",
+            value:
+              "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          },
+          {
+            name: "withdraw_ticket",
+            value: "withdrawTicket",
+          },
+        ],
+        typeArguments: [coinConfig.underlyingCoinType, coinConfig.coinType],
+      }
+      moveCallInfos.push(redeemTicketMoveCall)
+      if (!debug) {
+        debugLog(
+          `sbuck_saving_vault::redeem_withdraw_ticket move call:`,
+          redeemTicketMoveCall,
+        )
+      }
+
+      const [underlyingBalance] = tx.moveCall({
+        target: redeemTicketMoveCall.target,
+        arguments: [
+          tx.object(
+            "0xe83e455a9e99884c086c8c79c13367e7a865de1f953e75bcf3e529cdf03c6224",
+          ),
+          withdrawTicket,
+        ],
+        typeArguments: redeemTicketMoveCall.typeArguments,
+      })
+
+      // Convert balance back to coin
+      const fromBalanceMoveCall = {
+        target: `0x2::coin::from_balance`,
+        arguments: [{ name: "balance", value: "underlyingBalance" }],
+        typeArguments: [coinConfig.underlyingCoinType],
+      }
+      moveCallInfos.push(fromBalanceMoveCall)
+      if (!debug) {
+        debugLog(`coin::from_balance move call:`, fromBalanceMoveCall)
+      }
+
+      const [coin] = tx.moveCall({
+        target: fromBalanceMoveCall.target,
+        arguments: [underlyingBalance],
+        typeArguments: fromBalanceMoveCall.typeArguments,
+      })
+
+      underlyingCoin = coin
+      break
+    }
+    case "AlphaFi": {
+      const redeemMoveCall = {
+        target: `${ALPAHFI.PACKAGE_ID}::liquid_staking::redeem`,
+        arguments: [
+          { name: "liquid_staking_info", value: ALPAHFI.LIQUID_STAKING_INFO },
+          { name: "coin", value: "sCoin" },
+          { name: "sui_system_state", value: "0x5" },
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(redeemMoveCall)
+      if (!debug) {
+        debugLog(`alphaFi redeem move call:`, redeemMoveCall)
+      }
+
+      const [coin] = tx.moveCall({
+        target: redeemMoveCall.target,
+        arguments: [
+          tx.object(ALPAHFI.LIQUID_STAKING_INFO),
+          sCoin,
+          tx.object("0x5"),
+        ],
+        typeArguments: redeemMoveCall.typeArguments,
+      })
+
+      underlyingCoin = coin
+      break
+    }
+    case "Aftermath": {
+      const burnMoveCall = {
+        target: `0x7f6ce7ade63857c4fd16ef7783fed2dfc4d7fb7e40615abdb653030b76aef0c6::staked_sui_vault::request_unstake_atomic`,
+        arguments: [
+          { name: "staked_sui_vault", value: AFTERMATH.STAKED_SUI_VAULT },
+          { name: "safe", value: AFTERMATH.SAFE },
+          { name: "referral_vault", value: AFTERMATH.REFERRAL_VAULT },
+          { name: "treasury", value: AFTERMATH.TREASURY },
+          { name: "s_coin", value: "sCoin" },
+        ],
+        typeArguments: [],
+      }
+      moveCallInfos.push(burnMoveCall)
+      if (!debug) {
+        debugLog(`aftermath request_unstake_atomic move call:`, burnMoveCall)
+      }
+
+      const [coin] = tx.moveCall({
+        target: burnMoveCall.target,
+        arguments: [
+          tx.object(AFTERMATH.STAKED_SUI_VAULT),
+          tx.object(AFTERMATH.SAFE),
+          tx.object(AFTERMATH.REFERRAL_VAULT),
+          tx.object(AFTERMATH.TREASURY),
+          sCoin,
+        ],
+        typeArguments: burnMoveCall.typeArguments,
+      })
+
+      underlyingCoin = coin
+      break
+    }
+    case "Volo": {
+      const mintTicketMoveCall = {
+        target: `0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::native_pool::mint_ticket_non_entry`,
+        arguments: [
+          { name: "native_pool", value: VOLO.NATIVE_POOL },
+          { name: "metadata", value: VOLO.METADATA },
+          { name: "cert_coin", value: "sCoin" },
+        ],
+        typeArguments: [],
+      }
+      moveCallInfos.push(mintTicketMoveCall)
+      if (!debug) {
+        debugLog(`volo mint_ticket_non_entry move call:`, mintTicketMoveCall)
+      }
+
+      const [unstakeTicket] = tx.moveCall({
+        target: mintTicketMoveCall.target,
+        arguments: [
+          tx.object(VOLO.NATIVE_POOL),
+          tx.object(VOLO.METADATA),
+          sCoin,
+        ],
+        typeArguments: mintTicketMoveCall.typeArguments,
+      })
+
+      const burnTicketMoveCall = {
+        target: `0x549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55::native_pool::burn_ticket_non_entry`,
+        arguments: [
+          { name: "native_pool", value: VOLO.NATIVE_POOL },
+          { name: "sui_system_state", value: "0x5" },
+          { name: "unstake_ticket", value: "unstakeTicket" },
+        ],
+        typeArguments: [],
+      }
+      moveCallInfos.push(burnTicketMoveCall)
+      if (!debug) {
+        debugLog(`volo burn_ticket_non_entry move call:`, burnTicketMoveCall)
+      }
+
+      const [coin] = tx.moveCall({
+        target: burnTicketMoveCall.target,
+        arguments: [
+          tx.object(VOLO.NATIVE_POOL),
+          tx.object("0x5"),
+          unstakeTicket,
+        ],
+        typeArguments: burnTicketMoveCall.typeArguments,
+      })
+
+      underlyingCoin = coin
+      break
+    }
+    case "Mstable": {
+      // First, create the withdraw cap
+      const createWithdrawCapMoveCall = {
+        target: `0x8e9aa615cd18d263cfea43d68e2519a2de2d39075756a05f67ae6cee2794ff06::exchange_rate::create_withdraw_cap`,
+        arguments: [
+          {
+            name: "meta_vault_sui_integration",
+            value:
+              "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa",
+          },
+          {
+            name: "vault",
+            value:
+              "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+          },
+          {
+            name: "registry",
+            value:
+              "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
+          },
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(createWithdrawCapMoveCall)
+      if (!debug) {
+        debugLog(
+          `Mstable create_withdraw_cap move call:`,
+          createWithdrawCapMoveCall,
+        )
+      }
+
+      const [withdrawCap] = tx.moveCall({
+        target: createWithdrawCapMoveCall.target,
+        arguments: [
+          tx.object(
+            "0x408618719d06c44a12e9c6f7fdf614a9c2fb79f262932c6f2da7621c68c7bcfa",
+          ),
+          tx.object(
+            "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+          ),
+          tx.object(
+            "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
+          ),
+        ],
+        typeArguments: createWithdrawCapMoveCall.typeArguments,
+      })
+
+      // Next, perform the withdrawal
+      const withdrawMoveCall = {
+        target: `0x74ecdeabc36974da37a3e2052592b2bc2c83e878bbd74690e00816e91f93a505::vault::withdraw`,
+        arguments: [
+          {
+            name: "vault",
+            value:
+              "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+          },
+          {
+            name: "version",
+            value:
+              "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c",
+          },
+          { name: "withdraw_cap", value: "withdrawCap" },
+          { name: "coin", value: "sCoin" },
+          { name: "amount_limit", value: "0" },
+        ],
+        typeArguments: [coinConfig.coinType, coinConfig.underlyingCoinType],
+      }
+      moveCallInfos.push(withdrawMoveCall)
+      if (!debug) {
+        debugLog(`Mstable vault withdraw move call:`, withdrawMoveCall)
+      }
+
+      const [coin] = tx.moveCall({
+        target: withdrawMoveCall.target,
+        arguments: [
+          tx.object(
+            "0x3062285974a5e517c88cf3395923aac788dce74f3640029a01e25d76c4e76f5d",
+          ),
+          tx.object(
+            "0x4696559327b35ff2ab26904e7426a1646312e9c836d5c6cff6709a5ccc30915c",
+          ),
+          withdrawCap,
+          sCoin,
+          tx.pure.u64("0"),
+        ],
+        typeArguments: withdrawMoveCall.typeArguments,
+      })
+
+      underlyingCoin = coin
+      break
+    }
+    case "Winter": {
+      // TODO: use get coin value
+      const getCoinValueMoveCall = {
+        target: `0x2::coin::value`,
+        arguments: [{ name: "coin", value: sCoin }],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(getCoinValueMoveCall)
+      if (!debug) {
+        debugLog(`Winter get_coin_value move call:`, getCoinValueMoveCall)
+      }
+
+      const coinValue = tx.moveCall({
+        target: getCoinValueMoveCall.target,
+        arguments: [sCoin],
+        typeArguments: getCoinValueMoveCall.typeArguments,
+      })
+
+      const fcfsMoveCall = {
+        target: `0x10a7c91b25090b81a4de1e3a3912c994feb446529a308b7aa549eea259b11842::blizzard_hooks::fcfs`,
+        arguments: [
+          {
+            name: "blizzard_staking",
+            value: WINTER.BLIZZARD_STAKING,
+          },
+          {
+            name: "walrus_staking",
+            value: WINTER.WALRUS_STAKING,
+          },
+          {
+            name: "amount",
+            value: coinValue,
+          },
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(fcfsMoveCall)
+      if (!debug) {
+        debugLog(`Winter fcfs move call:`, fcfsMoveCall)
+      }
+
+      // 调用blizzard_hooks::fcfs获取ixVector
+
+      const [, ixVector] = tx.moveCall({
+        target: fcfsMoveCall.target,
+        arguments: [
+          tx.object(WINTER.BLIZZARD_STAKING),
+          tx.object(WINTER.WALRUS_STAKING),
+          coinValue,
+        ],
+        typeArguments: fcfsMoveCall.typeArguments,
+      })
+
+      // 首先调用get_allowed_versions获取版本信息
+      const getAllowedVersionsMoveCall = {
+        target: `0x29ba7f7bc53e776f27a6d1289555ded2f407b4b1a799224f06b26addbcd1c33d::blizzard_allowed_versions::get_allowed_versions`,
+        arguments: [
+          {
+            name: "blizzard_av",
+            value:
+              "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+          },
+        ],
+        typeArguments: [],
+      }
+      moveCallInfos.push(getAllowedVersionsMoveCall)
+      if (!debug) {
+        debugLog(
+          `Winter get_allowed_versions move call:`,
+          getAllowedVersionsMoveCall,
+        )
+      }
+
+      const allowedVersions = tx.moveCall({
+        target: getAllowedVersionsMoveCall.target,
+        arguments: [
+          tx.object(
+            "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+          ),
+        ],
+        typeArguments: getAllowedVersionsMoveCall.typeArguments,
+      })
+
+      // 调用burn_lst函数
+      const burnLstMoveCall = {
+        target: `0x29ba7f7bc53e776f27a6d1289555ded2f407b4b1a799224f06b26addbcd1c33d::blizzard_protocol::burn_lst`,
+        arguments: [
+          {
+            name: "blizzard_staking",
+            value: WINTER.BLIZZARD_STAKING,
+          },
+          {
+            name: "staking",
+            value: WINTER.WALRUS_STAKING,
+          },
+          {
+            name: "s_coin",
+            value: sCoin,
+          },
+          {
+            name: "ix_vector",
+            value: ixVector,
+          },
+          {
+            name: "allowed_versions",
+            value: allowedVersions,
+          },
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(burnLstMoveCall)
+      if (!debug) {
+        debugLog(`Winter burn_lst move call:`, burnLstMoveCall)
+      }
+
+      const [coin, stakedWals] = tx.moveCall({
+        target: burnLstMoveCall.target,
+        arguments: [
+          tx.object(WINTER.BLIZZARD_STAKING),
+          tx.object(WINTER.WALRUS_STAKING),
+          sCoin,
+          ixVector,
+          allowedVersions,
+        ],
+        typeArguments: burnLstMoveCall.typeArguments,
+      })
+
+      const vectorTransferStakedWalMoveCall = {
+        target: `0x3e12a9b6dbe7997b441b5fd6cf5e953cf2f3521a8f353f33e7f297cf7dac0ecc::blizzard_utils::vector_transfer_staked_wal`,
+        arguments: [
+          {
+            name: "walrus_staking",
+            value: WINTER.WALRUS_STAKING,
+          },
+          {
+            name: "StakedWalVector",
+            value: stakedWals,
+          },
+          {
+            name: "address",
+            value: address,
+          },
+        ],
+        typeArguments: [],
+      }
+
+      tx.moveCall({
+        target: vectorTransferStakedWalMoveCall.target,
+        arguments: [
+          tx.object(WINTER.WALRUS_STAKING),
+          stakedWals,
+          tx.pure.address(address),
+        ],
+        typeArguments: vectorTransferStakedWalMoveCall.typeArguments,
+      })
+
+      if (!debug) {
+        debugLog(
+          `Winter vector_transfer_staked_wal move call:`,
+          vectorTransferStakedWalMoveCall,
+        )
+      }
+
+      moveCallInfos.push(vectorTransferStakedWalMoveCall)
+
+      underlyingCoin = coin
+      break
+    }
+    default:
+      console.error(
+        "burnSCoin Unsupported underlying protocol: " +
+          coinConfig.underlyingProtocol,
+      )
+      underlyingCoin = sCoin
+  }
+
+  return (debug
+    ? [underlyingCoin, moveCallInfos]
+    : underlyingCoin) as unknown as BurnSCoinResult<T>
 }

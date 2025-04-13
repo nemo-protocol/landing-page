@@ -26,17 +26,14 @@ import Loading from "@/components/Loading"
 import { useState, useEffect } from "react"
 import usePortfolio from "@/hooks/usePortfolio"
 import useCoinData from "@/hooks/query/useCoinData"
-import {
-  burnSCoin,
-  redeemSyCoin,
-  initPyPosition,
-} from "@/lib/txHelper"
+import { redeemSyCoin, initPyPosition } from "@/lib/txHelper"
 import { debugLog } from "@/config"
 import {
   NEED_MIN_VALUE_LIST,
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { burnSCoin } from "@/lib/txHelper/coin"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -278,7 +275,12 @@ export const MobileCard: React.FC<MobileCardProps> = ({
           new Decimal(ytReward).gt(minValue) &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(item?.coinType)
         ) {
-          const underlyingCoin = burnSCoin(tx, item, yieldToken)
+          const underlyingCoin = burnSCoin({
+            tx,
+            address,
+            coinConfig: item,
+            sCoin: yieldToken,
+          })
           tx.transferObjects([underlyingCoin], address)
         } else {
           tx.transferObjects([yieldToken], address)
@@ -583,7 +585,11 @@ export const MobileCard: React.FC<MobileCardProps> = ({
           <LoadingButton
             className="w-full text-xs"
             loading={claimLoading}
-            disabled={!isValidAmount(lpReward) || !lpPositionsMap?.[item.id]?.lpPositions?.length || !marketState?.rewardMetrics?.length}
+            disabled={
+              !isValidAmount(lpReward) ||
+              !lpPositionsMap?.[item.id]?.lpPositions?.length ||
+              !marketState?.rewardMetrics?.length
+            }
             onClick={async () => {
               try {
                 await claimLpReward(selectedRewardIndex)

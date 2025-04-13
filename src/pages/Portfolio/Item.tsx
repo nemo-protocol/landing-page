@@ -17,12 +17,7 @@ import { formatDecimalValue, isValidAmount } from "@/lib/utils"
 import useQueryClaimYtReward from "@/hooks/useQueryClaimYtReward"
 import { PyPosition, MarketState, LpPosition } from "@/hooks/types"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
-import {
-  redeemPy,
-  burnSCoin,
-  redeemSyCoin,
-  initPyPosition,
-} from "@/lib/txHelper"
+import { redeemPy, redeemSyCoin, initPyPosition } from "@/lib/txHelper"
 import {
   AlertDialog,
   AlertDialogTitle,
@@ -47,6 +42,7 @@ import {
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { burnSCoin } from "@/lib/txHelper/coin"
 
 interface LoadingButtonProps {
   loading: boolean
@@ -277,7 +273,12 @@ export default function Item({
           new Decimal(ytReward).gt(minValue) &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
         ) {
-          const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+          const underlyingCoin = burnSCoin({
+            tx,
+            coinConfig,
+            sCoin: yieldToken,
+            address,
+          })
           tx.transferObjects([underlyingCoin], address)
         } else {
           tx.transferObjects([yieldToken], address)
@@ -351,7 +352,12 @@ export default function Item({
         if (new Decimal(ytReward).lte(minValue)) {
           tx.transferObjects([yieldToken], address)
         } else {
-          const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+          const underlyingCoin = burnSCoin({
+            tx,
+            address,
+            coinConfig,
+            sCoin: yieldToken,
+          })
           tx.transferObjects([underlyingCoin], address)
         }
 

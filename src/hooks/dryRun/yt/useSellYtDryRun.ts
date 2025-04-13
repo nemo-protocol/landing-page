@@ -4,16 +4,12 @@ import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import type { CoinConfig } from "@/queries/types/market"
 import type { DebugInfo, PyPosition } from "../../types"
 import { ContractError } from "../../types"
-import {
-  initPyPosition,
-  swapExactYtForSy,
-  redeemSyCoin,
-  burnSCoin,
-} from "@/lib/txHelper"
+import { initPyPosition, swapExactYtForSy, redeemSyCoin } from "@/lib/txHelper"
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { burnSCoin } from "@/lib/txHelper/coin"
 
 interface SellYtParams {
   minSyOut: string
@@ -82,7 +78,12 @@ export default function useSellYtDryRun<T extends boolean = false>(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
-        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+        const underlyingCoin = burnSCoin({
+          tx,
+          address,
+          coinConfig,
+          sCoin: yieldToken,
+        })
         tx.moveCall({
           target: `0x2::coin::value`,
           arguments: [underlyingCoin],

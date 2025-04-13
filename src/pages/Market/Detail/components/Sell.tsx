@@ -20,7 +20,6 @@ import {
   redeemSyCoin,
   swapExactPtForSy,
   swapExactYtForSy,
-  burnSCoin,
 } from "@/lib/txHelper"
 import AmountInput from "@/components/AmountInput"
 import ActionButton from "@/components/ActionButton"
@@ -47,6 +46,7 @@ import {
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { burnSCoin } from "@/lib/txHelper/coin"
 
 export default function Sell() {
   const [warning, setWarning] = useState("")
@@ -275,7 +275,12 @@ export default function Sell() {
           receivingType === "underlying" &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
         ) {
-          const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+          const underlyingCoin = burnSCoin({
+            tx,
+            coinConfig,
+            sCoin: yieldToken,
+            address,
+          })
           tx.transferObjects([underlyingCoin], address)
         } else {
           tx.transferObjects([yieldToken], address)
@@ -358,11 +363,7 @@ export default function Sell() {
   )
 
   const btnDisabled = useMemo(() => {
-    return (
-      !!error ||
-      !isValidAmount(redeemValue) ||
-      !isValidAmount(targetValue)
-    )
+    return !!error || !isValidAmount(redeemValue) || !isValidAmount(targetValue)
   }, [redeemValue, targetValue, error])
 
   const priceImpact = useMemo(() => {

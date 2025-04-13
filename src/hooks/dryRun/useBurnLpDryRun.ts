@@ -6,16 +6,12 @@ import type { DebugInfo, MoveCallInfo, PyPosition } from "../types"
 import { ContractError } from "../types"
 import useFetchLpPosition from "../useFetchLpPosition"
 import useFetchPyPosition from "../useFetchPyPosition"
-import {
-  initPyPosition,
-  mergeLpPositions,
-  redeemSyCoin,
-  burnSCoin,
-} from "@/lib/txHelper"
+import { initPyPosition, mergeLpPositions, redeemSyCoin } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 import { debugLog } from "@/config"
+import { burnSCoin } from "@/lib/txHelper/coin"
 
 type BurnLpResult = {
   ptAmount: string
@@ -131,12 +127,13 @@ export default function useBurnLpDryRun(
       ) {
         console.log("useBurnLpDryRun burnSCoin")
 
-        const [underlyingCoin, burnMoveCallInfo] = burnSCoin(
+        const [underlyingCoin, burnMoveCallInfo] = burnSCoin({
           tx,
+          address,
           coinConfig,
-          yieldToken,
-          true,
-        )
+          debug: true,
+          sCoin: yieldToken,
+        })
         tx.moveCall({
           target: `0x2::coin::value`,
           arguments: [underlyingCoin],

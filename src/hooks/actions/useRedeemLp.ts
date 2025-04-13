@@ -14,10 +14,10 @@ import {
   burnLp,
   redeemSyCoin,
   swapExactPtForSy,
-  burnSCoin,
 } from "@/lib/txHelper"
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 import { getPriceVoucher } from "@/lib/txHelper/price"
+import { burnSCoin } from "@/lib/txHelper/coin"
 
 interface RedeemLpParams {
   lpAmount: string
@@ -122,7 +122,12 @@ export default function useRedeemLp(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
-        const underlyingCoin = burnSCoin(tx, coinConfig, yieldToken)
+        const underlyingCoin = burnSCoin({
+          tx,
+          address,
+          coinConfig,
+          sCoin: yieldToken,
+        })
         tx.transferObjects([underlyingCoin], address)
       } else {
         tx.transferObjects([yieldToken], address)
@@ -148,11 +153,12 @@ export default function useRedeemLp(
           receivingType === "underlying" &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
         ) {
-          const swappedUnderlyingCoin = burnSCoin(
+          const swappedUnderlyingCoin = burnSCoin({
             tx,
+            address,
             coinConfig,
-            swappedYieldToken,
-          )
+            sCoin: swappedYieldToken,
+          })
           tx.transferObjects([swappedUnderlyingCoin], address)
         } else {
           tx.transferObjects([swappedYieldToken], address)
