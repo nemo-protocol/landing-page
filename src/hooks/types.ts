@@ -1,8 +1,10 @@
+import { TransactionArgument } from "@mysten/sui/transactions"
+
 export interface MoveCallInfo {
   target: string
   arguments: {
     name: string
-    value: string
+    value: string | TransactionArgument
   }[]
   typeArguments: string[]
 }

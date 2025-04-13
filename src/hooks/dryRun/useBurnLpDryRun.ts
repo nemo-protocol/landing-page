@@ -124,7 +124,10 @@ export default function useBurnLpDryRun(
       // Use coin::value to get the output amount based on receivingType
       if (
         receivingType === "underlying" &&
-        !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
+        !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType) &&
+        // FIXME: remove this
+        coinConfig?.coinType !==
+          "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL"
       ) {
         console.log("useBurnLpDryRun burnSCoin")
 

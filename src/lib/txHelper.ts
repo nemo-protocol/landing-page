@@ -11,6 +11,7 @@ import {
   ALPAHFI,
   HAEDAL,
   VOLO,
+  WINTER,
 } from "./constants"
 import {
   Transaction,
@@ -423,6 +424,177 @@ export const burnSCoin = <T extends boolean = false>(
         ],
         typeArguments: withdrawMoveCall.typeArguments,
       })
+
+      underlyingCoin = coin
+      break
+    }
+    case "Winter": {
+      // TODO: use get coin value
+      const getCoinValueMoveCall = {
+        target: `0x2::coin::value`,
+        arguments: [{ name: "coin", value: sCoin }],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(getCoinValueMoveCall)
+      if (!debug) {
+        debugLog(`Winter get_coin_value move call:`, getCoinValueMoveCall)
+      }
+
+      const coinValue = tx.moveCall({
+        target: getCoinValueMoveCall.target,
+        arguments: [sCoin],
+        typeArguments: getCoinValueMoveCall.typeArguments,
+      })
+
+      const fcfsMoveCall = {
+        target: `0x10a7c91b25090b81a4de1e3a3912c994feb446529a308b7aa549eea259b11842::blizzard_hooks::fcfs`,
+        arguments: [
+          {
+            name: "blizzard_staking",
+            value: WINTER.BLIZZARD_STAKING,
+          },
+          {
+            name: "walrus_staking",
+            value: WINTER.WALRUS_STAKING,
+          },
+          {
+            name: "amount",
+            value: coinValue,
+          },
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(fcfsMoveCall)
+      if (!debug) {
+        debugLog(`Winter fcfs move call:`, fcfsMoveCall)
+      }
+
+      // 调用blizzard_hooks::fcfs获取ixVector
+
+      const [, ixVector] = tx.moveCall({
+        target: fcfsMoveCall.target,
+        arguments: [
+          tx.object(WINTER.BLIZZARD_STAKING),
+          tx.object(WINTER.WALRUS_STAKING),
+          coinValue,
+        ],
+        typeArguments: fcfsMoveCall.typeArguments,
+      })
+
+      // 首先调用get_allowed_versions获取版本信息
+      const getAllowedVersionsMoveCall = {
+        target: `0x29ba7f7bc53e776f27a6d1289555ded2f407b4b1a799224f06b26addbcd1c33d::blizzard_allowed_versions::get_allowed_versions`,
+        arguments: [
+          {
+            name: "blizzard_av",
+            value:
+              "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+          },
+        ],
+        typeArguments: [],
+      }
+      moveCallInfos.push(getAllowedVersionsMoveCall)
+      if (!debug) {
+        debugLog(
+          `Winter get_allowed_versions move call:`,
+          getAllowedVersionsMoveCall,
+        )
+      }
+
+      const allowedVersions = tx.moveCall({
+        target: getAllowedVersionsMoveCall.target,
+        arguments: [
+          tx.object(
+            "0x4199e3c5349075a98ec0b6100c7f1785242d97ba1f9311ce7a3a021a696f9e4a",
+          ),
+        ],
+        typeArguments: getAllowedVersionsMoveCall.typeArguments,
+      })
+
+      // 调用burn_lst函数
+      const burnLstMoveCall = {
+        target: `0x29ba7f7bc53e776f27a6d1289555ded2f407b4b1a799224f06b26addbcd1c33d::blizzard_protocol::burn_lst`,
+        arguments: [
+          {
+            name: "blizzard_staking",
+            value: WINTER.BLIZZARD_STAKING,
+          },
+          {
+            name: "staking",
+            value: WINTER.WALRUS_STAKING,
+          },
+          {
+            name: "s_coin",
+            value: sCoin,
+          },
+          {
+            name: "ix_vector",
+            value: ixVector,
+          },
+          {
+            name: "allowed_versions",
+            value: allowedVersions,
+          },
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(burnLstMoveCall)
+      if (!debug) {
+        debugLog(`Winter burn_lst move call:`, burnLstMoveCall)
+      }
+
+      const [coin, stakedWals] = tx.moveCall({
+        target: burnLstMoveCall.target,
+        arguments: [
+          tx.object(WINTER.BLIZZARD_STAKING),
+          tx.object(WINTER.WALRUS_STAKING),
+          sCoin,
+          ixVector,
+          allowedVersions,
+        ],
+        typeArguments: burnLstMoveCall.typeArguments,
+      })
+
+      const vectorTransferStakedWalMoveCall = {
+        target: `0x3e12a9b6dbe7997b441b5fd6cf5e953cf2f3521a8f353f33e7f297cf7dac0ecc::blizzard_utils::vector_transfer_staked_wal`,
+        arguments: [
+          {
+            name: "walrus_staking",
+            value: WINTER.WALRUS_STAKING,
+          },
+          {
+            name: "StakedWalVector",
+            value: stakedWals,
+          },
+          {
+            name: "address",
+            value:
+              "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+          },
+        ],
+        typeArguments: [],
+      }
+
+      tx.moveCall({
+        target: vectorTransferStakedWalMoveCall.target,
+        arguments: [
+          tx.object(WINTER.WALRUS_STAKING),
+          stakedWals,
+          tx.pure.address(
+            "0xea126b68396dff3991a1117eaff3ade6b1c6de23b9ac3e964e10cd5d66fe2bbb",
+          ),
+        ],
+        typeArguments: vectorTransferStakedWalMoveCall.typeArguments,
+      })
+
+      if (!debug) {
+        debugLog(
+          `Winter vector_transfer_staked_wal move call:`,
+          vectorTransferStakedWalMoveCall,
+        )
+      }
+
+      moveCallInfos.push(vectorTransferStakedWalMoveCall)
 
       underlyingCoin = coin
       break

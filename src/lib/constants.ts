@@ -246,6 +246,13 @@ export const VOLO = {
     "0x680cd26af32b2bde8d3361e804c53ec1d1cfe24c7f039eb7f549e8dfde389a60",
 } as const
 
+export const WINTER = {
+  BLIZZARD_STAKING:
+    "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
+  WALRUS_STAKING:
+    "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+} as const
+
 export const SUPER_SUI = {
   REGISTRY:
     "0x5ff2396592a20f7bf6ff291963948d6fc2abec279e11f50ee74d193c4cf0bba8",
