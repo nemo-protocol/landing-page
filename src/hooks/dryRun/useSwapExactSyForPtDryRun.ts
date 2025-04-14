@@ -138,7 +138,7 @@ export default function useSwapExactSyForPtDryRun<T extends boolean = false>(
       const decimal = Number(coinConfig.decimal)
 
       const ptValue = new Decimal(_ptValue)
-        .div(Math.pow(2, 64))
+        .div(new Decimal(2).pow(64))
         .div(10 ** decimal)
         .toFixed(decimal)
 

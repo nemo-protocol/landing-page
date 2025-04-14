@@ -9,6 +9,7 @@ import { getPriceVoucher } from "@/lib/txHelper/price"
 import { Transaction } from "@mysten/sui/transactions"
 import { useSuiClient } from "@nemoprotocol/wallet-kit"
 import type { BaseCoinInfo } from "@/queries/types/market"
+import { formatDecimalValue } from "@/lib/utils"
 
 type DryRunResult<T extends boolean> = T extends true
   ? [string, DebugInfo]
@@ -85,12 +86,15 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
         )
 
         const formattedConversionRate = new Decimal(conversionRate)
-          .div(Math.pow(2, 64))
+          .div(new Decimal(2).pow(64))
           .toFixed()
 
         if (new Decimal(formattedConversionRate).lt(1)) {
           throw new ContractError(
-            `${coinConfig.coinType} conversion rate cannot be less than 1`,
+            `${coinConfig.coinType} conversion rate (${formatDecimalValue(
+              formattedConversionRate,
+              6,
+            )}) cannot be less than 1`,
             debugInfo,
           )
         }
