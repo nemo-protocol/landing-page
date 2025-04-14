@@ -14,6 +14,7 @@ import {
   getTreasury,
   WINTER,
 } from "../constants"
+import { initCetusVaultsSDK, InputType } from "@cetusprotocol/vaults-sdk"
 
 type MintSCoinResult<T extends boolean> = T extends true
   ? [TransactionArgument, MoveCallInfo[]]
@@ -24,6 +25,7 @@ type MintSCoinParams<T extends boolean = false> = {
   coinConfig: CoinConfig
   coinData: CoinData[]
   amount: string
+  address: string
   debug?: T
 }
 
@@ -33,6 +35,7 @@ type MintMultiSCoinResult<T extends boolean> = T extends true
 
 type MintMultiSCoinParams<T extends boolean = false> = {
   amount: string
+  address: string
   tx: Transaction
   coinData: CoinData[]
   coinConfig: CoinConfig
@@ -40,23 +43,42 @@ type MintMultiSCoinParams<T extends boolean = false> = {
   debug?: T
 }
 
-export const mintMultiSCoin = <T extends boolean = false>({
+export const mintMultiSCoin = async <T extends boolean = false>({
   tx,
   amount,
+  address,
   coinData,
   coinConfig,
   splitAmounts,
   debug = false as T,
-}: MintMultiSCoinParams<T>): MintMultiSCoinResult<T> => {
+}: MintMultiSCoinParams<T>): Promise<MintMultiSCoinResult<T>> => {
   console.log("mintMultiSCoin splitAmounts", splitAmounts)
 
-  const mintResult = mintSCoin({
+  const mintResult = await mintSCoin({
     tx,
     debug,
     amount,
+    address,
     coinData,
     coinConfig,
   })
+
+  if (coinConfig.underlyingProtocol === "Cetus") {
+    const minSplitAmount = Math.min(...splitAmounts.map(Number))
+
+    if (minSplitAmount < 3) {
+      const splitTotalAmount = splitAmounts.reduce(
+        (sum, val) => sum + Number(val),
+        0,
+      )
+
+      const needValue = (splitTotalAmount * 3) / minSplitAmount
+
+      throw new Error(
+        `Please enter at least ${needValue} ${coinConfig.underlyingCoinType}`,
+      )
+    }
+  }
 
   const [sCoin, moveCallInfos] = debug
     ? (mintResult as [TransactionArgument, MoveCallInfo[]])
@@ -95,13 +117,14 @@ export const mintMultiSCoin = <T extends boolean = false>({
     : coins) as unknown as MintMultiSCoinResult<T>
 }
 
-export const mintSCoin = <T extends boolean = false>({
+export const mintSCoin = async <T extends boolean = false>({
   tx,
   amount,
+  address,
   coinData,
   coinConfig,
   debug = false as T,
-}: MintSCoinParams<T>): MintSCoinResult<T> => {
+}: MintSCoinParams<T>): Promise<MintSCoinResult<T>> => {
   let moveCall: MoveCallInfo
   const moveCallInfos: MoveCallInfo[] = []
 
@@ -637,6 +660,40 @@ export const mintSCoin = <T extends boolean = false>({
         ],
         typeArguments: mintMoveCall.typeArguments,
       })
+
+      return (debug
+        ? [sCoin, moveCallInfos]
+        : sCoin) as unknown as MintSCoinResult<T>
+    }
+
+    case "Cetus": {
+      const sdk = initCetusVaultsSDK({
+        network: "mainnet",
+      })
+
+      const slippage = 0.05
+      sdk.senderAddress = address
+
+      const depositResult = await sdk.Vaults.calculateDepositAmount({
+        vault_id:
+          "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+        fix_amount_a: false,
+        input_amount: amount,
+        slippage: Number(slippage),
+        side: InputType.OneSide,
+      })
+
+      const sCoin = (await sdk.Vaults.deposit(
+        {
+          coin_object_b: coin,
+          vault_id:
+            "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+          slippage: Number(slippage),
+          deposit_result: depositResult,
+          return_lp_token: true,
+        },
+        tx,
+      )) as TransactionArgument
 
       return (debug
         ? [sCoin, moveCallInfos]

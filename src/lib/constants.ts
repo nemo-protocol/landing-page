@@ -237,6 +237,11 @@ export const NEED_MIN_VALUE_LIST = [
       "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL",
     minValue: 1,
   },
+  {
+    coinType:
+      "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN",
+    minValue: 3,
+  },
 ]
 
 export const VOLO = {
@@ -260,10 +265,14 @@ export const SUPER_SUI = {
 } as const
 
 export const WWAL = {
-  PACKAGE_ID: "0x0c2e5a60b4c6e2eda7a5add1f9340160bfcc0559749af239622e8d107d51b431",
-  TREASURY_CAP: "0x6d7da14a09687a3ed3e97deb3bc2428ab7f2db39f4e706dd7344760b5ae43729",
-  BLIZZARD_STAKING: "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
-  WALRUS_STAKING: "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
+  PACKAGE_ID:
+    "0x0c2e5a60b4c6e2eda7a5add1f9340160bfcc0559749af239622e8d107d51b431",
+  TREASURY_CAP:
+    "0x6d7da14a09687a3ed3e97deb3bc2428ab7f2db39f4e706dd7344760b5ae43729",
+  BLIZZARD_STAKING:
+    "0xccf034524a2bdc65295e212128f77428bb6860d757250c43323aa38b3d04df6d",
+  WALRUS_STAKING:
+    "0x10b9d30c28448939ce6c4d6c6e0ffce4a7f8a4ada8248bdad09ef8b70e4a3904",
 } as const
 
 export const UNSUPPORTED_UNDERLYING_COINS: string[] = []

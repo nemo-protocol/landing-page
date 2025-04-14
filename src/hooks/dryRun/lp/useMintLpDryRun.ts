@@ -91,9 +91,10 @@ export default function useMintLpDryRun<T extends boolean = false>(
       // Split coins and deposit
       const [[splitCoinForSy, splitCoinForPt, sCoin], mintSCoinMoveCall] =
         tokenType === 0
-          ? mintMultiSCoin({
+          ? await mintMultiSCoin({
               tx,
               amount,
+              address,
               coinData,
               coinConfig,
               debug: true,

@@ -43,9 +43,10 @@ export default function useMintSCoinDryRun<T extends boolean = false>(
       const tx = new Transaction()
       tx.setSender(address)
 
-      const [sCoin, mintMoveCallInfos] = mintSCoin({
+      const [sCoin, mintMoveCallInfos] = await mintSCoin({
         tx,
         amount,
+        address,
         coinData,
         coinConfig,
         debug: true,

@@ -62,8 +62,9 @@ export function useMintLp<T extends boolean = false>(
 
       const [[splitCoinForSy, splitCoinForPt, sCoin], mintSCoinMoveCall] =
         tokenType === 0
-          ? mintMultiSCoin({
+          ? await mintMultiSCoin({
               tx,
+              address,
               coinData,
               coinConfig,
               debug: true,

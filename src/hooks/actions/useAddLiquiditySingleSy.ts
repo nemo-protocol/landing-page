@@ -54,12 +54,13 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
     }: AddLiquiditySingleSyParams): Promise<DryRunResult<T>> => {
       const [splitCoin] =
         tokenType === 0
-          ? mintSCoin({
+          ? await mintSCoin({
               tx,
-              coinConfig,
+              address,
               coinData,
-              amount: addAmount,
+              coinConfig,
               debug: true,
+              amount: addAmount,
             })
           : splitCoinHelper(tx, coinData, [addAmount], coinType)
 

@@ -12,8 +12,8 @@ importers:
         specifier: ^0.1.7
         version: 0.1.7(@jest/transform@29.7.0)(@jest/types@29.6.3)(@mysten/dapp-kit@0.14.44(@tanstack/react-query@5.52.1(react@18.3.1))(@types/react-dom@18.3.0)(@types/react@18.3.3)(immer@9.0.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(@types/react-dom@18.3.0)(@types/react@18.3.3)(immer@9.0.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(typescript@5.5.4)(use-sync-external-store@1.2.2(react@18.3.1))(vite@5.3.5(@types/node@20.14.14)(terser@5.32.0))
       '@cetusprotocol/vaults-sdk':
-        specifier: ^0.2.2
-        version: 0.2.2(@jest/transform@29.7.0)(@jest/types@29.6.3)(@mysten/bcs@1.2.0)(@mysten/sui@1.18.0(typescript@5.5.4))(typescript@5.5.4)
+        specifier: 0.0.0-experimental-20250410145142
+        version: 0.0.0-experimental-20250410145142(@jest/transform@29.7.0)(@jest/types@29.6.3)(@mysten/bcs@1.2.0)(@mysten/sui@1.18.0(typescript@5.5.4))(typescript@5.5.4)
       '@mysten/dapp-kit':
         specifier: 0.14.44
         version: 0.14.44(@tanstack/react-query@5.52.1(react@18.3.1))(@types/react-dom@18.3.0)(@types/react@18.3.3)(immer@9.0.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
@@ -860,8 +860,8 @@ packages:
     peerDependencies:
       typescript: ^5.0.0
 
-  '@cetusprotocol/aggregator-sdk@0.4.4':
-    resolution: {integrity: sha512-rrWAkXlyCQeOBn+dr+WxDTP8lK1lr2SAwIPJP1w+uVTz1k9CCK8ufj7lhGfNVEC264qEivq5mIF7eWzsAgBELw==}
+  '@cetusprotocol/aggregator-sdk@0.6.0':
+    resolution: {integrity: sha512-tcT4xHS+ks3yXro0qiOTDgYizo2Tuq8wib4q58pTnziG0QVyKk6nnBZgQF+/QxsFNUutpDJgkgTEq/Fm/J2M0w==}
     peerDependencies:
       typescript: ^5.0.0
 
@@ -872,8 +872,8 @@ packages:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@cetusprotocol/vaults-sdk@0.2.2':
-    resolution: {integrity: sha512-ZxzM+nxNIoucZ7RPrbvjyBk1FXhza+stcR/crail0d5OXjolcOQQV/gZfJRpxGhGzHJI2nu+9ozrVxJw2V9E9Q==}
+  '@cetusprotocol/vaults-sdk@0.0.0-experimental-20250410145142':
+    resolution: {integrity: sha512-bTw50DkGI0Gzc8eRuJZF+O/77SALExuTd/O/mUQ+yLX+1Ki7Xwt+og63GZ4ITabyQQtpu7tkuKKlxmF1Yqsbkg==}
     peerDependencies:
       '@mysten/bcs': '>=1.0.4'
       '@mysten/sui': '>=1.6.0'
@@ -6288,7 +6288,7 @@ snapshots:
       - ts-node
       - utf-8-validate
 
-  '@cetusprotocol/aggregator-sdk@0.4.4(@jest/transform@29.7.0)(@jest/types@29.6.3)(typescript@5.5.4)':
+  '@cetusprotocol/aggregator-sdk@0.6.0(@jest/transform@29.7.0)(@jest/types@29.6.3)(typescript@5.5.4)':
     dependencies:
       '@babel/core': 7.25.2
       '@babel/preset-env': 7.26.0(@babel/core@7.25.2)
@@ -6366,9 +6366,9 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@cetusprotocol/vaults-sdk@0.2.2(@jest/transform@29.7.0)(@jest/types@29.6.3)(@mysten/bcs@1.2.0)(@mysten/sui@1.18.0(typescript@5.5.4))(typescript@5.5.4)':
+  '@cetusprotocol/vaults-sdk@0.0.0-experimental-20250410145142(@jest/transform@29.7.0)(@jest/types@29.6.3)(@mysten/bcs@1.2.0)(@mysten/sui@1.18.0(typescript@5.5.4))(typescript@5.5.4)':
     dependencies:
-      '@cetusprotocol/aggregator-sdk': 0.4.4(@jest/transform@29.7.0)(@jest/types@29.6.3)(typescript@5.5.4)
+      '@cetusprotocol/aggregator-sdk': 0.6.0(@jest/transform@29.7.0)(@jest/types@29.6.3)(typescript@5.5.4)
       '@mysten/bcs': 1.2.0
       '@mysten/sui': 1.18.0(typescript@5.5.4)
       '@suchipi/femver': 1.0.0

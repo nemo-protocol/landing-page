@@ -61,12 +61,13 @@ export default function useSwapExactSyForPtDryRun<T extends boolean = false>(
 
       const [splitCoin] =
         tokenType === 0
-          ? mintSCoin({
+          ? await mintSCoin({
               tx,
-              coinConfig,
+              address,
               coinData,
-              amount: swapAmount,
+              coinConfig,
               debug: true,
+              amount: swapAmount,
             })
           : splitCoinHelper(tx, coinData, [swapAmount], coinType)
 
