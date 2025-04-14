@@ -75,7 +75,14 @@ export default function SingleCoin() {
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
 
-  const { data: conversionRate } = useQueryConversionRate(coinConfig)
+  const { data: conversionRate, error: conversionRateError } =
+    useQueryConversionRate(coinConfig)
+
+  useEffect(() => {
+    if (conversionRateError) {
+      setError(conversionRateError.message)
+    }
+  }, [conversionRateError])
 
   const { mutateAsync: handleAddLiquiditySingleSy } =
     useAddLiquiditySingleSy(coinConfig)

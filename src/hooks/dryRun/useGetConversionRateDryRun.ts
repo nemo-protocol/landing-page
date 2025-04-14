@@ -88,6 +88,13 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
           .div(Math.pow(2, 64))
           .toFixed()
 
+        if (new Decimal(formattedConversionRate).lt(1)) {
+          throw new ContractError(
+            `${coinConfig.coinType} conversion rate cannot be less than 1`,
+            debugInfo,
+          )
+        }
+
         debugInfo.parsedOutput = formattedConversionRate
         debugInfo.result = formattedConversionRate
 
