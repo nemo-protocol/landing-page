@@ -17,7 +17,12 @@ import {
 import useCoinData from "@/hooks/query/useCoinData"
 import usePyPositionData from "@/hooks/usePyPositionData"
 import { parseErrorMessage, parseGasErrorMessage } from "@/lib/errorMapping"
-import { formatDecimalValue, isValidAmount, debounce } from "@/lib/utils"
+import {
+  formatDecimalValue,
+  isValidAmount,
+  debounce,
+  safeDivide,
+} from "@/lib/utils"
 import { depositSyCoin, initPyPosition, splitCoinHelper } from "@/lib/txHelper"
 import { mintSCoin } from "@/lib/txHelper/coin"
 import ActionButton from "@/components/ActionButton"
@@ -204,7 +209,7 @@ export default function Trade() {
 
             setYtValue(ytValue)
             setYtFeeValue(feeValue)
-            const ytRatio = new Decimal(ytValue).div(value).toFixed(4)
+            const ytRatio = safeDivide(ytValue, value, "string")
             setYtRatio(ytRatio)
           } catch (error) {
             const { error: msg, detail } = parseErrorMessage(
@@ -214,21 +219,28 @@ export default function Trade() {
             setErrorDetail(detail)
             setYtValue(undefined)
             setYtFeeValue(undefined)
-            setYtRatio("")
+            setYtRatio(initRatio)
           } finally {
             setIsCalcYtLoading(false)
           }
         } else {
           setYtValue(undefined)
           setYtFeeValue(undefined)
-          setYtRatio("")
+          setYtRatio(initRatio)
           setError(undefined)
         }
       }, 500)
       getYtOut()
       return getYtOut.cancel
     },
-    [tokenType, minValue, conversionRate, queryYtOut, coinConfig],
+    [
+      tokenType,
+      minValue,
+      conversionRate,
+      coinConfig?.underlyingCoinName,
+      queryYtOut,
+      initRatio,
+    ],
   )
 
   useEffect(() => {
@@ -284,6 +296,7 @@ export default function Trade() {
     const outputValue = new Decimal(ytValue).mul(ptYtData.ytPrice)
 
     const value = outputValue
+    console.log("ytRatio", ytRatio, initRatio)
     const ratio = new Decimal(ytRatio).minus(initRatio).mul(100)
 
     return { value, ratio }
