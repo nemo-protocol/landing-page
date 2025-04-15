@@ -79,6 +79,7 @@ export default function useMintSCoinDryRun<T extends boolean = false>(
       }
 
       if (result?.error) {
+        debugLog(`useMintSCoinDryRun error:`, debugInfo)
         throw new ContractError(result.error, debugInfo)
       }
 

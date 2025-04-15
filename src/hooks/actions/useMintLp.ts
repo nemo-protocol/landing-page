@@ -60,12 +60,15 @@ export function useMintLp<T extends boolean = false>(
       coinConfig,
       minLpAmount,
     }: MintLpParams): Promise<DryRunResult<T>> => {
-      const { coinAmount } = await mintCoin({
-        vaultId,
-        coinData,
-        slippage,
-        amount: addAmount,
-      })
+      const { coinAmount } =
+        tokenType === 0
+          ? await mintCoin({
+              vaultId,
+              coinData,
+              slippage,
+              amount: addAmount,
+            })
+          : { coinAmount: 0 }
 
       const lpOut = await estimateLpOut(addAmount)
 

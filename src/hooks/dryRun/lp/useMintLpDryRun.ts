@@ -9,7 +9,7 @@ import { useEstimateLpOutDryRun } from "./useEstimateLpOutDryRun"
 import type { CoinConfig } from "@/queries/types/market"
 import { useSuiClient, useWallet } from "@nemoprotocol/wallet-kit"
 import { useMutation, UseMutationResult } from "@tanstack/react-query"
-import { BaseDryRunResult, createDryRunResult } from "../../types/dryRun"
+import { BaseDryRunResult } from "../../types/dryRun"
 import {
   mintPY,
   depositSyCoin,
@@ -72,12 +72,15 @@ export default function useMintLpDryRun<T extends boolean = false>(
         throw new Error("No available coins")
       }
 
-      const { coinAmount } = await mintCoin({
-        amount,
-        coinData,
-        vaultId,
-        slippage,
-      })
+      const { coinAmount } =
+        tokenType === 0
+          ? await mintCoin({
+              amount,
+              coinData,
+              vaultId,
+              slippage,
+            })
+          : { coinAmount: 0 }
 
       const lpOut = await estimateLpOut(amount)
 
@@ -215,8 +218,6 @@ export default function useMintLpDryRun<T extends boolean = false>(
         }),
       })
 
-      console.log("useMintLpDryRun result", result)
-
       const debugInfo: DebugInfo = {
         moveCall: [...mintSCoinMoveCall, priceVoucherMoveCall, moveCallInfo],
         rawResult: result,
@@ -240,7 +241,9 @@ export default function useMintLpDryRun<T extends boolean = false>(
 
       debugInfo.parsedOutput = lpAmount
 
-      return createDryRunResult({ lpAmount, ytAmount }, debug, debugInfo)
+      return (
+        debug ? [{ lpAmount, ytAmount }, debugInfo] : { lpAmount, ytAmount }
+      ) as BaseDryRunResult<MintLpResult, T>
     },
   })
 }

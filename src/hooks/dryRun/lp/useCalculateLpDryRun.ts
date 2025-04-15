@@ -182,6 +182,7 @@ export function useCalculateLpAmount(
           }
         }
       } catch (errorMsg) {
+        console.log("errorMsg", errorMsg)
         try {
           const { error } = parseErrorMessage((errorMsg as Error).message)
           const { lpAmount } = await estimateLpOut(inputAmount)
