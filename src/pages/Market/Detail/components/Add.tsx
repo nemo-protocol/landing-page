@@ -47,6 +47,7 @@ import {
   SelectContent,
 } from "@/components/ui/select"
 import { mintSCoin } from "@/lib/txHelper/coin"
+import { CETUS_VAULT_ID_LIST } from "@/lib/constants"
 
 export default function SingleCoin() {
   const navigate = useNavigate()
@@ -240,6 +241,16 @@ export default function SingleCoin() {
     }
   }, [coinConfig, handleRefresh, marketStateData])
 
+  const vaultId = useMemo(
+    () =>
+      coinConfig?.underlyingProtocol === "Cetus"
+        ? CETUS_VAULT_ID_LIST.find(
+            (item) => item.coinType === coinConfig?.coinType,
+          )?.vaultId
+        : "",
+    [coinConfig],
+  )
+
   const debouncedGetLpPosition = useCallback(
     (value: string, decimal: number, config: CoinConfig | undefined) => {
       const getLpPosition = debounce(async () => {
@@ -257,10 +268,12 @@ export default function SingleCoin() {
           try {
             calculateLpAmount(
               {
-                inputAmount,
-                tokenType,
+                vaultId,
                 decimal,
+                slippage,
                 coinData,
+                tokenType,
+                inputAmount,
                 pyPositionData,
               },
               {
@@ -290,7 +303,7 @@ export default function SingleCoin() {
       getLpPosition()
       return getLpPosition.cancel
     },
-    [coinData, pyPositionData, marketStateData, calculateLpAmount, tokenType],
+    [coinData, pyPositionData, marketStateData, calculateLpAmount, vaultId, slippage, tokenType],
   )
 
   useEffect(() => {
@@ -316,7 +329,9 @@ export default function SingleCoin() {
         ? [
             await mintSCoin({
               tx,
+              vaultId,
               address,
+              slippage,
               coinData,
               coinConfig,
               amount: addAmount,
@@ -418,7 +433,9 @@ export default function SingleCoin() {
           console.log("handleMintLp")
           await handleMintLp({
             tx,
+            vaultId,
             address,
+            slippage,
             coinData,
             addAmount,
             tokenType,
@@ -431,6 +448,8 @@ export default function SingleCoin() {
           await handleAddLiquiditySingleSy({
             tx,
             address,
+            vaultId,
+            slippage,
             coinType,
             coinData,
             addAmount,

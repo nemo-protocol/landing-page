@@ -48,7 +48,7 @@ import useGetApproxPtOutDryRun from "@/hooks/dryRun/useGetApproxPtOutDryRun"
 import useSwapExactSyForPtDryRun from "@/hooks/dryRun/useSwapExactSyForPtDryRun"
 import useGetConversionRateDryRun from "@/hooks/dryRun/useGetConversionRateDryRun"
 import useQueryPtRatio from "@/hooks/useQueryPtRatio"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import { CETUS_VAULT_ID_LIST, NEED_MIN_VALUE_LIST } from "@/lib/constants"
 import { getPriceVoucher } from "@/lib/txHelper/price"
 import { mintSCoin } from "@/lib/txHelper/coin"
 
@@ -179,6 +179,16 @@ export default function Invest() {
     }
   }, [coinConfig])
 
+  const vaultId = useMemo(
+    () =>
+      coinConfig?.underlyingProtocol === "Cetus"
+        ? CETUS_VAULT_ID_LIST.find(
+            (item) => item.coinType === coinConfig?.coinType,
+          )?.vaultId
+        : "",
+    [coinConfig],
+  )
+
   const debouncedGetPtOut = useCallback(
     (value: string, decimal: number, config?: CoinConfig) => {
       const getPtOut = debounce(async () => {
@@ -237,7 +247,9 @@ export default function Invest() {
               }
 
               const newPtValue = await swapExactSyForPtDryRun({
+                vaultId,
                 coinData,
+                slippage,
                 coinType,
                 minPtOut,
                 tokenType,
@@ -378,6 +390,8 @@ export default function Invest() {
             ? [
                 await mintSCoin({
                   tx,
+                  vaultId,
+                  slippage,
                   address,
                   coinData,
                   coinConfig,

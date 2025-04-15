@@ -12,6 +12,8 @@ import { getPriceVoucher } from "@/lib/txHelper/price"
 import { burnSCoin } from "@/lib/txHelper/coin"
 
 interface SellYtParams {
+  vaultId?: string
+  slippage: string
   minSyOut: string
   ytAmount: string
   pyPositions?: PyPosition[]
@@ -33,6 +35,8 @@ export default function useSellYtDryRun<T extends boolean = false>(
 
   return useMutation({
     mutationFn: async ({
+      vaultId,
+      slippage,
       minSyOut,
       ytAmount,
       receivingType,
@@ -78,9 +82,11 @@ export default function useSellYtDryRun<T extends boolean = false>(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
-        const underlyingCoin = burnSCoin({
+        const underlyingCoin = await burnSCoin({
           tx,
           address,
+          vaultId,
+          slippage,
           coinConfig,
           sCoin: yieldToken,
         })

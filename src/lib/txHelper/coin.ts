@@ -21,12 +21,14 @@ type MintSCoinResult<T extends boolean> = T extends true
   : TransactionArgument
 
 type MintSCoinParams<T extends boolean = false> = {
-  tx: Transaction
-  coinConfig: CoinConfig
-  coinData: CoinData[]
-  amount: string
-  address: string
   debug?: T
+  amount: string
+  tx: Transaction
+  address: string
+  vaultId?: string
+  slippage: string
+  coinData: CoinData[]
+  coinConfig: CoinConfig
 }
 
 type MintMultiSCoinResult<T extends boolean> = T extends true
@@ -34,20 +36,24 @@ type MintMultiSCoinResult<T extends boolean> = T extends true
   : TransactionArgument[]
 
 type MintMultiSCoinParams<T extends boolean = false> = {
+  debug?: T
   amount: string
   address: string
   tx: Transaction
+  vaultId?: string
+  slippage: string
   coinData: CoinData[]
   coinConfig: CoinConfig
   splitAmounts: string[]
-  debug?: T
 }
 
 export const mintMultiSCoin = async <T extends boolean = false>({
   tx,
   amount,
+  vaultId,
   address,
   coinData,
+  slippage,
   coinConfig,
   splitAmounts,
   debug = false as T,
@@ -58,8 +64,10 @@ export const mintMultiSCoin = async <T extends boolean = false>({
     tx,
     debug,
     amount,
+    vaultId,
     address,
     coinData,
+    slippage,
     coinConfig,
   })
 
@@ -121,7 +129,9 @@ export const mintSCoin = async <T extends boolean = false>({
   tx,
   amount,
   address,
+  vaultId,
   coinData,
+  slippage,
   coinConfig,
   debug = false as T,
 }: MintSCoinParams<T>): Promise<MintSCoinResult<T>> => {
@@ -578,7 +588,6 @@ export const mintSCoin = async <T extends boolean = false>({
         : sCoin) as unknown as MintSCoinResult<T>
     }
     case "Winter": {
-      // 首先调用get_allowed_versions获取版本信息
       const getAllowedVersionsMoveCall = {
         target: `0x29ba7f7bc53e776f27a6d1289555ded2f407b4b1a799224f06b26addbcd1c33d::blizzard_allowed_versions::get_allowed_versions`,
         arguments: [
@@ -667,16 +676,17 @@ export const mintSCoin = async <T extends boolean = false>({
     }
 
     case "Cetus": {
+      if (!vaultId) {
+        throw new Error("Vault ID is required for Cetus")
+      }
       const sdk = initCetusVaultsSDK({
         network: "mainnet",
       })
 
-      const slippage = 0.05
       sdk.senderAddress = address
 
       const depositResult = await sdk.Vaults.calculateDepositAmount({
-        vault_id:
-          "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+        vault_id: vaultId,
         fix_amount_a: false,
         input_amount: amount,
         slippage: Number(slippage),
@@ -708,8 +718,8 @@ export const mintSCoin = async <T extends boolean = false>({
 }
 
 type GetCoinValueResult<T extends boolean> = T extends true
-  ? MoveCallInfo
-  : void
+  ? [TransactionArgument, MoveCallInfo]
+  : TransactionArgument
 
 export const getCoinValue = <T extends boolean = false>(
   tx: Transaction,
@@ -719,7 +729,7 @@ export const getCoinValue = <T extends boolean = false>(
 ): GetCoinValueResult<T> => {
   const moveCallInfo: MoveCallInfo = {
     target: `0x2::coin::value`,
-    arguments: [{ name: "coin", value: "coin" }],
+    arguments: [{ name: "coin", value: coin }],
     typeArguments: [coinType],
   }
 
@@ -727,13 +737,15 @@ export const getCoinValue = <T extends boolean = false>(
     debugLog(`coin::value move call:`, moveCallInfo)
   }
 
-  tx.moveCall({
+  const coinValue = tx.moveCall({
     target: moveCallInfo.target,
     arguments: [coin],
     typeArguments: moveCallInfo.typeArguments,
   })
 
-  return (debug ? moveCallInfo : undefined) as unknown as GetCoinValueResult<T>
+  return (debug
+    ? [coinValue, moveCallInfo]
+    : coinValue) as unknown as GetCoinValueResult<T>
 }
 
 type BurnSCoinResult<T extends boolean> = T extends true
@@ -744,17 +756,21 @@ type BurnSCoinParams<T extends boolean = false> = {
   debug?: T
   tx: Transaction
   address: string
+  vaultId?: string
+  slippage: string
   coinConfig: CoinConfig
   sCoin: TransactionArgument
 }
 
-export const burnSCoin = <T extends boolean = false>({
+export const burnSCoin = async <T extends boolean = false>({
   tx,
   sCoin,
   address,
+  vaultId,
+  slippage,
   coinConfig,
   debug = false as T,
-}: BurnSCoinParams<T>): BurnSCoinResult<T> => {
+}: BurnSCoinParams<T>): Promise<BurnSCoinResult<T>> => {
   const moveCallInfos: MoveCallInfo[] = []
   let underlyingCoin: TransactionArgument
 
@@ -1161,22 +1177,16 @@ export const burnSCoin = <T extends boolean = false>({
       break
     }
     case "Winter": {
-      // TODO: use get coin value
-      const getCoinValueMoveCall = {
-        target: `0x2::coin::value`,
-        arguments: [{ name: "coin", value: sCoin }],
-        typeArguments: [coinConfig.coinType],
-      }
+      const [coinValue, getCoinValueMoveCall] = getCoinValue(
+        tx,
+        sCoin,
+        coinConfig.coinType,
+        true,
+      )
       moveCallInfos.push(getCoinValueMoveCall)
       if (!debug) {
         debugLog(`Winter get_coin_value move call:`, getCoinValueMoveCall)
       }
-
-      const coinValue = tx.moveCall({
-        target: getCoinValueMoveCall.target,
-        arguments: [sCoin],
-        typeArguments: getCoinValueMoveCall.typeArguments,
-      })
 
       const fcfsMoveCall = {
         target: `0x10a7c91b25090b81a4de1e3a3912c994feb446529a308b7aa549eea259b11842::blizzard_hooks::fcfs`,
@@ -1327,6 +1337,46 @@ export const burnSCoin = <T extends boolean = false>({
 
       underlyingCoin = coin
       break
+    }
+    case "Cetus": {
+      if (!vaultId) {
+        throw new Error("Vault ID is required for Cetus")
+      }
+      const sdk = initCetusVaultsSDK({
+        network: "mainnet",
+      })
+
+      sdk.senderAddress = address
+
+      const amount = getCoinValue(
+        tx,
+        sCoin,
+        coinConfig.coinType,
+      ) as unknown as string
+
+      const withdrawResult = await sdk.Vaults.calculateWithdrawAmount({
+        vault_id: vaultId,
+        fix_amount_a: false,
+        input_amount: amount,
+        slippage: Number(slippage),
+        side: InputType.OneSide,
+        is_ft_input: false,
+        max_ft_amount: "",
+      })
+
+      const coin = (await sdk.Vaults.withdraw(
+        {
+          vault_id: vaultId,
+          return_coin: true,
+          slippage: Number(slippage),
+          ft_amount: withdrawResult.burn_ft_amount,
+        },
+        tx,
+      )) as TransactionArgument
+
+      return (debug
+        ? [coin, moveCallInfos]
+        : coin) as unknown as MintSCoinResult<T>
     }
     default:
       console.error(

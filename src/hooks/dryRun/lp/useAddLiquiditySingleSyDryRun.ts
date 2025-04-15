@@ -13,6 +13,8 @@ import { formatDecimalValue } from "@/lib/utils"
 import { useAddLiquiditySingleSy } from "@/hooks/actions/useAddLiquiditySingleSy"
 
 interface AddLiquiditySingleSyParams {
+  vaultId?: string
+  slippage: string
   addAmount: string
   tokenType: number
   coinData: CoinData[]
@@ -43,6 +45,8 @@ export default function useAddLiquiditySingleSyDryRun<
 
   return useMutation({
     mutationFn: async ({
+      vaultId,
+      slippage,
       coinData,
       addAmount,
       tokenType,
@@ -82,6 +86,8 @@ export default function useAddLiquiditySingleSyDryRun<
       // 调用 useAddLiquiditySingleSy 中的逻辑
       const addLiquiditySingleSyDebugInfo = await addLiquiditySingleSy({
         tx,
+        vaultId,
+        slippage,
         address,
         coinData,
         addAmount,

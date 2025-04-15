@@ -134,19 +134,14 @@ export function usePoolMetrics() {
       coinInfo,
       marketState,
     }: CalculatePoolMetricsParams): Promise<PoolMetricsResult> => {
-      console.log("coinConfig", coinInfo)
       // Check cache first
       const cachedResult = getMetricsFromCache(coinInfo.marketStateId)
       if (cachedResult) {
         return cachedResult
       }
 
-      console.log("cachedResult", cachedResult)
-
       // If lpSupply is 0, return zero values without making RPC calls
       if (!isValidAmount(marketState.lpSupply)) {
-        console.log("isValidAmount lpSupply is 0")
-
         const zeroResult: PoolMetricsResult = {
           ptPrice: "0",
           ytPrice: "0",

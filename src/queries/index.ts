@@ -213,7 +213,7 @@ export function useCoinInfoList<T extends boolean = true>(
       const coinList = (await getCoinInfoList(params).catch(() => [])).filter(
         // ({ marketStateId }) =>
         //   marketStateId ===
-        //   "0xa72ae88db5febc37fabb1bf10b6f0eeca002b59b7252998abd0b359c5269eed0",
+        //   "0x42191dce0f78c8a73a4933a2cc41cbae5f2dd43c2984457fa474e02e67a937ef",
         ({ marketStateId }) => !!marketStateId,
       )
 

@@ -22,6 +22,8 @@ import Decimal from "decimal.js"
 interface MintLpParams {
   tx: Transaction
   address: string
+  vaultId?: string
+  slippage: string
   addAmount: string
   tokenType: number
   minLpAmount: string
@@ -48,6 +50,8 @@ export function useMintLp<T extends boolean = false>(
   return useMutation({
     mutationFn: async ({
       tx,
+      vaultId,
+      slippage,
       address,
       coinData,
       tokenType,
@@ -56,7 +60,12 @@ export function useMintLp<T extends boolean = false>(
       coinConfig,
       minLpAmount,
     }: MintLpParams): Promise<DryRunResult<T>> => {
-      const { coinAmount } = await mintCoin({ amount: addAmount, coinData })
+      const { coinAmount } = await mintCoin({
+        vaultId,
+        coinData,
+        slippage,
+        amount: addAmount,
+      })
 
       const lpOut = await estimateLpOut(addAmount)
 
@@ -64,7 +73,9 @@ export function useMintLp<T extends boolean = false>(
         tokenType === 0
           ? await mintMultiSCoin({
               tx,
+              vaultId,
               address,
+              slippage,
               coinData,
               coinConfig,
               debug: true,

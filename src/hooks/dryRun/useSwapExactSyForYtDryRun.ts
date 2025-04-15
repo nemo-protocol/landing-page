@@ -29,12 +29,16 @@ export default function useSwapExactSyForYtDryRun(
       coinData,
       coinType,
       minYtOut,
+      slippage,
+      vaultId,
     }: {
       tokenType: number
       swapAmount: string
       coinData: CoinData[]
       coinType: string
       minYtOut: string
+      slippage: string
+      vaultId?: string
     }): Promise<[SwapResult] | [SwapResult, DebugInfo]> => {
       if (!address) {
         throw new Error("Please connect wallet first")
@@ -52,6 +56,8 @@ export default function useSwapExactSyForYtDryRun(
         tokenType === 0
           ? await mintSCoin({
               tx,
+              slippage,
+              vaultId,
               address,
               coinData,
               coinConfig,

@@ -25,6 +25,8 @@ interface SwapParams {
   minPtOut: string
   approxPtOut: string
   pyPositions?: PyPosition[]
+  slippage: string
+  vaultId?: string
 }
 
 type DryRunResult<T extends boolean> = T extends true
@@ -41,11 +43,13 @@ export default function useSwapExactSyForPtDryRun<T extends boolean = false>(
 
   return useMutation({
     mutationFn: async ({
-      tokenType,
-      swapAmount,
+      vaultId,
+      slippage,
       coinData,
       coinType,
       minPtOut,
+      tokenType,
+      swapAmount,
       approxPtOut,
       pyPositions: inputPyPositions,
     }: SwapParams): Promise<DryRunResult<T>> => {
@@ -64,7 +68,9 @@ export default function useSwapExactSyForPtDryRun<T extends boolean = false>(
           ? await mintSCoin({
               tx,
               address,
+              vaultId,
               coinData,
+              slippage,
               coinConfig,
               debug: true,
               amount: swapAmount,

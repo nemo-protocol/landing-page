@@ -28,6 +28,8 @@ type BurnLpResult = {
 
 interface BurnLpParams {
   lpAmount: string
+  slippage: string
+  vaultId?: string
   receivingType?: "underlying" | "sy"
 }
 
@@ -44,7 +46,7 @@ export default function useBurnLpDryRun(
 
   return useMutation({
     mutationFn: async (
-      { lpAmount, receivingType }: BurnLpParams,
+      { lpAmount, receivingType, slippage, vaultId }: BurnLpParams,
       innerConfig?: CoinConfig,
     ): Promise<[BurnLpResult] | [BurnLpResult, DebugInfo]> => {
       if (!address) {
@@ -129,9 +131,11 @@ export default function useBurnLpDryRun(
         coinConfig?.coinType !==
           "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL"
       ) {
-        const [underlyingCoin, burnMoveCallInfo] = burnSCoin({
+        const [underlyingCoin, burnMoveCallInfo] = await burnSCoin({
           tx,
           address,
+          vaultId,
+          slippage,
           coinConfig,
           debug: true,
           sCoin: yieldToken,

@@ -17,6 +17,8 @@ import { mintSCoin } from "@/lib/txHelper/coin"
 
 interface AddLiquiditySingleSyParams {
   tx: Transaction
+  vaultId?: string
+  slippage: string
   addAmount: string
   tokenType: number
   coinConfig: CoinConfig
@@ -42,6 +44,8 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
   return useMutation({
     mutationFn: async ({
       tx,
+      vaultId,
+      slippage,
       addAmount,
       tokenType,
       coinConfig,
@@ -56,7 +60,9 @@ export function useAddLiquiditySingleSy<T extends boolean = false>(
         tokenType === 0
           ? await mintSCoin({
               tx,
+              vaultId,
               address,
+              slippage,
               coinData,
               coinConfig,
               debug: true,

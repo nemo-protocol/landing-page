@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/tooltip"
 import { showTransactionDialog } from "@/lib/dialog"
 import {
+  CETUS_VAULT_ID_LIST,
   NEED_MIN_VALUE_LIST,
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
@@ -90,6 +91,16 @@ export default function Sell() {
 
   const decimal = useMemo(() => Number(coinConfig?.decimal), [coinConfig])
 
+  const vaultId = useMemo(
+    () =>
+      coinConfig?.underlyingProtocol === "Cetus"
+        ? CETUS_VAULT_ID_LIST.find(
+            (item) => item.coinType === coinConfig?.coinType,
+          )?.vaultId
+        : "",
+    [coinConfig],
+  )
+
   useEffect(() => {
     if (coinConfig) {
       const minValue = NEED_MIN_VALUE_LIST.find(
@@ -115,12 +126,16 @@ export default function Sell() {
             const { outputValue } =
               tokenType === "yt"
                 ? await sellYtDryRun({
-                    ytAmount: inputAmount,
+                    vaultId,
+                    slippage,
                     minSyOut: "0",
                     receivingType: "sy",
+                    ytAmount: inputAmount,
                     pyPositions: pyPositionData,
                   })
                 : await sellPtDryRun({
+                    vaultId,
+                    slippage,
                     minSyOut: "0",
                     receivingType: "sy",
                     ptAmount: inputAmount,
@@ -275,11 +290,13 @@ export default function Sell() {
           receivingType === "underlying" &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
         ) {
-          const underlyingCoin = burnSCoin({
+          const underlyingCoin = await burnSCoin({
             tx,
+            vaultId,
+            address,
+            slippage,
             coinConfig,
             sCoin: yieldToken,
-            address,
           })
           tx.transferObjects([underlyingCoin], address)
         } else {

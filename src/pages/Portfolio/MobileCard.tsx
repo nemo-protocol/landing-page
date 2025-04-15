@@ -23,12 +23,13 @@ import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 import { Transaction } from "@mysten/sui/transactions"
 import useCustomSignAndExecuteTransaction from "@/hooks/useCustomSignAndExecuteTransaction"
 import Loading from "@/components/Loading"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import usePortfolio from "@/hooks/usePortfolio"
 import useCoinData from "@/hooks/query/useCoinData"
 import { redeemSyCoin, initPyPosition } from "@/lib/txHelper"
 import { debugLog } from "@/config"
 import {
+  CETUS_VAULT_ID_LIST,
   NEED_MIN_VALUE_LIST,
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
@@ -75,6 +76,7 @@ const LoadingButton = ({
 )
 
 interface MobileCardProps {
+  slippage: string
   item: PortfolioItem
   selectType: "pt" | "yt" | "lp"
   pyPositionsMap: Record<
@@ -105,6 +107,7 @@ interface ItemType {
 
 export const MobileCard: React.FC<MobileCardProps> = ({
   item,
+  slippage,
   selectType,
   pyPositionsMap,
   lpPositionsMap,
@@ -126,6 +129,15 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   const [minValue, setMinValue] = useState(0)
 
   const { data: suiCoins } = useCoinData(address, "0x2::sui::SUI")
+
+  const vaultId = useMemo(
+    () =>
+      item?.underlyingProtocol === "Cetus"
+        ? CETUS_VAULT_ID_LIST.find((item) => item.coinType === item?.coinType)
+            ?.vaultId
+        : "",
+    [item],
+  )
 
   useEffect(() => {
     if (item) {
@@ -275,11 +287,13 @@ export const MobileCard: React.FC<MobileCardProps> = ({
           new Decimal(ytReward).gt(minValue) &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(item?.coinType)
         ) {
-          const underlyingCoin = burnSCoin({
+          const underlyingCoin = await burnSCoin({
             tx,
             address,
             coinConfig: item,
             sCoin: yieldToken,
+            slippage,
+            vaultId,
           })
           tx.transferObjects([underlyingCoin], address)
         } else {

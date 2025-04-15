@@ -35,8 +35,8 @@ export default function List({ list, isLoading }: ListProps) {
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
   const { data: pyPositionsMap = {}, isLoading: isPositionsLoading } =
@@ -128,6 +128,7 @@ export default function List({ list, isLoading }: ListProps) {
               {/* Mobile View */}
               {isMobile ? (
                 <MobileList
+                  slippage={slippage}
                   list={filteredList}
                   selectType={selectType}
                   pyPositionsMap={pyPositionsMap}
@@ -139,7 +140,8 @@ export default function List({ list, isLoading }: ListProps) {
                 <div
                   className="rounded-3xl border border-white/5 overflow-hidden"
                   style={{
-                    background: "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
+                    background:
+                      "linear-gradient(246deg, #061A40 -12%, #000308 26.64%)",
                   }}
                 >
                   <Table>
@@ -155,10 +157,14 @@ export default function List({ list, isLoading }: ListProps) {
                         <TableHead className="text-center">Value</TableHead>
                         <TableHead className="text-center">Amount</TableHead>
                         {selectType === "yt" && (
-                          <TableHead className="text-center">Accrued Yield</TableHead>
+                          <TableHead className="text-center">
+                            Accrued Yield
+                          </TableHead>
                         )}
                         {selectType === "lp" && (
-                          <TableHead className="text-center">Incentive</TableHead>
+                          <TableHead className="text-center">
+                            Incentive
+                          </TableHead>
                         )}
                         <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
@@ -166,8 +172,9 @@ export default function List({ list, isLoading }: ListProps) {
                     <TableBody>
                       {filteredList.map((item) => (
                         <Item
-                          key={item.id}
                           {...item}
+                          key={item.id}
+                          slippage={slippage}
                           selectType={selectType}
                           marketState={marketStates?.[item.marketStateId]}
                           ptBalance={pyPositionsMap?.[item.id]?.ptBalance}
@@ -214,7 +221,10 @@ export default function List({ list, isLoading }: ListProps) {
               <span className="text-white/60">
                 You don't have any position yet
               </span>
-              <Link to="/market" className="px-4 py-2 rounded-full bg-[#0F60FF]">
+              <Link
+                to="/market"
+                className="px-4 py-2 rounded-full bg-[#0F60FF]"
+              >
                 <span className="text-white">View Markets</span>
               </Link>
             </div>

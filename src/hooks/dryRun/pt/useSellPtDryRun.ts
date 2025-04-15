@@ -15,6 +15,8 @@ import { burnSCoin } from "@/lib/txHelper/coin"
 interface SellPtParams {
   minSyOut: string
   ptAmount: string
+  vaultId?: string
+  slippage: string
   pyPositions?: PyPosition[]
   receivingType: "underlying" | "sy"
 }
@@ -34,6 +36,8 @@ export default function useSellPtDryRun<T extends boolean = false>(
 
   return useMutation({
     mutationFn: async ({
+      vaultId,
+      slippage,
       minSyOut,
       ptAmount,
       receivingType,
@@ -79,11 +83,13 @@ export default function useSellPtDryRun<T extends boolean = false>(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
-        const underlyingCoin = burnSCoin({
+        const underlyingCoin = await burnSCoin({
           tx,
           coinConfig,
           sCoin: yieldToken,
           address,
+          slippage,
+          vaultId,
         })
         tx.moveCall({
           target: `0x2::coin::value`,

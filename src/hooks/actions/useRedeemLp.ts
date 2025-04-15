@@ -21,6 +21,8 @@ import { burnSCoin } from "@/lib/txHelper/coin"
 
 interface RedeemLpParams {
   lpAmount: string
+  slippage: string
+  vaultId?: string
   coinConfig: CoinConfig
   lpPositions: LpPosition[]
   pyPositions: PyPosition[]
@@ -41,7 +43,9 @@ export default function useRedeemLp(
 
   const redeemLp = useCallback(
     async ({
+      vaultId,
       lpAmount,
+      slippage,
       coinConfig,
       lpPositions,
       pyPositions = [],
@@ -63,7 +67,12 @@ export default function useRedeemLp(
       console.log("lpAmount", lpAmount)
 
       // First check if we can swap PT
-      const [{ ptAmount }] = await burnLpDryRun({ lpAmount, receivingType })
+      const [{ ptAmount }] = await burnLpDryRun({
+        vaultId,
+        lpAmount,
+        slippage,
+        receivingType,
+      })
 
       let canSwapPt = false
       if (ptAmount && new Decimal(ptAmount).gt(0)) {
@@ -122,9 +131,11 @@ export default function useRedeemLp(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
-        const underlyingCoin = burnSCoin({
+        const underlyingCoin = await burnSCoin({
           tx,
           address,
+          vaultId,
+          slippage,
           coinConfig,
           sCoin: yieldToken,
         })
@@ -153,9 +164,11 @@ export default function useRedeemLp(
           receivingType === "underlying" &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
         ) {
-          const swappedUnderlyingCoin = burnSCoin({
+          const swappedUnderlyingCoin = await burnSCoin({
             tx,
             address,
+            vaultId,
+            slippage,
             coinConfig,
             sCoin: swappedYieldToken,
           })

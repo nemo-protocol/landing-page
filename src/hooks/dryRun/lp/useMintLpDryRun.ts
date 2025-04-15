@@ -23,6 +23,8 @@ import { mintMultiSCoin } from "@/lib/txHelper/coin"
 
 interface MintLpParams {
   amount: string
+  vaultId?: string
+  slippage: string
   tokenType: number
   coinData: CoinData[]
   coinConfig: CoinConfig
@@ -51,6 +53,8 @@ export default function useMintLpDryRun<T extends boolean = false>(
   return useMutation({
     mutationFn: async ({
       amount,
+      vaultId,
+      slippage,
       coinData,
       tokenType,
       coinConfig,
@@ -68,7 +72,12 @@ export default function useMintLpDryRun<T extends boolean = false>(
         throw new Error("No available coins")
       }
 
-      const { coinAmount } = await mintCoin({ amount, coinData })
+      const { coinAmount } = await mintCoin({
+        amount,
+        coinData,
+        vaultId,
+        slippage,
+      })
 
       const lpOut = await estimateLpOut(amount)
 
@@ -93,6 +102,8 @@ export default function useMintLpDryRun<T extends boolean = false>(
         tokenType === 0
           ? await mintMultiSCoin({
               tx,
+              vaultId,
+              slippage,
               amount,
               address,
               coinData,

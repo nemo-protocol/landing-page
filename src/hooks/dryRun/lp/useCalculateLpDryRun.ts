@@ -22,6 +22,8 @@ interface CalculateLpAmountResult {
 }
 
 interface CalculateLpAmountParams {
+  vaultId?: string
+  slippage: string
   decimal: number
   tokenType: number
   inputAmount: string
@@ -45,7 +47,9 @@ export function useCalculateLpAmount(
 
   return useMutation({
     mutationFn: async ({
+      vaultId,
       decimal,
+      slippage,
       coinData,
       tokenType,
       inputAmount,
@@ -83,6 +87,8 @@ export function useCalculateLpAmount(
           }
 
           const { lpAmount, ytAmount } = await seedLiquidityDryRun({
+            vaultId,
+            slippage,
             addAmount: inputAmount,
             tokenType,
             coinData,
@@ -106,6 +112,8 @@ export function useCalculateLpAmount(
           console.log("mintLpDryRun")
 
           const { lpAmount, ytAmount } = await mintLpDryRun({
+            vaultId,
+            slippage,
             coinData,
             tokenType,
             coinConfig,
@@ -133,6 +141,8 @@ export function useCalculateLpAmount(
 
             const { lpAmount, lpValue, tradeFee } =
               await addLiquiditySingleSyDryRun({
+                vaultId,
+                slippage,
                 coinData,
                 tokenType,
                 addAmount: inputAmount,
@@ -150,6 +160,8 @@ export function useCalculateLpAmount(
             console.log("mintLpDryRun")
 
             const { lpAmount, ytAmount } = await mintLpDryRun({
+              vaultId,
+              slippage,
               coinData,
               tokenType,
               coinConfig,

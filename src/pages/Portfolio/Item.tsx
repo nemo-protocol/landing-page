@@ -38,6 +38,7 @@ import useClaimLpReward from "@/hooks/actions/useClaimLpReward"
 import { ChevronDown } from "lucide-react"
 import useCoinData from "@/hooks/query/useCoinData"
 import {
+  CETUS_VAULT_ID_LIST,
   NEED_MIN_VALUE_LIST,
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
@@ -81,6 +82,7 @@ const LoadingButton = ({
 )
 
 export default function Item({
+  slippage,
   selectType,
   ptBalance,
   ytBalance,
@@ -90,6 +92,7 @@ export default function Item({
   marketState,
   ...coinConfig
 }: PortfolioItem & {
+  slippage: string
   ptBalance: string
   ytBalance: string
   lpBalance: string
@@ -123,6 +126,16 @@ export default function Item({
   const { data: ptYtData, isLoading: isPtYtLoading } = useCalculatePtYt(
     coinConfig,
     marketState,
+  )
+
+  const vaultId = useMemo(
+    () =>
+      coinConfig?.underlyingProtocol === "Cetus"
+        ? CETUS_VAULT_ID_LIST.find(
+            (item) => item.coinType === coinConfig?.coinType,
+          )?.vaultId
+        : "",
+    [coinConfig],
   )
 
   const [minValue, setMinValue] = useState(0)
@@ -273,11 +286,13 @@ export default function Item({
           new Decimal(ytReward).gt(minValue) &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
         ) {
-          const underlyingCoin = burnSCoin({
+          const underlyingCoin = await burnSCoin({
             tx,
             coinConfig,
             sCoin: yieldToken,
             address,
+            slippage,
+            vaultId,
           })
           tx.transferObjects([underlyingCoin], address)
         } else {
@@ -352,9 +367,11 @@ export default function Item({
         if (new Decimal(ytReward).lte(minValue)) {
           tx.transferObjects([yieldToken], address)
         } else {
-          const underlyingCoin = burnSCoin({
+          const underlyingCoin = await burnSCoin({
             tx,
             address,
+            vaultId,
+            slippage,
             coinConfig,
             sCoin: yieldToken,
           })
@@ -395,10 +412,12 @@ export default function Item({
       try {
         setRedeemLoading(true)
         const { digest } = await redeemLp({
-          lpAmount: lpBalance,
+          vaultId,
+          slippage,
           coinConfig,
           lpPositions,
           pyPositions,
+          lpAmount: lpBalance,
         })
         setTxId(digest)
         setOpen(true)

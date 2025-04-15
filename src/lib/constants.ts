@@ -276,3 +276,18 @@ export const WWAL = {
 } as const
 
 export const UNSUPPORTED_UNDERLYING_COINS: string[] = []
+
+export const CETUS_VAULT_ID_LIST = [
+  {
+    coinType:
+      "0x828b452d2aa239d48e4120c24f4a59f451b8cd8ac76706129f4ac3bd78ac8809::lp_token::LP_TOKEN",
+    vaultId:
+      "0xde97452e63505df696440f86f0b805263d8659b77b8c316739106009d514c270",
+  },
+  {
+    coinType:
+      "0x0c8a5fcbe32b9fc88fe1d758d33dd32586143998f68656f43f3a6ced95ea4dc3::lp_token::LP_TOKEN",
+    vaultId:
+      "0xff4cc0af0ad9d50d4a3264dfaafd534437d8b66c8ebe9f92b4c39d898d6870a3",
+  },
+]

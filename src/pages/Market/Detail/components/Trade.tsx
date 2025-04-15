@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/tooltip"
 import { formatLargeNumber } from "@/lib/utils"
 import { showTransactionDialog } from "@/lib/dialog"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import { CETUS_VAULT_ID_LIST, NEED_MIN_VALUE_LIST } from "@/lib/constants"
 import useGetConversionRateDryRun from "@/hooks/dryRun/useGetConversionRateDryRun"
 import { getPriceVoucher } from "@/lib/txHelper/price"
 
@@ -311,6 +311,16 @@ export default function Trade() {
     coinConfig?.underlyingPrice,
   ])
 
+  const vaultId = useMemo(
+    () =>
+      coinConfig?.underlyingProtocol === "Cetus"
+        ? CETUS_VAULT_ID_LIST.find(
+            (item) => item.coinType === coinConfig?.coinType,
+          )?.vaultId
+        : "",
+    [coinConfig],
+  )
+
   async function swap() {
     if (
       coinType &&
@@ -345,7 +355,9 @@ export default function Trade() {
             ? [
                 await mintSCoin({
                   tx,
+                  vaultId,
                   address,
+                  slippage,
                   coinData,
                   coinConfig,
                   amount: swapAmount,

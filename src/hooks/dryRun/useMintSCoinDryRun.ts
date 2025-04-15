@@ -12,6 +12,8 @@ import { debugLog } from "@/config"
 
 interface MintAndGetCoinValueParams {
   amount: string
+  vaultId?: string
+  slippage: string
   coinData: CoinData[]
 }
 
@@ -31,6 +33,8 @@ export default function useMintSCoinDryRun<T extends boolean = false>(
   return useMutation({
     mutationFn: async ({
       amount,
+      vaultId,
+      slippage,
       coinData,
     }: MintAndGetCoinValueParams): Promise<DryRunResult<T>> => {
       if (!address) {
@@ -46,13 +50,15 @@ export default function useMintSCoinDryRun<T extends boolean = false>(
       const [sCoin, mintMoveCallInfos] = await mintSCoin({
         tx,
         amount,
+        vaultId,
         address,
+        slippage,
         coinData,
         coinConfig,
         debug: true,
       })
 
-      const getCoinValueMoveCallInfo = getCoinValue(
+      const [, getCoinValueMoveCallInfo] = getCoinValue(
         tx,
         sCoin,
         coinConfig.coinType,

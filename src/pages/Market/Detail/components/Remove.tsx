@@ -31,12 +31,14 @@ import {
 } from "@/components/ui/select"
 import { formatDecimalValue } from "@/lib/utils"
 import useSellPtDryRun from "@/hooks/dryRun/pt/useSellPtDryRun"
-import { NEED_MIN_VALUE_LIST } from "@/lib/constants"
+import { CETUS_VAULT_ID_LIST } from "@/lib/constants"
+import SlippageSetting from "@/components/SlippageSetting"
 
 export default function Remove() {
   const navigate = useNavigate()
   const { coinType, maturity } = useParams()
   const [lpValue, setLpValue] = useState("")
+  const [slippage, setSlippage] = useState("0.5")
   const [error, setError] = useState<string>()
   const { account: currentAccount } = useWallet()
   const [warning, setWarning] = useState<string>()
@@ -49,8 +51,6 @@ export default function Remove() {
     "underlying",
   )
 
-  const [minValue, setMinValue] = useState<number>(0)
-
   const address = useMemo(() => currentAccount?.address, [currentAccount])
   const isConnected = useMemo(() => !!address, [address])
 
@@ -59,13 +59,6 @@ export default function Remove() {
     isLoading: isConfigLoading,
     refetch: refetchCoinConfig,
   } = useCoinConfig(coinType, maturity, address)
-
-  useEffect(() => {
-    const minValue =
-      NEED_MIN_VALUE_LIST.find((item) => item.coinType === coinConfig?.coinType)
-        ?.minValue || 0
-    setMinValue(minValue)
-  }, [coinConfig])
 
   const { mutateAsync: sellPtDryRun } = useSellPtDryRun(coinConfig)
 
@@ -118,7 +111,7 @@ export default function Remove() {
       return new Decimal(ptYtData.lpPrice).toString()
     }
     return "0"
-  }, [ ptYtData?.lpPrice])
+  }, [ptYtData?.lpPrice])
 
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
@@ -126,26 +119,20 @@ export default function Remove() {
         setError(undefined)
         setWarning(undefined)
         if (value && value !== "0" && decimal) {
-          // if (
-          //   receivingType === "underlying" &&
-          //   new Decimal(minValue).gt(0) &&
-          //   new Decimal(value).lt(minValue)
-          // ) {
-          //   console.log("minValue", minValue)
-          //   console.log("value", value)
-          //   setError("The minimum redeem amount is 3")
-          //   return
-          // }
           setIsInputLoading(true)
           try {
             const lpAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
             const [{ ptAmount, ptValue, outputValue }] = await burnLpDryRun({
+              slippage,
+              vaultId,
               lpAmount,
               receivingType,
             })
 
             try {
               const { outputValue: swappedOutputValue } = await sellPtDryRun({
+                slippage,
+                vaultId,
                 ptAmount,
                 minSyOut: "0",
                 receivingType,
@@ -185,7 +172,6 @@ export default function Remove() {
     },
     [
       receivingType,
-      minValue,
       burnLpDryRun,
       sellPtDryRun,
       pyPositionData,
@@ -236,6 +222,16 @@ export default function Remove() {
     [decimal, coinConfig],
   )
 
+  const vaultId = useMemo(
+    () =>
+      coinConfig?.underlyingProtocol === "Cetus"
+        ? CETUS_VAULT_ID_LIST.find(
+            (item) => item.coinType === coinConfig?.coinType,
+          )?.vaultId
+        : "",
+    [coinConfig],
+  )
+
   async function remove() {
     if (
       decimal &&
@@ -254,6 +250,8 @@ export default function Remove() {
           receivingType,
           pyPositions: pyPositionData || [],
           lpPositions: lppMarketPositionData,
+          vaultId,
+          slippage,
         })
 
         showTransactionDialog({
@@ -328,7 +326,7 @@ export default function Remove() {
 
           <ChevronsDown className="size-5 sm:size-6" />
 
-          <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm">
+          <div className="rounded-lg sm:rounded-xl border border-[#2D2D48] px-3 sm:px-4 py-4 sm:py-6 w-full text-xs sm:text-sm space-y-2">
             <div className="flex flex-col items-end gap-y-0.5 sm:gap-y-1">
               <div className="flex items-center justify-between w-full h-[24px] sm:h-[28px]">
                 <span>Receiving</span>
@@ -424,6 +422,10 @@ export default function Remove() {
                   ? dayjs(parseInt(coinConfig.maturity)).format("DD MMM YYYY")
                   : "--"}
               </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Slippage</span>
+              <SlippageSetting slippage={slippage} setSlippage={setSlippage} />
             </div>
           </div>
 

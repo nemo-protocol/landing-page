@@ -5,6 +5,7 @@ import { MobileCard } from "./MobileCard"
 
 // 简化后的MobileListProps
 interface MobileListProps {
+  slippage: string
   list: PortfolioItem[]
   selectType: "pt" | "yt" | "lp"
   pyPositionsMap: Record<string, {
@@ -25,6 +26,7 @@ export const MobileList: React.FC<MobileListProps> = ({
   pyPositionsMap,
   lpPositionsMap,
   marketStates,
+  slippage
 }) => {
   const [selectedRewardIndex, setSelectedRewardIndex] = useState(0)
   
@@ -32,6 +34,7 @@ export const MobileList: React.FC<MobileListProps> = ({
     <div className="md:hidden">
       {list?.map((item) => (
         <MobileCard
+          slippage={slippage}
           key={`${selectType}-${item.id}`}
           item={item}
           selectType={selectType}
