@@ -9,7 +9,10 @@ import useFetchPyPosition from "../useFetchPyPosition"
 import { initPyPosition, mergeLpPositions, redeemSyCoin } from "@/lib/txHelper"
 import Decimal from "decimal.js"
 import { bcs } from "@mysten/sui/bcs"
-import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
+import {
+  NEED_MIN_VALUE_LIST,
+  UNSUPPORTED_UNDERLYING_COINS,
+} from "@/lib/constants"
 import { debugLog } from "@/config"
 import { burnSCoin } from "@/lib/txHelper/coin"
 import { formatDecimalValue } from "@/lib/utils"
@@ -126,8 +129,6 @@ export default function useBurnLpDryRun(
         coinConfig?.coinType !==
           "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL"
       ) {
-        console.log("useBurnLpDryRun burnSCoin")
-
         const [underlyingCoin, burnMoveCallInfo] = burnSCoin({
           tx,
           address,
@@ -193,17 +194,22 @@ export default function useBurnLpDryRun(
         .div(10 ** decimal)
         .toFixed(decimal)
 
+      const minValue =
+        NEED_MIN_VALUE_LIST.find(
+          (item) => item.coinType === coinConfig?.coinType,
+        )?.minValue || 0
+
       if (
-        coinConfig?.coinType ===
-          "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL" &&
-        new Decimal(outputValue).lt(1)
+        receivingType === "underlying" &&
+        new Decimal(outputValue).lt(minValue)
       ) {
         const lpValue = new Decimal(lpAmount).div(Decimal.pow(10, decimal))
         throw new ContractError(
           `Please at least enter ${formatDecimalValue(
             new Decimal(lpValue).div(outputValue),
             4,
-          )} LP wWAL or try to withdraw to wWal. `,
+          )} LP wWAL or try to withdraw to ${coinConfig.coinName}
+          .`,
           debugInfo,
         )
       }

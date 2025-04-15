@@ -126,14 +126,16 @@ export default function Remove() {
         setError(undefined)
         setWarning(undefined)
         if (value && value !== "0" && decimal) {
-          if (
-            receivingType === "underlying" &&
-            new Decimal(minValue).gt(0) &&
-            new Decimal(value).lt(minValue)
-          ) {
-            setError("The minimum redeem amount is 3")
-            return
-          }
+          // if (
+          //   receivingType === "underlying" &&
+          //   new Decimal(minValue).gt(0) &&
+          //   new Decimal(value).lt(minValue)
+          // ) {
+          //   console.log("minValue", minValue)
+          //   console.log("value", value)
+          //   setError("The minimum redeem amount is 3")
+          //   return
+          // }
           setIsInputLoading(true)
           try {
             const lpAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)

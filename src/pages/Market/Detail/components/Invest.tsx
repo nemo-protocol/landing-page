@@ -199,7 +199,6 @@ export default function Invest() {
           setIsCalcPtLoading(true)
           try {
             const rate = await getConversionRate(coinConfig)
-            console.log("rate", rate)
             setConversionRate(rate)
             const swapAmount = new Decimal(value).mul(10 ** decimal).toFixed(0)
 
@@ -232,26 +231,24 @@ export default function Invest() {
               .mul(tokenType === 0 ? rate : 1)
               .toFixed(0)
 
-            console.log("actualSwapAmount", actualSwapAmount)
-
             try {
-              if (address && coinData?.length) {
-                const newPtValue = await swapExactSyForPtDryRun({
-                  coinData,
-                  coinType,
-                  minPtOut,
-                  tokenType,
-                  approxPtOut,
-                  swapAmount: actualSwapAmount,
-                })
-
-                const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
-
-                setPtRatio(ptRatio)
-                setPtValue(newPtValue)
-              } else {
-                throw new Error("Please connect your wallet")
+              if (!coinData || coinData?.length === 0) {
+                throw new Error("Insufficient balance")
               }
+
+              const newPtValue = await swapExactSyForPtDryRun({
+                coinData,
+                coinType,
+                minPtOut,
+                tokenType,
+                approxPtOut,
+                swapAmount: actualSwapAmount,
+              })
+
+              const ptRatio = new Decimal(ptValue).div(value).toFixed(4)
+
+              setPtRatio(ptRatio)
+              setPtValue(newPtValue)
             } catch (dryRunError) {
               const { error } = parseErrorMessage(
                 (dryRunError as Error).message ?? dryRunError,

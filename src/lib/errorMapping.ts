@@ -124,6 +124,17 @@ export const parseErrorMessage = (errorString: string) => {
 
   if (
     errorString.includes(
+      'address: 549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55, name: Identifier("native_pool")',
+    )
+  ) {
+    return {
+      error: "Underlying protocol error, try to withdraw to vSUI.",
+      detail: "",
+    }
+  }
+
+  if (
+    errorString.includes(
       'address: 8b4d553839b219c3fd47608a0cc3d5fcc572cb25d41b7df3833208586a8d2470, name: Identifier("walstaking")',
     )
   ) {
