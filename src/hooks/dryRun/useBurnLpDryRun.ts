@@ -208,7 +208,7 @@ export default function useBurnLpDryRun(
           `Please at least enter ${formatDecimalValue(
             new Decimal(lpValue).div(outputValue),
             4,
-          )} LP wWAL or try to withdraw to ${coinConfig.coinName}
+          )} LP ${coinConfig.coinName} or try to withdraw to ${coinConfig.coinName}
           .`,
           debugInfo,
         )
