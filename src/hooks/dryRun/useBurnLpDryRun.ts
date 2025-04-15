@@ -12,6 +12,7 @@ import { bcs } from "@mysten/sui/bcs"
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 import { debugLog } from "@/config"
 import { burnSCoin } from "@/lib/txHelper/coin"
+import { formatDecimalValue } from "@/lib/utils"
 
 type BurnLpResult = {
   ptAmount: string
@@ -191,6 +192,21 @@ export default function useBurnLpDryRun(
       const outputValue = new Decimal(outputAmount)
         .div(10 ** decimal)
         .toFixed(decimal)
+
+      if (
+        coinConfig?.coinType ===
+          "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL" &&
+        new Decimal(outputValue).lt(1)
+      ) {
+        const lpValue = new Decimal(lpAmount).div(Decimal.pow(10, decimal))
+        throw new ContractError(
+          `Please at least enter ${formatDecimalValue(
+            new Decimal(lpValue).div(outputValue),
+            4,
+          )} LP wWAL or try to withdraw to wWal. `,
+          debugInfo,
+        )
+      }
 
       const syAmount = result.events[0].parsedJson.sy_amount as string
       const syValue = new Decimal(syAmount).div(10 ** decimal).toFixed(decimal)
