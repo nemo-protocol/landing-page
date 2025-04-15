@@ -23,7 +23,9 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
   const address = DEFAULT_Address
 
   return useMutation({
-    mutationFn: async (coinConfig?: BaseCoinInfo): Promise<DryRunResult<T>> => {
+    mutationFn: async (
+      coinConfig?: BaseCoinInfo & { underlyingProtocol?: string },
+    ): Promise<DryRunResult<T>> => {
       if (!coinConfig) {
         throw new Error("Please select a pool")
       }
@@ -89,7 +91,10 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
           .div(new Decimal(2).pow(64))
           .toFixed()
 
-        if (new Decimal(formattedConversionRate).lt(1)) {
+        if (
+          new Decimal(formattedConversionRate).lt(1) &&
+          coinConfig?.underlyingProtocol !== "Cetus"
+        ) {
           throw new ContractError(
             `${coinConfig.coinType} conversion rate (${formatDecimalValue(
               formattedConversionRate,

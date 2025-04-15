@@ -102,8 +102,8 @@ export default function SingleCoin() {
 
   const {
     data: coinData,
-    isLoading: isBalanceLoading,
     refetch: refetchCoinData,
+    isLoading: isBalanceLoading,
   } = useCoinData(
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
