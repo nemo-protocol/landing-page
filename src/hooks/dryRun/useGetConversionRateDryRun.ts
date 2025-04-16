@@ -93,7 +93,7 @@ export default function useGetConversionRateDryRun<T extends boolean = false>(
 
         if (
           new Decimal(formattedConversionRate).lt(1) &&
-          coinConfig?.underlyingProtocol !== "Cetus"
+          coinConfig?.provider !== "Cetus"
         ) {
           throw new ContractError(
             `${coinConfig.coinType} conversion rate (${formatDecimalValue(
