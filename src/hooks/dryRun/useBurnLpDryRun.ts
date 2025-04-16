@@ -123,6 +123,13 @@ export default function useBurnLpDryRun(
 
       const yieldToken = redeemSyCoin(tx, coinConfig, syCoin)
 
+      if (
+        coinConfig.coinType ===
+        "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL"
+      ) {
+        throw new Error("Underlying protocol error, try to withdraw to wWAL.")
+      }
+
       // Use coin::value to get the output amount based on receivingType
       if (
         receivingType === "underlying" &&

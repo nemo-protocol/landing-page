@@ -124,6 +124,17 @@ export const parseErrorMessage = (errorString: string) => {
 
   if (
     errorString.includes(
+      'address: 29ba7f7bc53e776f27a6d1289555ded2f407b4b1a799224f06b26addbcd1c33d, name: Identifier("blizzard_inner_protocol")',
+    )
+  ) {
+    return {
+      error: "Underlying protocol error, try to deposit by wWal.",
+      detail: "",
+    }
+  }
+
+  if (
+    errorString.includes(
       'address: 549e8b69270defbfafd4f94e17ec44cdbdd99820b33bda2278dea3b9a32d3f55, name: Identifier("native_pool")',
     )
   ) {
