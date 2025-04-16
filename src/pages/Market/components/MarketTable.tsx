@@ -166,9 +166,14 @@ const MarketTable = ({ list }: MarketTableProps) => {
                                 {formatLargeNumber(item.perPoints, 6)}
                               </span>
                             </div>
-                            <span className="text-[#96A9E4] text-xs">
-                              per LP per day
-                            </span>
+                            <div className="flex flex-row items-center gap-1 text-xs">
+                              <span className="text-white">
+                                {item.boost}x boost
+                              </span>
+                              <span className="text-[#96A9E4] text-xs">
+                                per LP per day
+                              </span>
+                            </div>
                           </div>
                         </div>
                       )}

@@ -18,35 +18,38 @@ interface MarketItemProps {
 }
 
 const MarketItem = ({ item }: MarketItemProps) => {
-  console.log("item", item);
-  
+  console.log("item", item)
+
   const navigate = useNavigate()
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const tooltipRef = useRef<HTMLDivElement>(null)
 
   const handleTooltipClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent button click event (navigation)
-    e.preventDefault(); // Prevent any default behavior
-    setTooltipOpen(!tooltipOpen);
+    e.stopPropagation() // Prevent button click event (navigation)
+    e.preventDefault() // Prevent any default behavior
+    setTooltipOpen(!tooltipOpen)
   }
-  
+
   const handleNavigate = () => {
-    navigate(`/market/detail/${item.coinType}/${item.maturity}/add`);
+    navigate(`/market/detail/${item.coinType}/${item.maturity}/add`)
   }
 
   // Handle clicking outside to close tooltip
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
-        setTooltipOpen(false);
+      if (
+        tooltipRef.current &&
+        !tooltipRef.current.contains(event.target as Node)
+      ) {
+        setTooltipOpen(false)
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   return (
     <TooltipProvider>
@@ -154,11 +157,11 @@ const MarketItem = ({ item }: MarketItemProps) => {
               <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
                 <TooltipTrigger asChild>
                   <button
-                    className={`mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer border ${tooltipOpen ? 'border-white' : 'border-transparent hover:border-white'}`}
+                    className={`mt-2.5 py-3 pl-7 pr-4.5 flex items-center justify-between text-sm bg-[#62CAFF] w-full text-black h-14 rounded-xl cursor-pointer border ${tooltipOpen ? "border-white" : "border-transparent hover:border-white"}`}
                     onClick={handleNavigate}
                   >
-                    <span 
-                      className={`underline cursor-pointer ${tooltipOpen ? 'font-bold' : ''}`}
+                    <span
+                      className={`underline cursor-pointer ${tooltipOpen ? "font-bold" : ""}`}
                       onClick={handleTooltipClick}
                     >
                       + POOL APY
@@ -204,9 +207,14 @@ const MarketItem = ({ item }: MarketItemProps) => {
                               {formatLargeNumber(item.perPoints, 6)}
                             </span>
                           </div>
-                          <span className="text-[#96A9E4] text-xs">
-                            per LP per day
-                          </span>
+                          <div className="flex flex-row items-center gap-1 text-xs">
+                            <span className="text-white">
+                              {item.boost}x boost
+                            </span>
+                            <span className="text-[#96A9E4] text-xs">
+                              per LP per day
+                            </span>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -217,7 +225,9 @@ const MarketItem = ({ item }: MarketItemProps) => {
                         <div className="absolute -bottom-1 left-0 top-0 w-[1px] bg-[#41517A]"></div>
                         <div className="flex flex-1 flex-row items-start justify-between gap-4">
                           <div className="flex flex-row items-center gap-1.5">
-                            <span className="text-[#96A9E4] text-xs">PT APY</span>
+                            <span className="text-[#96A9E4] text-xs">
+                              PT APY
+                            </span>
                           </div>
                           <span className="font-mono text-xs">
                             {item.scaledPtApy

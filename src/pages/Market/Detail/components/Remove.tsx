@@ -113,6 +113,16 @@ export default function Remove() {
     return "0"
   }, [ptYtData?.lpPrice])
 
+  const vaultId = useMemo(
+    () =>
+      coinConfig?.underlyingProtocol === "Cetus"
+        ? CETUS_VAULT_ID_LIST.find(
+            (item) => item.coinType === coinConfig?.coinType,
+          )?.vaultId
+        : "",
+    [coinConfig],
+  )
+
   const debouncedGetSyOut = useCallback(
     (value: string, decimal: number) => {
       const getSyOut = debounce(async () => {
@@ -171,9 +181,11 @@ export default function Remove() {
       return getSyOut.cancel
     },
     [
-      receivingType,
+      slippage,
+      vaultId,
       burnLpDryRun,
       sellPtDryRun,
+      receivingType,
       pyPositionData,
       coinConfig?.coinName,
     ],
@@ -220,16 +232,6 @@ export default function Remove() {
       return value
     },
     [decimal, coinConfig],
-  )
-
-  const vaultId = useMemo(
-    () =>
-      coinConfig?.underlyingProtocol === "Cetus"
-        ? CETUS_VAULT_ID_LIST.find(
-            (item) => item.coinType === coinConfig?.coinType,
-          )?.vaultId
-        : "",
-    [coinConfig],
   )
 
   async function remove() {

@@ -7,6 +7,7 @@ export interface BaseCoinInfo {
   coinName: string
   coinType: string
   nemoContractId: string
+  boost:string
   provider: string
   providerLogo: string
   cap: string
