@@ -336,7 +336,7 @@ export default function Remove() {
                 <span>Receiving</span>
                 <span className="flex items-center gap-x-1 sm:gap-x-1.5 h-6 sm:h-7">
                   {isInputLoading ? (
-                    <Skeleton className="h-6 sm:h-7 w-[140px] sm:w-[180px] bg-[#2D2D48]" />
+                    <Skeleton className="h-6 sm:h-7 w-20 sm:w-40 bg-[#2D2D48]" />
                   ) : !lpValue ? (
                     "0"
                   ) : (
@@ -359,7 +359,9 @@ export default function Remove() {
                     <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
                       <SelectValue>
                         <div className="flex items-center gap-x-1">
-                          <span>
+                          <span className=" max-w-20 truncate" title={receivingType === "underlying"
+                              ? coinConfig?.underlyingCoinName
+                              : coinConfig?.coinName}>
                             {receivingType === "underlying"
                               ? coinConfig?.underlyingCoinName
                               : coinConfig?.coinName}

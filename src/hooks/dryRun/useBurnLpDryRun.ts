@@ -134,6 +134,12 @@ export default function useBurnLpDryRun(
         throw new Error("Underlying protocol error, try to withdraw to wWAL.")
       }
 
+      if (coinConfig.provider === "Cetus" && receivingType === "underlying") {
+        throw new Error(
+          `Underlying protocol error, try to withdraw to ${coinConfig.coinName}.`,
+        )
+      }
+
       // Use coin::value to get the output amount based on receivingType
       if (
         receivingType === "underlying" &&
