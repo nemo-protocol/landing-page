@@ -15,7 +15,7 @@ import {
   depositSyCoin,
 } from "@/lib/txHelper"
 import { useWallet } from "@nemoprotocol/wallet-kit"
-import { showTransactionDialog } from '@/lib/dialog'
+import { showTransactionDialog } from "@/lib/dialog"
 import ActionButton from "@/components/ActionButton"
 import useMintPYDryRun from "@/hooks/dryRun/useMintPYDryRun"
 import { debounce } from "@/lib/utils"
@@ -30,7 +30,6 @@ export default function Mint({
   maturity: string
   coinType: string
 }) {
-
   const [isMinting, setIsMinting] = useState(false)
 
   const { address, signAndExecuteTransaction } = useWallet()
@@ -169,22 +168,24 @@ export default function Mint({
         })
 
         showTransactionDialog({
-          status: 'Success',
+          status: "Success",
           network,
           txId: res.digest,
           onClose: async () => {
             await refreshData()
-          }
+          },
         })
 
         setMintValue("")
       } catch (errorMsg) {
-        const { error } = parseErrorMessage((errorMsg as ContractError)?.message ?? errorMsg)
+        const { error } = parseErrorMessage(
+          (errorMsg as ContractError)?.message ?? errorMsg,
+        )
         showTransactionDialog({
-          status: 'Failed',
+          status: "Failed",
           network,
-          txId: '',
-          message: error
+          txId: "",
+          message: error,
         })
       } finally {
         setIsMinting(false)
@@ -216,13 +217,15 @@ export default function Mint({
                     coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
                   }
                 />
-                <span className={coinConfig?.coinName && "px-2"}>
+                <span
+                  className={coinConfig?.coinName && "px-2 max-w-40 truncate"}
+                >
                   {coinConfig?.coinName}
                 </span>
               </>
             )}
           </div>
-          <div className="flex flex-col items-end gap-y-1">
+          <div className="flex flex-col items-end gap-y-1 flex-1">
             <input
               min={0}
               type="number"
@@ -230,10 +233,15 @@ export default function Mint({
               disabled={!isConnected}
               onChange={(e) => handleInputChange(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
-              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+              className={`bg-transparent h-full outline-none w-full text-right min-w-0`}
             />
             {isConnected && (
-              <span className="text-xs text-white/80">
+              <span
+                className="text-xs text-white/80 max-w-40 truncate cursor-pointer"
+                title={`$${new Decimal(coinConfig?.underlyingPrice || 0)
+                  .mul(mintValue || 0)
+                  .toString()}`}
+              >
                 $
                 {new Decimal(coinConfig?.underlyingPrice || 0)
                   .mul(mintValue || 0)
@@ -277,14 +285,16 @@ export default function Mint({
                     coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
                   }
                 />
-                <span className="px-2">PT {coinConfig?.coinName}</span>
+                <span className="px-2 max-w-40 truncate">
+                  PT {coinConfig?.coinName}
+                </span>
               </>
             )}
           </div>
           <div className="text-right grow">
             {isInputLoading ? (
-              <div className="flex justify-end">
-                <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+              <div className="flex justify-end w-full">
+                <Skeleton className="h-7 w-20 max-w-full bg-[#2D2D48]" />
               </div>
             ) : (
               ptAmount &&
@@ -307,14 +317,16 @@ export default function Mint({
                   coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
                 }
               />
-              <span className="px-2">YT {coinConfig?.coinName}</span>
+              <span className="px-2 max-w-40 truncate">
+                YT {coinConfig?.coinName}
+              </span>
             </>
           )}
         </div>
         <div className="text-right grow">
           {isInputLoading ? (
-            <div className="flex justify-end">
-              <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+            <div className="flex justify-end w-full">
+              <Skeleton className="h-7 w-20 max-w-full bg-[#2D2D48]" />
             </div>
           ) : (
             ytAmount &&
