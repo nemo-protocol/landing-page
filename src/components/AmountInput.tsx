@@ -122,7 +122,7 @@ export default function AmountInput({
                     >
                       <Wallet className="size-3 sm:size-3.5" />
                       {isConnected ? (
-                        <span className="max-w-60 text-wrap text-left">
+                        <span className="max-w-40 truncate text-left">
                           {`${formatDecimalValue(coinBalance, decimal)} ${coinName}`}
                         </span>
                       ) : (
@@ -147,7 +147,7 @@ export default function AmountInput({
                 e.target instanceof HTMLElement && e.target.blur()
               }
               className={cn(
-                "bg-transparent outline-none grow text-right min-w-0 placeholder:text-xl sm:placeholder:text-3xl p-0 font-bold w-full",
+                "bg-transparent outline-none grow text-right min-w-0 placeholder:text-xl sm:placeholder:text-3xl p-0 font-bold w-full shrink-0",
                 disabled && "cursor-not-allowed",
                 amount.length <= 8
                   ? "text-xl sm:text-3xl"
@@ -163,7 +163,14 @@ export default function AmountInput({
                 isLoading ? (
                   <Skeleton className="h-3 sm:h-4 w-16 sm:w-20 ml-auto bg-[#2D2D48]" />
                 ) : (
-                  <span className="text-[10px] sm:text-xs text-white/80 ml-auto">
+                  <span
+                    className="text-[10px] sm:text-xs text-white/80 ml-auto max-w-20 truncate hover:cursor-pointer"
+                    title={`${formatDecimalValue(
+                      new Decimal(isValidAmount(price ?? "0") ? (price ?? "0") : 0,
+                      ).mul(amount),
+                      6,
+                    )}`}
+                  >
                     $
                     {formatDecimalValue(
                       new Decimal(

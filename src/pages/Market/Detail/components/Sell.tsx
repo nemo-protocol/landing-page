@@ -188,6 +188,8 @@ export default function Sell() {
       coinConfig?.coinName,
       tokenType,
       sellYtDryRun,
+      vaultId,
+      slippage,
       pyPositionData,
       sellPtDryRun,
       receivingType,
@@ -292,6 +294,8 @@ export default function Sell() {
         ) {
           const underlyingCoin = await burnSCoin({
             tx,
+            // FIXME: cetus amount
+            amount: "",
             vaultId,
             address,
             slippage,
@@ -465,7 +469,7 @@ export default function Sell() {
                 setTargetValue("")
               }}
             >
-              <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
+              <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base max-w-32">
                 <SelectValue placeholder="Select token type" />
               </SelectTrigger>
               <SelectContent className="border-none outline-none bg-[#0E0F16]">

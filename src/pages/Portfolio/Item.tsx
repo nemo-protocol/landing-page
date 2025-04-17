@@ -288,6 +288,8 @@ export default function Item({
         ) {
           const underlyingCoin = await burnSCoin({
             tx,
+            // FIXME: cetus amount
+            amount: "",
             coinConfig,
             sCoin: yieldToken,
             address,
@@ -369,6 +371,8 @@ export default function Item({
         } else {
           const underlyingCoin = await burnSCoin({
             tx,
+            // FIXME: cetus amount
+            amount: "",
             address,
             vaultId,
             slippage,

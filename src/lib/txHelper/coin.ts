@@ -754,6 +754,7 @@ type BurnSCoinResult<T extends boolean> = T extends true
 
 type BurnSCoinParams<T extends boolean = false> = {
   debug?: T
+  amount: string
   tx: Transaction
   address: string
   vaultId?: string
@@ -765,6 +766,7 @@ type BurnSCoinParams<T extends boolean = false> = {
 export const burnSCoin = async <T extends boolean = false>({
   tx,
   sCoin,
+  amount,
   address,
   vaultId,
   slippage,
@@ -1345,20 +1347,18 @@ export const burnSCoin = async <T extends boolean = false>({
       break
     }
     case "Cetus": {
+      if (!amount) {
+        throw new Error("Amount is required for Cetus")
+      }
       if (!vaultId) {
         throw new Error("Vault ID is required for Cetus")
       }
+
       const sdk = initCetusVaultsSDK({
         network: "mainnet",
       })
 
       sdk.senderAddress = address
-
-      const amount = getCoinValue(
-        tx,
-        sCoin,
-        coinConfig.coinType,
-      ) as unknown as string
 
       const withdrawResult = await sdk.Vaults.calculateWithdrawAmount({
         vault_id: vaultId,

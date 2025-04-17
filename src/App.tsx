@@ -3,8 +3,8 @@ import { HashRouter, Route, Routes } from "react-router-dom"
 import "./App.css"
 import Loading from "@/components/Loading"
 import { motion } from "framer-motion"
-import TransactionStatusDialog from '@/components/TransactionStatusDialog'
-import { useDialogStore } from '@/lib/dialog'
+import TransactionStatusDialog from "@/components/TransactionStatusDialog"
+import { useDialogStore } from "@/lib/dialog"
 
 interface CountryResponse {
   ip: string
@@ -26,14 +26,16 @@ const Swap = lazy(() => import("./pages/Swap"))
 function App() {
   const [isBlocked, setIsBlocked] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { open, status, network, txId, message, onClose, hideDialog } = useDialogStore()
+  const { open, status, network, txId, message, onClose, hideDialog } =
+    useDialogStore()
 
   useEffect(() => {
     const checkCountry = async () => {
       try {
         const response = await fetch("https://api.country.is/")
         const data: CountryResponse = await response.json()
-        const restrictedRegions = import.meta.env.VITE_RESTRICTED_REGIONS?.split(",") || []
+        const restrictedRegions =
+          import.meta.env.VITE_RESTRICTED_REGIONS?.split(",") || []
         if (restrictedRegions.includes(data.country)) {
           setIsBlocked(true)
         }
@@ -113,7 +115,7 @@ function App() {
           </div>
         </Suspense>
       </HashRouter>
-      
+
       <TransactionStatusDialog
         open={open}
         status={status}

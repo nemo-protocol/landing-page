@@ -18,6 +18,7 @@ import {
 import { UNSUPPORTED_UNDERLYING_COINS } from "@/lib/constants"
 import { getPriceVoucher } from "@/lib/txHelper/price"
 import { burnSCoin } from "@/lib/txHelper/coin"
+import useBurnSCoinDryRun from "../dryRun/useBurnSCoinDryRun"
 
 interface RedeemLpParams {
   lpAmount: string
@@ -37,6 +38,7 @@ export default function useRedeemLp(
   const address = account?.address
 
   const { mutateAsync: burnLpDryRun } = useBurnLpDryRun(coinConfig)
+  const { mutateAsync: burnSCoinDryRun } = useBurnSCoinDryRun(coinConfig)
   const { mutateAsync: swapExactPtForSyDryRun } =
     useSwapExactPtForSyDryRun(coinConfig)
   const { mutateAsync: claimLpRewardMutation } = useClaimLpReward(coinConfig)
@@ -131,8 +133,12 @@ export default function useRedeemLp(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
+        const { coinAmount: amount } = await burnSCoinDryRun({
+          lpAmount,
+        })
         const underlyingCoin = await burnSCoin({
           tx,
+          amount,
           address,
           vaultId,
           slippage,
@@ -164,8 +170,12 @@ export default function useRedeemLp(
           receivingType === "underlying" &&
           !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
         ) {
+          const { coinAmount: amount } = await burnSCoinDryRun({
+            lpAmount,
+          })
           const swappedUnderlyingCoin = await burnSCoin({
             tx,
+            amount,
             address,
             vaultId,
             slippage,
@@ -192,6 +202,7 @@ export default function useRedeemLp(
       address,
       marketState,
       burnLpDryRun,
+      burnSCoinDryRun,
       claimLpRewardMutation,
       swapExactPtForSyDryRun,
       signAndExecuteTransaction,

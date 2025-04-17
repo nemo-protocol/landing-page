@@ -300,7 +300,9 @@ export default function Remove() {
         </div>
 
         <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07] flex flex-col items-center gap-y-3 sm:gap-y-4 w-full">
-          <h2 className="text-center text-base sm:text-xl">Remove Liquidity</h2>
+          <h2 className="text-center text-base sm:text-xl">
+            Remove Liquidity
+          </h2>
 
           <AmountInput
             error={error}
@@ -320,7 +322,7 @@ export default function Remove() {
             isConfigLoading={isConfigLoading}
             coinName={`LP ${coinConfig?.coinName}`}
             coinNameComponent={
-              <span className="text-sm sm:text-base">
+              <span className="text-sm sm:text-base max-w-40 truncate">
                 LP {coinConfig?.coinName}
               </span>
             }
@@ -436,7 +438,7 @@ export default function Remove() {
             btnText={btnText}
             loading={isRemoving}
             disabled={
-              !!error ||
+              // !!error ||
               lpValue === "" ||
               lpValue === "0" ||
               insufficientBalance ||

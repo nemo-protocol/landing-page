@@ -82,8 +82,11 @@ export default function useSellYtDryRun<T extends boolean = false>(
         receivingType === "underlying" &&
         !UNSUPPORTED_UNDERLYING_COINS.includes(coinConfig?.coinType)
       ) {
+
         const underlyingCoin = await burnSCoin({
           tx,
+          // FIXME: cetus amount
+          amount: "",
           address,
           vaultId,
           slippage,

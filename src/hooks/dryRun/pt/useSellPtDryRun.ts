@@ -85,6 +85,8 @@ export default function useSellPtDryRun<T extends boolean = false>(
       ) {
         const underlyingCoin = await burnSCoin({
           tx,
+          // FIXME: cetus amount
+          amount: "",
           coinConfig,
           sCoin: yieldToken,
           address,

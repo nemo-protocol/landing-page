@@ -14,8 +14,9 @@ import {
   UNSUPPORTED_UNDERLYING_COINS,
 } from "@/lib/constants"
 import { debugLog } from "@/config"
-import { burnSCoin } from "@/lib/txHelper/coin"
+import { burnSCoin, getCoinValue } from "@/lib/txHelper/coin"
 import { formatDecimalValue } from "@/lib/utils"
+import useBurnSCoinDryRun from "./useBurnSCoinDryRun"
 
 type BurnLpResult = {
   ptAmount: string
@@ -43,6 +44,8 @@ export default function useBurnLpDryRun(
     useFetchLpPosition(outerCoinConfig)
   const { mutateAsync: fetchPyPositionAsync } =
     useFetchPyPosition(outerCoinConfig)
+
+  const { mutateAsync: burnSCoinDryRun } = useBurnSCoinDryRun(outerCoinConfig)
 
   return useMutation({
     mutationFn: async (
@@ -139,8 +142,15 @@ export default function useBurnLpDryRun(
         coinConfig?.coinType !==
           "0xb1b0650a8862e30e3f604fd6c5838bc25464b8d3d827fbd58af7cb9685b832bf::wwal::WWAL"
       ) {
+        const { coinAmount: amount } = await burnSCoinDryRun({
+          lpAmount,
+        })
+
+        console.log("burnSCoinDryRun amount", amount)
+
         const [underlyingCoin, burnMoveCallInfo] = await burnSCoin({
           tx,
+          amount,
           address,
           vaultId,
           slippage,
@@ -148,18 +158,23 @@ export default function useBurnLpDryRun(
           debug: true,
           sCoin: yieldToken,
         })
-        tx.moveCall({
-          target: `0x2::coin::value`,
-          arguments: [underlyingCoin],
-          typeArguments: [coinConfig.underlyingCoinType],
-        })
         moveCallInfos.push(...burnMoveCallInfo)
+
+        const [, getCoinValueMoveCallInfo] = getCoinValue(
+          tx,
+          underlyingCoin,
+          coinConfig.underlyingCoinType,
+          true,
+        )
+        moveCallInfos.push(getCoinValueMoveCallInfo)
       } else {
-        tx.moveCall({
-          target: `0x2::coin::value`,
-          arguments: [yieldToken],
-          typeArguments: [coinConfig.coinType],
-        })
+        const [, getCoinValueMoveCallInfo] = getCoinValue(
+          tx,
+          yieldToken,
+          coinConfig.coinType,
+          true,
+        )
+        moveCallInfos.push(getCoinValueMoveCallInfo)
       }
 
       const result = await client.devInspectTransactionBlock({

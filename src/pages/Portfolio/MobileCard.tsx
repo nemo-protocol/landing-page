@@ -289,11 +289,13 @@ export const MobileCard: React.FC<MobileCardProps> = ({
         ) {
           const underlyingCoin = await burnSCoin({
             tx,
+            // FIXME: cetus amount
+            amount: "",
             address,
+            vaultId,
+            slippage,
             coinConfig: item,
             sCoin: yieldToken,
-            slippage,
-            vaultId,
           })
           tx.transferObjects([underlyingCoin], address)
         } else {
