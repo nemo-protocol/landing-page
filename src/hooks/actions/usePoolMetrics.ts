@@ -166,10 +166,11 @@ export function usePoolMetrics() {
       // Make RPC calls to get prices
       const conversionRate = await getConversionRate(coinInfo)
 
-      const underlyingPrice =
-        coinInfo.provider === "Cetus"
-          ? new Decimal(coinInfo.underlyingPrice)
-          : safeDivide(coinInfo.coinPrice, conversionRate, "decimal")
+      const underlyingPrice = safeDivide(
+        coinInfo.coinPrice,
+        conversionRate,
+        "decimal",
+      )
 
       let ptPrice: Decimal
       let ytPrice: Decimal
