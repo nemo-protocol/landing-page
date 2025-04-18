@@ -2,6 +2,7 @@ import { useRef } from "react"
 import { CoinConfig } from "@/queries/types/market"
 import { useMutation } from "@tanstack/react-query"
 import useQueryYtOutBySyInDryRun from "@/hooks/dryRun/yt/useQueryYtOutBySyIn"
+import { isValidAmount } from "@/lib/utils"
 
 interface YtOutBySyInResult {
   syIn: string
@@ -37,6 +38,10 @@ export default function useQueryYtOutBySyIn() {
             innerCoinConfig: coinConfig,
           })
 
+          if (!isValidAmount(ytAmount)) {
+            throw new Error("Invalid ytAmount")
+          }
+
           lastSuccessIndexRef.current = index
           return {
             syIn: syAmount,
@@ -51,4 +56,4 @@ export default function useQueryYtOutBySyIn() {
       return fetchYtOut()
     },
   })
-} 
+}
