@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton"
 import SlippageSetting from "./SlippageSetting"
-import RefreshButton from "./RefreshButton"
+// import RefreshButton from "./RefreshButton"
 import { isValidAmount } from "@/lib/utils"
 
 interface TradeInfoProps {
@@ -24,7 +24,7 @@ export default function TradeInfo({
   tradeFeeSymbol = "",
   slippage,
   setSlippage,
-  onRefresh,
+  // onRefresh,
   isLoading,
   isRatioLoading,
 }: TradeInfoProps) {
@@ -41,7 +41,7 @@ export default function TradeInfo({
                 {`1 ${coinName} ≈ ${Number(ratio).toFixed(4)} ${targetCoinName}`}
               </span>
             )}
-            {onRefresh && <RefreshButton onRefresh={onRefresh} size={20} />}
+            {/* {onRefresh && <RefreshButton onRefresh={onRefresh} size={20} />} */}
           </div>
         </div>
       )}
