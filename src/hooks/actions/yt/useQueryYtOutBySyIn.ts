@@ -20,7 +20,7 @@ export default function useQueryYtOutBySyIn() {
         throw new Error("Please select a pool")
       }
 
-      const syAmounts = ["1000000", "10000", "1000"]
+      const syAmounts = ["1000000", "10000", "1000", "100", "10"]
 
       const fetchYtOut = async (
         index = lastSuccessIndexRef.current,

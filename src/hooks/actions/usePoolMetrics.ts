@@ -166,11 +166,10 @@ export function usePoolMetrics() {
       // Make RPC calls to get prices
       const conversionRate = await getConversionRate(coinInfo)
 
-      const underlyingPrice = safeDivide(
-        coinInfo.coinPrice,
-        conversionRate,
-        "decimal",
-      )
+      const underlyingPrice =
+        coinInfo.provider === "Cetus"
+          ? new Decimal(coinInfo.underlyingPrice)
+          : safeDivide(coinInfo.coinPrice, conversionRate, "decimal")
 
       let ptPrice: Decimal
       let ytPrice: Decimal
@@ -189,13 +188,12 @@ export function usePoolMetrics() {
         try {
           const { syIn, ptOut } = await queryPtOutBySyIn(coinInfo)
           ptPrice = safeDivide(
-            new Decimal(coinInfo.coinPrice).mul(Number(ptOut)),
-            Number(syIn),
+            new Decimal(coinInfo.coinPrice).mul(Number(syIn)),
+            Number(ptOut),
             "decimal",
           )
           ytPrice = underlyingPrice.sub(ptPrice)
         } catch (syError) {
-          console.log("SY calc error", syError)
           throw new Error("All price calculation methods failed")
         }
       }

@@ -135,8 +135,8 @@ export default function Trade() {
 
   const {
     data: coinData,
-    isLoading: isBalanceLoading,
     refetch: refetchCoinData,
+    isLoading: isBalanceLoading,
   } = useCoinData(
     address,
     tokenType === 0 ? coinConfig?.underlyingCoinType : coinType,
@@ -264,9 +264,10 @@ export default function Trade() {
       !hasLiquidity ||
       insufficientBalance ||
       !isValidAmount(swapValue) ||
+      !isValidAmount(ytValue) ||
       !!error
     )
-  }, [swapValue, insufficientBalance, hasLiquidity, error])
+  }, [hasLiquidity, insufficientBalance, swapValue, ytValue, error])
 
   const btnText = useMemo(() => {
     if (!hasLiquidity) {
