@@ -220,9 +220,9 @@ export default function Redeem({
                 coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
               }
             />
-            <span>PT {coinConfig?.coinName}</span>
+            <span className="max-w-40 truncate">PT {coinConfig?.coinName}</span>
           </div>
-          <div className="flex flex-col items-end gap-y-1">
+          <div className="flex flex-col items-end gap-y-1 flex-1">
             <input
               min={0}
               type="number"
@@ -230,7 +230,7 @@ export default function Redeem({
               disabled={!isConnected}
               onChange={(e) => setRedeemValue(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
-              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+              className={`bg-transparent h-full outline-none text-right min-w-0 w-full`}
             />
             {isConnected && (
               <span className="text-xs text-white/80">
@@ -282,9 +282,9 @@ export default function Redeem({
                 coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
               }
             />
-            <span>YT {coinConfig?.coinName}</span>
+            <span className="max-w-40 truncate">YT {coinConfig?.coinName}</span>
           </div>
-          <div className="flex flex-col items-end gap-y-1">
+          <div className="flex flex-col items-end gap-y-1 flex-1">
             <input
               min={0}
               type="number"
@@ -292,7 +292,7 @@ export default function Redeem({
               disabled={!isConnected}
               onChange={(e) => setRedeemValue(e.target.value)}
               placeholder={!isConnected ? "Please connect wallet" : ""}
-              className={`bg-transparent h-full outline-none grow text-right min-w-0`}
+              className={`bg-transparent h-full outline-none text-right min-w-0 w-full`}
             />
             {isConnected && (
               <span className="text-xs text-white/80">
@@ -339,12 +339,12 @@ export default function Redeem({
                 coinConfig?.coinLogo ? "size-6" : "size-6 rounded-full"
               }
             />
-            <span>{coinConfig?.coinName}</span>
+            <span className="max-w-40 truncate">{coinConfig?.coinName}</span>
           </div>
           <div className="text-right grow">
             {isInputLoading ? (
               <div className="flex justify-end">
-                <Skeleton className="h-7 w-[180px] bg-[#2D2D48]" />
+                <Skeleton className="h-7 w-32 bg-[#2D2D48]" />
               </div>
             ) : (
               syAmount &&

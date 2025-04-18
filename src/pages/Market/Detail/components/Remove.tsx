@@ -300,9 +300,7 @@ export default function Remove() {
         </div>
 
         <div className="bg-[#12121B] rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/[0.07] flex flex-col items-center gap-y-3 sm:gap-y-4 w-full">
-          <h2 className="text-center text-base sm:text-xl">
-            Remove Liquidity
-          </h2>
+          <h2 className="text-center text-base sm:text-xl">Remove Liquidity</h2>
 
           <AmountInput
             error={error}
@@ -359,9 +357,14 @@ export default function Remove() {
                     <SelectTrigger className="border-none focus:ring-0 p-0 h-auto focus:outline-none bg-transparent text-sm sm:text-base w-fit">
                       <SelectValue>
                         <div className="flex items-center gap-x-1">
-                          <span className=" max-w-20 truncate" title={receivingType === "underlying"
-                              ? coinConfig?.underlyingCoinName
-                              : coinConfig?.coinName}>
+                          <span
+                            className=" max-w-20 truncate"
+                            title={
+                              receivingType === "underlying"
+                                ? coinConfig?.underlyingCoinName
+                                : coinConfig?.coinName
+                            }
+                          >
                             {receivingType === "underlying"
                               ? coinConfig?.underlyingCoinName
                               : coinConfig?.coinName}
