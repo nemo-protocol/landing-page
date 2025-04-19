@@ -1384,6 +1384,37 @@ export const burnSCoin = async <T extends boolean = false>({
         ? [coin, moveCallInfos]
         : coin) as unknown as MintSCoinResult<T>
     }
+    case "SpringSui": {
+      const redeemMoveCall = {
+        target: `0x82e6f4f75441eae97d2d5850f41a09d28c7b64a05b067d37748d471f43aaf3f7::liquid_staking::redeem`,
+        arguments: [
+          {
+            name: "liquid_staking_info",
+            value: "0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b",
+          },
+          { name: "coin", value: sCoin },
+          { name: "sui_system_state", value: "0x5" },
+        ],
+        typeArguments: [coinConfig.coinType],
+      }
+      moveCallInfos.push(redeemMoveCall)
+      if (!debug) {
+        debugLog(`spring_sui redeem move call:`, redeemMoveCall)
+      }
+
+      const [coin] = tx.moveCall({
+        target: redeemMoveCall.target,
+        arguments: [
+          tx.object("0x15eda7330c8f99c30e430b4d82fd7ab2af3ead4ae17046fcb224aa9bad394f6b"),
+          sCoin,
+          tx.object("0x5"),
+        ],
+        typeArguments: redeemMoveCall.typeArguments,
+      })
+
+      underlyingCoin = coin
+      break
+    }
     default:
       console.error(
         "burnSCoin Unsupported underlying protocol: " +
